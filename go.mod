@@ -14,8 +14,9 @@ require (
 	github.com/hashicorp/hcl v1.0.0
 	github.com/imdario/mergo v0.3.10
 	github.com/json-iterator/go v1.1.10
-	github.com/mattn/go-isatty v0.0.3
+	github.com/mattn/go-isatty v0.0.12
 	github.com/mitchellh/mapstructure v1.3.3
+	github.com/mozillazg/go-pinyin v0.18.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/viper v1.7.1
