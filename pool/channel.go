@@ -1,384 +1,205 @@
 package pool
 
 import (
-	"context"
 	"errors"
-	"io"
+	"fmt"
 	"sync"
 	"time"
 )
 
-var (
-	// ErrDBClosed 连接池关闭
-	ErrDBClosed = errors.New("database is closed")
-	// ErrBadConn 无效的连接
-	ErrBadConn = errors.New("bad connection")
-	// ErrTimeOut 等待超时
-	ErrTimeOut = errors.New("wait timeout")
-)
-
-// Connect 连接接口
-type Connect func(context.Context) (io.Closer, error)
-
-// GetConn 连接接口
-type GetDriver interface {
-	Conn() io.Closer
-	Close() error
+// Config 连接池相关配置
+type Config struct {
+	//是否初始化连接池
+	IsInit bool
+	//最大链接数
+	MaxOpenConns int
+	//最大闲置链接
+	MaxIdleConns int
+	//生成连接的方法
+	New func() (interface{}, error)
+	//关闭连接的方法
+	Close func(interface{}) error
+	//检查连接是否有效的方法
+	Ping func(interface{}) error
+	//连接最大空闲时间，超过该事件则将失效
+	ConnTimeout time.Duration
 }
 
-// Pool 连接池
-type Pool interface {
-	Get(context.Context) (GetDriver, error)
-	Close() error
+// channelPool 存放连接信息
+type channelPool struct {
+	mutex              sync.Mutex
+	conns              chan *Conn
+	new                func() (interface{}, error)
+	close              func(interface{}) error
+	ping               func(interface{}) error
+	connTimeout        time.Duration
+	maxOpenConns       int
+	overstepConnNumber int
 }
 
-// DB 生成一个DB池
-type DB struct {
-	sync.Mutex
-
-	freeConn     []*driverConn               //空闲连接队列
-	connRequests map[uint64]chan *driverConn //连接等待队列
-	openerCh     chan struct{}               //创建新连接信号
-	cleanerCh    chan struct{}               //清理连接信号
-
-	connector   Connect
-	maxLifetime time.Duration //活跃时间
-	timeOut     time.Duration //超时时间
-	maxOpen     int           //最大打开连接数
-	numOpen     int           //打开连接数
-	maxIdle     int           //最大空闲连接数
-	nextRequest uint64        //下一个等待连接key
-
-	stop   func() //关闭触发函数，context的
-	closed bool   //连接池是否关闭
+type Conn struct {
+	conn interface{}
+	t    time.Time
 }
 
-const connectionRequestQueueSize = 50
-
-// OpenCustom 可配置连接
-func OpenCustom(c Connect, maxLifetime, timeOut time.Duration, maxIdle, maxOpen int) Pool {
-	ctx, cancel := context.WithCancel(context.Background())
-	db := &DB{
-		connector:    c,
-		openerCh:     make(chan struct{}, connectionRequestQueueSize),
-		stop:         cancel,
-		maxLifetime:  maxLifetime,
-		timeOut:      timeOut,
-		maxIdle:      maxIdle,
-		maxOpen:      maxOpen,
-		connRequests: make(map[uint64]chan *driverConn),
+// NewChannelPool 初始化连接
+func NewChannelPool(poolConfig *Config) (Pool, error) {
+	if poolConfig.MaxIdleConns < 0 || poolConfig.MaxOpenConns <= 0 || poolConfig.MaxIdleConns > poolConfig.MaxOpenConns {
+		return nil, errors.New("invalid capacity settings")
+	}
+	if poolConfig.New == nil {
+		return nil, errors.New("invalid factory func settings")
+	}
+	if poolConfig.Close == nil {
+		return nil, errors.New("invalid close func settings")
 	}
 
-	// 监控
-	go db.connectionOpener(ctx)
-
-	return db
-}
-
-// Open 默认配置连接
-func Open(c Connect) Pool {
-	ctx, cancel := context.WithCancel(context.Background())
-	db := &DB{
-		connector:    c,
-		openerCh:     make(chan struct{}, connectionRequestQueueSize),
-		stop:         cancel,
-		maxLifetime:  5 * time.Minute,
-		timeOut:      15 * time.Second,
-		maxIdle:      5,
-		maxOpen:      10,
-		connRequests: make(map[uint64]chan *driverConn),
+	c := &channelPool{
+		conns:       make(chan *Conn, poolConfig.MaxIdleConns),
+		new:         poolConfig.New,
+		close:       poolConfig.Close,
+		connTimeout: poolConfig.ConnTimeout,
 	}
 
-	// 监控
-	go db.connectionOpener(ctx)
-
-	return db
+	if poolConfig.Ping != nil {
+		c.ping = poolConfig.Ping
+	}
+	if poolConfig.IsInit {
+		for i := 0; i < poolConfig.MaxOpenConns; i++ {
+			conn, err := c.new()
+			if err != nil {
+				c.CloseAll()
+				return nil, fmt.Errorf("factory is not able to fill the pool: %s", err)
+			}
+			c.conns <- &Conn{conn: conn, t: time.Now()}
+		}
+	}
+	return c, nil
 }
 
-// 创建新的连接
-// 等待maybeOpenNewConnections释放阻塞
-func (db *DB) connectionOpener(ctx context.Context) {
+// getConns 获取所有连接
+func (c *channelPool) getConns() chan *Conn {
+	c.mutex.Lock()
+	conns := c.conns
+	c.mutex.Unlock()
+	return conns
+}
+
+// Get 从pool中取一个连接
+func (c *channelPool) Get() (interface{}, error) {
+	conns := c.getConns()
+	if conns == nil {
+		return nil, ErrClosed
+	}
 	for {
 		select {
-		case <-ctx.Done():
-			return
-		case <-db.openerCh:
-			db.openNewConnection(ctx)
-		}
-	}
-}
-
-func (db *DB) openNewConnection(ctx context.Context) {
-	ci, err := db.connector(ctx)
-	db.Lock()
-	defer db.Unlock()
-	if db.closed {
-		if err == nil {
-			ci.Close()
-		}
-		db.numOpen--
-		return
-	}
-	if err != nil {
-		db.numOpen--
-		db.maybeOpenNewConnections()
-		return
-	}
-	dc := &driverConn{
-		db:        db,
-		createdAt: time.Now(),
-		ci:        ci,
-	}
-	if !db.recovery(dc) {
-		db.numOpen--
-		ci.Close()
-	}
-}
-
-// 资源创建失败时, 判断是否有还在等待的请求, 有就创建新的资源
-func (db *DB) maybeOpenNewConnections() {
-	numRequests := len(db.connRequests)
-	if db.maxOpen > 0 {
-		numCanOpen := db.maxOpen - db.numOpen
-		if numRequests > numCanOpen {
-			numRequests = numCanOpen
-		}
-	}
-	for numRequests > 0 {
-		db.numOpen++
-		numRequests--
-		if db.closed {
-			return
-		}
-		db.openerCh <- struct{}{}
-	}
-}
-
-// 等待连接map的key
-func (db *DB) nextConnRequestsKey() uint64 {
-	next := db.nextRequest
-	db.nextRequest++
-	return next
-}
-
-// 获取资源
-func (db *DB) conn(ctx context.Context) (*driverConn, error) {
-	db.Lock()
-	if db.closed {
-		db.Unlock()
-		return nil, ErrDBClosed
-	}
-
-	select {
-	default:
-	case <-ctx.Done():
-		db.Unlock()
-		return nil, ctx.Err()
-	}
-
-	lifetime := db.maxLifetime
-	numFree := len(db.freeConn)
-	if numFree > 0 {
-		conn := db.freeConn[0]
-		copy(db.freeConn, db.freeConn[1:])
-		db.freeConn = db.freeConn[:numFree-1]
-		conn.inUse = true
-		db.Unlock()
-		if conn.expired(lifetime) {
-			conn.close()
-			return nil, ErrBadConn
-		}
-
-		return conn, nil
-	}
-
-	if db.maxOpen > 0 && db.numOpen >= db.maxOpen {
-		reqkey := db.nextConnRequestsKey()
-		req := make(chan *driverConn, 1)
-		db.connRequests[reqkey] = req
-		db.Unlock()
-
-		select {
-		case <-ctx.Done():
-			db.Lock()
-			delete(db.connRequests, reqkey)
-			db.Unlock()
-
-			select {
-			default:
-			case conn, ok := <-req:
-				if ok && conn != nil {
-					db.Lock()
-					noexist := db.recovery(conn)
-					db.Unlock()
-					if !noexist {
-						conn.close()
-					}
+		case wrapConn := <-conns:
+			if wrapConn == nil {
+				return nil, ErrClosed
+			}
+			//判断是否超时，超时则丢弃
+			if timeout := c.connTimeout; timeout > 0 {
+				if wrapConn.t.Add(timeout).Before(time.Now()) {
+					//丢弃并关闭该连接
+					c.Close(wrapConn.conn)
+					continue
 				}
 			}
-			return nil, ErrTimeOut
-		case conn, ok := <-req:
-			if !ok || conn == nil {
-				return nil, ErrBadConn
+			//判断是否失效，失效则丢弃，如果用户没有设定 ping 方法，就不检查
+			if c.ping != nil {
+				if err := c.Ping(wrapConn.conn); err != nil {
+					fmt.Println("conn is not able to be connected: ", err)
+					continue
+				}
 			}
-			if conn.expired(db.maxLifetime) {
-				conn.close()
-				return nil, ErrBadConn
+			return wrapConn.conn, nil
+		default:
+			if c.maxOpenConns > (c.Len() + c.overstepConnNumber) {
+				return <-conns, nil
 			}
+			c.mutex.Lock()
+			if c.new == nil {
+				c.mutex.Unlock()
+				continue
+			}
+			conn, err := c.new()
+			c.mutex.Unlock()
+			if err != nil {
+				return nil, err
+			}
+			c.overstepConnNumber++
 			return conn, nil
 		}
 	}
-
-	db.numOpen++
-	db.Unlock()
-
-	conn, err := db.connector(ctx)
-	if err != nil {
-		db.Lock()
-		db.numOpen--
-		db.maybeOpenNewConnections()
-		db.Unlock()
-		return nil, err
-	}
-	dc := &driverConn{
-		db:        db,
-		ci:        conn,
-		createdAt: time.Now(),
-		inUse:     true,
-	}
-	return dc, nil
 }
 
-// 资源回收
-func (db *DB) recovery(dc *driverConn) bool {
-	if db.closed {
-		return false
+// Put 将连接放回pool中
+func (c *channelPool) Put(conn interface{}) error {
+	if conn == nil {
+		return errors.New("connection is nil. rejecting")
 	}
 
-	if db.maxOpen > 0 && db.numOpen > db.maxOpen {
-		return false
+	c.mutex.Lock()
+
+	if c.conns == nil {
+		c.mutex.Unlock()
+		return c.Close(conn)
 	}
 
-	if c := len(db.connRequests); c > 0 {
-		var req chan *driverConn
-		var reqkey uint64
-		for reqkey, req = range db.connRequests {
-			break
-		}
-
-		delete(db.connRequests, reqkey)
-		req <- dc
-
-		return true
-	} else if db.maxIdle > len(db.freeConn) {
-		dc.inUse = false
-		db.freeConn = append(db.freeConn, dc)
-		db.startCleanerLocked()
-		return true
-	}
-	return false
-}
-
-// 关闭连接池
-func (db *DB) Close() error {
-	db.Lock()
-	if db.closed {
-		db.Unlock()
-		return ErrDBClosed
-	}
-	fns := make([]func() error, 0, len(db.freeConn))
-	for _, dc := range db.freeConn {
-		fns = append(fns, dc.close)
-	}
-	db.freeConn = nil
-	db.closed = true
-
-	for _, req := range db.connRequests {
-		close(req)
-	}
-
-	db.Unlock()
-
-	var err error
-	for _, fn := range fns {
-		err = fn()
-	}
-	db.stop()
-	return err
-}
-
-func (db *DB) startCleanerLocked() {
-	if db.maxLifetime > 0 && db.numOpen > 0 && db.cleanerCh == nil {
-		db.cleanerCh = make(chan struct{}, 1)
-		go db.connectionCleaner()
-	} else {
-		select {
-		case db.cleanerCh <- struct{}{}:
-		default:
-		}
+	select {
+	case c.conns <- &Conn{conn: conn, t: time.Now()}:
+		c.mutex.Unlock()
+		return nil
+	default:
+		c.mutex.Unlock()
+		c.overstepConnNumber--
+		//连接池已满，直接关闭该连接
+		return c.Close(conn)
 	}
 }
 
-// 定时清理超时连接
-func (db *DB) connectionCleaner() {
-	t := time.NewTimer(db.maxLifetime)
+// Close 关闭单条连接
+func (c *channelPool) Close(conn interface{}) error {
+	if conn == nil {
+		return errors.New("connection is nil. rejecting")
+	}
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if c.close == nil {
+		return nil
+	}
+	return c.close(conn)
+}
 
-	for {
-		select {
-		case <-t.C:
-		case <-db.cleanerCh:
-		}
+// Ping 检查单条连接是否有效
+func (c *channelPool) Ping(conn interface{}) error {
+	if conn == nil {
+		return errors.New("connection is nil. rejecting")
+	}
+	return c.ping(conn)
+}
 
-		db.Lock()
-		if db.closed || db.numOpen == 0 {
-			db.cleanerCh = nil
-			db.Unlock()
-			return
-		}
+// Release 释放连接池中所有连接
+func (c *channelPool) CloseAll() {
+	c.mutex.Lock()
+	conns := c.conns
+	c.conns = nil
+	c.new = nil
+	c.ping = nil
+	closeFun := c.close
+	c.close = nil
+	c.mutex.Unlock()
 
-		expiredSince := time.Now().Add(-db.maxLifetime)
-		var closing []*driverConn
-		for i := 0; i < len(db.freeConn); i++ {
-			c := db.freeConn[i]
-			if c.createdAt.Before(expiredSince) {
-				closing = append(closing, c)
-				last := len(db.freeConn) - 1
-				db.freeConn[i] = db.freeConn[last]
-				db.freeConn[last] = nil
-				db.freeConn = db.freeConn[:last]
-				i--
-			}
-		}
-		db.Unlock()
-
-		for _, dc := range closing {
-			dc.close()
-		}
-
-		t.Reset(db.maxLifetime)
+	if conns == nil {
+		return
+	}
+	close(conns)
+	for wrapConn := range conns {
+		closeFun(wrapConn.conn)
 	}
 }
 
-// 重连最大次数
-const maxReconnect = 2
-
-// 获取资源
-func (db *DB) Get(ctx context.Context) (GetDriver, error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	ctext, cancel := context.WithTimeout(ctx, db.timeOut)
-	defer cancel()
-	var dc *driverConn
-	var err error
-	for i := 0; i < maxReconnect; i++ {
-		dc, err = db.conn(ctext)
-		if err != ErrBadConn {
-			break
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	return dc, nil
+// Len 连接池中已有的连接
+func (c *channelPool) Len() int {
+	return len(c.getConns())
 }
