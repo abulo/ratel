@@ -7,6 +7,7 @@ require (
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/go-redis/redis/v8 v8.0.0-beta.7
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/google/uuid v1.1.1
 	github.com/hashicorp/hcl v1.0.0
 	github.com/imdario/mergo v0.3.10
 	github.com/json-iterator/go v1.1.10
