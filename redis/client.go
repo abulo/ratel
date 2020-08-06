@@ -49,7 +49,7 @@ func (configs *Configs) Redis(name string) *Client {
 	}
 	config, ok := configs.cfg[name]
 	if !ok {
-		Log.Panic("Redis配置:" + name + "找不到！")
+		log.Panic("Redis配置:" + name + "找不到！")
 	}
 
 	db := connect(config)
@@ -88,7 +88,7 @@ func connect(config *Config) *Client {
 	client := NewClient(opts)
 	ctx := context.TODO()
 	if err := client.Ping(ctx).Err(); err != nil {
-		Log.Panic(err.Error())
+		log.Panic(err.Error())
 	}
 	return client
 }
@@ -190,7 +190,7 @@ func (r *Client) MGetByPipeline(ctx context.Context, keys ...string) ([]string, 
 			p := pipes[i%pipeCount]
 			p.Get(ctx, r.k(k))
 		}
-		Log.Debug("process cost: %v", time.Since(start))
+		log.Debug("process cost: %v", time.Since(start))
 		start = time.Now()
 		var wg sync.WaitGroup
 		var lock sync.Mutex
@@ -217,7 +217,7 @@ func (r *Client) MGetByPipeline(ctx context.Context, keys ...string) ([]string, 
 			}()
 		}
 		wg.Wait()
-		Log.Debug("exec cost: %v", time.Since(start))
+		log.Debug("exec cost: %v", time.Since(start))
 
 		if len(errors) > 0 {
 			return nil, <-errors
