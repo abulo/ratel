@@ -56,47 +56,6 @@ func Default() *Configs {
 	}
 }
 
-//MongoDBClient 连接
-type MongoDBClient struct {
-	Client *mongo.Client
-	Name   string
-}
-
-//collection *mongo.Client
-type collection struct {
-	Database *mongo.Database
-	Table    *mongo.Collection
-	filter   bson.D
-	limit    int64
-	skip     int64
-	sort     bson.D
-	fields   bson.M
-}
-
-//Opt 配置
-type Opt struct {
-	Url             string
-	MaxConnIdleTime int
-	MaxPoolSize     int
-	MinPoolSize     int
-	Database        string
-}
-
-// Configs 配置
-type Configs struct {
-	opt         map[string]*Opt
-	connections map[string]*MongoDBClient
-	mu          sync.RWMutex
-}
-
-//Default 构造
-func Default() *Configs {
-	return &Configs{
-		opt:         make(map[string]*Opt),
-		connections: make(map[string]*MongoDBClient),
-	}
-}
-
 //SetOpt 设置配置文件
 func (configs *Configs) SetOpt(name string, cf *Opt) *Configs {
 	configs.opt[name] = cf
