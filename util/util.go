@@ -1,6 +1,5 @@
 package util
 
-
 import (
 	"archive/zip"
 	"bytes"
@@ -18,6 +17,7 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"log"
 	"math"
 	"math/rand"
 	"net"
@@ -35,6 +35,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/google/uuid"
 	"github.com/mozillazg/go-pinyin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -4162,4 +4163,66 @@ func Tag(i interface{}) string {
 	replacer := strings.NewReplacer(tagPatterns...)
 	format := ToString(i)
 	return replacer.Replace(format)
+}
+
+
+
+
+func MarshalHTML(v interface{}) template.HTML {
+	a, _ := json.Marshal(v)
+	return template.HTML(a)
+}
+
+func MarshalJS(v interface{}) template.JS {
+	a, _ := json.Marshal(v)
+	return template.JS(a)
+}
+
+func JS(v string) template.JS {
+	return template.JS(v)
+}
+
+func Static(v string) string {
+	return "/static/" + v
+}
+
+func UnescapeString(v interface{}) string {
+	a, _ := json.Marshal(v)
+	return html.EscapeString(string(a))
+}
+
+
+
+
+//GetAppRootPath 获取应用程序根目录
+func GetAppRootPath() string {
+	return GetParentDirectory(GetCurrentDirectory())
+}
+
+func substr(s string, pos, length int) string {
+	runes := []rune(s)
+	l := pos + length
+	if l > len(runes) {
+		l = len(runes)
+	}
+	return string(runes[pos:l])
+}
+
+// GetParentDirectory 获取上级目录
+func GetParentDirectory(dirctory string) string {
+	return substr(dirctory, 0, strings.LastIndex(dirctory, "/"))
+}
+
+// GetCurrentDirectory 获取当前目录
+func GetCurrentDirectory() string {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return strings.Replace(dir, "\\", "/", -1)
+}
+
+//Random 随机字符串
+func Random() string {
+	return uuid.New().String() + strconv.FormatInt(time.Now().UnixNano(), 10)
 }
