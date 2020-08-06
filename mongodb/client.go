@@ -15,8 +15,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-//MongoDBClient 连接
-type MongoDBClient struct {
+//MongoDB 连接
+type MongoDB struct {
 	Client *mongo.Client
 	Name   string
 }
@@ -34,7 +34,7 @@ type collection struct {
 
 //Opt 配置
 type Opt struct {
-	Url             string
+	URL             string
 	MaxConnIdleTime int
 	MaxPoolSize     int
 	MinPoolSize     int
@@ -44,7 +44,7 @@ type Opt struct {
 // Configs 配置
 type Configs struct {
 	opt         map[string]*Opt
-	connections map[string]*MongoDBClient
+	connections map[string]*MongoDB
 	mu          sync.RWMutex
 }
 
@@ -52,7 +52,7 @@ type Configs struct {
 func Default() *Configs {
 	return &Configs{
 		opt:         make(map[string]*Opt),
-		connections: make(map[string]*MongoDBClient),
+		connections: make(map[string]*MongoDB),
 	}
 }
 
@@ -63,13 +63,13 @@ func (configs *Configs) SetOpt(name string, cf *Opt) *Configs {
 }
 
 //connect 数据库连接
-func connect(config *Opt, name string) *MongoDBClient {
+func connect(config *Opt, name string) *MongoDB {
 	//数据库连接
 	mongoOptions := options.Client()
 	mongoOptions.SetMaxConnIdleTime(time.Duration(config.MaxConnIdleTime) * time.Second)
 	mongoOptions.SetMaxPoolSize(uint64(config.MaxPoolSize))
 	mongoOptions.SetMinPoolSize(uint64(config.MinPoolSize))
-	client, err := mongo.NewClient(mongoOptions.ApplyURI(config.Url))
+	client, err := mongo.NewClient(mongoOptions.ApplyURI(config.URL))
 	if err != nil {
 		log.Panic(err)
 		return nil
@@ -80,11 +80,11 @@ func connect(config *Opt, name string) *MongoDBClient {
 		log.Panic("MongoDB连接失败->", err)
 		return nil
 	}
-	return &MongoDBClient{Client: client, Name: name}
+	return &MongoDB{Client: client, Name: name}
 }
 
 //GetMongoDB 获取实列
-func (configs *Configs) GetMongoDB(name string) *MongoDBClient {
+func (configs *Configs) GetMongoDB(name string) *MongoDB {
 	conn, ok := configs.connections[name]
 	if ok {
 		return conn
@@ -115,7 +115,7 @@ func (collection *collection) reset() {
 }
 
 // Collection 得到一个mongo操作对象
-func (client *MongoDBClient) Collection(table string) *collection {
+func (client *MongoDB) Collection(table string) *collection {
 	database := client.Client.Database(client.Name)
 	return &collection{
 		Database: database,
