@@ -25,6 +25,6 @@ require (
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/ugorji/go/codec v1.1.7
 	go.mongodb.org/mongo-driver v1.4.0
-	golang.org/x/sys v0.0.0-20200806060901-a37d78b92225
+	golang.org/x/sys v0.0.0-20200806125547-5acd03effb82
 	gopkg.in/yaml.v2 v2.3.0
 )

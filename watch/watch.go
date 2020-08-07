@@ -1,7 +1,6 @@
 package watch
 
 import (
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -447,14 +446,10 @@ func runApp() {
 	}
 }
 
-func init() {
-	flag.StringVar(&runcmd, "run", "", "要运行的Go文件")
-	flag.StringVar(&runArgs, "args", "", "参数")
-}
-
-func Run() {
-	//解析参数
-	flag.Parse()
+//Run 运行
+func Run(cmd, args string) {
+	runcmd = cmd
+	runArgs = args
 	//config配置
 	cfg = ParseConfig()
 	//程序运行的当前目录
