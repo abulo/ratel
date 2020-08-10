@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-// Config 连接池相关配置
-type Config struct {
+// PoolConfig 连接池相关配置
+type PoolConfig struct {
 	//是否初始化连接池
 	IsInit bool
 	//最大链接数
@@ -16,25 +16,28 @@ type Config struct {
 	//最大闲置链接
 	MaxIdleConns int
 	//生成连接的方法
-	New func() (interface{}, error)
+	New func(interface{}) (interface{}, error)
 	//关闭连接的方法
 	Close func(interface{}) error
 	//检查连接是否有效的方法
 	Ping func(interface{}) error
 	//连接最大空闲时间，超过该事件则将失效
 	ConnTimeout time.Duration
+	//配置参数
+	Config interface{}
 }
 
 // channelPool 存放连接信息
 type channelPool struct {
 	mutex              sync.Mutex
 	conns              chan *Conn
-	new                func() (interface{}, error)
+	new                func(interface{}) (interface{}, error)
 	close              func(interface{}) error
 	ping               func(interface{}) error
 	connTimeout        time.Duration
 	maxOpenConns       int
 	overstepConnNumber int
+	config             interface{}
 }
 
 type Conn struct {
@@ -43,7 +46,7 @@ type Conn struct {
 }
 
 // NewChannelPool 初始化连接
-func NewChannelPool(poolConfig *Config) (Pool, error) {
+func NewChannelPool(poolConfig *PoolConfig) (Pool, error) {
 	if poolConfig.MaxIdleConns < 0 || poolConfig.MaxOpenConns <= 0 || poolConfig.MaxIdleConns > poolConfig.MaxOpenConns {
 		return nil, errors.New("invalid capacity settings")
 	}
@@ -59,6 +62,7 @@ func NewChannelPool(poolConfig *Config) (Pool, error) {
 		new:         poolConfig.New,
 		close:       poolConfig.Close,
 		connTimeout: poolConfig.ConnTimeout,
+		config:      poolConfig.Config,
 	}
 
 	if poolConfig.Ping != nil {
@@ -66,7 +70,7 @@ func NewChannelPool(poolConfig *Config) (Pool, error) {
 	}
 	if poolConfig.IsInit {
 		for i := 0; i < poolConfig.MaxOpenConns; i++ {
-			conn, err := c.new()
+			conn, err := c.new(poolConfig.Config)
 			if err != nil {
 				c.CloseAll()
 				return nil, fmt.Errorf("factory is not able to fill the pool: %s", err)
@@ -122,7 +126,7 @@ func (c *channelPool) Get() (interface{}, error) {
 				c.mutex.Unlock()
 				continue
 			}
-			conn, err := c.new()
+			conn, err := c.new(c.config)
 			c.mutex.Unlock()
 			if err != nil {
 				return nil, err

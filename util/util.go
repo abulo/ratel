@@ -4165,9 +4165,6 @@ func Tag(i interface{}) string {
 	return replacer.Replace(format)
 }
 
-
-
-
 func MarshalHTML(v interface{}) template.HTML {
 	a, _ := json.Marshal(v)
 	return template.HTML(a)
@@ -4190,9 +4187,6 @@ func UnescapeString(v interface{}) string {
 	a, _ := json.Marshal(v)
 	return html.EscapeString(string(a))
 }
-
-
-
 
 //GetAppRootPath 获取应用程序根目录
 func GetAppRootPath() string {
