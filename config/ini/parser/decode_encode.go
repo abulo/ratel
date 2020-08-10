@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-// Decode 解码INI为golang数据
+// Decode INI content to golang data
 func Decode(blob []byte, v interface{}) error {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr {
@@ -33,7 +33,7 @@ func Decode(blob []byte, v interface{}) error {
 	return json.Unmarshal(bs, v)
 }
 
-// Encode 将golang数据编码为INI
+// Encode golang data to INI
 func Encode(v interface{}, defSection ...string) (out []byte, err error) {
 	switch vd := v.(type) {
 	case map[string]interface{}: // from full mode
@@ -46,7 +46,7 @@ func Encode(v interface{}, defSection ...string) (out []byte, err error) {
 	return
 }
 
-// EncodeFull 完整模式数据到INI
+// EncodeFull full mode data to INI
 func EncodeFull(data map[string]interface{}, defSection ...string) (out []byte, err error) {
 	if len(data) == 0 {
 		return
@@ -131,7 +131,7 @@ func buildSectionBuffer(data map[string]interface{}, buf *bytes.Buffer) (err err
 	return
 }
 
-// EncodeSimple map数据 to INI
+// EncodeSimple data to INI
 func EncodeSimple(data map[string]map[string]string, defSection ...string) (out []byte, err error) {
 	if len(data) == 0 {
 		return

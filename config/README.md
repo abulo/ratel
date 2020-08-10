@@ -1,13 +1,14 @@
-# config
-
+# Config
 
 功能完善的Golang应用程序配置管理工具库。
 
+> **[EN README](README.md)**
 
 ## 功能简介
 
 - 支持多种格式: `JSON`(默认), `INI`, `YAML`, `TOML`, `HCL`, `ENV`, `Flags`
   - `JSON` 内容支持注释，解析时将自动清除注释
+  - 其他驱动都是按需使用，不使用的不会加载编译到应用中
 - 支持多个文件、多数据加载
 - 支持从 OS ENV 变量数据加载配置
 - 支持从远程 URL 加载配置数据
@@ -16,9 +17,9 @@
 - 支持通过 `.` 分隔符来按路径获取子级值。 e.g `map.key` `arr.2`
 - 支持解析ENV变量名称。 like `shell: ${SHELL}` -> `shell: /bin/zsh`
 - 简洁的使用API `Get` `Int` `Uint` `Int64` `String` `Bool` `Ints` `IntMap` `Strings` `StringMap` ...
-> 提供一个子包 `dotenv`，支持从文件（eg `.env`）中导入数据到ENV
+- 完善的单元测试(code coverage > 95%)
 
-## 只使用INI
+> 提供一个子包 `dotenv`，支持从文件（eg `.env`）中导入数据到ENV
 
 
 
@@ -134,7 +135,7 @@ fmt.Print(name) // new name
 - `LoadOSEnv(keys []string)` Load from os ENV
 - `LoadData(dataSource ...interface{}) (err error)` Load from struts or maps
 - `LoadFlags(keys []string) (err error)` Load from CLI flags
-- `LoadExists(sourceFiles ...string) (err error)`
+- `LoadExists(sourceFiles ...string) (err error)` 
 - `LoadFiles(sourceFiles ...string) (err error)`
 - `LoadRemote(format, url string) (err error)`
 - `LoadSources(format string, src []byte, more ...[]byte) (err error)`

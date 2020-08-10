@@ -17,15 +17,14 @@ require (
 	github.com/imdario/mergo v0.3.10
 	github.com/json-iterator/go v1.1.10
 	github.com/mattn/go-isatty v0.0.12
-	github.com/mitchellh/mapstructure v1.3.3
 	github.com/mozillazg/go-pinyin v0.18.0
 	github.com/opentracing/opentracing-go v1.2.0
+	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/viper v1.7.1
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/ugorji/go/codec v1.1.7
 	go.mongodb.org/mongo-driver v1.4.0
-	golang.org/x/sys v0.0.0-20200808120158-1030fc2bf1d9
 	gopkg.in/yaml.v2 v2.3.0
 )

@@ -15,9 +15,6 @@ const (
 	JSON = "json"
 	Yaml = "yaml"
 	Toml = "toml"
-
-	// default delimiter
-	defaultDelimiter byte = '.'
 )
 
 // internal vars
@@ -52,10 +49,6 @@ type Options struct {
 	Readonly bool
 	// enable config data cache
 	EnableCache bool
-	// parse key, allow find value by key path. eg: 'key.sub' will find `map[key]sub`
-	ParseKey bool
-	// the delimiter char for split key path, if `FindByPath=true`. default is '.'
-	Delimiter byte
 	// default write format
 	DumpFormat string
 	// default input format
@@ -80,7 +73,6 @@ type Config struct {
 
 	// decoders["toml"] = func(blob []byte, v interface{}) (err error){}
 	// decoders["yaml"] = func(blob []byte, v interface{}) (err error){}
-	// drivers map[string]Driver TODO Deprecated decoder and encoder, use driver instead
 	decoders map[string]Decoder
 	encoders map[string]Encoder
 
@@ -98,8 +90,10 @@ type Config struct {
 func New(name string) *Config {
 	return &Config{
 		name: name,
-		opts: newDefaultOption(),
 		data: make(map[string]interface{}),
+
+		// init options
+		opts: &Options{DumpFormat: JSON, ReadFormat: JSON},
 
 		// default add JSON driver
 		encoders: map[string]Encoder{JSON: JSONEncoder},
@@ -111,8 +105,10 @@ func New(name string) *Config {
 func NewEmpty(name string) *Config {
 	return &Config{
 		name: name,
-		opts: newDefaultOption(),
 		data: make(map[string]interface{}),
+
+		// empty options
+		opts: &Options{},
 
 		// don't add any drivers
 		encoders: map[string]Encoder{},
@@ -132,16 +128,6 @@ func Default() *Config {
 	return dc
 }
 
-func newDefaultOption() *Options {
-	return &Options{
-		ParseKey:  true,
-		Delimiter: defaultDelimiter,
-
-		DumpFormat: JSON,
-		ReadFormat: JSON,
-	}
-}
-
 /*************************************************************
  * config setting
  *************************************************************/
@@ -154,13 +140,6 @@ func ParseEnv(opts *Options) {
 // Readonly set readonly
 func Readonly(opts *Options) {
 	opts.Readonly = true
-}
-
-// Delimiter set delimiter char
-func Delimiter(sep byte) func(*Options) {
-	return func(opts *Options) {
-		opts.Delimiter = sep
-	}
 }
 
 // EnableCache set readonly
@@ -343,16 +322,8 @@ func (c *Config) addErrorf(format string, a ...interface{}) {
 }
 
 // GetEnv get os ENV value by name
-// Deprecated
-//	please use Getenv() instead
 func GetEnv(name string, defVal ...string) (val string) {
-	return Getenv(name, defVal...)
-}
-
-// Getenv get os ENV value by name. like os.Getenv, but support default value
-// Notice:
-// - Key is not case sensitive when getting
-func Getenv(name string, defVal ...string) (val string) {
+	name = strings.ToUpper(name)
 	if val = os.Getenv(name); val != "" {
 		return
 	}
@@ -361,11 +332,6 @@ func Getenv(name string, defVal ...string) (val string) {
 		val = defVal[0]
 	}
 	return
-}
-
-// format key
-func formatKey(key, sep string) string {
-	return strings.Trim(strings.TrimSpace(key), sep)
 }
 
 // fix yaml format

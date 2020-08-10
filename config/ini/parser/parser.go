@@ -1,21 +1,52 @@
+/*
+Package parser is a Parser for parse INI format content to golang data
+
+There are example data:
+
+	# comments
+	name = inhere
+	age = 28
+	debug = true
+	hasQuota1 = 'this is val'
+	hasQuota2 = "this is val1"
+	shell = ${SHELL}
+	noEnv = ${NotExist|defValue}
+
+	; array in def section
+	tags[] = a
+	tags[] = b
+	tags[] = c
+
+	; comments
+	[sec1]
+	key = val0
+	some = value
+	stuff = things
+	; array in section
+	types[] = x
+	types[] = y
+
+how to use, please see examples:
+*/
 package parser
 
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
-// errSyntax 当INI文件中存在语法错误时返回
+// errSyntax is returned when there is a syntax error in an INI file.
 type errSyntax struct {
 	Line   int
 	Source string // The contents of the erroneous line, without leading or trailing whitespace
 }
 
-// Error 错误消息返回
+// Error message return
 func (e errSyntax) Error() string {
 	return fmt.Sprintf("invalid INI syntax on line %d: %s", e.Line, e.Source)
 }
