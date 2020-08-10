@@ -50,8 +50,8 @@ arr1:
 package main
 
 import (
-    "pm-esd/config"
-    "pm-esd/config/yaml"
+    "github.com/abulo/ratel/config"
+    "github.com/abulo/ratel/config/yaml"
 )
 
 // go run ./examples/yaml.go
