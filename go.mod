@@ -6,7 +6,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/elastic/go-elasticsearch/v8 v8.0.0-20200728144331-527225d8e836
-	github.com/fsnotify/fsnotify v1.4.7
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-playground/validator/v10 v10.3.0
 	github.com/go-redis/redis/v8 v8.0.0-beta.7
@@ -26,6 +26,6 @@ require (
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/ugorji/go/codec v1.1.7
 	go.mongodb.org/mongo-driver v1.4.0
-	golang.org/x/sys v0.0.0-20200806125547-5acd03effb82
+	golang.org/x/sys v0.0.0-20200808120158-1030fc2bf1d9
 	gopkg.in/yaml.v2 v2.3.0
 )
