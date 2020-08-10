@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/abulo/ratel/util"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"go.mongodb.org/mongo-driver/bson"
@@ -57,6 +58,11 @@ func connect(config *Config) *MongoDB {
 	u, err := url.Parse(config.URL)
 	if err != nil {
 		log.Panic(err)
+		return nil
+	}
+
+	if util.Empty(u.Path) || util.Empty(u.Path[1:]) {
+		log.Panic(errors.New("no database"))
 		return nil
 	}
 	name := u.Path[1:]
