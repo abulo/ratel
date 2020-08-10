@@ -92,18 +92,18 @@ func SetOut(out io.Writer) Option {
 type Option func(*options)
 
 // Default create a default mongo hook
-func Default(sess *mongodb.MongoDB, cName string, opts ...Option) *Hook {
+func Default(sess *mongodb.MongoDB, opts ...Option) *Hook {
 	var options []Option
 	options = append(options, opts...)
-	options = append(options, SetExec(NewExec(sess, cName)))
+	options = append(options, SetExec(NewExec(sess)))
 	return New(options...)
 }
 
 // DefaultWithURL create a default mongo hook
-func DefaultWithURL(sess *mongodb.MongoDB, cName string, opts ...Option) *Hook {
+func DefaultWithURL(sess *mongodb.MongoDB, opts ...Option) *Hook {
 	var options []Option
 	options = append(options, opts...)
-	options = append(options, SetExec(NewExecWithURL(sess, cName)))
+	options = append(options, SetExec(NewExecWithURL(sess)))
 	return New(options...)
 }
 

@@ -47,7 +47,6 @@ func (OpenTelemetryHook) AfterProcess(ctx context.Context, cmd redis.Cmder) erro
 		if span != nil {
 			span.Finish()
 		}
-
 	}
 	return nil
 }

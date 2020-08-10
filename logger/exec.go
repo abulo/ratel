@@ -15,24 +15,21 @@ type ExecCloser interface {
 
 type defaultExec struct {
 	sess     *mongodb.MongoDB
-	cName    string
 	canClose bool
 }
 
 // NewExec create an exec instance
-func NewExec(sess *mongodb.MongoDB, cName string) ExecCloser {
+func NewExec(sess *mongodb.MongoDB) ExecCloser {
 	return &defaultExec{
 		sess:     sess,
-		cName:    cName,
 		canClose: true,
 	}
 }
 
 // NewExecWithURL create an exec instance
-func NewExecWithURL(sess *mongodb.MongoDB, cName string) ExecCloser {
+func NewExecWithURL(sess *mongodb.MongoDB) ExecCloser {
 	return &defaultExec{
 		sess:     sess,
-		cName:    cName,
 		canClose: true,
 	}
 }
@@ -49,7 +46,7 @@ func (e *defaultExec) Exec(entry *logrus.Entry) error {
 	item["created"] = entry.Time.Unix()
 
 	ctx := context.TODO()
-	_, err := e.sess.Collection(e.cName).InsertOne(ctx, item)
+	_, err := e.sess.Collection(e.sess.Name).InsertOne(ctx, item)
 	if err != nil {
 		return err
 	}

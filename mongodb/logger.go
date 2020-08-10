@@ -16,6 +16,6 @@ type logger interface {
 var log logger
 
 //SetLogger 设置日志
-func (configs *Configs) SetLogger(l logger) {
+func (config *Config) SetLogger(l logger) {
 	log = l
 }

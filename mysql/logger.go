@@ -2,7 +2,7 @@ package mysql
 
 var logs logger
 
-func (configs *Configs) SetLogger(l logger) {
+func (config *Config) SetLogger(l logger) {
 	logs = l
 }
 
@@ -19,6 +19,6 @@ type logger interface {
 
 var trace bool
 
-func (configs *Configs) SetTrace(t bool) {
+func (config *Config) SetTrace(t bool) {
 	trace = t
 }

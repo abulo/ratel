@@ -41,14 +41,12 @@ type Sql struct {
 type QueryDb struct {
 	db      *sql.DB
 	lastsql Sql
-	link    *Config
 }
 
-//QueryTx
+//QueryTx 事务
 type QueryTx struct {
 	tx      *sql.Tx
 	lastsql Sql
-	link    *Config
 }
 
 //NewQuery 生成一个新的查询构造器

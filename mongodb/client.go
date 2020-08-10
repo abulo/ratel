@@ -3,8 +3,8 @@ package mongodb
 import (
 	"context"
 	"errors"
+	"net/url"
 	"reflect"
-	"sync"
 	"time"
 
 	"github.com/opentracing/opentracing-go"
@@ -32,38 +32,16 @@ type collection struct {
 	fields   bson.M
 }
 
-//Opt 配置
-type Opt struct {
+//Config 配置
+type Config struct {
 	URL             string
 	MaxConnIdleTime int
 	MaxPoolSize     int
 	MinPoolSize     int
-	Database        string
-}
-
-// Configs 配置
-type Configs struct {
-	opt         map[string]*Opt
-	connections map[string]*MongoDB
-	mu          sync.RWMutex
-}
-
-//Default 构造
-func Default() *Configs {
-	return &Configs{
-		opt:         make(map[string]*Opt),
-		connections: make(map[string]*MongoDB),
-	}
-}
-
-//SetOpt 设置配置文件
-func (configs *Configs) SetOpt(name string, cf *Opt) *Configs {
-	configs.opt[name] = cf
-	return configs
 }
 
 //connect 数据库连接
-func connect(config *Opt, name string) *MongoDB {
+func connect(config *Config) *MongoDB {
 	//数据库连接
 	mongoOptions := options.Client()
 	mongoOptions.SetMaxConnIdleTime(time.Duration(config.MaxConnIdleTime) * time.Second)
@@ -74,6 +52,14 @@ func connect(config *Opt, name string) *MongoDB {
 		log.Panic(err)
 		return nil
 	}
+
+	//解析URL
+	u, err := url.Parse(config.URL)
+	if err != nil {
+		log.Panic(err)
+		return nil
+	}
+	name := u.Path[1:]
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
@@ -81,28 +67,6 @@ func connect(config *Opt, name string) *MongoDB {
 		return nil
 	}
 	return &MongoDB{Client: client, Name: name}
-}
-
-//GetMongoDB 获取实列
-func (configs *Configs) GetMongoDB(name string) *MongoDB {
-	conn, ok := configs.connections[name]
-	if ok {
-		return conn
-	}
-	config, ok := configs.opt[name]
-	if !ok {
-		log.Panic("MongoDB配置:" + name + "找不到！")
-	}
-	db := connect(config, config.Database)
-	configs.mu.Lock()
-	configs.connections[name] = db
-	configs.mu.Unlock()
-
-	configs.mu.RLock()
-	v := configs.connections[name]
-	configs.mu.RUnlock()
-	return v
-
 }
 
 func (collection *collection) reset() {

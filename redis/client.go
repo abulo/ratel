@@ -20,49 +20,8 @@ type Config struct {
 	KeyPrefix string
 }
 
-//Configs 配置组
-type Configs struct {
-	cfg         map[string]*Config
-	connections map[string]*Client
-	mu          sync.RWMutex
-}
-
-//Default 构造
-func Default() *Configs {
-	return &Configs{
-		cfg:         make(map[string]*Config),
-		connections: make(map[string]*Client),
-	}
-}
-
-//SetConfig 设置配置文件
-func (configs *Configs) SetConfig(name string, cf *Config) *Configs {
-	configs.cfg[name] = cf
-	return configs
-}
-
-//Redis  获取 redis 实列
-func (configs *Configs) Redis(name string) *Client {
-	conn, ok := configs.connections[name]
-	if ok {
-		return conn
-	}
-	config, ok := configs.cfg[name]
-	if !ok {
-		log.Panic("Redis配置:" + name + "找不到！")
-	}
-
-	db := connect(config)
-	configs.mu.Lock()
-	configs.connections[name] = db
-	configs.mu.Unlock()
-	configs.mu.RLock()
-	v := configs.connections[name]
-	configs.mu.RUnlock()
-	return v
-}
-
-func connect(config *Config) *Client {
+//New 新连接
+func New(config *Config) *Client {
 	opts := Options{}
 	if config.Type {
 		opts.Type = ClientCluster
