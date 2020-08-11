@@ -4179,8 +4179,8 @@ func JS(v string) template.JS {
 	return template.JS(v)
 }
 
-func Static(v string) string {
-	return "/static/" + v
+func Static(p, v string) string {
+	return "/" + p + "/" + v
 }
 
 func UnescapeString(v interface{}) string {

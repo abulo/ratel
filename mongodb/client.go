@@ -41,8 +41,8 @@ type Config struct {
 	MinPoolSize     int
 }
 
-//connect 数据库连接
-func connect(config *Config) *MongoDB {
+//New 数据库连接
+func New(config *Config) *MongoDB {
 	//数据库连接
 	mongoOptions := options.Client()
 	mongoOptions.SetMaxConnIdleTime(time.Duration(config.MaxConnIdleTime) * time.Second)
@@ -652,9 +652,6 @@ func BeforeCreate(document interface{}) interface{} {
 		if val.FieldByName("Id").Interface() == "" {
 			dataVal.SetMapIndex(reflect.ValueOf("_id"), reflect.ValueOf(primitive.NewObjectID().String()))
 		}
-
-		// dataVal.SetMapIndex(reflect.ValueOf("created_at"), reflect.ValueOf(time.Now().Unix()))
-		// dataVal.SetMapIndex(reflect.ValueOf("updated_at"), reflect.ValueOf(time.Now().Unix()))
 		return dataVal.Interface()
 
 	default:
@@ -662,8 +659,6 @@ func BeforeCreate(document interface{}) interface{} {
 			if !val.MapIndex(reflect.ValueOf("_id")).IsValid() {
 				val.SetMapIndex(reflect.ValueOf("_id"), reflect.ValueOf(primitive.NewObjectID()))
 			}
-			// val.SetMapIndex(reflect.ValueOf("created_at"), reflect.ValueOf(time.Now().Unix()))
-			// val.SetMapIndex(reflect.ValueOf("updated_at"), reflect.ValueOf(time.Now().Unix()))
 		}
 		return val.Interface()
 	}
@@ -694,12 +689,13 @@ func BeforeUpdate(document interface{}) interface{} {
 			data[typ.Field(i).Tag.Get("bson")] = val.Field(i).Interface()
 		}
 		dataVal := reflect.ValueOf(data)
-		// dataVal.SetMapIndex(reflect.ValueOf("updated_at"), reflect.ValueOf(time.Now().Unix()))
 		return dataVal.Interface()
 
 	default:
 		if val.Type() == reflect.TypeOf(bson.M{}) {
-			// val.SetMapIndex(reflect.ValueOf("updated_at"), reflect.ValueOf(time.Now().Unix()))
+			if !val.MapIndex(reflect.ValueOf("_id")).IsValid() {
+				val.SetMapIndex(reflect.ValueOf("_id"), reflect.ValueOf(primitive.NewObjectID()))
+			}
 		}
 		return val.Interface()
 	}
