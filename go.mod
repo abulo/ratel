@@ -13,10 +13,13 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.2
 	github.com/google/uuid v1.1.1
+	github.com/hashicorp/consul/api v1.6.0
 	github.com/hashicorp/hcl v1.0.0
 	github.com/imdario/mergo v0.3.10
 	github.com/json-iterator/go v1.1.10
+	github.com/liangdas/mqant v1.3.92
 	github.com/mattn/go-isatty v0.0.12
+	github.com/mitchellh/hashstructure v1.0.0
 	github.com/mozillazg/go-pinyin v0.18.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
@@ -25,6 +28,8 @@ require (
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/ugorji/go/codec v1.1.7
+	go.etcd.io/etcd v3.3.22+incompatible
 	go.mongodb.org/mongo-driver v1.4.0
+	google.golang.org/grpc/examples v0.0.0-20200810225334-2983360ff4e7 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
