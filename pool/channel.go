@@ -10,13 +10,13 @@ import (
 // PoolConfig 连接池相关配置
 type PoolConfig struct {
 	//是否初始化连接池
-	IsInit bool
+	// IsInit bool
 	//最大链接数
 	MaxOpenConns int
 	//最大闲置链接
 	MaxIdleConns int
 	//生成连接的方法
-	New func(interface{}) (interface{}, error)
+	New func() (interface{}, error)
 	//关闭连接的方法
 	Close func(interface{}) error
 	//检查连接是否有效的方法
@@ -31,7 +31,7 @@ type PoolConfig struct {
 type channelPool struct {
 	mutex              sync.Mutex
 	conns              chan *Conn
-	new                func(interface{}) (interface{}, error)
+	new                func() (interface{}, error)
 	close              func(interface{}) error
 	ping               func(interface{}) error
 	connTimeout        time.Duration
@@ -68,16 +68,16 @@ func NewChannelPool(poolConfig *PoolConfig) (Pool, error) {
 	if poolConfig.Ping != nil {
 		c.ping = poolConfig.Ping
 	}
-	if poolConfig.IsInit {
-		for i := 0; i < poolConfig.MaxOpenConns; i++ {
-			conn, err := c.new(poolConfig.Config)
-			if err != nil {
-				c.CloseAll()
-				return nil, fmt.Errorf("factory is not able to fill the pool: %s", err)
-			}
-			c.conns <- &Conn{conn: conn, t: time.Now()}
-		}
-	}
+	// if poolConfig.IsInit {
+	// 	for i := 0; i < poolConfig.MaxOpenConns; i++ {
+	// 		conn, err := c.new()
+	// 		if err != nil {
+	// 			c.CloseAll()
+	// 			return nil, fmt.Errorf("factory is not able to fill the pool: %s", err)
+	// 		}
+	// 		c.conns <- &Conn{conn: conn, t: time.Now()}
+	// 	}
+	// }
 	return c, nil
 }
 
@@ -126,7 +126,7 @@ func (c *channelPool) Get() (interface{}, error) {
 				c.mutex.Unlock()
 				continue
 			}
-			conn, err := c.new(c.config)
+			conn, err := c.new()
 			c.mutex.Unlock()
 			if err != nil {
 				return nil, err
