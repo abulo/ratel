@@ -28,8 +28,6 @@ require (
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/ugorji/go/codec v1.1.7
-	go.etcd.io/etcd v3.3.22+incompatible
 	go.mongodb.org/mongo-driver v1.4.0
-	google.golang.org/grpc/examples v0.0.0-20200810225334-2983360ff4e7 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
