@@ -14,6 +14,30 @@ import (
 	"github.com/imdario/mergo"
 )
 
+func LoadDir(dir, suffix string) error { return dc.LoadDir(dir, suffix) }
+
+// loadDir
+func (c *Config) LoadDir(dir, suffix string) (err error) {
+	fileList := []string{}
+	err = filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
+		ok := strings.HasSuffix(f.Name(), suffix)
+		if ok {
+			fileList = append(fileList, filepath.FromSlash(path))
+		}
+		return nil
+	})
+	if err != nil {
+		return
+	}
+
+	for _, file := range fileList {
+		if err = c.loadFile(file, false); err != nil {
+			return
+		}
+	}
+	return
+}
+
 // LoadFiles load one or multi files
 func LoadFiles(sourceFiles ...string) error { return dc.LoadFiles(sourceFiles...) }
 
