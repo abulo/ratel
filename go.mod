@@ -1,6 +1,6 @@
 module github.com/abulo/ratel
 
-go 1.14
+go 1.15
 
 require (
 	github.com/BurntSushi/toml v0.3.1
@@ -15,7 +15,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/consul/api v1.6.0
 	github.com/hashicorp/hcl v1.0.0
-	github.com/imdario/mergo v0.3.10
+	github.com/imdario/mergo v0.3.11
 	github.com/json-iterator/go v1.1.10
 	github.com/liangdas/mqant v1.3.92
 	github.com/mattn/go-isatty v0.0.12
