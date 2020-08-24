@@ -41,10 +41,10 @@ func connect(config *Config) *sql.DB {
 	//数据库连接
 	db, err := sql.Open("mysql", config.URI())
 	if err != nil {
-		logs.Fatal(err.Error())
+		_logger.Fatal(err.Error())
 	}
 	if err = db.Ping(); err != nil {
-		logs.Fatal(err.Error())
+		_logger.Fatal(err.Error())
 	}
 	db.SetMaxOpenConns(config.MaxOpenConns)
 	db.SetMaxIdleConns(config.MaxIdleConns)
