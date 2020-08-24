@@ -1,9 +1,9 @@
 package redis
 
-var log logger
+var _logger logger
 
-func (config *Config) SetLogger(l logger) {
-	log = l
+func SetLogger(l logger) {
+	_logger = l
 }
 
 type logger interface {
@@ -19,6 +19,6 @@ type logger interface {
 
 var trace bool
 
-func (config *Config) SetTrace(t bool) {
+func SetTrace(t bool) {
 	trace = t
 }

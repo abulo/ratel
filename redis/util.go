@@ -27,9 +27,9 @@ func LoadParamsFromEnv() *viper.Viper {
 	prefix := os.Getenv(EnvPrefixKey)
 	if prefix == "" {
 		prefix = DefaultEnvPrefixKey
-		log.Warn("ENV_PREFIX not exist in env Use default env prefix: %s", DefaultEnvPrefixKey)
+		_logger.Warn("ENV_PREFIX not exist in env Use default env prefix: %s", DefaultEnvPrefixKey)
 	} else {
-		log.Warn("Use EnvPrefixKey: %s", prefix)
+		_logger.Warn("Use EnvPrefixKey: %s", prefix)
 	}
 	v.SetEnvPrefix(prefix)
 	v.AutomaticEnv()
@@ -45,17 +45,17 @@ func LoadParamsFromVolume() (*viper.Viper, error) {
 	//使用默认DIR
 	if configDir == "" {
 		configDir = DefaultDir
-		log.Warn("ConfigDirKey not exist in env Use default dir %s", DefaultDir)
+		_logger.Warn("ConfigDirKey not exist in env Use default dir %s", DefaultDir)
 	} else {
-		log.Info("Use Config_Dir: %s", configDir)
+		_logger.Info("Use Config_Dir: %s", configDir)
 	}
 
 	//使用默认文件名称
 	if fileName == "" {
 		fileName = DefaultFileName
-		log.Warn("ConfigNameKey not exist in env Use default name %s", DefaultFileName)
+		_logger.Warn("ConfigNameKey not exist in env Use default name %s", DefaultFileName)
 	} else {
-		log.Info("Use CONFIG_NAME: %s", fileName)
+		_logger.Info("Use CONFIG_NAME: %s", fileName)
 	}
 
 	v.SetConfigName(fileName)
