@@ -31,6 +31,6 @@ require (
 	github.com/ugorji/go/codec v1.1.7
 	go.mongodb.org/mongo-driver v1.4.0
 	go.uber.org/multierr v1.1.0
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	gopkg.in/yaml.v2 v2.3.0
 )
