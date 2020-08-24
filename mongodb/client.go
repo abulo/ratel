@@ -50,26 +50,26 @@ func New(config *Config) *MongoDB {
 	mongoOptions.SetMinPoolSize(uint64(config.MinPoolSize))
 	client, err := mongo.NewClient(mongoOptions.ApplyURI(config.URL))
 	if err != nil {
-		log.Panic(err)
+		_logger.Panic(err)
 		return nil
 	}
 
 	//解析URL
 	u, err := url.Parse(config.URL)
 	if err != nil {
-		log.Panic(err)
+		_logger.Panic(err)
 		return nil
 	}
 
 	if util.Empty(u.Path) || util.Empty(u.Path[1:]) {
-		log.Panic(errors.New("no database"))
+		_logger.Panic(errors.New("no database"))
 		return nil
 	}
 	name := u.Path[1:]
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
-		log.Panic("MongoDB连接失败->", err)
+		_logger.Panic("MongoDB连接失败->", err)
 		return nil
 	}
 	return &MongoDB{Client: client, Name: name}
