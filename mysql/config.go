@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/abulo/ratel/logger"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -41,10 +42,10 @@ func connect(config *Config) *sql.DB {
 	//数据库连接
 	db, err := sql.Open("mysql", config.URI())
 	if err != nil {
-		_logger.Fatal(err.Error())
+		logger.Logger.Fatal(err.Error())
 	}
 	if err = db.Ping(); err != nil {
-		_logger.Fatal(err.Error())
+		logger.Logger.Fatal(err.Error())
 	}
 	db.SetMaxOpenConns(config.MaxOpenConns)
 	db.SetMaxIdleConns(config.MaxIdleConns)

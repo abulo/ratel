@@ -40,11 +40,6 @@ func (s *jagerLogger) Infof(msg string, args ...interface{}) {
 	logrus.Infof(msg, args...)
 }
 
-// Errorf - 日志记录
-func (l *jagerLogger) Errorf(msg string, args ...interface{}) {
-	logrus.Errorf(msg, args...)
-}
-
 //InitConfig 初始化 config
 func InitConfig(url string) TraceConfig {
 	_, _, err := net.SplitHostPort(url)

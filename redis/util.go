@@ -3,6 +3,7 @@ package redis
 import (
 	"os"
 
+	"github.com/abulo/ratel/logger"
 	"github.com/spf13/viper"
 )
 
@@ -27,9 +28,9 @@ func LoadParamsFromEnv() *viper.Viper {
 	prefix := os.Getenv(EnvPrefixKey)
 	if prefix == "" {
 		prefix = DefaultEnvPrefixKey
-		_logger.Warn("ENV_PREFIX not exist in env Use default env prefix: %s", DefaultEnvPrefixKey)
+		logger.Logger.Warn("ENV_PREFIX not exist in env Use default env prefix: %s", DefaultEnvPrefixKey)
 	} else {
-		_logger.Warn("Use EnvPrefixKey: %s", prefix)
+		logger.Logger.Warn("Use EnvPrefixKey: %s", prefix)
 	}
 	v.SetEnvPrefix(prefix)
 	v.AutomaticEnv()
@@ -45,17 +46,17 @@ func LoadParamsFromVolume() (*viper.Viper, error) {
 	//使用默认DIR
 	if configDir == "" {
 		configDir = DefaultDir
-		_logger.Warn("ConfigDirKey not exist in env Use default dir %s", DefaultDir)
+		logger.Logger.Warn("ConfigDirKey not exist in env Use default dir %s", DefaultDir)
 	} else {
-		_logger.Info("Use Config_Dir: %s", configDir)
+		logger.Logger.Info("Use Config_Dir: %s", configDir)
 	}
 
 	//使用默认文件名称
 	if fileName == "" {
 		fileName = DefaultFileName
-		_logger.Warn("ConfigNameKey not exist in env Use default name %s", DefaultFileName)
+		logger.Logger.Warn("ConfigNameKey not exist in env Use default name %s", DefaultFileName)
 	} else {
-		_logger.Info("Use CONFIG_NAME: %s", fileName)
+		logger.Logger.Info("Use CONFIG_NAME: %s", fileName)
 	}
 
 	v.SetConfigName(fileName)

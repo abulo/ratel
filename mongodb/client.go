@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/abulo/ratel/logger"
 	"github.com/abulo/ratel/util"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -50,26 +51,26 @@ func New(config *Config) *MongoDB {
 	mongoOptions.SetMinPoolSize(uint64(config.MinPoolSize))
 	client, err := mongo.NewClient(mongoOptions.ApplyURI(config.URL))
 	if err != nil {
-		_logger.Panic(err)
+		logger.Logger.Panic(err)
 		return nil
 	}
 
 	//解析URL
 	u, err := url.Parse(config.URL)
 	if err != nil {
-		_logger.Panic(err)
+		logger.Logger.Panic(err)
 		return nil
 	}
 
 	if util.Empty(u.Path) || util.Empty(u.Path[1:]) {
-		_logger.Panic(errors.New("no database"))
+		logger.Logger.Panic(errors.New("no database"))
 		return nil
 	}
 	name := u.Path[1:]
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
-		_logger.Panic("MongoDB连接失败->", err)
+		logger.Logger.Panic("MongoDB连接失败->", err)
 		return nil
 	}
 	return &MongoDB{Client: client, Name: name}

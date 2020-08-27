@@ -12,3 +12,4 @@ go mod vendor;
 go mod verify;
 #解释为什么需要依赖
 go mod why;
+go mod vendor;

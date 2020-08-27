@@ -3,6 +3,7 @@ package goroutine
 import (
 	"fmt"
 
+	"github.com/abulo/ratel/logger"
 	"github.com/abulo/ratel/util"
 	"github.com/pkg/errors"
 )
@@ -13,7 +14,7 @@ func try(fn func() error, cleaner func()) (ret error) {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			_logger.Error("recover", err)
+			logger.Logger.Error("recover", err)
 			if _, ok := err.(error); ok {
 				ret = err.(error)
 			} else {
@@ -31,7 +32,7 @@ func try2(fn func(), cleaner func()) (ret error) {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			_logger.Error("recover", err)
+			logger.Logger.Error("recover", err)
 			if _, ok := err.(error); ok {
 				ret = err.(error)
 			} else {

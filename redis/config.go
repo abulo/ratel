@@ -3,6 +3,7 @@ package redis
 import (
 	"time"
 
+	"github.com/abulo/ratel/logger"
 	"github.com/spf13/viper"
 )
 
@@ -35,10 +36,10 @@ func addrStructure(redisPort []string, redisHosts []string) []string {
 	if len(redisPort) != len(redisHosts) {
 		port := "6379"
 		if len(redisPort) == 0 {
-			_logger.Warn("REDIS_PORT not exist, Use default port:%s", port)
+			logger.Logger.Warn("REDIS_PORT not exist, Use default port:%s", port)
 		} else {
 			port = redisPort[0]
-			_logger.Warn("REDIS_PORT len not equal REDIS_HOST len, Use first port:%s", port)
+			logger.Logger.Warn("REDIS_PORT len not equal REDIS_HOST len, Use first port:%s", port)
 		}
 		for _, host := range redisHosts {
 			host := host + ":" + port
@@ -51,7 +52,7 @@ func addrStructure(redisPort []string, redisHosts []string) []string {
 		}
 	}
 	if len(hosts) == 0 {
-		_logger.Warn("REDIS_PORT hosts is empty")
+		logger.Logger.Warn("REDIS_PORT hosts is empty")
 	}
 	return hosts
 }
