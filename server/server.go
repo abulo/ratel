@@ -16,23 +16,19 @@ type ConfigInfo struct {
 
 // ServiceInfo represents service info
 type ServiceInfo struct {
-	Name     string            `json:"name"`
-	AppID    string            `json:"appId"`
-	Scheme   string            `json:"scheme"`
-	Address  string            `json:"address"`
-	Weight   float64           `json:"weight"`
-	Enable   bool              `json:"enable"`
-	Healthy  bool              `json:"healthy"`
-	Metadata map[string]string `json:"metadata"`
-	Region   string            `json:"region"`
-	Zone     string            `json:"zone"`
-	Kind     uint8             `json:"kind"`
-	// Deployment 部署组: 不同组的流量隔离
-	// 比如某些服务给内部调用和第三方调用，可以配置不同的deployment,进行流量隔离
-	Deployment string `json:"deployment"`
-	// Group 流量组: 流量在Group之间进行负载均衡
-	Group    string              `json:"group"`
-	Services map[string]*Service `json:"services" toml:"services"`
+	Name       string              `json:"name"`
+	AppID      string              `json:"appId"`
+	Scheme     string              `json:"scheme"`
+	Address    string              `json:"address"`
+	Weight     float64             `json:"weight"`
+	Enable     bool                `json:"enable"`
+	Healthy    bool                `json:"healthy"`
+	Metadata   map[string]string   `json:"metadata"`
+	Region     string              `json:"region"`
+	Zone       string              `json:"zone"`
+	Deployment string              `json:"deployment"` // Deployment 部署组: 不同组的流量隔离 // 比如某些服务给内部调用和第三方调用，可以配置不同的deployment,进行流量隔离
+	Group      string              `json:"group"`      // Group 流量组: 流量在Group之间进行负载均衡
+	Services   map[string]*Service `json:"services" toml:"services"`
 }
 
 // Service ...
@@ -96,12 +92,6 @@ func WithAddress(address string) Option {
 	}
 }
 
-func WithKind(kind uint8) Option {
-	return func(c *ServiceInfo) {
-		c.Kind = kind
-	}
-}
-
 func defaultServiceInfo() ServiceInfo {
 	si := ServiceInfo{
 		Name:       env.Name(),
@@ -112,7 +102,6 @@ func defaultServiceInfo() ServiceInfo {
 		Metadata:   make(map[string]string),
 		Region:     env.AppRegion(),
 		Zone:       env.AppZone(),
-		Kind:       0,
 		Deployment: "",
 		Group:      "",
 	}
