@@ -33,5 +33,6 @@ require (
 	go.mongodb.org/mongo-driver v1.4.0
 	go.uber.org/multierr v1.5.0
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+	google.golang.org/grpc v1.31.0
 	gopkg.in/yaml.v2 v2.3.0
 )
