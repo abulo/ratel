@@ -9,7 +9,6 @@ import (
 
 func TestMetadataSet(t *testing.T) {
 	ctx := Set(context.TODO(), "Key", "val")
-
 	val, ok := Get(ctx, "Key")
 	if !ok {
 		t.Fatal("key Key not found")
