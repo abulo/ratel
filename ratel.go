@@ -83,16 +83,16 @@ func (app *Ratel) Run(servers ...server.Server) error {
 
 	//blocking and wait quit
 	if err := <-app.cycle.Wait(); err != nil {
-		logger.Logger.Error("shutdown with error", err)
+		logger.Error("shutdown with error", err)
 		return err
 	}
-	logger.Logger.Info("shutdown, bye!")
+	logger.Info("shutdown, bye!")
 	return nil
 }
 
 // waitSignals wait signal
 func (app *Ratel) waitSignals() {
-	logger.Logger.Info("init listen signal")
+	logger.Info("init listen signal")
 	signals.Shutdown(func(grace bool) { //when get shutdown signal
 		//todo: support timeout
 		if grace {

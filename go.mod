@@ -15,12 +15,14 @@ require (
 	github.com/go-redis/redis/v8 v8.0.0-beta.8
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.2
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.1.2
 	github.com/gorilla/websocket v1.4.2
+	github.com/hashicorp/consul/api v1.6.0
 	github.com/hashicorp/hcl v1.0.0
 	github.com/imdario/mergo v0.3.11
 	github.com/json-iterator/go v1.1.10
 	github.com/mattn/go-isatty v0.0.12
+	github.com/mitchellh/hashstructure v1.0.0
 	github.com/mozillazg/go-pinyin v0.18.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
@@ -33,6 +35,6 @@ require (
 	go.mongodb.org/mongo-driver v1.4.0
 	go.uber.org/multierr v1.5.0
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	google.golang.org/grpc v1.31.0
+	google.golang.org/grpc v1.31.1
 	gopkg.in/yaml.v2 v2.3.0
 )
