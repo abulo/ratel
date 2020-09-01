@@ -1,4 +1,4 @@
-package mongodb
+package elasticsearch
 
 var trace bool
 

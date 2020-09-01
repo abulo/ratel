@@ -11,6 +11,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 )
 
 type OpenTelemetryHook struct{}
@@ -31,7 +32,7 @@ func (OpenTelemetryHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (co
 			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "redis")
-			span.SetTag("redis.cmd", String(b))
+			span.LogFields(log.String("cmd", String(b)))
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
@@ -92,7 +93,8 @@ func (OpenTelemetryHook) BeforeProcessPipeline(ctx context.Context, cmds []redis
 			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "redis")
-			span.SetTag("redis.cmds", String(b))
+			// span.SetTag("redis.cmds", String(b))
+			span.LogFields(log.String("cmds", String(b)))
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}

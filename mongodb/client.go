@@ -11,6 +11,7 @@ import (
 	"github.com/abulo/ratel/util"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -128,32 +129,27 @@ func (collection *collection) Fields(fields bson.M) *collection {
 
 //CreateOneIndex 创建单个普通索引
 func (collection *collection) CreateIndex(ctx context.Context, key bson.D, op *options.IndexOptions) (res string, err error) {
-
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "CreateIndex")
-			span.SetTag("keys", key)
-			span.SetTag("options", op)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("keys", key))
+			span.LogFields(log.Object("options", op))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-
 	indexView := collection.Table.Indexes()
 	indexModel := mongo.IndexModel{Keys: key, Options: op}
 	res, err = indexView.CreateOne(ctx, indexModel)
-
 	return
 }
 
@@ -164,17 +160,15 @@ func (collection *collection) ListIndexes(ctx context.Context, opts *options.Lis
 		ctx = context.TODO()
 	}
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "ListIndexes")
-			span.SetTag("options", opts)
-
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("options", opts))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -185,7 +179,6 @@ func (collection *collection) ListIndexes(ctx context.Context, opts *options.Lis
 		collection.reset()
 		return nil, err
 	}
-
 	err = cursor.All(ctx, &results)
 	if err != nil {
 		collection.reset()
@@ -202,22 +195,20 @@ func (collection *collection) DropIndex(ctx context.Context, name string, opts *
 		ctx = context.TODO()
 	}
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "DropIndex")
-			span.SetTag("indexname", name)
-			span.SetTag("options", opts)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.String("indexname", name))
+			span.LogFields(log.Object("options", opts))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-
 	_, err := indexView.DropOne(ctx, name, opts)
 	if err != nil {
 		collection.reset()
@@ -234,22 +225,20 @@ func (collection *collection) InsertOne(ctx context.Context, document interface{
 		ctx = context.TODO()
 	}
 	if trace {
-
 		data = BeforeCreate(document)
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "InsertOne")
-			span.SetTag("data", data)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("document", data))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-
 	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	result, err := collection.Table.InsertOne(ctx, data)
 	collection.reset()
@@ -263,17 +252,16 @@ func (collection *collection) InsertMany(ctx context.Context, documents interfac
 		ctx = context.TODO()
 	}
 	if trace {
-
 		data = BeforeCreate(documents).([]interface{})
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "InsertMany")
-			span.SetTag("data", data)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("documents", documents))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -289,16 +277,15 @@ func (collection *collection) Aggregate(ctx context.Context, pipeline interface{
 		ctx = context.TODO()
 	}
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "Aggregate")
-			span.SetTag("data", pipeline)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("pipeline", pipeline))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -324,16 +311,16 @@ func (collection *collection) UpdateOrInsert(ctx context.Context, documents []in
 		ctx = context.TODO()
 	}
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "UpdateOrInsert")
-			span.SetTag("filter", collection.filter)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("filter", collection.filter))
+			span.LogFields(log.Object("documents", documents))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -353,17 +340,16 @@ func (collection *collection) UpdateOne(ctx context.Context, document interface{
 		ctx = context.TODO()
 	}
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "UpdateOne")
-			span.SetTag("filter", collection.filter)
-			span.SetTag("update", update)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("filter", collection.filter))
+			span.LogFields(log.Object("update", update))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -381,17 +367,16 @@ func (collection *collection) UpdateOneRaw(ctx context.Context, document interfa
 		ctx = context.TODO()
 	}
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "UpdateOneRaw")
-			span.SetTag("filter", collection.filter)
-			span.SetTag("update", document)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("filter", collection.filter))
+			span.LogFields(log.Object("update", document))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -410,17 +395,16 @@ func (collection *collection) UpdateMany(ctx context.Context, document interface
 		ctx = context.TODO()
 	}
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "UpdateMany")
-			span.SetTag("filter", collection.filter)
-			span.SetTag("update", update)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("filter", collection.filter))
+			span.LogFields(log.Object("update", update))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -434,24 +418,22 @@ func (collection *collection) UpdateMany(ctx context.Context, document interface
 
 // 查询一条数据
 func (collection *collection) FindOne(ctx context.Context, document interface{}) error {
-
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "FindOne")
-			span.SetTag("filter", collection.filter)
-			span.SetTag("skip", collection.skip)
-			span.SetTag("sort", collection.sort)
-			span.SetTag("fields", collection.fields)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("filter", collection.filter))
+			span.LogFields(log.Int64("skip", collection.skip))
+			span.LogFields(log.Object("sort", collection.sort))
+			span.LogFields(log.Object("fields", collection.fields))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -478,20 +460,19 @@ func (collection *collection) FindMany(ctx context.Context, documents interface{
 		ctx = context.TODO()
 	}
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "FindMany")
-			span.SetTag("filter", collection.filter)
-			span.SetTag("skip", collection.skip)
-			span.SetTag("limit", collection.limit)
-			span.SetTag("sort", collection.sort)
-			span.SetTag("fields", collection.fields)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("filter", collection.filter))
+			span.LogFields(log.Int64("skip", collection.skip))
+			span.LogFields(log.Int64("limit", collection.limit))
+			span.LogFields(log.Object("sort", collection.sort))
+			span.LogFields(log.Object("fields", collection.fields))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -535,21 +516,19 @@ func (collection *collection) FindMany(ctx context.Context, documents interface{
 
 // 删除数据,并返回删除成功的数量
 func (collection *collection) Delete(ctx context.Context) (count int64, err error) {
-
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "Delete")
-			span.SetTag("filter", collection.filter)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("filter", collection.filter))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -573,20 +552,18 @@ func (collection *collection) Delete(ctx context.Context) (count int64, err erro
 }
 
 func (collection *collection) Drop(ctx context.Context) error {
-
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "Drop")
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -597,21 +574,19 @@ func (collection *collection) Drop(ctx context.Context) error {
 }
 
 func (collection *collection) Count(ctx context.Context) (result int64, err error) {
-
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
 	if trace {
-
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mongodb")
-			span.SetTag("database", collection.Database.Name())
-			span.SetTag("table", collection.Table.Name())
 			span.SetTag("method", "Count")
-			span.SetTag("filter", collection.filter)
+			span.LogFields(log.String("database", collection.Database.Name()))
+			span.LogFields(log.String("table", collection.Table.Name()))
+			span.LogFields(log.Object("filter", collection.filter))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}

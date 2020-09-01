@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log"
 
+	"github.com/abulo/ratel/logger"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 )
 
 // Client --
@@ -19,25 +22,41 @@ type Client struct {
 func NewClient(config elasticsearch.Config) *Client {
 	esClient, err := elasticsearch.NewClient(config)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	return &Client{esClient: esClient}
 }
 
 // Index --
-func (client *Client) Index(index string, id string, doc interface{}) (*IndexResponse, error) {
+func (client *Client) Index(ctx context.Context, index, id string, doc interface{}) (*IndexResponse, error) {
 	buf := bytes.NewBuffer(make([]byte, 0))
 	if err := json.NewEncoder(buf).Encode(doc); err != nil {
 		return nil, err
 	}
-
 	req := esapi.IndexRequest{
 		Index:      index,
 		DocumentID: id,
 		Body:       buf,
 		Refresh:    "true",
 	}
-	res, err := req.Do(context.Background(), client.esClient)
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	if trace {
+		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan("elasticsearch", opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			ext.PeerService.Set(span, "elasticsearch")
+			span.SetTag("method", "IndexRequest")
+			span.LogFields(log.String("Index", index))
+			span.LogFields(log.String("DocumentID", id))
+			span.LogFields(log.Object("Body", doc))
+			defer span.Finish()
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
+	}
+	res, err := req.Do(ctx, client.esClient)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +71,7 @@ func (client *Client) Index(index string, id string, doc interface{}) (*IndexRes
 }
 
 // Create --
-func (client *Client) Create(index string, id string, doc interface{}) (*IndexResponse, error) {
+func (client *Client) Create(ctx context.Context, index, id string, doc interface{}) (*IndexResponse, error) {
 	buf := bytes.NewBuffer(make([]byte, 0))
 	if err := json.NewEncoder(buf).Encode(doc); err != nil {
 		return nil, err
@@ -64,7 +83,26 @@ func (client *Client) Create(index string, id string, doc interface{}) (*IndexRe
 		Body:       buf,
 		Refresh:    "true",
 	}
-	res, err := req.Do(context.Background(), client.esClient)
+
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	if trace {
+		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan("elasticsearch", opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			ext.PeerService.Set(span, "elasticsearch")
+			span.SetTag("method", "CreateRequest")
+			span.LogFields(log.String("Index", index))
+			span.LogFields(log.String("DocumentID", id))
+			span.LogFields(log.Object("Body", doc))
+			defer span.Finish()
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
+	}
+
+	res, err := req.Do(ctx, client.esClient)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +117,7 @@ func (client *Client) Create(index string, id string, doc interface{}) (*IndexRe
 }
 
 // Update --
-func (client *Client) Update(index string, id string, doc interface{}) (*IndexResponse, error) {
+func (client *Client) Update(ctx context.Context, index, id string, doc interface{}) (*IndexResponse, error) {
 	query := make(map[string]interface{})
 	query["doc"] = doc
 	buf := bytes.NewBuffer(make([]byte, 0))
@@ -93,7 +131,26 @@ func (client *Client) Update(index string, id string, doc interface{}) (*IndexRe
 		Body:       buf,
 		Refresh:    "true",
 	}
-	res, err := req.Do(context.Background(), client.esClient)
+
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	if trace {
+		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan("elasticsearch", opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			ext.PeerService.Set(span, "elasticsearch")
+			span.SetTag("method", "UpdateRequest")
+			span.LogFields(log.String("Index", index))
+			span.LogFields(log.String("DocumentID", id))
+			span.LogFields(log.Object("Body", doc))
+			defer span.Finish()
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
+	}
+
+	res, err := req.Do(ctx, client.esClient)
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +165,30 @@ func (client *Client) Update(index string, id string, doc interface{}) (*IndexRe
 }
 
 // Get --
-func (client *Client) Get(index string, id string, response interface{}) error {
+func (client *Client) Get(ctx context.Context, index, id string, response interface{}) error {
 	req := esapi.GetRequest{
 		Index:      index,
 		DocumentID: id,
 	}
-	res, err := req.Do(context.Background(), client.esClient)
+
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	if trace {
+		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan("elasticsearch", opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			ext.PeerService.Set(span, "elasticsearch")
+			span.SetTag("method", "GetRequest")
+			span.LogFields(log.String("Index", index))
+			span.LogFields(log.String("DocumentID", id))
+			defer span.Finish()
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
+	}
+
+	res, err := req.Do(ctx, client.esClient)
 	if err != nil {
 		return err
 	}
@@ -126,13 +201,31 @@ func (client *Client) Get(index string, id string, response interface{}) error {
 }
 
 // Delete --
-func (client *Client) Delete(index string, id string) (*IndexResponse, error) {
+func (client *Client) Delete(ctx context.Context, index, id string) (*IndexResponse, error) {
 	req := esapi.DeleteRequest{
 		Index:      index,
 		DocumentID: id,
 		Refresh:    "true",
 	}
-	res, err := req.Do(context.Background(), client.esClient)
+
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	if trace {
+		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan("elasticsearch", opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			ext.PeerService.Set(span, "elasticsearch")
+			span.SetTag("method", "DeleteRequest")
+			span.LogFields(log.String("Index", index))
+			span.LogFields(log.String("DocumentID", id))
+			defer span.Finish()
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
+	}
+
+	res, err := req.Do(ctx, client.esClient)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +240,7 @@ func (client *Client) Delete(index string, id string) (*IndexResponse, error) {
 }
 
 // Search --
-func (client *Client) Search(index string, query interface{}, response interface{}) error {
+func (client *Client) Search(ctx context.Context, index string, query interface{}, response interface{}) error {
 	buf := bytes.NewBuffer(make([]byte, 0))
 	if err := json.NewEncoder(buf).Encode(query); err != nil {
 		return err
@@ -157,7 +250,25 @@ func (client *Client) Search(index string, query interface{}, response interface
 		Index: []string{index},
 		Body:  buf,
 	}
-	res, err := req.Do(context.Background(), client.esClient)
+
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	if trace {
+		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan("elasticsearch", opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			ext.PeerService.Set(span, "elasticsearch")
+			span.SetTag("method", "SearchRequest")
+			span.LogFields(log.String("Index", index))
+			span.LogFields(log.Object("Body", query))
+			defer span.Finish()
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
+	}
+
+	res, err := req.Do(ctx, client.esClient)
 	if err != nil {
 		return err
 	}
