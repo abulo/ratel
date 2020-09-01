@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/abulo/ratel/gin"
@@ -20,8 +21,9 @@ type Config struct {
 // Server ...
 type Server struct {
 	*gin.Engine
-	Server *http.Server
-	config *Config
+	Server   *http.Server
+	config   *Config
+	listener net.Listener
 }
 
 // WithHost ...
@@ -49,10 +51,18 @@ func (config *Config) Address() string {
 
 // Build create server instance, then initialize it with necessary interceptor
 func (config *Config) Build() *Server {
+
+	listener, err := net.Listen("tcp", config.Address())
+	if err != nil {
+		logger.Panic("new gin server err", err)
+	}
+	config.Port = listener.Addr().(*net.TCPAddr).Port
+
 	gin.SetMode(config.Mode)
 	return &Server{
-		Engine: gin.New(),
-		config: config,
+		Engine:   gin.New(),
+		config:   config,
+		listener: listener,
 	}
 }
 
@@ -67,11 +77,11 @@ func (s *Server) Upgrade(ws *WebSocket) gin.IRoutes {
 func (s *Server) Serve() error {
 	s.Server = &http.Server{
 		Addr:    s.config.Address(),
-		Handler: s.Engine,
+		Handler: s,
 	}
-	err := s.Server.ListenAndServe()
+	err := s.Server.Serve(s.listener)
 	if err == http.ErrServerClosed {
-		logger.Logger.Info("close gin", s.config.Address())
+		logger.Info("close gin", s.config.Address())
 		return nil
 	}
 	return err

@@ -14,7 +14,7 @@ func try(fn func() error, cleaner func()) (ret error) {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Logger.Error("recover", err)
+			logger.Error("recover", err)
 			if _, ok := err.(error); ok {
 				ret = err.(error)
 			} else {
@@ -32,7 +32,7 @@ func try2(fn func(), cleaner func()) (ret error) {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Logger.Error("recover", err)
+			logger.Error("recover", err)
 			if _, ok := err.(error); ok {
 				ret = err.(error)
 			} else {

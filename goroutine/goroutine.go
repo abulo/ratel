@@ -58,13 +58,13 @@ func GoDirect(fn interface{}, args ...interface{}) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				logger.Logger.Error("recover", err)
+				logger.Error("recover", err)
 			}
 		}()
 		// 忽略返回值, goroutine执行的返回值通常都会忽略掉
 		_, err := inj.Invoke(fn)
 		if err != nil {
-			logger.Logger.Error("inject", err)
+			logger.Error("inject", err)
 			return
 		}
 	}()
@@ -80,7 +80,7 @@ func DelayGo(delay time.Duration, fn func()) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				logger.Logger.Error("inject", err)
+				logger.Error("inject", err)
 			}
 		}()
 		time.Sleep(delay)
