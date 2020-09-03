@@ -167,10 +167,11 @@ func (app *Ratel) startServers() error {
 	for _, s := range app.servers {
 		s := s
 		eg.Go(func() (err error) {
-			_ = app.registerer.RegisterService(context.TODO(), s.Info())
-			defer app.registerer.UnregisterService(context.TODO(), s.Info())
-			logger.Info("start server", s.Info().Name, s.Info().Label(), s.Info().Scheme)
-			defer app.logger.Info("exit server", s.Info().Name, err, s.Info().Label())
+			if app.registerer != nil {
+				_ = app.registerer.RegisterService(context.TODO(), s.Info())
+				defer app.registerer.UnregisterService(context.TODO(), s.Info())
+				logger.Info("start server", s.Info().Name, s.Info().Label(), s.Info().Scheme)
+			}
 			err = s.Serve()
 			return
 		})
