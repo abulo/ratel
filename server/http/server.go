@@ -90,6 +90,12 @@ func (config *Config) Build() *Server {
 	}
 }
 
+//ServerInterceptor ...
+func (s *Server) ServerInterceptor(fn gin.HandlerFunc) *Server {
+	s.Use(fn)
+	return s
+}
+
 //Upgrade protocol to WebSocket
 func (s *Server) Upgrade(ws *WebSocket) gin.IRoutes {
 	return s.GET(ws.Pattern, ws.Name, func(c *gin.Context) {

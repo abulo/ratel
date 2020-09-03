@@ -4,14 +4,22 @@ import (
 	"context"
 	"io"
 	"net"
-	"net/http"
+	"strings"
 	"time"
 
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 	"github.com/sirupsen/logrus"
 	"github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-lib/metrics"
+	"google.golang.org/grpc/metadata"
+)
+
+var (
+	// String ...
+	String = log.String
 )
 
 // TraceConfig 实列
@@ -142,13 +150,129 @@ func (t *Tracing) buildJaeger(cfg TraceConfig) (opentracing.Tracer, io.Closer, e
 	return tracer, closer, nil
 }
 
-// ToContext 将span写入request的context中
-func ToContext(r *http.Request, span opentracing.Span) *http.Request {
-	return r.WithContext(opentracing.ContextWithSpan(r.Context(), span))
+// Start ...
+func StartSpanFromContext(ctx context.Context, op string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context) {
+	return opentracing.StartSpanFromContext(ctx, op, opts...)
 }
 
-// FromContext 从context中取出span
-func FromContext(ctx context.Context, name string) opentracing.Span {
-	span, _ := opentracing.StartSpanFromContext(ctx, name)
-	return span
+// SpanFromContext ...
+func SpanFromContext(ctx context.Context) opentracing.Span {
+	return opentracing.SpanFromContext(ctx)
+}
+
+// CustomTag ...
+func CustomTag(key string, val interface{}) opentracing.Tag {
+	return opentracing.Tag{
+		Key:   key,
+		Value: val,
+	}
+}
+
+// TagComponent ...
+func TagComponent(component string) opentracing.Tag {
+	return opentracing.Tag{
+		Key:   "component",
+		Value: component,
+	}
+}
+
+// TagSpanKind ...
+func TagSpanKind(kind string) opentracing.Tag {
+	return opentracing.Tag{
+		Key:   "span.kind",
+		Value: kind,
+	}
+}
+
+// TagSpanURL ...
+func TagSpanURL(url string) opentracing.Tag {
+	return opentracing.Tag{
+		Key:   "span.url",
+		Value: url,
+	}
+}
+
+// FromIncomingContext ...
+func FromIncomingContext(ctx context.Context) opentracing.StartSpanOption {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = metadata.New(nil)
+	}
+	sc, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, MetadataReaderWriter{MD: md})
+	if err != nil {
+		return NullStartSpanOption{}
+	}
+	return ext.RPCServerOption(sc)
+}
+
+// HeaderExtractor ...
+func HeaderExtractor(hdr map[string][]string) opentracing.StartSpanOption {
+	sc, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, MetadataReaderWriter{MD: hdr})
+	if err != nil {
+		return NullStartSpanOption{}
+	}
+	return opentracing.ChildOf(sc)
+}
+
+type hdrRequestKey struct{}
+
+// HeaderInjector ...
+func HeaderInjector(ctx context.Context, hdr map[string][]string) context.Context {
+	span := opentracing.SpanFromContext(ctx)
+	err := opentracing.GlobalTracer().Inject(span.Context(), opentracing.HTTPHeaders, MetadataReaderWriter{MD: hdr})
+	if err != nil {
+		span.LogFields(log.String("event", "inject failed"), log.Error(err))
+		return ctx
+	}
+	return context.WithValue(ctx, hdrRequestKey{}, hdr)
+}
+
+// MetadataExtractor ...
+func MetadataExtractor(md map[string][]string) opentracing.StartSpanOption {
+	sc, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, MetadataReaderWriter{MD: md})
+	if err != nil {
+		return NullStartSpanOption{}
+	}
+	return opentracing.ChildOf(sc)
+}
+
+// MetadataInjector ...
+func MetadataInjector(ctx context.Context, md metadata.MD) context.Context {
+	span := opentracing.SpanFromContext(ctx)
+	err := opentracing.GlobalTracer().Inject(span.Context(), opentracing.HTTPHeaders, MetadataReaderWriter{MD: md})
+	if err != nil {
+		span.LogFields(log.String("event", "inject failed"), log.Error(err))
+		return ctx
+	}
+	return metadata.NewOutgoingContext(ctx, md)
+}
+
+// NullStartSpanOption ...
+type NullStartSpanOption struct{}
+
+// Apply ...
+func (sso NullStartSpanOption) Apply(options *opentracing.StartSpanOptions) {}
+
+// MetadataReaderWriter ...
+type MetadataReaderWriter struct {
+	MD map[string][]string
+}
+
+// Set ...
+func (w MetadataReaderWriter) Set(key, val string) {
+	key = strings.ToLower(key)
+	w.MD[key] = append(w.MD[key], val)
+}
+
+// ForeachKey ...
+func (w MetadataReaderWriter) ForeachKey(handler func(key, val string) error) error {
+	for k, vals := range w.MD {
+		for _, v := range vals {
+			if err := handler(k, v); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
