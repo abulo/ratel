@@ -59,6 +59,7 @@ func (eng *Engine) serveHTTPTwo() error {
 			"status": "17777",
 		})
 	})
+	server.InitFuncMap()
 
 	return eng.Serve(server)
 }

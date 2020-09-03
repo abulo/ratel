@@ -7,6 +7,7 @@ import (
 	"github.com/abulo/ratel/cycle"
 	"github.com/abulo/ratel/goroutine"
 	"github.com/abulo/ratel/logger"
+	"github.com/abulo/ratel/registry"
 	"github.com/abulo/ratel/server"
 	"github.com/abulo/ratel/signals"
 	"golang.org/x/sync/errgroup"
@@ -20,6 +21,7 @@ type Ratel struct {
 	startupOnce sync.Once
 	stopOnce    sync.Once
 	servers     []server.Server
+	registerer  registry.Registry
 }
 
 //New new a Application
@@ -71,6 +73,11 @@ func (app *Ratel) Serve(s ...server.Server) error {
 	return nil
 }
 
+// SetRegistry set customize registry
+func (app *Ratel) SetRegistry(reg registry.Registry) {
+	app.registerer = reg
+}
+
 // Run run application
 func (app *Ratel) Run(servers ...server.Server) error {
 	app.smu.Lock()
@@ -106,6 +113,12 @@ func (app *Ratel) waitSignals() {
 // GracefulStop application after necessary cleanup
 func (app *Ratel) GracefulStop(ctx context.Context) (err error) {
 	app.stopOnce.Do(func() {
+		if app.registerer != nil {
+			err = app.registerer.Close()
+			if err != nil {
+				logger.Error("stop register close err", err)
+			}
+		}
 		//stop servers
 		app.smu.RLock()
 		for _, s := range app.servers {
@@ -125,6 +138,13 @@ func (app *Ratel) GracefulStop(ctx context.Context) (err error) {
 // Stop application immediately after necessary cleanup
 func (app *Ratel) Stop() (err error) {
 	app.stopOnce.Do(func() {
+
+		if app.registerer != nil {
+			err = app.registerer.Close()
+			if err != nil {
+				logger.Error("stop register close err", err)
+			}
+		}
 
 		//stop servers
 		app.smu.RLock()
@@ -147,6 +167,10 @@ func (app *Ratel) startServers() error {
 	for _, s := range app.servers {
 		s := s
 		eg.Go(func() (err error) {
+			_ = app.registerer.RegisterService(context.TODO(), s.Info())
+			defer app.registerer.UnregisterService(context.TODO(), s.Info())
+			logger.Info("start server", s.Info().Name, s.Info().Label(), s.Info().Scheme)
+			defer app.logger.Info("exit server", s.Info().Name, err, s.Info().Label())
 			err = s.Serve()
 			return
 		})

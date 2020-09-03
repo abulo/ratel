@@ -19,13 +19,16 @@ type Config struct {
 	serverOptions      []grpc.ServerOption
 	streamInterceptors []grpc.StreamServerInterceptor
 	unaryInterceptors  []grpc.UnaryServerInterceptor
+
+	Name   string
+	Health string
 }
 
 // Server ...
 type Server struct {
 	*grpc.Server
-	listener net.Listener
-	*Config
+	listener   net.Listener
+	config     *Config
 	serverInfo *server.ServiceInfo
 }
 
@@ -43,12 +46,14 @@ func (config *Config) Build() *Server {
 	info := server.ApplyOptions(
 		server.WithScheme("grpc"),
 		server.WithAddress(config.Address()),
+		server.WithName(config.Name),
+		server.WithHealth(config.Health),
 	)
 
 	return &Server{
 		Server:     newServer,
 		listener:   listener,
-		Config:     config,
+		config:     config,
 		serverInfo: &info,
 	}
 }
@@ -73,9 +78,14 @@ func (s *Server) GracefulStop(ctx context.Context) error {
 	return nil
 }
 
-// Info returns server info, used by governor and consumer balancer
 func (s *Server) Info() *server.ServiceInfo {
-	return s.serverInfo
+	info := server.ApplyOptions(
+		server.WithScheme("grpc"),
+		server.WithAddress(s.config.Address()),
+		server.WithName(s.config.Name),
+		server.WithHealth(s.config.Health),
+	)
+	return &info
 }
 
 // WithServerOption inject server option to grpc server
@@ -111,4 +121,34 @@ func (config *Config) WithUnaryInterceptor(intes ...grpc.UnaryServerInterceptor)
 
 func (config *Config) Address() string {
 	return fmt.Sprintf("%s:%d", config.Host, config.Port)
+}
+
+// WithHost ...
+func (config *Config) WithHost(host string) *Config {
+	config.Host = host
+	return config
+}
+
+// WithPort ...
+func (config *Config) WithPort(port int) *Config {
+	config.Port = port
+	return config
+}
+
+// WithNetwork ...
+func (config *Config) WithNetwork(network string) *Config {
+	config.Network = network
+	return config
+}
+
+// WithName ...
+func (config *Config) WithName(name string) *Config {
+	config.Name = name
+	return config
+}
+
+// WithHealth ...
+func (config *Config) WithHealth(health string) *Config {
+	config.Health = health
+	return config
 }

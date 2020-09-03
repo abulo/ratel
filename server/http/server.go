@@ -13,17 +13,20 @@ import (
 
 // Config HTTP config
 type Config struct {
-	Host string
-	Port int
-	Mode string
+	Host   string
+	Port   int
+	Mode   string
+	Name   string
+	Health string
 }
 
 // Server ...
 type Server struct {
 	*gin.Engine
-	Server   *http.Server
-	config   *Config
-	listener net.Listener
+	Server     *http.Server
+	config     *Config
+	listener   net.Listener
+	serverInfo *server.ServiceInfo
 }
 
 // WithHost ...
@@ -44,6 +47,18 @@ func (config *Config) WithMode(mode string) *Config {
 	return config
 }
 
+// WithName ...
+func (config *Config) WithName(name string) *Config {
+	config.Name = name
+	return config
+}
+
+// WithHealth ...
+func (config *Config) WithHealth(health string) *Config {
+	config.Health = health
+	return config
+}
+
 // Address ...
 func (config *Config) Address() string {
 	return fmt.Sprintf("%s:%d", config.Host, config.Port)
@@ -59,10 +74,19 @@ func (config *Config) Build() *Server {
 	config.Port = listener.Addr().(*net.TCPAddr).Port
 
 	gin.SetMode(config.Mode)
+
+	info := server.ApplyOptions(
+		server.WithScheme("http"),
+		server.WithAddress(config.Address()),
+		server.WithName(config.Name),
+		server.WithHealth(config.Health),
+	)
+
 	return &Server{
-		Engine:   gin.New(),
-		config:   config,
-		listener: listener,
+		Engine:     gin.New(),
+		config:     config,
+		listener:   listener,
+		serverInfo: &info,
 	}
 }
 
@@ -104,6 +128,8 @@ func (s *Server) Info() *server.ServiceInfo {
 	info := server.ApplyOptions(
 		server.WithScheme("http"),
 		server.WithAddress(s.config.Address()),
+		server.WithName(s.config.Name),
+		server.WithHealth(s.config.Health),
 	)
 	return &info
 }
