@@ -2,9 +2,12 @@ package trace
 
 import (
 	"context"
+	"io"
 
 	"github.com/abulo/ratel/gin"
+	"github.com/abulo/ratel/hbase"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/tsuna/gohbase/hrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -80,4 +83,27 @@ func RPCTraceStreamServerInterceptor(srv interface{}, ss grpc.ServerStream, info
 		ServerStream: ss,
 		ctx:          ctx,
 	})
+}
+
+//HBaseTrace ...
+func HBaseTrace(component, instance string) hbase.HookFunc {
+	return func(ctx context.Context, call hrpc.Call, customName string) func(err error) {
+		if customName == "" {
+			customName = call.Name()
+		}
+		statement := string(call.Table()) + " " + string(call.Key())
+		span, ctx := StartSpanFromContext(
+			ctx,
+			"Hbase:"+customName,
+			TagComponent("Hbase"),
+			TagSpanKind("client"),
+			CustomTag("statement", statement),
+		)
+		return func(err error) {
+			if err == io.EOF {
+				err = nil
+			}
+			span.Finish()
+		}
+	}
 }

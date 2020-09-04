@@ -32,6 +32,7 @@ require (
 	github.com/prometheus/client_golang v1.7.1 // indirect
 	github.com/shirou/gopsutil v2.20.8+incompatible
 	github.com/sirupsen/logrus v1.6.0
+	github.com/tsuna/gohbase v0.0.0-20200831170559-79db14850535
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/ugorji/go/codec v1.1.7
