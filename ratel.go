@@ -10,6 +10,7 @@ import (
 	"github.com/abulo/ratel/registry"
 	"github.com/abulo/ratel/server"
 	"github.com/abulo/ratel/signals"
+	"github.com/abulo/ratel/worker"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -21,6 +22,7 @@ type Ratel struct {
 	startupOnce sync.Once
 	stopOnce    sync.Once
 	servers     []server.Server
+	workers     []worker.Worker
 	registerer  registry.Registry
 }
 
@@ -49,6 +51,8 @@ func (app *Ratel) initialize() {
 		app.cycle = cycle.NewCycle()
 		app.smu = &sync.RWMutex{}
 		app.servers = make([]server.Server, 0)
+		app.workers = make([]worker.Worker, 0)
+		app.SetRegistry(registry.Nop{})
 	})
 }
 
@@ -78,6 +82,12 @@ func (app *Ratel) SetRegistry(reg registry.Registry) {
 	app.registerer = reg
 }
 
+// Schedule ..
+func (app *Ratel) Schedule(w worker.Worker) error {
+	app.workers = append(app.workers, w)
+	return nil
+}
+
 // Run run application
 func (app *Ratel) Run(servers ...server.Server) error {
 	app.smu.Lock()
@@ -87,6 +97,9 @@ func (app *Ratel) Run(servers ...server.Server) error {
 
 	// start servers and govern server
 	app.cycle.Run(app.startServers)
+
+	// start workers
+	app.cycle.Run(app.startWorkers)
 
 	//blocking and wait quit
 	if err := <-app.cycle.Wait(); err != nil {
@@ -129,6 +142,14 @@ func (app *Ratel) GracefulStop(ctx context.Context) (err error) {
 			}(s)
 		}
 		app.smu.RUnlock()
+
+		//stop workers
+		for _, w := range app.workers {
+			func(w worker.Worker) {
+				app.cycle.Run(w.Stop)
+			}(w)
+		}
+
 		<-app.cycle.Done()
 		app.cycle.Close()
 	})
@@ -154,7 +175,12 @@ func (app *Ratel) Stop() (err error) {
 			}(s)
 		}
 		app.smu.RUnlock()
-
+		//stop workers
+		for _, w := range app.workers {
+			func(w worker.Worker) {
+				app.cycle.Run(w.Stop)
+			}(w)
+		}
 		<-app.cycle.Done()
 		app.cycle.Close()
 	})
@@ -167,13 +193,23 @@ func (app *Ratel) startServers() error {
 	for _, s := range app.servers {
 		s := s
 		eg.Go(func() (err error) {
-			if app.registerer != nil {
-				_ = app.registerer.RegisterService(context.TODO(), s.Info())
-				defer app.registerer.UnregisterService(context.TODO(), s.Info())
-				logger.Info("start server", s.Info().Name, s.Info().Label(), s.Info().Scheme)
-			}
+			_ = app.registerer.RegisterService(context.TODO(), s.Info())
+			defer app.registerer.UnregisterService(context.TODO(), s.Info())
+			logger.Info("start server", s.Info().Name, s.Info().Label(), s.Info().Scheme)
 			err = s.Serve()
 			return
+		})
+	}
+	return eg.Wait()
+}
+
+func (app *Ratel) startWorkers() error {
+	var eg errgroup.Group
+	// start multi workers
+	for _, w := range app.workers {
+		w := w
+		eg.Go(func() error {
+			return w.Run()
 		})
 	}
 	return eg.Wait()
