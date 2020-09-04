@@ -193,9 +193,9 @@ func (s *Scheduler) RunAll() {
 }
 
 // Run run all Jobs regardless if they are scheduled to run or not
-func (s *Scheduler) Run() (err error) {
+func (s *Scheduler) Run() error {
 	s.RunAll()
-	err = nil
+	return nil
 }
 
 // RunAllWithDelay runs all Jobs with delay seconds
@@ -278,11 +278,11 @@ func (s *Scheduler) Clear() {
 }
 
 // Stop stops the scheduler. This is a no-op if the scheduler is already stopped .
-func (s *Scheduler) Stop() (err error) {
-	err = nil
+func (s *Scheduler) Stop() error {
 	if s.running {
 		s.stopScheduler()
 	}
+	return nil
 }
 
 func (s *Scheduler) stopScheduler() {
