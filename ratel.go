@@ -10,6 +10,7 @@ import (
 	"github.com/abulo/ratel/registry"
 	"github.com/abulo/ratel/server"
 	"github.com/abulo/ratel/signals"
+	"github.com/abulo/ratel/trace"
 	"github.com/abulo/ratel/worker"
 	"golang.org/x/sync/errgroup"
 )
@@ -78,14 +79,25 @@ func (app *Ratel) Serve(s ...server.Server) error {
 }
 
 // SetRegistry set customize registry
-func (app *Ratel) SetRegistry(reg registry.Registry) {
+func (app *Ratel) SetRegistry(reg registry.Registry) *Ratel {
 	app.registerer = reg
+	return app
 }
 
-// Schedule ..
-func (app *Ratel) Schedule(w worker.Worker) error {
+// SetWorker ..
+func (app *Ratel) SetWorker(w worker.Worker) *Ratel {
 	app.workers = append(app.workers, w)
-	return nil
+	return app
+}
+
+//SetTracer ...
+func (app *Ratel) SetTracer(name, host string) *Ratel {
+	cfg := trace.InitConfig(host)
+	cfg.ServiceName = name
+	if err := trace.New(cfg).Setup(); err != nil {
+		logger.Panic(err)
+	}
+	return app
 }
 
 // Run run application
@@ -195,7 +207,7 @@ func (app *Ratel) startServers() error {
 		eg.Go(func() (err error) {
 			_ = app.registerer.RegisterService(context.TODO(), s.Info())
 			defer app.registerer.UnregisterService(context.TODO(), s.Info())
-			logger.Info("start server", s.Info().Name, s.Info().Label(), s.Info().Scheme)
+			logger.Info("start server:", s.Info().Name, ":", s.Info().Label(), ":", s.Info().Scheme)
 			err = s.Serve()
 			return
 		})

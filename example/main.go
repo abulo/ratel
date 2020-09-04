@@ -4,6 +4,7 @@ import (
 	"github.com/abulo/ratel"
 	"github.com/abulo/ratel/gin"
 	"github.com/abulo/ratel/logger"
+	"github.com/abulo/ratel/pprof"
 	"github.com/abulo/ratel/server/http"
 )
 
@@ -29,11 +30,10 @@ func NewEngine() *Engine {
 }
 func (eng *Engine) serveHTTP() error {
 	config := &http.Config{
-		Host:   "127.0.0.1",
-		Port:   7777,
-		Mode:   gin.DebugMode,
-		Name:   "admin",
-		Health: "http://127.0.0.1:7777/ping",
+		Host: "127.0.0.1",
+		Port: 7777,
+		Mode: gin.DebugMode,
+		Name: "admin",
 	}
 	server := config.Build()
 	server.GET("/ping", "ping", func(ctx *gin.Context) {
@@ -47,11 +47,10 @@ func (eng *Engine) serveHTTP() error {
 
 func (eng *Engine) serveHTTPTwo() error {
 	config := &http.Config{
-		Host:   "127.0.0.1",
-		Port:   17777,
-		Mode:   gin.DebugMode,
-		Name:   "api",
-		Health: "http://127.0.0.1:7777/ping",
+		Host: "127.0.0.1",
+		Port: 17777,
+		Mode: gin.DebugMode,
+		Name: "api",
 	}
 	server := config.Build()
 	server.GET("/ping", "ping", func(ctx *gin.Context) {
@@ -60,6 +59,7 @@ func (eng *Engine) serveHTTPTwo() error {
 		})
 	})
 	server.InitFuncMap()
+	pprof.Register(server.Engine)
 
 	return eng.Serve(server)
 }
