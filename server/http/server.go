@@ -13,11 +13,10 @@ import (
 
 // Config HTTP config
 type Config struct {
-	Host   string
-	Port   int
-	Mode   string
-	Name   string
-	Health string
+	Host string
+	Port int
+	Mode string
+	Name string
 }
 
 // Server ...
@@ -53,12 +52,6 @@ func (config *Config) WithName(name string) *Config {
 	return config
 }
 
-// WithHealth ...
-func (config *Config) WithHealth(health string) *Config {
-	config.Health = health
-	return config
-}
-
 // Address ...
 func (config *Config) Address() string {
 	return fmt.Sprintf("%s:%d", config.Host, config.Port)
@@ -79,7 +72,6 @@ func (config *Config) Build() *Server {
 		server.WithScheme("http"),
 		server.WithAddress(config.Address()),
 		server.WithName(config.Name),
-		server.WithHealth(config.Health),
 	)
 
 	return &Server{
@@ -135,7 +127,6 @@ func (s *Server) Info() *server.ServiceInfo {
 		server.WithScheme("http"),
 		server.WithAddress(s.config.Address()),
 		server.WithName(s.config.Name),
-		server.WithHealth(s.config.Health),
 	)
 	return &info
 }

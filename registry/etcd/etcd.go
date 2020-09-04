@@ -36,12 +36,8 @@ type etcdRegistry struct {
 	sessions map[string]*concurrency.Session
 }
 
-// Build ...
-func (config *Config) Build() registry.Registry {
-	return newRegistry(config)
-}
-
-func newRegistry(config *Config) *etcdRegistry {
+//Build ...
+func Build(config *Config) *etcdRegistry {
 	reg := &etcdRegistry{
 		client:   config.Config.Build(),
 		Config:   config,

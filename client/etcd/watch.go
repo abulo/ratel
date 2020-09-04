@@ -78,3 +78,11 @@ func (client *Client) WatchPrefix(ctx context.Context, prefix string) (*Watch, e
 	})
 	return w, nil
 }
+
+// Close close watch
+func (w *Watch) Close() error {
+	if w.cancel != nil {
+		w.cancel()
+	}
+	return nil
+}

@@ -20,8 +20,7 @@ type Config struct {
 	streamInterceptors []grpc.StreamServerInterceptor
 	unaryInterceptors  []grpc.UnaryServerInterceptor
 
-	Name   string
-	Health string
+	Name string
 }
 
 // Server ...
@@ -47,7 +46,6 @@ func (config *Config) Build() *Server {
 		server.WithScheme("grpc"),
 		server.WithAddress(config.Address()),
 		server.WithName(config.Name),
-		server.WithHealth(config.Health),
 	)
 
 	return &Server{
@@ -83,7 +81,6 @@ func (s *Server) Info() *server.ServiceInfo {
 		server.WithScheme("grpc"),
 		server.WithAddress(s.config.Address()),
 		server.WithName(s.config.Name),
-		server.WithHealth(s.config.Health),
 	)
 	return &info
 }
@@ -144,11 +141,5 @@ func (config *Config) WithNetwork(network string) *Config {
 // WithName ...
 func (config *Config) WithName(name string) *Config {
 	config.Name = name
-	return config
-}
-
-// WithHealth ...
-func (config *Config) WithHealth(health string) *Config {
-	config.Health = health
 	return config
 }

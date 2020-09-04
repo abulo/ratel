@@ -12,7 +12,6 @@ type ServiceInfo struct {
 	Name    string `json:"name"`
 	Scheme  string `json:"scheme"`
 	Address string `json:"address"`
-	Health  string `json:"health"`
 }
 
 // Label ...
@@ -51,12 +50,6 @@ func WithAddress(address string) Option {
 func WithName(name string) Option {
 	return func(c *ServiceInfo) {
 		c.Name = name
-	}
-}
-
-func WithHealth(health string) Option {
-	return func(c *ServiceInfo) {
-		c.Health = health
 	}
 }
 
