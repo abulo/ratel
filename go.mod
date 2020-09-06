@@ -8,7 +8,7 @@ require (
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/coreos/etcd v3.3.25+incompatible
 	github.com/coreos/go-semver v0.3.0 // indirect
-	github.com/coreos/go-systemd v0.0.0 // indirect
+	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/elastic/go-elasticsearch/v8 v8.0.0-20200901131320-e21ad8e37e8d
 	github.com/fsnotify/fsnotify v1.4.9
@@ -46,4 +46,4 @@ require (
 
 replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.5
 
-replace github.com/coreos/go-systemd v0.0.0 => github.com/coreos/go-systemd/v22 v22.1.0
+replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.1.0
