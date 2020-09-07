@@ -38,7 +38,7 @@ func (config *Config) Build() *Server {
 
 	listener, err := net.Listen(config.Network, config.Address())
 	if err != nil {
-		logger.Info("new grpc server err", config.Address(), err)
+		logger.Logger.Info("new grpc server err", config.Address(), err)
 	}
 	config.Port = listener.Addr().(*net.TCPAddr).Port
 

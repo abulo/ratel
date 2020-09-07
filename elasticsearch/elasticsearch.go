@@ -22,7 +22,7 @@ type Client struct {
 func NewClient(config elasticsearch.Config) *Client {
 	esClient, err := elasticsearch.NewClient(config)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Logger.Fatal(err)
 	}
 	return &Client{esClient: esClient}
 }

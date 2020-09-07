@@ -48,7 +48,7 @@ func New(config *Config) *Client {
 	client := NewClient(opts)
 	ctx := context.TODO()
 	if err := client.Ping(ctx).Err(); err != nil {
-		logger.Panic(err.Error())
+		logger.Logger.Panic(err.Error())
 	}
 	return client
 }
@@ -150,7 +150,7 @@ func (r *Client) MGetByPipeline(ctx context.Context, keys ...string) ([]string, 
 			p := pipes[i%pipeCount]
 			p.Get(ctx, r.k(k))
 		}
-		logger.Debug("process cost: %v", time.Since(start))
+		logger.Logger.Debug("process cost: %v", time.Since(start))
 		start = time.Now()
 		var wg sync.WaitGroup
 		var lock sync.Mutex
@@ -177,7 +177,7 @@ func (r *Client) MGetByPipeline(ctx context.Context, keys ...string) ([]string, 
 			}()
 		}
 		wg.Wait()
-		logger.Debug("exec cost: %v", time.Since(start))
+		logger.Logger.Debug("exec cost: %v", time.Since(start))
 
 		if len(errors) > 0 {
 			return nil, <-errors

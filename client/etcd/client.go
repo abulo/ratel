@@ -57,7 +57,7 @@ func newClient(config *Config) *Client {
 		AutoSyncInterval: config.AutoSyncInterval,
 	}
 	if config.Endpoints == nil {
-		logger.Panic("client etcd endpoints empty", config)
+		logger.Logger.Panic("client etcd endpoints empty", config)
 	}
 	if !config.Secure {
 		conf.DialOptions = append(conf.DialOptions, grpc.WithInsecure())
@@ -73,7 +73,7 @@ func newClient(config *Config) *Client {
 	if config.CaCert != "" {
 		certBytes, err := ioutil.ReadFile(config.CaCert)
 		if err != nil {
-			logger.Panic("parse CaCert failed", err)
+			logger.Logger.Panic("parse CaCert failed", err)
 		}
 		caCertPool := x509.NewCertPool()
 		ok := caCertPool.AppendCertsFromPEM(certBytes)
@@ -86,7 +86,7 @@ func newClient(config *Config) *Client {
 	if config.CertFile != "" && config.KeyFile != "" {
 		tlsCert, err := tls.LoadX509KeyPair(config.CertFile, config.KeyFile)
 		if err != nil {
-			logger.Panic("load CertFile or KeyFile failed", err)
+			logger.Logger.Panic("load CertFile or KeyFile failed", err)
 		}
 		tlsConfig.Certificates = []tls.Certificate{tlsCert}
 		tlsEnabled = true
@@ -98,14 +98,14 @@ func newClient(config *Config) *Client {
 	client, err := clientv3.New(conf)
 
 	if err != nil {
-		logger.Panic("client etcd start panic", err)
+		logger.Logger.Panic("client etcd start panic", err)
 	}
 
 	cc := &Client{
 		Client: client,
 		config: config,
 	}
-	logger.Info("dial etcd server")
+	logger.Logger.Info("dial etcd server")
 	return cc
 }
 

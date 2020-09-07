@@ -56,14 +56,14 @@ func (client *Client) WatchPrefix(ctx context.Context, prefix string) (*Watch, e
 					w.revision = n.Header.GetRevision()
 				}
 				if err := n.Err(); err != nil {
-					logger.Error("watch request err", err, prefix)
+					logger.Logger.Error("watch request err", err, prefix)
 					continue
 				}
 				for _, ev := range n.Events {
 					select {
 					case w.eventChan <- ev:
 					default:
-						logger.Error("watch etcd with prefix", "err", "block event chan, drop event message")
+						logger.Logger.Error("watch etcd with prefix", "err", "block event chan, drop event message")
 					}
 				}
 			}

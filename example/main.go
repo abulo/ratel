@@ -15,7 +15,7 @@ type Engine struct {
 func main() {
 	eng := NewEngine()
 	if err := eng.Run(); err != nil {
-		logger.Panic(err)
+		logger.Logger.Panic(err)
 	}
 }
 func NewEngine() *Engine {
@@ -24,7 +24,7 @@ func NewEngine() *Engine {
 		eng.serveHTTP,
 		eng.serveHTTPTwo,
 	); err != nil {
-		logger.Panic("startup", err)
+		logger.Logger.Panic("startup", err)
 	}
 	return eng
 }

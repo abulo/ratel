@@ -36,8 +36,6 @@ type options struct {
 	out        io.Writer
 }
 
-
-
 // SetMaxQueues 设置缓冲区的数量
 func SetMaxQueues(maxQueues int) Option {
 	return func(o *options) {
@@ -144,7 +142,6 @@ func (h *Hook) Levels() []logrus.Level {
 // Fire 触发日志事件时将调用
 func (h *Hook) Fire(entry *logrus.Entry) error {
 	if entry.HasCaller() {
-		fmt.Println(entry.Caller)
 		funcVal := entry.Caller.Function
 		fileVal := fmt.Sprintf("%s:%d", entry.Caller.File, entry.Caller.Line)
 		entry.Data["func"] = funcVal

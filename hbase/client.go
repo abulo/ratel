@@ -57,7 +57,7 @@ func (config *Config) NewClient(options ...gohbase.Option) *Client {
 		options = append(options, gohbase.ZookeeperTimeout(time.Duration(config.Zookeeper.Timeout)))
 	}
 	if config.RPCQueueSize != 0 {
-		logger.Warn("RPCQueueSize configuration be ignored")
+		logger.Logger.Warn("RPCQueueSize configuration be ignored")
 	}
 	// force RpcQueueSize = 1, don't change it !!! it has reason
 	options = append(options, gohbase.RpcQueueSize(1))

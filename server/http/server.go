@@ -62,7 +62,7 @@ func (config *Config) Build() *Server {
 
 	listener, err := net.Listen("tcp", config.Address())
 	if err != nil {
-		logger.Panic("new gin server err", err)
+		logger.Logger.Panic("new gin server err", err)
 	}
 	config.Port = listener.Addr().(*net.TCPAddr).Port
 
@@ -103,7 +103,7 @@ func (s *Server) Serve() error {
 	}
 	err := s.Server.Serve(s.listener)
 	if err == http.ErrServerClosed {
-		logger.Info("close gin", s.config.Address())
+		logger.Logger.Info("close gin", s.config.Address())
 		return nil
 	}
 	return err

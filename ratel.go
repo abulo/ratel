@@ -95,7 +95,7 @@ func (app *Ratel) SetTracer(name, host string) *Ratel {
 	cfg := trace.InitConfig(host)
 	cfg.ServiceName = name
 	if err := trace.New(cfg).Setup(); err != nil {
-		logger.Panic(err)
+		logger.Logger.Panic(err)
 	}
 	return app
 }
@@ -115,16 +115,16 @@ func (app *Ratel) Run(servers ...server.Server) error {
 
 	//blocking and wait quit
 	if err := <-app.cycle.Wait(); err != nil {
-		logger.Error("shutdown with error", err)
+		logger.Logger.Error("shutdown with error", err)
 		return err
 	}
-	logger.Info("shutdown, bye!")
+	logger.Logger.Info("shutdown, bye!")
 	return nil
 }
 
 // waitSignals wait signal
 func (app *Ratel) waitSignals() {
-	logger.Info("init listen signal")
+	logger.Logger.Info("init listen signal")
 	signals.Shutdown(func(grace bool) { //when get shutdown signal
 		//todo: support timeout
 		if grace {
@@ -141,7 +141,7 @@ func (app *Ratel) GracefulStop(ctx context.Context) (err error) {
 		if app.registerer != nil {
 			err = app.registerer.Close()
 			if err != nil {
-				logger.Error("stop register close err", err)
+				logger.Logger.Error("stop register close err", err)
 			}
 		}
 		//stop servers
@@ -175,7 +175,7 @@ func (app *Ratel) Stop() (err error) {
 		if app.registerer != nil {
 			err = app.registerer.Close()
 			if err != nil {
-				logger.Error("stop register close err", err)
+				logger.Logger.Error("stop register close err", err)
 			}
 		}
 
@@ -207,7 +207,7 @@ func (app *Ratel) startServers() error {
 		eg.Go(func() (err error) {
 			_ = app.registerer.RegisterService(context.TODO(), s.Info())
 			defer app.registerer.UnregisterService(context.TODO(), s.Info())
-			logger.Info("start server:", s.Info().Name, ":", s.Info().Label(), ":", s.Info().Scheme)
+			logger.Logger.Info("start server:", s.Info().Name, ":", s.Info().Label(), ":", s.Info().Scheme)
 			err = s.Serve()
 			return
 		})

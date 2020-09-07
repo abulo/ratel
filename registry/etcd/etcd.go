@@ -67,14 +67,14 @@ func (reg *etcdRegistry) ListServices(ctx context.Context, name string, scheme s
 	target := fmt.Sprintf("/%s/%s/providers/%s://", reg.Prefix, name, scheme)
 	getResp, getErr := reg.client.Get(ctx, target, clientv3.WithPrefix())
 	if getErr != nil {
-		logger.Error("watch request err ", getErr, target)
+		logger.Logger.Error("watch request err ", getErr, target)
 		return nil, getErr
 	}
 
 	for _, kv := range getResp.Kvs {
 		var service server.ServiceInfo
 		if err := json.Unmarshal(kv.Value, &service); err != nil {
-			logger.Warnf("invalid service", err)
+			logger.Logger.Warnf("invalid service", err)
 			continue
 		}
 		services = append(services, &service)
@@ -115,7 +115,7 @@ func (reg *etcdRegistry) WatchServices(ctx context.Context, name string, scheme 
 			select {
 			case addresses <- *al2:
 			default:
-				logger.Warnf("invalid")
+				logger.Logger.Warnf("invalid")
 			}
 		}
 	})
@@ -136,9 +136,9 @@ func (reg *etcdRegistry) Close() error {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			err := reg.unregister(ctx, k.(string))
 			if err != nil {
-				logger.Error("unregister service", err, k, v)
+				logger.Logger.Error("unregister service", err, k, v)
 			} else {
-				logger.Info("unregister service", k, v)
+				logger.Logger.Info("unregister service", k, v)
 			}
 			cancel()
 		}(k)
@@ -157,12 +157,12 @@ func updateAddrList(al *registry.Endpoints, prefix, scheme string, kvs ...*mvccp
 			addr = strings.TrimPrefix(addr, "providers/")
 			uri, err := url.Parse(addr)
 			if err != nil {
-				logger.Error("parse uri", err, kv.Key)
+				logger.Logger.Error("parse uri", err, kv.Key)
 				continue
 			}
 			var serviceInfo server.ServiceInfo
 			if err := json.Unmarshal(kv.Value, &serviceInfo); err != nil {
-				logger.Error("parse uri", err, kv.Key)
+				logger.Logger.Error("parse uri", err, kv.Key)
 				continue
 			}
 			al.Nodes[uri.String()] = serviceInfo
@@ -181,7 +181,7 @@ func deleteAddrList(al *registry.Endpoints, prefix, scheme string, kvs ...*mvccp
 			}
 			uri, err := url.Parse(addr)
 			if err != nil {
-				logger.Error("parse uri", err, kv.Key)
+				logger.Logger.Error("parse uri", err, kv.Key)
 				continue
 			}
 			delete(al.Nodes, uri.String())
@@ -212,10 +212,10 @@ func (reg *etcdRegistry) registerBiz(ctx context.Context, info *server.ServiceIn
 
 	_, err := reg.client.Put(readCtx, key, val, opOptions...)
 	if err != nil {
-		logger.Error("register service", err, info)
+		logger.Logger.Error("register service", err, info)
 		return err
 	}
-	logger.Info("register service", key, val)
+	logger.Logger.Info("register service", key, val)
 	reg.kvs.Store(key, val)
 	return nil
 
@@ -242,11 +242,11 @@ func (reg *etcdRegistry) registerMetric(ctx context.Context, info *server.Servic
 	}
 	_, err := reg.client.Put(ctx, key, info.Address, opOptions...)
 	if err != nil {
-		logger.Error("register service", err, key, info)
+		logger.Logger.Error("register service", err, key, info)
 		return err
 	}
 
-	logger.Info("register service", key, info.Address)
+	logger.Logger.Info("register service", key, info.Address)
 	reg.kvs.Store(key, info.Address)
 	return nil
 }
