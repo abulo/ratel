@@ -9,7 +9,10 @@ import (
 )
 
 // std 日志组件
-var std = logrus.New()
+// var std = logrus.New()
+
+// std 日志组件
+var std *logrus.Logger = logrus.New()
 
 func StandardLogger() *logrus.Logger {
 	return std

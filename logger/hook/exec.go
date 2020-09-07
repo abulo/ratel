@@ -46,7 +46,7 @@ func (e *defaultExec) Exec(entry *logrus.Entry) error {
 	item["created"] = entry.Time.Unix()
 
 	ctx := context.TODO()
-	_, err := e.sess.Collection(e.sess.Name).InsertOne(ctx, item)
+	_, err := e.sess.Collection("logger").InsertOne(ctx, item)
 	if err != nil {
 		return err
 	}
