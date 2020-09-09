@@ -37,32 +37,44 @@ type collection struct {
 
 //Config 配置
 type Config struct {
-	URL             string
-	MaxConnIdleTime int
-	MaxPoolSize     int
-	MinPoolSize     int
+	URI             string
+	AppName         string
+	ConnectTimeout  time.Duration
+	MaxConnIdleTime time.Duration
+	MaxPoolSize     uint64
+	MinPoolSize     uint64
 }
 
 //New 数据库连接
 func New(config *Config) *MongoDB {
 	//数据库连接
 	mongoOptions := options.Client()
-	mongoOptions.SetMaxConnIdleTime(time.Duration(config.MaxConnIdleTime) * time.Second)
-	mongoOptions.SetMaxPoolSize(uint64(config.MaxPoolSize))
-	mongoOptions.SetMinPoolSize(uint64(config.MinPoolSize))
-	client, err := mongo.NewClient(mongoOptions.ApplyURI(config.URL))
+	if !util.Empty(config.AppName) {
+		mongoOptions.SetAppName(config.AppName)
+	}
+	if !util.Empty(config.ConnectTimeout) {
+		mongoOptions.SetConnectTimeout(config.ConnectTimeout)
+	}
+	if !util.Empty(config.MaxConnIdleTime) {
+		mongoOptions.SetMaxConnIdleTime(config.MaxConnIdleTime)
+	}
+	if !util.Empty(config.MaxPoolSize) {
+		mongoOptions.SetMaxPoolSize(config.MaxPoolSize)
+	}
+	if !util.Empty(config.MinPoolSize) {
+		mongoOptions.SetMinPoolSize(config.MinPoolSize)
+	}
+	client, err := mongo.NewClient(mongoOptions.ApplyURI(config.URI))
 	if err != nil {
 		logger.Logger.Panic(err)
 		return nil
 	}
-
 	//解析URL
-	u, err := url.Parse(config.URL)
+	u, err := url.Parse(config.URI)
 	if err != nil {
 		logger.Logger.Panic(err)
 		return nil
 	}
-
 	if util.Empty(u.Path) || util.Empty(u.Path[1:]) {
 		logger.Logger.Panic(errors.New("no database"))
 		return nil
