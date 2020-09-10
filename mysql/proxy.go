@@ -62,7 +62,7 @@ func (proxy *Proxy) SetRead(query *QueryDb) {
 //Write 获取写库
 func (proxy *Proxy) Write() *QueryDb {
 	len := len(proxy.write)
-	write := util.Rand(0, len)
+	write := util.Rand(0, len-1)
 	return proxy.write[write]
 }
 
@@ -72,6 +72,6 @@ func (proxy *Proxy) Read() *QueryDb {
 	if len < 1 {
 		return proxy.Write()
 	}
-	read := util.Rand(0, len)
+	read := util.Rand(0, len-1)
 	return proxy.read[read]
 }
