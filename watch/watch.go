@@ -289,7 +289,7 @@ func NewWatcher(paths []string, files []string) {
 	go func() {
 		for {
 			select {
-			case e := <-watcher.Event:
+			case e := <-watcher.Events:
 				isbuild := true
 				// Skip ignored files
 				if ignoreFile(e.Name) {
@@ -314,7 +314,7 @@ func NewWatcher(paths []string, files []string) {
 						Autobuild(files)
 					}()
 				}
-			case err := <-watcher.Error:
+			case err := <-watcher.Errors:
 				Errorf("%v", err)
 				Warnf(" %s\n", err.Error()) // No need to exit here
 			}
@@ -323,7 +323,7 @@ func NewWatcher(paths []string, files []string) {
 	Infof("初始化监控\n")
 	for _, path := range paths {
 		Infof("文件夹( %s )\n", path)
-		err = watcher.Watch(path)
+		err = watcher.Add(path)
 		if err != nil {
 			Errorf("讲课文件夹失败[ %s ]\n", err)
 			os.Exit(2)
