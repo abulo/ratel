@@ -37,9 +37,9 @@ type collection struct {
 
 //Config 配置
 type Config struct {
-	URI             string
-	AppName         string
-	ConnectTimeout  time.Duration
+	URI string
+	// AppName string
+	// ConnectTimeout  time.Duration
 	MaxConnIdleTime time.Duration
 	MaxPoolSize     uint64
 	MinPoolSize     uint64
@@ -49,8 +49,8 @@ type Config struct {
 func New(config *Config) *MongoDB {
 	//数据库连接
 	mongoOptions := options.Client()
-	mongoOptions.SetAppName(config.AppName)
-	mongoOptions.SetConnectTimeout(config.ConnectTimeout)
+	// mongoOptions.SetAppName(config.AppName)
+	// mongoOptions.SetConnectTimeout(config.ConnectTimeout)
 	mongoOptions.SetMaxConnIdleTime(config.MaxConnIdleTime)
 	mongoOptions.SetMaxPoolSize(config.MaxPoolSize)
 	mongoOptions.SetMinPoolSize(config.MinPoolSize)
@@ -70,7 +70,7 @@ func New(config *Config) *MongoDB {
 		return nil
 	}
 	name := u.Path[1:]
-	ctx := context.TODO()
+	ctx, _ := context.WithTimeout(context.TODO(), 5*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
 		logger.Logger.Panic("MongoDB连接失败->", err)
@@ -241,7 +241,7 @@ func (collection *collection) InsertOne(ctx context.Context, document interface{
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-	// ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	result, err := collection.Table.InsertOne(ctx, data)
 	collection.reset()
 	return result, err
@@ -268,7 +268,7 @@ func (collection *collection) InsertMany(ctx context.Context, documents interfac
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-	// ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	result, err := collection.Table.InsertMany(ctx, data)
 	collection.reset()
 	return result, err
@@ -292,7 +292,7 @@ func (collection *collection) Aggregate(ctx context.Context, pipeline interface{
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-	// ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	cursor, err := collection.Table.Aggregate(ctx, pipeline)
 	if err != nil {
 		collection.reset()
@@ -327,7 +327,7 @@ func (collection *collection) UpdateOrInsert(ctx context.Context, documents []in
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-	// ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	var upsert = true
 	result, err := collection.Table.UpdateMany(ctx, collection.filter, documents, &options.UpdateOptions{Upsert: &upsert})
 	collection.reset()
@@ -356,7 +356,7 @@ func (collection *collection) UpdateOne(ctx context.Context, document interface{
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-	// ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	result, err := collection.Table.UpdateOne(ctx, collection.filter, update)
 
 	collection.reset()
@@ -383,7 +383,7 @@ func (collection *collection) UpdateOneRaw(ctx context.Context, document interfa
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-	// ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	result, err := collection.Table.UpdateOne(ctx, collection.filter, document, opt...)
 	collection.reset()
 	return result, err
@@ -411,7 +411,7 @@ func (collection *collection) UpdateMany(ctx context.Context, document interface
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-	// ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	result, err := collection.Table.UpdateMany(ctx, collection.filter, update)
 
 	collection.reset()
@@ -440,7 +440,7 @@ func (collection *collection) FindOne(ctx context.Context, document interface{})
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-	// ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	result := collection.Table.FindOne(ctx, collection.filter, &options.FindOneOptions{
 		Skip:       &collection.skip,
 		Sort:       collection.sort,
@@ -479,7 +479,7 @@ func (collection *collection) FindMany(ctx context.Context, documents interface{
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-	// ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	result, err := collection.Table.Find(ctx, collection.filter, &options.FindOptions{
 		Skip:       &collection.skip,
 		Limit:      &collection.limit,
@@ -542,7 +542,7 @@ func (collection *collection) Delete(ctx context.Context) (count int64, err erro
 		return
 	}
 
-	// ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	result, err := collection.Table.DeleteMany(ctx, collection.filter)
 	if err != nil {
 		collection.reset()
@@ -570,7 +570,7 @@ func (collection *collection) Drop(ctx context.Context) error {
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-	// ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	err := collection.Table.Drop(ctx)
 	return err
 }
@@ -593,7 +593,7 @@ func (collection *collection) Count(ctx context.Context) (result int64, err erro
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-	// ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 	result, err = collection.Table.CountDocuments(ctx, collection.filter)
 	if err != nil {
 		collection.reset()
