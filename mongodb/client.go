@@ -46,24 +46,14 @@ type Config struct {
 }
 
 //New 数据库连接
-func New(config *Config) *MongoDB {
+func New(config *Config, opts ...*options.ClientOptions) *MongoDB {
 	//数据库连接
 	mongoOptions := options.Client()
-	if !util.Empty(config.AppName) {
-		mongoOptions.SetAppName(config.AppName)
-	}
-	if !util.Empty(config.ConnectTimeout) {
-		mongoOptions.SetConnectTimeout(config.ConnectTimeout)
-	}
-	if !util.Empty(config.MaxConnIdleTime) {
-		mongoOptions.SetMaxConnIdleTime(config.MaxConnIdleTime)
-	}
-	if !util.Empty(config.MaxPoolSize) {
-		mongoOptions.SetMaxPoolSize(config.MaxPoolSize)
-	}
-	if !util.Empty(config.MinPoolSize) {
-		mongoOptions.SetMinPoolSize(config.MinPoolSize)
-	}
+	mongoOptions.SetAppName(config.AppName)
+	mongoOptions.SetConnectTimeout(config.ConnectTimeout)
+	mongoOptions.SetMaxConnIdleTime(config.MaxConnIdleTime)
+	mongoOptions.SetMaxPoolSize(config.MaxPoolSize)
+	mongoOptions.SetMinPoolSize(config.MinPoolSize)
 	client, err := mongo.NewClient(mongoOptions.ApplyURI(config.URI))
 	if err != nil {
 		logger.Logger.Panic(err)
