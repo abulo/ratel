@@ -26,6 +26,14 @@ func NewProxyPool() *ProxyPool {
 	}
 }
 
+//NewProxy 代理池
+func NewProxy() *Proxy {
+	return &Proxy{
+		write: make([]*QueryDb, 0),
+		read:  make([]*QueryDb, 0),
+	}
+}
+
 //SetNameSpace 设置组
 func (proxypool *ProxyPool) SetNameSpace(group string, proxy *Proxy) {
 	proxypool.mu.Lock()
