@@ -25,6 +25,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/hcl v1.0.0
 	github.com/imdario/mergo v0.3.11
+	github.com/jlaffaye/ftp v0.0.0-20200812143550-39e3779af0db
 	github.com/json-iterator/go v1.1.10
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mozillazg/go-pinyin v0.18.0

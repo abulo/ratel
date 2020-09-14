@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"path/filepath"
+
 	"github.com/abulo/ratel"
 	"github.com/abulo/ratel/gin"
 	"github.com/abulo/ratel/logger"
@@ -13,10 +16,12 @@ type Engine struct {
 }
 
 func main() {
-	eng := NewEngine()
-	if err := eng.Run(); err != nil {
-		logger.Logger.Panic(err)
-	}
+
+	fmt.Println(filepath.Dir("asdasdasd/asdasd.ggg"))
+	// eng := NewEngine()
+	// if err := eng.Run(); err != nil {
+	// 	logger.Logger.Panic(err)
+	// }
 }
 func NewEngine() *Engine {
 	eng := &Engine{}
