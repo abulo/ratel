@@ -31,6 +31,7 @@ require (
 	github.com/mozillazg/go-pinyin v0.18.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
+	github.com/pkg/sftp v1.12.0
 	github.com/prometheus/client_golang v1.7.1 // indirect
 	github.com/shirou/gopsutil v2.20.8+incompatible
 	github.com/sirupsen/logrus v1.6.0
@@ -41,6 +42,7 @@ require (
 	go.mongodb.org/mongo-driver v1.4.1
 	go.uber.org/multierr v1.5.0
 	go.uber.org/zap v1.16.0 // indirect
+	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	google.golang.org/grpc v1.32.0
 	gopkg.in/yaml.v2 v2.3.0
