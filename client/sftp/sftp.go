@@ -262,3 +262,57 @@ func getRecursivelyPath(localPath string, remotePath string, remoteFullFilepath 
 func (client *Client) Quit() (errors []error) {
 	return client.Close()
 }
+
+//Chmod ..
+func (client *Client) Chmod(path string, mode os.FileMode) error {
+	return client.SFTPClient.Chmod(path, mode)
+}
+
+// Chown changes the user and group owners of the named file.
+func (client *Client) Chown(path string, uid, gid int) error {
+	return client.SFTPClient.Chown(path, uid, gid)
+}
+
+// Remove removes the specified file or directory. An error will be returned if no
+// file or directory with the specified path exists, or if the specified directory
+// is not empty.
+func (client *Client) Remove(path string) error {
+	return client.SFTPClient.Remove(path)
+}
+
+// RemoveDirectory removes a directory path.
+func (client *Client) RemoveDirectory(path string) error {
+	return client.SFTPClient.RemoveDirectory(path)
+}
+
+// Rename renames a file.
+func (client *Client) Rename(oldname, newname string) error {
+	return client.SFTPClient.Rename(oldname, newname)
+}
+
+// PosixRename renames a file using the posix-rename@openssh.com extension
+// which will replace newname if it already exists.
+func (client *Client) PosixRename(oldname, newname string) error {
+	return client.SFTPClient.PosixRename(oldname, newname)
+}
+
+// Getwd returns the current working directory of the server. Operations
+// involving relative paths will be based at this location.
+func (client *Client) Getwd() (string, error) {
+	return client.SFTPClient.Getwd()
+}
+
+// Mkdir creates the specified directory. An error will be returned if a file or
+// directory with the specified path already exists, or if the directory's
+// parent folder does not exist (the method cannot create complete paths).
+func (client *Client) Mkdir(path string) error {
+	return client.SFTPClient.Mkdir(path)
+}
+
+// MkdirAll creates a directory named path, along with any necessary parents,
+// and returns nil, or else returns an error.
+// If path is already a directory, MkdirAll does nothing and returns nil.
+// If path contains a regular file, an error is returned
+func (client *Client) MkdirAll(path string) error {
+	return client.SFTPClient.MkdirAll(path)
+}
