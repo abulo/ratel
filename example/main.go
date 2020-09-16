@@ -1,14 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"time"
 
 	"github.com/abulo/ratel"
 	"github.com/abulo/ratel/gin"
 	"github.com/abulo/ratel/logger"
 	"github.com/abulo/ratel/logger/hook"
 	"github.com/abulo/ratel/mongodb"
+	"github.com/abulo/ratel/redis"
 	"github.com/abulo/ratel/server/http"
+	"github.com/abulo/ratel/trace"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,20 +22,32 @@ type Engine struct {
 
 //MongoDB 代理
 var MongoDB *mongodb.Proxy = mongodb.NewProxy()
+var Redis *redis.Proxy = redis.NewProxy()
 
 // func init() {
 
 // }
 
 func main() {
-
+	mongodb.SetTrace(true)
 	opt := &mongodb.Config{}
 	opt.URI = "mongodb://root:654321@127.0.0.1:27017/admin_request_log?authSource=admin"
 	opt.MaxConnIdleTime = 5
 	opt.MaxPoolSize = 64
 	opt.MinPoolSize = 10
 	MongoDB.SetNameSpace("common", mongodb.New(opt))
-	mongodb.SetTrace(true)
+
+	redis.SetTrace(true)
+
+	optr := &redis.Config{}
+	optr.KeyPrefix = "abulo"
+	optr.Password = ""
+	optr.PoolSize = 10
+	optr.Database = 0
+	optr.Hosts = []string{"127.0.0.1:6379"}
+	optr.Type = false
+
+	Redis.SetNameSpace("common", redis.New(optr))
 
 	loggerHook := hook.DefaultWithURL(MongoDB.NameSpace("common"))
 	defer loggerHook.Flush()
@@ -53,7 +69,7 @@ func NewEngine() *Engine {
 	); err != nil {
 		logger.Logger.Panic("startup", err)
 	}
-	// eng.SetTracer("ratel", "127.0.0.1:6831")
+	eng.SetTracer("ratel", "127.0.0.1:6831")
 	return eng
 }
 func (eng *Engine) serveHTTP() error {
@@ -64,8 +80,10 @@ func (eng *Engine) serveHTTP() error {
 		Name: "admin",
 	}
 	server := config.Build()
-	// server.Use(trace.HTTPTraceServerInterceptor())
+	server.Use(trace.HTTPTraceServerInterceptor())
 	server.GET("/ping", "ping", func(ctx *gin.Context) {
+		e := Redis.NameSpace("common").Set(ctx.Request.Context(), "aaaaa", "daadasd", time.Minute*5).Err()
+		fmt.Println(e)
 		ctx.JSON(200, gin.H{
 			"status": "7777",
 		})
