@@ -226,8 +226,8 @@ func (collection *collection) InsertOne(ctx context.Context, document interface{
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	data = BeforeCreate(document)
 	if trace {
-		data = BeforeCreate(document)
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -253,8 +253,8 @@ func (collection *collection) InsertMany(ctx context.Context, documents interfac
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	data = BeforeCreate(documents).([]interface{})
 	if trace {
-		data = BeforeCreate(documents).([]interface{})
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
