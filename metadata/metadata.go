@@ -12,6 +12,7 @@ type metadataKey struct{}
 // from Transport headers.
 type Metadata map[string]string
 
+//Get ..
 func (md Metadata) Get(key string) (string, bool) {
 	// attempt to get as is
 	val, ok := md[key]
@@ -24,10 +25,12 @@ func (md Metadata) Get(key string) (string, bool) {
 	return val, ok
 }
 
+//Set ..
 func (md Metadata) Set(key, val string) {
 	md[key] = val
 }
 
+//Delete ..
 func (md Metadata) Delete(key string) {
 	// delete key as-is
 	delete(md, key)

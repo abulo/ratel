@@ -24,6 +24,7 @@ type Server struct {
 	*http.Server
 	listener net.Listener
 	*Config
+	serverInfo *server.ServiceInfo
 }
 
 var (
@@ -60,14 +61,20 @@ func (config *Config) Build() *Server {
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
+	info := server.ApplyOptions(
+		server.WithScheme("http"),
+		server.WithAddress(config.Address()),
+		server.WithName(config.Name),
+	)
 
 	return &Server{
 		Server: &http.Server{
 			Addr:    config.Address(),
 			Handler: DefaultServeMux,
 		},
-		listener: listener,
-		Config:   config,
+		listener:   listener,
+		Config:     config,
+		serverInfo: &info,
 	}
 }
 
@@ -98,7 +105,6 @@ func (s *Server) Info() *server.ServiceInfo {
 		server.WithAddress(s.listener.Addr().String()),
 		server.WithName(s.Name),
 	)
-	// info.Name = info.Name + "." + ModName
 	return &info
 }
 

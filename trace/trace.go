@@ -150,7 +150,7 @@ func (t *Tracing) buildJaeger(cfg TraceConfig) (opentracing.Tracer, io.Closer, e
 	return tracer, closer, nil
 }
 
-// Start ...
+// StartSpanFromContext ...
 func StartSpanFromContext(ctx context.Context, op string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context) {
 	return opentracing.StartSpanFromContext(ctx, op, opts...)
 }

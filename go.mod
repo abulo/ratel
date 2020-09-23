@@ -11,7 +11,7 @@ require (
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
-	github.com/elastic/go-elasticsearch/v8 v8.0.0-20200918151311-dae5060a1a69
+	github.com/elastic/go-elasticsearch/v8 v8.0.0-20200922075529-9e5cb3155e6c
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
@@ -44,8 +44,9 @@ require (
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
-	golang.org/x/exp v0.0.0-20200908183739-ae8ad444f925 // indirect
+	golang.org/x/exp v0.0.0-20200917184745-18d7dbdd5567 // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+	google.golang.org/genproto v0.0.0-20200921165018-b9da36f5f452
 	google.golang.org/grpc v1.32.0
 	gopkg.in/yaml.v2 v2.3.0
 )
