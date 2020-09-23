@@ -1,9 +1,8 @@
 package main
 
 import (
-	"fmt"
+	ohttp "net/http"
 	"os"
-	"time"
 
 	"github.com/abulo/ratel"
 	"github.com/abulo/ratel/gin"
@@ -12,7 +11,9 @@ import (
 	"github.com/abulo/ratel/mongodb"
 	"github.com/abulo/ratel/redis"
 	"github.com/abulo/ratel/server/http"
+	"github.com/abulo/ratel/server/monitor"
 	"github.com/abulo/ratel/trace"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
@@ -65,7 +66,7 @@ func NewEngine() *Engine {
 	eng := &Engine{}
 	if err := eng.Startup(
 		eng.serveHTTP,
-		// eng.serveHTTPTwo,
+		eng.serveHTTPTwo,
 	); err != nil {
 		logger.Logger.Panic("startup", err)
 	}
@@ -80,10 +81,10 @@ func (eng *Engine) serveHTTP() error {
 		Name: "admin",
 	}
 	server := config.Build()
+	server.Use(trace.HTTPMetricServerInterceptor())
 	server.Use(trace.HTTPTraceServerInterceptor())
 	server.GET("/ping", "ping", func(ctx *gin.Context) {
-		e := Redis.NameSpace("common").Set(ctx.Request.Context(), "aaaaa", "daadasd", time.Minute*5).Err()
-		fmt.Println(e)
+		// e := Redis.NameSpace("common").Set(ctx.Request.Context(), "aaaaa", "daadasd", time.Minute*5).Err()
 		ctx.JSON(200, gin.H{
 			"status": "7777",
 		})
@@ -92,23 +93,26 @@ func (eng *Engine) serveHTTP() error {
 	return eng.Serve(server)
 }
 
-// func (eng *Engine) serveHTTPTwo() error {
-// 	config := &http.Config{
-// 		Host: "127.0.0.1",
-// 		Port: 17777,
-// 		Mode: gin.DebugMode,
-// 		Name: "api",
-// 	}
-// 	server := config.Build()
-// 	// server.Use(trace.HTTPTraceServerInterceptor())
-// 	server.GET("/ping", "ping", func(ctx *gin.Context) {
-// 		ctx.JSON(200, gin.H{
-// 			"status": "17777",
-// 		})
-// 	})
+func (eng *Engine) serveHTTPTwo() error {
+	config := &monitor.Config{
+		Host:    "127.0.0.1",
+		Port:    17777,
+		Network: "tcp4",
+		Name:    "monitor",
+	}
+	// monitor.HandleFunc("/metrics", func(w ohttp.ResponseWriter, r *ohttp.Request) {
+	// 	promhttp.Handler().ServeHTTP(w, r)
+	// })
+	server := config.Build()
 
-// 	server.InitFuncMap()
-// 	pprof.Register(server.Engine)
+	server.HandleFunc("/metrics", func(w ohttp.ResponseWriter, r *ohttp.Request) {
+		promhttp.Handler().ServeHTTP(w, r)
+	})
 
-// 	return eng.Serve(server)
-// }
+	// server.Use(trace.HTTPTraceServerInterceptor())
+
+	// 	server.InitFuncMap()
+	// 	pprof.Register(server.Engine)
+
+	return eng.Serve(server)
+}

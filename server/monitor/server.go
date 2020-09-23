@@ -109,7 +109,7 @@ func (s *Server) Info() *server.ServiceInfo {
 }
 
 // HandleFunc ...
-func HandleFunc(pattern string, handler http.HandlerFunc) {
+func (s *Server) HandleFunc(pattern string, handler http.HandlerFunc) {
 	// todo: 增加安全管控
 	DefaultServeMux.HandleFunc(pattern, handler)
 }

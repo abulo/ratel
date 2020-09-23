@@ -34,7 +34,7 @@ var (
 	CodeCacheHit = "hit"
 
 	// Namespace
-	DefaultNamespace = "jupiter"
+	DefaultNamespace = "ratel"
 )
 
 var (
