@@ -156,7 +156,7 @@ func HBaseTrace(component, instance string) hbase.HookFunc {
 			if err == io.EOF {
 				err = nil
 			}
-			span.Finish()
+			defer span.Finish()
 		}
 	}
 }

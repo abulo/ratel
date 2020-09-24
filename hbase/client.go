@@ -3,7 +3,6 @@ package hbase
 import (
 	"context"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/abulo/ratel/logger"
@@ -14,7 +13,7 @@ import (
 // ZKConfig Server&Client settings.
 type ZKConfig struct {
 	Root    string
-	Addrs   []string
+	Addrs   string
 	Timeout time.Duration
 }
 
@@ -49,7 +48,7 @@ func (config *Config) WithOptions(option gohbase.Option) *Config {
 
 // NewClient new a hbase client.
 func (config *Config) NewClient(options ...gohbase.Option) *Client {
-	zk := strings.Join(config.Zookeeper.Addrs, ",")
+	zk := config.Zookeeper.Addrs
 	if config.Zookeeper.Root != "" {
 		options = append(options, gohbase.ZookeeperRoot(config.Zookeeper.Root))
 	}
@@ -106,6 +105,7 @@ func (c *Client) invokeHook(ctx context.Context, call hrpc.Call, customName stri
 // NOTE: if err != nil the results is safe for range operate even not result found
 func (c *Client) ScanAll(ctx context.Context, table []byte, options ...func(hrpc.Call) error) (results []*hrpc.Result, err error) {
 	cursor, err := c.Scan(ctx, table, options...)
+
 	if err != nil {
 		return nil, err
 	}
