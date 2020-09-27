@@ -24,21 +24,6 @@ const (
 	DefaultDPI = 72
 )
 
-var (
-	Default3x3Kernel = [9]float64{
-		-1, -1, 0,
-		-1, 1, 1,
-		0, 1, 1,
-	}
-	Default5x5Kernel = [25]float64{
-		-2, -1, 0, 1, 1,
-		-2, -1, 0, 1, 2,
-		-2, -1, 1, 1, 2,
-		-2, -1, 0, 1, 2,
-		-1, -1, 0, 1, 2,
-	}
-)
-
 type Image struct {
 	src image.Image
 }
