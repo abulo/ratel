@@ -38,18 +38,20 @@ func OpenLocalFile(filename string, opts ...imaging.DecodeOption) (*Image, error
 	}
 	//如果是 webp 格式, 先将 webp 转换成 jpeg
 	newFilename := filename + ".jpg"
-	if extension == "webp" && !util.FileExists(newFilename) {
-		buffer, err := bimg.Read(filename)
-		if err != nil {
-			return nil, err
-		}
-		newCovImage, err := bimg.NewImage(buffer).Convert(bimg.JPEG)
-		if err != nil {
-			return nil, err
-		}
-		err = bimg.Write(newFilename, newCovImage)
-		if err != nil {
-			return nil, err
+	if extension == "webp" {
+		if !util.FileExists(newFilename) {
+			buffer, err := bimg.Read(filename)
+			if err != nil {
+				return nil, err
+			}
+			newCovImage, err := bimg.NewImage(buffer).Convert(bimg.JPEG)
+			if err != nil {
+				return nil, err
+			}
+			err = bimg.Write(newFilename, newCovImage)
+			if err != nil {
+				return nil, err
+			}
 		}
 		filename = newFilename
 	}
