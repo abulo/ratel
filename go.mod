@@ -13,11 +13,11 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/disintegration/imaging v1.6.2
-	github.com/elastic/go-elasticsearch/v8 v8.0.0-20200924133523-7442a8de3032
+	github.com/elastic/go-elasticsearch/v8 v8.0.0-20200928071025-e60736373e1a
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/go-playground/validator/v10 v10.3.0
+	github.com/go-playground/validator/v10 v10.4.0
 	github.com/go-redis/redis/v8 v8.2.2
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.1 // indirect
@@ -31,6 +31,7 @@ require (
 	github.com/imdario/mergo v0.3.11
 	github.com/jlaffaye/ftp v0.0.0-20200812143550-39e3779af0db
 	github.com/json-iterator/go v1.1.10
+	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mozillazg/go-pinyin v0.18.0
 	github.com/opentracing/opentracing-go v1.2.0
@@ -38,18 +39,18 @@ require (
 	github.com/pkg/sftp v1.12.0
 	github.com/prometheus/client_golang v1.7.1
 	github.com/shirou/gopsutil v2.20.8+incompatible
-	github.com/sirupsen/logrus v1.6.0
+	github.com/sirupsen/logrus v1.7.0
 	github.com/streadway/amqp v1.0.0
 	github.com/tsuna/gohbase v0.0.0-20200831170559-79db14850535
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.3.0+incompatible
-	github.com/ugorji/go/codec v1.1.8
+	github.com/ugorji/go/codec v1.1.9
 	go.mongodb.org/mongo-driver v1.4.1
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
-	golang.org/x/exp v0.0.0-20200917184745-18d7dbdd5567 // indirect
-	golang.org/x/image v0.0.0-20200927005634-a67d67e0935b
+	golang.org/x/exp v0.0.0-20200924195034-c827fd4f18b9 // indirect
+	golang.org/x/image v0.0.0-20200927104501-e162460cd6b5
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	google.golang.org/genproto v0.0.0-20200925023002-c2d885f95484
 	google.golang.org/grpc v1.32.0
