@@ -13,12 +13,12 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/disintegration/imaging v1.6.2
-	github.com/elastic/go-elasticsearch/v8 v8.0.0-20200928071025-e60736373e1a
+	github.com/elastic/go-elasticsearch/v8 v8.0.0-20200929065430-35fd8bce1107
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-playground/validator/v10 v10.4.0
-	github.com/go-redis/redis/v8 v8.2.2
+	github.com/go-redis/redis/v8 v8.2.3
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
@@ -52,7 +52,7 @@ require (
 	golang.org/x/exp v0.0.0-20200924195034-c827fd4f18b9 // indirect
 	golang.org/x/image v0.0.0-20200927104501-e162460cd6b5
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	google.golang.org/genproto v0.0.0-20200925023002-c2d885f95484
+	google.golang.org/genproto v0.0.0-20200929141702-51c3e5b607fe
 	google.golang.org/grpc v1.32.0
 	gopkg.in/yaml.v2 v2.3.0
 )
