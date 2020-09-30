@@ -37,6 +37,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
@@ -62,8 +63,11 @@ var (
 	quotesRegex = regexp.MustCompile(`^(['"])(.*)(['"])$`)
 )
 
-// parse mode
-// ModeFull - will parse array
+// DefSection default section key name
+const DefSection = "__default"
+
+// mode of parse data
+// ModeFull  - will parse array
 // ModeSimple - don't parse array value
 const (
 	ModeFull   parseMode = 1
@@ -89,7 +93,11 @@ type Parser struct {
 	simpleData map[string]map[string]string
 	// parsed    bool
 	parseMode parseMode
-	// -- options ---
+
+	// ---- options ----
+
+	// TagName of mapping data to struct
+	TagName string
 	// Ignore case for key name
 	IgnoreCase bool
 	// default section name. default is "__default"
@@ -100,42 +108,28 @@ type Parser struct {
 	Collector UserCollector
 }
 
-// FullParser create a full mode Parser with some options
-// Deprecated: please use NewFulled() instead it.
-func FullParser(opts ...func(*Parser)) *Parser {
-	return NewFulled(opts...)
-}
-
 // NewFulled create a full mode Parser with some options
 func NewFulled(opts ...func(*Parser)) *Parser {
 	p := &Parser{
-		fullData: make(map[string]interface{}),
-
+		TagName:    TagName,
+		DefSection: DefSection,
 		parseMode:  ModeFull,
-		DefSection: "__default",
+		fullData:   make(map[string]interface{}),
 	}
 
-	p.WithOptions(opts...)
-	return p
-}
-
-// SimpleParser create a simple mode Parser.
-// Deprecated: please use NewSimpled() instead it.
-func SimpleParser(opts ...func(*Parser)) *Parser {
-	return NewSimpled(opts...)
+	return p.WithOptions(opts...)
 }
 
 // NewSimpled create a simple mode Parser
 func NewSimpled(opts ...func(*Parser)) *Parser {
 	p := &Parser{
-		simpleData: make(map[string]map[string]string),
-
+		TagName:    TagName,
+		DefSection: DefSection,
 		parseMode:  ModeSimple,
-		DefSection: "__default",
+		simpleData: make(map[string]map[string]string),
 	}
 
-	p.WithOptions(opts...)
-	return p
+	return p.WithOptions(opts...)
 }
 
 // NoDefSection set don't return DefSection title
@@ -151,10 +145,11 @@ func IgnoreCase(p *Parser) {
 }
 
 // WithOptions apply some options
-func (p *Parser) WithOptions(opts ...func(*Parser)) {
+func (p *Parser) WithOptions(opts ...func(*Parser)) *Parser {
 	for _, opt := range opts {
 		opt(p)
 	}
+	return p
 }
 
 /*************************************************************
@@ -221,14 +216,15 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 			continue
 		}
 
+		// array/slice data
 		if groups := assignArrRegex.FindStringSubmatch(line); groups != nil {
 			// skip array parse on simple mode
 			if p.parseMode == ModeSimple {
 				continue
 			}
 
-			key, val := groups[1], groups[2]
-			key, val = strings.TrimSpace(key), trimWithQuotes(val)
+			// key, val := groups[1], groups[2]
+			key, val := strings.TrimSpace(groups[1]), trimWithQuotes(groups[2])
 
 			if p.Collector != nil {
 				p.Collector(section, key, val, true)
@@ -236,8 +232,8 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 				p.collectFullValue(section, key, val, true)
 			}
 		} else if groups := assignRegex.FindStringSubmatch(line); groups != nil {
-			key, val := groups[1], groups[2]
-			key, val = strings.TrimSpace(key), trimWithQuotes(val)
+			// key, val := groups[1], groups[2]
+			key, val := strings.TrimSpace(groups[1]), trimWithQuotes(groups[2])
 
 			if p.Collector != nil {
 				p.Collector(section, key, val, false)
@@ -265,7 +261,6 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 
 func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
 	defSection := p.DefSection
-
 	if p.IgnoreCase {
 		key = strings.ToLower(key)
 		section = strings.ToLower(section)
@@ -336,8 +331,8 @@ func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
 
 func (p *Parser) collectMapValue(name string, key, val string) {
 	if p.IgnoreCase {
-		name = strings.ToLower(name)
 		key = strings.ToLower(key)
+		name = strings.ToLower(name)
 	}
 
 	if sec, ok := p.simpleData[name]; ok {
@@ -385,6 +380,33 @@ func (p *Parser) Reset() {
 	} else {
 		p.simpleData = make(map[string]map[string]string)
 	}
+}
+
+// MapStruct mapping the parsed data to struct ptr
+func (p *Parser) MapStruct(ptr interface{}) (err error) {
+	if p.parseMode == ModeFull {
+		err = mapStruct(p.TagName, p.fullData, ptr)
+	} else {
+		err = mapStruct(p.TagName, p.simpleData, ptr)
+	}
+	return
+}
+
+func mapStruct(tagName string, data interface{}, ptr interface{}) error {
+	mapConf := &mapstructure.DecoderConfig{
+		Metadata: nil,
+		Result:   ptr,
+		TagName:  tagName,
+		// will auto convert string to int/uint
+		WeaklyTypedInput: true,
+	}
+
+	decoder, err := mapstructure.NewDecoder(mapConf)
+	if err != nil {
+		return err
+	}
+
+	return decoder.Decode(data)
 }
 
 func trimWithQuotes(inputVal string) (filtered string) {
