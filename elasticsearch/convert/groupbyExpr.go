@@ -2,10 +2,10 @@ package convert
 
 import (
 	"encoding/json"
-	"errors"
 	"strings"
 
 	"github.com/abulo/ratel/elasticsearch/sqlparser"
+	"github.com/pkg/errors"
 )
 
 // handleSelectGroupBy 处置Select 里面的group by

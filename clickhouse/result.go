@@ -2,11 +2,11 @@ package clickhouse
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"reflect"
 
 	_ "github.com/ClickHouse/clickhouse-go"
+	"github.com/pkg/errors"
 )
 
 // Row 获取记录

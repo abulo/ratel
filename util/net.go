@@ -1,9 +1,10 @@
 package util
 
 import (
-	"errors"
 	"fmt"
 	"net"
+
+	"github.com/pkg/errors"
 )
 
 // GetLocalIP ...

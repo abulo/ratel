@@ -5,7 +5,6 @@
 package gin
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,6 +21,7 @@ import (
 	"github.com/abulo/ratel/gin/binding"
 	"github.com/abulo/ratel/gin/render"
 	"github.com/gin-contrib/sse"
+	"github.com/pkg/errors"
 )
 
 // Content-Type MIME of the most common data formats.

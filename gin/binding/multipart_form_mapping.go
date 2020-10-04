@@ -5,10 +5,11 @@
 package binding
 
 import (
-	"errors"
 	"mime/multipart"
 	"net/http"
 	"reflect"
+
+	"github.com/pkg/errors"
 )
 
 type multipartRequest http.Request

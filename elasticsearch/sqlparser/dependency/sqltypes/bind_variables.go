@@ -17,12 +17,12 @@ limitations under the License.
 package sqltypes
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
 
 	"github.com/abulo/ratel/elasticsearch/sqlparser/dependency/querypb"
+	"github.com/pkg/errors"
 )
 
 // NullBindVariable is a bindvar with NULL value.

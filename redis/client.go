@@ -2,13 +2,13 @@ package redis
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/abulo/ratel/logger"
 	"github.com/go-redis/redis/v8"
+	"github.com/pkg/errors"
 )
 
 //Config 配置

@@ -5,7 +5,6 @@
 package binding
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/abulo/ratel/gin/internal/bytesconv"
+	"github.com/pkg/errors"
 )
 
 var errUnknownType = errors.New("unknown type")

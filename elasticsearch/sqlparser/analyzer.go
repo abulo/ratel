@@ -19,13 +19,13 @@ package sqlparser
 // analyzer.go contains utility analysis functions.
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
 
 	"github.com/abulo/ratel/elasticsearch/sqlparser/dependency/sqltypes"
+	"github.com/pkg/errors"
 )
 
 // These constants are used to identify the SQL statement type.

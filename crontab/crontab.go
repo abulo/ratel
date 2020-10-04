@@ -2,12 +2,13 @@ package crontab
 
 import (
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
 	"runtime"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Error declarations for gocron related errors

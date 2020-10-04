@@ -1,10 +1,10 @@
 package convert
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/abulo/ratel/elasticsearch/sqlparser"
+	"github.com/pkg/errors"
 )
 
 // ElasticSQL ..

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/imdario/mergo"
+	"github.com/pkg/errors"
 )
 
 func LoadDir(dir, suffix string) error { return dc.LoadDir(dir, suffix) }

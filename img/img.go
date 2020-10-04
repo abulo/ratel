@@ -2,7 +2,6 @@ package img
 
 import (
 	"bytes"
-	"errors"
 	"image"
 	"image/color"
 	"image/draw"
@@ -17,6 +16,7 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/golang/freetype"
 	"github.com/h2non/bimg"
+	"github.com/pkg/errors"
 	"golang.org/x/image/font"
 )
 

@@ -18,12 +18,12 @@ package sqlparser
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 
 	"github.com/abulo/ratel/elasticsearch/sqlparser/dependency/bytes2"
 	"github.com/abulo/ratel/elasticsearch/sqlparser/dependency/sqltypes"
+	"github.com/pkg/errors"
 )
 
 const (

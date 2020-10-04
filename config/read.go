@@ -1,12 +1,13 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 var (

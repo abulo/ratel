@@ -1,7 +1,6 @@
 package gin
 
 import (
-	"errors"
 	"fmt"
 	"html"
 	"html/template"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 const (

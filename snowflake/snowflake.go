@@ -1,12 +1,13 @@
 package snowflake
 
 import (
-	"errors"
 	"net"
 	"os"
 	"strconv"
 	"sync/atomic"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 const (

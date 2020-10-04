@@ -1,6 +1,6 @@
 package pool
 
-import "errors"
+import "github.com/pkg/errors"
 
 var (
 	//ErrClosed 连接池已经关闭Error

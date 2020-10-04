@@ -1,10 +1,11 @@
 package pool
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // PoolConfig 连接池相关配置

@@ -1,10 +1,9 @@
 package hcl
 
 import (
-	"errors"
-
 	"github.com/abulo/ratel/config"
 	"github.com/hashicorp/hcl"
+	"github.com/pkg/errors"
 )
 
 // Decoder the hcl content decoder

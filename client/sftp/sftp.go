@@ -1,13 +1,13 @@
 package sftp
 
 import (
-	"errors"
 	"io"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/abulo/ratel/logger"
+	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 )

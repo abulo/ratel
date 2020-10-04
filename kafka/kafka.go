@@ -1,12 +1,12 @@
 package kafka
 
 import (
-	"errors"
 	"strings"
 	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/abulo/ratel/logger"
+	"github.com/pkg/errors"
 )
 
 const (

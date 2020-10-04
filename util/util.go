@@ -10,7 +10,6 @@ import (
 	"encoding/csv"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"hash/crc32"
 	"html"
@@ -37,6 +36,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mozillazg/go-pinyin"
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )

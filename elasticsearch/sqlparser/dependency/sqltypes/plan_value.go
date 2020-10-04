@@ -18,10 +18,10 @@ package sqltypes
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/abulo/ratel/elasticsearch/sqlparser/dependency/querypb"
+	"github.com/pkg/errors"
 )
 
 // PlanValue represents a value or a list of values for

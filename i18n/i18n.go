@@ -2,7 +2,6 @@ package i18n
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/abulo/ratel/config/ini"
+	"github.com/pkg/errors"
 )
 
 const (

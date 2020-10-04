@@ -1,11 +1,11 @@
 package convert
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/abulo/ratel/elasticsearch/sqlparser"
+	"github.com/pkg/errors"
 )
 
 // handleComparisonExpr ...

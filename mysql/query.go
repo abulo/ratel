@@ -3,11 +3,12 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 const (

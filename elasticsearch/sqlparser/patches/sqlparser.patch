@@ -11,7 +11,7 @@ diff -u /Users/bramp/go/src/vitess.io/vitess/go//vt/sqlparser/analyzer.go /Users
  // analyzer.go contains utility analysis functions.
  
  import (
-+	"errors"
++	"github.com/pkg/errors"
  	"fmt"
  	"strconv"
  	"strings"
