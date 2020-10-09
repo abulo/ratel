@@ -85,8 +85,6 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 			span := opentracing.StartSpan("mysql", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mysql")
-			// span.SetTag("query", query)
-			// span.SetTag("param", args)
 			span.LogFields(log.String("sql", query))
 			span.LogFields(log.Object("param", args))
 			defer span.Finish()
@@ -104,7 +102,6 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 		return res, err
 	}
 	res, err = stmt.ExecContext(ctx, args...)
-	// res, err = querydb.db.ExecContext(ctx, query, args...)
 	querydb.db.PingContext(ctx)
 	return res, err
 }
@@ -128,8 +125,6 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 			span := opentracing.StartSpan("mysql", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mysql")
-			// span.SetTag("query", query)
-			// span.SetTag("param", args)
 			span.LogFields(log.String("sql", query))
 			span.LogFields(log.Object("param", args))
 			defer span.Finish()
@@ -146,7 +141,6 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 		return res, err
 	}
 	res, err = stmt.QueryContext(ctx, args...)
-	// res, err = querydb.db.QueryContext(ctx, query, args...)
 	querydb.db.PingContext(ctx)
 	return res, err
 }
@@ -171,7 +165,7 @@ func (querytx *QueryTx) NewQuery(ctx context.Context) *QueryBuilder {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	return &QueryBuilder{connection: querytx, ctx: ctx}
+	return &QueryBuilder{connection: querytx, ctx: ctx, transaction: true}
 }
 
 //Exec 复用执行语句
@@ -195,8 +189,6 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 			span := opentracing.StartSpan("mysql", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mysql")
-			// span.SetTag("query", query)
-			// span.SetTag("param", args)
 			span.LogFields(log.String("sql", query))
 			span.LogFields(log.Object("param", args))
 			defer span.Finish()
@@ -213,7 +205,6 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 		return res, err
 	}
 	res, err = stmt.ExecContext(ctx, args...)
-	// res, err = querytx.tx.ExecContext(ctx, query, args...)
 	return res, err
 
 }
@@ -238,8 +229,6 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 			span := opentracing.StartSpan("mysql", opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
 			ext.PeerService.Set(span, "mysql")
-			// span.SetTag("query", query)
-			// span.SetTag("param", args)
 			span.LogFields(log.String("sql", query))
 			span.LogFields(log.Object("param", args))
 			defer span.Finish()
@@ -255,7 +244,6 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 		return res, err
 	}
 	res, err = stmt.QueryContext(ctx, args...)
-	// res, err = querytx.tx.QueryContext(ctx, query, args...)
 	return res, err
 }
 
