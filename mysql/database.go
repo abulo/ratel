@@ -54,7 +54,7 @@ func (querydb *QueryDb) NewQuery(ctx context.Context) *QueryBuilder {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	return &QueryBuilder{connection: querydb, ctx: ctx}
+	return &QueryBuilder{connection: querydb, ctx: ctx, transaction: false}
 }
 
 //Begin 开启一个事务
