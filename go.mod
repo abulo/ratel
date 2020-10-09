@@ -53,13 +53,13 @@ require (
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
-	golang.org/x/exp v0.0.0-20200924195034-c827fd4f18b9 // indirect
+	golang.org/x/exp v0.0.0-20201008143054-e3b2a7f2fdc7 // indirect
 	golang.org/x/image v0.0.0-20200927104501-e162460cd6b5
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	golang.org/x/net v0.0.0-20201006153459-a7d1128ccaa0 // indirect
+	golang.org/x/net v0.0.0-20201009032441-dbdefad45b89 // indirect
 	golang.org/x/sync v0.0.0-20201008141435-b3e1573b7520
-	golang.org/x/sys v0.0.0-20201008064518-c1f3e3309c71 // indirect
-	golang.org/x/tools v0.0.0-20201008025239-9df69603baec // indirect
+	golang.org/x/sys v0.0.0-20201009025420-dfb3f7c4e634 // indirect
+	golang.org/x/tools v0.0.0-20201009032223-96877f285f7e // indirect
 	google.golang.org/genproto v0.0.0-20201008135153-289734e2e40c
 	google.golang.org/grpc v1.32.0
 	google.golang.org/protobuf v1.25.0 // indirect
