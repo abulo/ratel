@@ -48,7 +48,7 @@ require (
 	github.com/tsuna/gohbase v0.0.0-20201006203713-f1ffe9f66b83
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible
-	github.com/ugorji/go/codec v1.1.10
+	github.com/ugorji/go/codec v1.1.11
 	go.mongodb.org/mongo-driver v1.4.2
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
