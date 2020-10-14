@@ -18,7 +18,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-playground/validator/v10 v10.4.0
-	github.com/go-redis/redis/v8 v8.3.0
+	github.com/go-redis/redis/v8 v8.3.1
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
@@ -58,9 +58,9 @@ require (
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/net v0.0.0-20201010224723-4f7140c49acb // indirect
 	golang.org/x/sync v0.0.0-20201008141435-b3e1573b7520
-	golang.org/x/sys v0.0.0-20201009025420-dfb3f7c4e634 // indirect
-	golang.org/x/tools v0.0.0-20201013053347-2db1cd791039 // indirect
-	google.golang.org/genproto v0.0.0-20201012135029-0c95dc0d88e8
+	golang.org/x/sys v0.0.0-20201014080544-cc95f250f6bc // indirect
+	golang.org/x/tools v0.0.0-20201013201025-64a9e34f3752 // indirect
+	google.golang.org/genproto v0.0.0-20201013134114-7f9ee70cb474
 	google.golang.org/grpc v1.32.0
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
