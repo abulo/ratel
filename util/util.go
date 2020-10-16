@@ -181,8 +181,6 @@ func Usleep(t int64) {
 	time.Sleep(time.Duration(t) * time.Microsecond)
 }
 
-//////////// String Functions ////////////
-
 // Strpos strpos()
 func Strpos(haystack, needle string, offset int) int {
 	length := len(haystack)
