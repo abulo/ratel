@@ -8,7 +8,7 @@ require (
 	github.com/Shopify/sarama v1.27.1
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
-	github.com/coreos/bbolt v0.0.0-00010101000000-000000000000 // indirect
+	github.com/coreos/bbolt v1.3.5 // indirect
 	github.com/coreos/etcd v3.3.25+incompatible
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
@@ -23,7 +23,7 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
-	github.com/golang/protobuf v1.4.2
+	github.com/golang/protobuf v1.4.3
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/websocket v1.4.2
@@ -49,7 +49,7 @@ require (
 	github.com/tsuna/gohbase v0.0.0-20201006203713-f1ffe9f66b83
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible
-	github.com/ugorji/go/codec v1.1.11
+	github.com/ugorji/go/codec v1.1.12
 	go.mongodb.org/mongo-driver v1.4.2
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
@@ -61,12 +61,14 @@ require (
 	golang.org/x/sync v0.0.0-20201008141435-b3e1573b7520
 	golang.org/x/sys v0.0.0-20201014080544-cc95f250f6bc // indirect
 	golang.org/x/tools v0.0.0-20201013201025-64a9e34f3752 // indirect
-	google.golang.org/genproto v0.0.0-20201013134114-7f9ee70cb474
+	google.golang.org/genproto v0.0.0-20201015140912-32ed001d685c
 	google.golang.org/grpc v1.32.0
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
 
 replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.5
+
+replace github.com/coreos/etcd => go.etcd.io/etcd v3.3.25+incompatible
 
 replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.1.0
