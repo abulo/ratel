@@ -6,8 +6,8 @@ import (
 
 	"github.com/abulo/ratel/goroutine"
 	"github.com/abulo/ratel/logger"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/mvcc/mvccpb"
 )
 
 // Watch A watch only tells the latest revision

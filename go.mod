@@ -10,7 +10,7 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/coreos/bbolt v1.3.5 // indirect
-	github.com/coreos/etcd v3.3.25+incompatible
+	github.com/coreos/etcd v3.3.25+incompatible // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
@@ -42,7 +42,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.12.0
-	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/client_golang v1.8.0
 	github.com/samuel/go-zookeeper v0.0.0-20200724154423-2164a8ac840e // indirect
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/sirupsen/logrus v1.7.0
@@ -51,6 +51,7 @@ require (
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible
 	github.com/ugorji/go/codec v1.1.12
+	go.etcd.io/etcd v3.3.25+incompatible
 	go.mongodb.org/mongo-driver v1.4.2
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
@@ -60,7 +61,7 @@ require (
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/net v0.0.0-20201010224723-4f7140c49acb // indirect
 	golang.org/x/sync v0.0.0-20201008141435-b3e1573b7520
-	golang.org/x/tools v0.0.0-20201013201025-64a9e34f3752 // indirect
+	golang.org/x/tools v0.0.0-20201014231627-1610a49f37af // indirect
 	google.golang.org/genproto v0.0.0-20201015140912-32ed001d685c
 	google.golang.org/grpc v1.33.0
 	google.golang.org/grpc/examples v0.0.0-20201015222124-ea47aa91b3da // indirect
@@ -73,5 +74,7 @@ require (
 replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.5
 
 replace github.com/coreos/etcd => go.etcd.io/etcd v3.3.25+incompatible
+
+replace go.etcd.io/etcd => go.etcd.io/etcd v3.3.25+incompatible
 
 replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.1.0

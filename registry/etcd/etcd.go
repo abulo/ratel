@@ -14,9 +14,9 @@ import (
 	"github.com/abulo/ratel/logger"
 	"github.com/abulo/ratel/registry"
 	"github.com/abulo/ratel/server"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/concurrency"
-	"github.com/coreos/etcd/mvcc/mvccpb"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3/concurrency"
+	"go.etcd.io/etcd/mvcc/mvccpb"
 )
 
 // Config ...
