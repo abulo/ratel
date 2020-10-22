@@ -6,7 +6,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/ClickHouse/clickhouse-go v1.4.3
 	github.com/HdrHistogram/hdrhistogram-go v0.9.0 // indirect
-	github.com/Shopify/sarama v1.27.1
+	github.com/Shopify/sarama v1.27.2
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/coreos/bbolt v1.3.3 // indirect
@@ -32,7 +32,7 @@ require (
 	github.com/h2non/bimg v1.1.4
 	github.com/hashicorp/hcl v1.0.0
 	github.com/imdario/mergo v0.3.11
-	github.com/jlaffaye/ftp v0.0.0-20201019174721-a50ad6ffd6d5
+	github.com/jlaffaye/ftp v0.0.0-20201021201046-0de5c29d4555
 	github.com/json-iterator/go v1.1.10
 	github.com/klauspost/compress v1.11.1 // indirect
 	github.com/mattn/go-isatty v0.0.12
@@ -58,10 +58,10 @@ require (
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/mod v0.3.1-0.20200828183125-ce943fd02449 // indirect
 	golang.org/x/net v0.0.0-20201010224723-4f7140c49acb // indirect
-	golang.org/x/sync v0.0.0-20201008141435-b3e1573b7520
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/tools v0.0.0-20201014231627-1610a49f37af // indirect
-	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154
-	google.golang.org/grpc v1.33.0
+	google.golang.org/genproto v0.0.0-20201021134325-0d71844de594
+	google.golang.org/grpc v1.33.1
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	modernc.org/mathutil v1.1.1 // indirect
