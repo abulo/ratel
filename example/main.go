@@ -70,7 +70,7 @@ func NewEngine() *Engine {
 	); err != nil {
 		logger.Logger.Panic("startup", err)
 	}
-	eng.SetTracer("ratel", "127.0.0.1:6831")
+	eng.Tracer("ratel", "127.0.0.1:6831")
 	return eng
 }
 func (eng *Engine) serveHTTP() error {

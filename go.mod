@@ -20,7 +20,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-playground/validator/v10 v10.4.1
-	github.com/go-redis/redis/v8 v8.3.2
+	github.com/go-redis/redis/v8 v8.3.3
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
@@ -44,7 +44,7 @@ require (
 	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/sirupsen/logrus v1.7.0
 	github.com/streadway/amqp v1.0.0
-	github.com/tsuna/gohbase v0.0.0-20201006203713-f1ffe9f66b83
+	github.com/tsuna/gohbase v0.0.0-20201030211314-79d7a74bc5e3
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible
 	github.com/ugorji/go/codec v1.1.13
@@ -58,7 +58,7 @@ require (
 	golang.org/x/net v0.0.0-20201010224723-4f7140c49acb // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/tools v0.0.0-20201014231627-1610a49f37af // indirect
-	google.golang.org/genproto v0.0.0-20201026171402-d4b8fe4fd877
+	google.golang.org/genproto v0.0.0-20201030142918-24207fddd1c3
 	google.golang.org/grpc v1.33.1
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0

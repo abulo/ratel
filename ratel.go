@@ -53,7 +53,7 @@ func (app *Ratel) initialize() {
 		app.smu = &sync.RWMutex{}
 		app.servers = make([]server.Server, 0)
 		app.workers = make([]worker.Worker, 0)
-		app.SetRegistry(registry.Nop{})
+		app.Registry(registry.Nop{})
 	})
 }
 
@@ -78,20 +78,20 @@ func (app *Ratel) Serve(s ...server.Server) error {
 	return nil
 }
 
-// SetRegistry set customize registry
-func (app *Ratel) SetRegistry(reg registry.Registry) *Ratel {
+// Registry set customize registry
+func (app *Ratel) Registry(reg registry.Registry) *Ratel {
 	app.registerer = reg
 	return app
 }
 
-// SetWorker ..
-func (app *Ratel) SetWorker(w worker.Worker) *Ratel {
+// Worker ..
+func (app *Ratel) Worker(w worker.Worker) *Ratel {
 	app.workers = append(app.workers, w)
 	return app
 }
 
-//SetTracer ...
-func (app *Ratel) SetTracer(name, host string) *Ratel {
+//Tracer ...
+func (app *Ratel) Tracer(name, host string) *Ratel {
 	cfg := trace.InitConfig(host)
 	cfg.ServiceName = name
 	if err := trace.New(cfg).Setup(); err != nil {
