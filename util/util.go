@@ -31,6 +31,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	_ "time/tzdata"
 	"unicode"
 	"unicode/utf8"
 
@@ -93,23 +94,42 @@ var tagPatterns = []string{
 
 var errNegativeNotAllowed = errors.New("unable to cast negative value")
 
+//TimeZone 默认时区
+var TimeZone *time.Location
+
+//GetTimeZone 获取时区
+func GetTimeZone() *time.Location {
+	if TimeZone == nil {
+		TimeZone, _ = time.LoadLocation("Local")
+	}
+	return TimeZone
+}
+
+//SetTimeZone 设置时区
+func SetTimeZone(zone string) *time.Location {
+	//loc, err := time.LoadLocation("Asia/Shanghai")
+	TimeZone, _ = time.LoadLocation(zone)
+	return TimeZone
+}
+
 // DateTime Functions
 
 // Time time()
 func Time() int64 {
-	cstZone := time.FixedZone("CST", 8*3600)
+	//cstZone := time.FixedZone("CST", 8*3600)
+	cstZone := GetTimeZone()
 	return time.Now().In(cstZone).Unix()
 }
 
 // Now time.Now()
 func Now() time.Time {
-	cstZone := time.FixedZone("CST", 8*3600)
+	cstZone := GetTimeZone()
 	return time.Now().In(cstZone)
 }
 
 //Timestamp 毫秒
 func Timestamp() int64 {
-	cstZone := time.FixedZone("CST", 8*3600)
+	cstZone := GetTimeZone()
 	return time.Now().In(cstZone).UnixNano() / int64(time.Millisecond)
 }
 
@@ -119,7 +139,7 @@ func Timestamp() int64 {
 func StrToTime(format, strtime string) (int64, error) {
 	replacer := strings.NewReplacer(datePatterns...)
 	format = replacer.Replace(format)
-	cstZone := time.FixedZone("CST", 8*3600)
+	cstZone := GetTimeZone()
 	t, err := time.ParseInLocation(format, strtime, cstZone)
 	if err != nil {
 		return 0, err
@@ -130,7 +150,7 @@ func StrToTime(format, strtime string) (int64, error) {
 // Date date()
 func Date(format string, ts ...time.Time) string {
 
-	cstZone := time.FixedZone("CST", 8*3600)
+	cstZone := GetTimeZone()
 	replacer := strings.NewReplacer(datePatterns...)
 	formats := replacer.Replace(format)
 	t := time.Now()
@@ -2419,7 +2439,7 @@ func jsonStringToObject(s string, v interface{}) error {
 func ToTimeE(i interface{}) (tim time.Time, err error) {
 	i = indirect(i)
 
-	cstZone := time.FixedZone("CST", 8*3600)
+	cstZone := GetTimeZone()
 
 	switch v := i.(type) {
 	case time.Time:
@@ -3641,7 +3661,7 @@ func StringToDate(s string) (time.Time, error) {
 // }
 
 func parseDateWith(s string, dates []string) (d time.Time, e error) {
-	cstZone := time.FixedZone("CST", 8*3600)
+	cstZone := GetTimeZone()
 	for _, dateType := range dates {
 		if d, e = time.ParseInLocation(dateType, s, cstZone); e == nil {
 			return
