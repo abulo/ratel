@@ -41,14 +41,14 @@ require (
 	github.com/pkg/sftp v1.12.0
 	github.com/prometheus/client_golang v1.8.0
 	github.com/samuel/go-zookeeper v0.0.0-20200724154423-2164a8ac840e // indirect
-	github.com/shirou/gopsutil v2.20.9+incompatible
+	github.com/shirou/gopsutil v3.20.10+incompatible
 	github.com/sirupsen/logrus v1.7.0
 	github.com/streadway/amqp v1.0.0
 	github.com/tsuna/gohbase v0.0.0-20201030211314-79d7a74bc5e3
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible
 	github.com/ugorji/go/codec v1.1.13
-	go.mongodb.org/mongo-driver v1.4.2
+	go.mongodb.org/mongo-driver v1.4.3
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
@@ -58,7 +58,7 @@ require (
 	golang.org/x/net v0.0.0-20201010224723-4f7140c49acb // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/tools v0.0.0-20201014231627-1610a49f37af // indirect
-	google.golang.org/genproto v0.0.0-20201030142918-24207fddd1c3
+	google.golang.org/genproto v0.0.0-20201103154000-415bd0cd5df6
 	google.golang.org/grpc v1.33.1
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0

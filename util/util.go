@@ -94,22 +94,22 @@ var tagPatterns = []string{
 
 var errNegativeNotAllowed = errors.New("unable to cast negative value")
 
-//TimeZone 默认时区
-var TimeZone *time.Location
+//timeZone 默认时区
+var timeZone *time.Location
 
 //GetTimeZone 获取时区
 func GetTimeZone() *time.Location {
-	if TimeZone == nil {
-		TimeZone, _ = time.LoadLocation("Local")
+	if timeZone == nil {
+		timeZone, _ = time.LoadLocation("Local")
 	}
-	return TimeZone
+	return timeZone
 }
 
 //SetTimeZone 设置时区
 func SetTimeZone(zone string) *time.Location {
 	//loc, err := time.LoadLocation("Asia/Shanghai")
-	TimeZone, _ = time.LoadLocation(zone)
-	return TimeZone
+	timeZone, _ = time.LoadLocation(zone)
+	return timeZone
 }
 
 // DateTime Functions
