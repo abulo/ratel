@@ -27,6 +27,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -4353,4 +4354,45 @@ func isPrivateIP(ipAddr string) bool {
 		}
 	}
 	return false
+}
+
+type intSlice []int
+
+func (s intSlice) Len() int { return len(s) }
+
+func (s intSlice) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+func (s intSlice) Less(i, j int) bool { return s[i] < s[j] }
+
+func equal(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func GetMissingElement(arr []int) int {
+	if arr == nil || len(arr) <= 0 {
+		return 1
+	}
+	sort.Sort(intSlice(arr))
+	var arrTemp []int
+
+	for i := 1; i <= arr[len(arr)-1]; i++ {
+		arrTemp = append(arrTemp, i)
+	}
+	if equal(arrTemp, arr) {
+		return arr[len(arr)-1] + 1
+	}
+	for i, v := range arrTemp {
+		if v != arr[i] {
+			return v
+		}
+	}
+	return 1
 }
