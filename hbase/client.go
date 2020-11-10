@@ -8,6 +8,7 @@ import (
 	"github.com/abulo/ratel/logger"
 	"github.com/tsuna/gohbase"
 	"github.com/tsuna/gohbase/hrpc"
+	"github.com/tsuna/gohbase/pb"
 )
 
 // ZKConfig Server&Client settings.
@@ -38,6 +39,7 @@ type Client struct {
 	addr   string
 	config *Config
 	hooks  []HookFunc
+	admin  gohbase.AdminClient
 }
 
 //WithOptions ...
@@ -76,11 +78,13 @@ func (config *Config) NewClient(options ...gohbase.Option) *Client {
 	}
 
 	options = append(options, config.Options...)
-	hc := gohbase.NewClient(zk, options...)
+	// hc := gohbase.NewClient(zk, options...)
+	// admin := gohbase.NewAdminClient(zk, options...)
 	return &Client{
-		hc:     hc,
+		hc:     gohbase.NewClient(zk, options...),
 		addr:   zk,
 		config: config,
+		admin:  gohbase.NewAdminClient(zk, options...),
 	}
 }
 
@@ -305,6 +309,91 @@ func (c *Client) Ping(ctx context.Context) (err error) {
 	values := map[string]map[string][]byte{"test": map[string][]byte{"test": []byte("test")}}
 	_, err = c.PutStr(ctx, "test", testRowKey, values)
 	return
+}
+
+//CreateTable .
+func (c *Client) CreateTable(ctx context.Context, table []byte, families map[string]map[string]string, opts ...func(*hrpc.CreateTable)) error {
+	createTable := hrpc.NewCreateTable(ctx, table, families, opts...)
+	return c.admin.CreateTable(createTable)
+}
+
+//DeleteTable .
+func (c *Client) DeleteTable(ctx context.Context, table []byte) error {
+	deleteTable := hrpc.NewDeleteTable(ctx, table)
+	return c.admin.DeleteTable(deleteTable)
+}
+
+// EnableTable .
+func (c *Client) EnableTable(ctx context.Context, table []byte) error {
+	enableTable := hrpc.NewEnableTable(ctx, table)
+	return c.admin.EnableTable(enableTable)
+}
+
+// DisableTable .
+func (c *Client) DisableTable(ctx context.Context, table []byte) error {
+	disableTable := hrpc.NewDisableTable(ctx, table)
+	return c.admin.DisableTable(disableTable)
+}
+
+//CreateSnapshot .
+func (c *Client) CreateSnapshot(ctx context.Context, name string, table string, opts ...func(hrpc.Call) error) error {
+	snapshot, err := hrpc.NewSnapshot(ctx, name, table, opts...)
+	if err != nil {
+		return err
+	}
+	return c.admin.CreateSnapshot(snapshot)
+}
+
+// DeleteSnapshot .
+func (c *Client) DeleteSnapshot(ctx context.Context, name string, table string, opts ...func(hrpc.Call) error) error {
+	snapshot, err := hrpc.NewSnapshot(ctx, name, table, opts...)
+	if err != nil {
+		return err
+	}
+	return c.admin.DeleteSnapshot(snapshot)
+}
+
+//ListSnapshots .
+func (c *Client) ListSnapshots(ctx context.Context) ([]*pb.SnapshotDescription, error) {
+	return c.admin.ListSnapshots(hrpc.NewListSnapshots(ctx))
+}
+
+//RestoreSnapshot .
+func (c *Client) RestoreSnapshot(ctx context.Context, name string, table string, opts ...func(hrpc.Call) error) error {
+	snapshot, err := hrpc.NewSnapshot(ctx, name, table, opts...)
+	if err != nil {
+		return err
+	}
+	return c.admin.RestoreSnapshot(snapshot)
+}
+
+//ClusterStatus .
+func (c *Client) ClusterStatus() (*pb.ClusterStatus, error) {
+	return c.admin.ClusterStatus()
+}
+
+//ListTableNames .
+func (c *Client) ListTableNames(ctx context.Context, opts ...func(hrpc.Call) error) ([]*pb.TableName, error) {
+	listTableNames, err := hrpc.NewListTableNames(ctx, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return c.admin.ListTableNames(listTableNames)
+}
+
+//SetBalancer .
+func (c *Client) SetBalancer(ctx context.Context, enabled bool) (bool, error) {
+	setBalancer, _ := hrpc.NewSetBalancer(ctx, enabled)
+	return c.admin.SetBalancer(setBalancer)
+}
+
+//MoveRegion .
+func (c *Client) MoveRegion(ctx context.Context, regionName []byte, opts ...func(hrpc.Call) error) error {
+	moveRegion, err := hrpc.NewMoveRegion(ctx, regionName, opts...)
+	if err != nil {
+		return err
+	}
+	return c.admin.MoveRegion(moveRegion)
 }
 
 // Close close client.
