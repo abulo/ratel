@@ -57,7 +57,8 @@ func (config *Config) Address() string {
 
 // Build create server instance, then initialize it with necessary interceptor
 func (config *Config) Build() *Server {
-	var listener, err = net.Listen("tcp4", config.Address())
+
+	var listener, err = net.Listen(config.Network, config.Address())
 	if err != nil {
 		logger.Logger.Panic(err)
 	}

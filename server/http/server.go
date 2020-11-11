@@ -13,10 +13,11 @@ import (
 
 // Config HTTP config
 type Config struct {
-	Host string
-	Port int
-	Mode string
-	Name string
+	Host    string
+	Port    int
+	Mode    string
+	Name    string
+	Network string
 }
 
 // Server ...
@@ -60,7 +61,7 @@ func (config *Config) Address() string {
 // Build create server instance, then initialize it with necessary interceptor
 func (config *Config) Build() *Server {
 
-	listener, err := net.Listen("tcp", config.Address())
+	listener, err := net.Listen(config.Network, config.Address())
 	if err != nil {
 		logger.Logger.Panic("new gin server err", err)
 	}
