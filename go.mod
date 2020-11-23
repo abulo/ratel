@@ -20,7 +20,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-playground/validator/v10 v10.4.1
-	github.com/go-redis/redis/v8 v8.3.3
+	github.com/go-redis/redis/v8 v8.4.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
@@ -28,7 +28,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/h2non/bimg v1.1.4
+	github.com/h2non/bimg v1.1.5
 	github.com/hashicorp/hcl v1.0.0
 	github.com/imdario/mergo v0.3.11
 	github.com/jlaffaye/ftp v0.0.0-20201112195030-9aae4d151126
@@ -51,13 +51,13 @@ require (
 	go.mongodb.org/mongo-driver v1.4.3
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
-	golang.org/x/crypto v0.0.0-20201112155050-0c6587e931a9
+	golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9
 	golang.org/x/image v0.0.0-20200927104501-e162460cd6b5
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/mod v0.3.1-0.20200828183125-ce943fd02449 // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/tools v0.0.0-20201112185108-eeaa07dd7696 // indirect
-	google.golang.org/genproto v0.0.0-20201112120144-2985b7af83de
+	google.golang.org/genproto v0.0.0-20201119123407-9b1e624d6bc4
 	google.golang.org/grpc v1.33.2
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
