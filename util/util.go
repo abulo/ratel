@@ -1380,6 +1380,20 @@ func InArray(needle interface{}, haystack interface{}) bool {
 	return false
 }
 
+//判断二维数组里面是不是只有一条数据
+func MultiArray(haystack interface{}) bool {
+	val := reflect.ValueOf(haystack)
+	switch val.Kind() {
+	case reflect.Slice, reflect.Array:
+		if val.Len() > 1 {
+			return true
+		}
+	default:
+		return false
+	}
+	return false
+}
+
 //////////// Mathematical Functions ////////////
 
 // Abs abs()
