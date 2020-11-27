@@ -34,7 +34,7 @@ require (
 	github.com/jlaffaye/ftp v0.0.0-20201112195030-9aae4d151126
 	github.com/json-iterator/go v1.1.10
 	github.com/mattn/go-isatty v0.0.12
-	github.com/mitchellh/mapstructure v1.3.3
+	github.com/mitchellh/mapstructure v1.4.0
 	github.com/mozillazg/go-pinyin v0.18.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
@@ -59,7 +59,7 @@ require (
 	google.golang.org/genproto v0.0.0-20201119123407-9b1e624d6bc4
 	google.golang.org/grpc v1.33.2
 	google.golang.org/protobuf v1.25.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.5
