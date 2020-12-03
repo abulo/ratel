@@ -670,11 +670,11 @@ func BeforeUpdate(document interface{}) interface{} {
 		return dataVal.Interface()
 
 	default:
-		if val.Type() == reflect.TypeOf(bson.M{}) {
-			if !val.MapIndex(reflect.ValueOf("_id")).IsValid() {
-				val.SetMapIndex(reflect.ValueOf("_id"), reflect.ValueOf(primitive.NewObjectID()))
-			}
-		}
+		// if val.Type() == reflect.TypeOf(bson.M{}) {
+		// 	if !val.MapIndex(reflect.ValueOf("_id")).IsValid() {
+		// 		val.SetMapIndex(reflect.ValueOf("_id"), reflect.ValueOf(primitive.NewObjectID()))
+		// 	}
+		// }
 		return val.Interface()
 	}
 }
