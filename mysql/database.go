@@ -15,12 +15,6 @@ import (
 	"github.com/opentracing/opentracing-go/log"
 )
 
-//Rows 行
-// type Rows = sql.Rows
-
-//Result 数据集合
-// type Result = sql.Result
-
 // Connection 链接
 type Connection interface {
 	Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error)

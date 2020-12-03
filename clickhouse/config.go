@@ -24,15 +24,28 @@ type Config struct {
 func (config *Config) URI() string {
 
 	//tcp://host1:9000?username=user&password=qwerty&database=clicks&read_timeout=10&write_timeout=20&alt_hosts=host2:9000,host3:9000
-	return "tcp://" +
-		config.Host + ":" +
-		config.Port + "?" +
-		"username=" + config.Username +
-		"&password=" + config.Password +
-		"&database=" + config.Database +
-		"&read_timeout=" + util.ToString(config.ReadTimeout) +
-		"&write_timeout=" + util.ToString(config.WriteTimeout) +
-		"&alt_hosts=" + config.LoadBalance
+
+	link := "tcp://" + config.Host + ":" + config.Port
+	param := make([]string, 0)
+	if !util.Empty(config.Username) {
+		param = append(param, "username="+config.Username)
+	}
+	if !util.Empty(config.Password) {
+		param = append(param, "password="+config.Password)
+	}
+	if !util.Empty(config.Database) {
+		param = append(param, "database="+config.Database)
+	}
+	if config.ReadTimeout > 0 {
+		param = append(param, "read_timeout="+util.ToString(config.ReadTimeout))
+	}
+	if config.WriteTimeout > 0 {
+		param = append(param, "write_timeout="+util.ToString(config.WriteTimeout))
+	}
+	if !util.Empty(config.LoadBalance) {
+		param = append(param, "alt_hosts="+config.LoadBalance)
+	}
+	return link + "?" + util.Implode("&", param)
 }
 
 //connect 数据库连接

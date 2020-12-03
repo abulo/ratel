@@ -45,6 +45,7 @@ type QueryBuilder struct {
 	limit      int64
 	offset     int64
 	distinct   bool
+	transaction bool
 	binds      []string
 	joins      []join
 	unions     []union
@@ -520,7 +521,6 @@ func (query *QueryBuilder) MultiInsert(datas ...interface{}) (int64, error) {
 		result, err := query.connection.Exec(query.ctx, sql, query.args...)
 		if err != nil {
 			err = NewDBError(err.Error(), query.connection.GetLastSql())
-			// Log.Info(err.Error())
 			return 0, err
 		}
 		return result.RowsAffected()
@@ -591,7 +591,6 @@ func (query *QueryBuilder) Replace(datas ...interface{}) (int64, error) {
 		result, err := query.connection.Exec(query.ctx, sql, query.args...)
 		if err != nil {
 			err = NewDBError(err.Error(), query.connection.GetLastSql())
-			// Log.Info(err.Error())
 			return 0, err
 		}
 		return result.RowsAffected()
@@ -632,7 +631,7 @@ func (query *QueryBuilder) ReplaceSQL(datas ...interface{}) string {
 	return ""
 }
 
-//InsertUpdate
+//InsertUpdate ...
 func (query *QueryBuilder) InsertUpdate(insert interface{}, update interface{}) (int64, error) {
 
 	columns, values, err := query.getInsertMap(insert)
@@ -659,13 +658,12 @@ func (query *QueryBuilder) InsertUpdate(insert interface{}, update interface{}) 
 	result, err := query.connection.Exec(query.ctx, sql, query.args...)
 	if err != nil {
 		err = NewDBError(err.Error(), query.connection.GetLastSql())
-		// Log.Info(err.Error())
 		return 0, err
 	}
 	return result.RowsAffected()
 }
 
-//InsertUpdate
+//InsertUpdateSQL ...
 func (query *QueryBuilder) InsertUpdateSQL(insert interface{}, update interface{}) string {
 
 	columns, values, err := query.getInsertMap(insert)
@@ -709,7 +707,6 @@ func (query *QueryBuilder) Insert(data interface{}) (int64, error) {
 	result, err := query.connection.Exec(query.ctx, sql, query.args...)
 	if err != nil {
 		err = NewDBError(err.Error(), query.connection.GetLastSql())
-		// Log.Info(err.Error())
 		return 0, err
 	}
 	return result.LastInsertId()
@@ -750,7 +747,6 @@ func (query *QueryBuilder) Update(data interface{}) (int64, error) {
 	result, err := query.connection.Exec(query.ctx, sql, args...)
 	if err != nil {
 		err = NewDBError(err.Error(), query.connection.GetLastSql())
-		// Log.Info(err.Error())
 		return 0, err
 	}
 	return result.RowsAffected()
@@ -781,7 +777,6 @@ func (query *QueryBuilder) Delete() (int64, error) {
 	result, err := query.connection.Exec(query.ctx, sql, query.args...)
 	if err != nil {
 		err = NewDBError(err.Error(), query.connection.GetLastSql())
-		// Log.Info(err.Error())
 		return 0, err
 	}
 	return result.RowsAffected()
@@ -795,7 +790,7 @@ func (query *QueryBuilder) DeleteSQL() string {
 	return query.connection.GetLastSql().ToString()
 }
 
-//Count
+//Count ...
 func (query *QueryBuilder) Count() (int64, error) {
 	query.Select("COUNT(1) AS _C")
 	d, err := query.Row().ToMap()
@@ -814,55 +809,60 @@ func (query *QueryBuilder) Exec(sql string, args ...interface{}) (int64, error) 
 	result, err := query.connection.Exec(query.ctx, sql, args...)
 	if err != nil {
 		err = NewDBError(err.Error(), query.connection.GetLastSql())
-		// Log.Info(err.Error())
 		return 0, err
 	}
 	return result.RowsAffected()
 }
 
-//Exec 原始SQl语句执行
+//ExecSQL 原始SQl语句执行
 func (query *QueryBuilder) ExecSQL(sql string, args ...interface{}) string {
 	query.connection.LastSql(sql, args...)
 	return query.connection.GetLastSql().ToString()
 }
 
+// QueryRows ...
 func (query *QueryBuilder) QueryRows(sql string, args ...interface{}) *Rows {
 	rows, err := query.connection.Query(query.ctx, sql, args...)
 	if err != nil {
 		err = NewDBError(err.Error(), query.connection.GetLastSql())
-		// Log.Info(err.Error())
-		return &Rows{rs: nil, lastError: err}
+		return &Rows{rs: nil, lastError: err, transaction: query.transaction}
 	}
-	return &Rows{rs: rows, lastError: err}
+	return &Rows{rs: rows, lastError: err, transaction: query.transaction}
 }
 
+//QueryRowsSQL ...
 func (query *QueryBuilder) QueryRowsSQL(sql string, args ...interface{}) string {
 	query.connection.LastSql(sql, args...)
 	return query.connection.GetLastSql().ToString()
 }
 
+//QueryRowSQL ...
 func (query *QueryBuilder) QueryRowSQL(sql string, args ...interface{}) string {
 	query.connection.LastSql(sql, args...)
 	return query.connection.GetLastSql().ToString()
 }
 
+// QueryRow ...
 func (query *QueryBuilder) QueryRow(sql string, args ...interface{}) *Row {
 	rs := query.QueryRows(sql, args...)
 	r := new(Row)
 	r.rs = rs
+	r.transaction = query.transaction
 	return r
 }
 
-//GetRow 获取一条记录
+//Row 获取一条记录
 func (query *QueryBuilder) Row() *Row {
 	query.offset = 0
 	query.limit = 1
 	rs := query.Rows()
 	r := new(Row)
 	r.rs = rs
+	r.transaction = query.transaction
 	return r
 }
 
+// RowSQL ...
 func (query *QueryBuilder) RowSQL() string {
 	grammar := Grammar{builder: query}
 	sql := grammar.Select()
@@ -871,6 +871,7 @@ func (query *QueryBuilder) RowSQL() string {
 	return query.connection.GetLastSql().ToString()
 }
 
+// RowsSQL ...
 func (query *QueryBuilder) RowsSQL() string {
 	grammar := Grammar{builder: query}
 	sql := grammar.Select()
@@ -879,15 +880,14 @@ func (query *QueryBuilder) RowsSQL() string {
 	return query.connection.GetLastSql().ToString()
 }
 
-//GetRows 获取多条记录
+//Rows 获取多条记录
 func (query *QueryBuilder) Rows() *Rows {
 	grammar := Grammar{builder: query}
 	sql := grammar.Select()
 	rows, err := query.connection.Query(query.ctx, sql, query.args...)
 	if err != nil {
 		err = NewDBError(err.Error(), query.connection.GetLastSql())
-		// Log.Info(err.Error())
-		return &Rows{rs: nil, lastError: err}
+		return &Rows{rs: nil, lastError: err, transaction: query.transaction}
 	}
-	return &Rows{rs: rows, lastError: err}
+	return &Rows{rs: rows, lastError: err, transaction: query.transaction}
 }
