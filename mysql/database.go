@@ -39,7 +39,7 @@ type QueryDb struct {
 
 //QueryTx 事务
 type QueryTx struct {
-	tx      *sql.Tx
+	Tx      *sql.Tx
 	lastsql Sql
 }
 
@@ -146,12 +146,12 @@ func (querydb *QueryDb) GetLastSql() Sql {
 
 // Commit 事务提交
 func (querytx *QueryTx) Commit() error {
-	return querytx.tx.Commit()
+	return querytx.Tx.Commit()
 }
 
 // Rollback 事务回滚
 func (querytx *QueryTx) Rollback() error {
-	return querytx.tx.Rollback()
+	return querytx.Tx.Rollback()
 }
 
 // NewQuery 生成一个新的查询构造器
@@ -194,7 +194,7 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 	var err error
 
 	//添加预处理
-	stmt, err := querytx.tx.PrepareContext(ctx, query)
+	stmt, err := querytx.Tx.PrepareContext(ctx, query)
 	if err != nil {
 		return res, err
 	}
@@ -233,7 +233,7 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 	var err error
 
 	//添加预处理
-	stmt, err := querytx.tx.PrepareContext(ctx, query)
+	stmt, err := querytx.Tx.PrepareContext(ctx, query)
 	if err != nil {
 		return res, err
 	}
