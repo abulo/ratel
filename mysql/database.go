@@ -57,7 +57,7 @@ func (querydb *QueryDb) Begin() (*QueryTx, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &QueryTx{tx: tx}, nil
+	return &QueryTx{Tx: tx}, nil
 }
 
 //Exec 复用执行语句
