@@ -101,7 +101,7 @@ func (client *Clientkafka) ListTopics() []string {
 	for _, p := range partitions {
 		list = append(list, p.Topic)
 	}
-	return list
+	return util.ArrayStringUniq(list)
 }
 
 //CreateTopic create
