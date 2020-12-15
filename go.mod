@@ -55,13 +55,13 @@ require (
 	go.mongodb.org/mongo-driver v1.4.4
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
-	golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c
-	golang.org/x/image v0.0.0-20200927104501-e162460cd6b5
+	golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
+	golang.org/x/image v0.0.0-20201208152932-35266b937fa6
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/mod v0.3.1-0.20200828183125-ce943fd02449 // indirect
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 	golang.org/x/tools v0.0.0-20201112185108-eeaa07dd7696 // indirect
-	google.golang.org/genproto v0.0.0-20201207150747-9ee31aac76e7
+	google.golang.org/genproto v0.0.0-20201214200347-8c77b98c765d
 	google.golang.org/grpc v1.34.0
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
