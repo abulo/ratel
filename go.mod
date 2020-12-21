@@ -14,13 +14,13 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/disintegration/imaging v1.6.2
-	github.com/elastic/go-elasticsearch/v8 v8.0.0-20201202142044-1e78b5bf06b1
+	github.com/elastic/go-elasticsearch/v8 v8.0.0-20201216152027-57cb70149147
 	github.com/frankban/quicktest v1.10.2 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-playground/validator/v10 v10.4.1
-	github.com/go-redis/redis/v8 v8.4.2
+	github.com/go-redis/redis/v8 v8.4.4
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
@@ -43,7 +43,7 @@ require (
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.12.0
-	github.com/prometheus/client_golang v1.8.0
+	github.com/prometheus/client_golang v1.9.0
 	github.com/segmentio/kafka-go v0.4.8
 	github.com/shirou/gopsutil v3.20.11+incompatible
 	github.com/sirupsen/logrus v1.7.0
@@ -51,11 +51,11 @@ require (
 	github.com/tsuna/gohbase v0.0.0-20201125011725-348991136365
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible
-	github.com/ugorji/go/codec v1.2.1
+	github.com/ugorji/go/codec v1.2.2
 	go.mongodb.org/mongo-driver v1.4.4
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
-	golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
+	golang.org/x/crypto v0.0.0-20201217014255-9d1352758620
 	golang.org/x/image v0.0.0-20201208152932-35266b937fa6
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/mod v0.3.1-0.20200828183125-ce943fd02449 // indirect
