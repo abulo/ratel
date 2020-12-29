@@ -14,7 +14,7 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/disintegration/imaging v1.6.2
-	github.com/elastic/go-elasticsearch/v8 v8.0.0-20201216152027-57cb70149147
+	github.com/elastic/go-elasticsearch/v8 v8.0.0-20201228163300-0c439f86c3aa
 	github.com/frankban/quicktest v1.10.2 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/sse v0.1.0
@@ -52,6 +52,7 @@ require (
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible
 	github.com/ugorji/go/codec v1.2.2
+	github.com/valyala/fasthttp v1.18.0
 	go.mongodb.org/mongo-driver v1.4.4
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
