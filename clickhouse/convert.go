@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/ClickHouse/clickhouse-go"
+	_ "github.com/abulo/clickhouse-go"
 )
 
 //转换成string

@@ -3,7 +3,7 @@ package clickhouse
 import (
 	"database/sql"
 
-	_ "github.com/ClickHouse/clickhouse-go"
+	_ "github.com/abulo/clickhouse-go"
 	"github.com/abulo/ratel/logger"
 	"github.com/abulo/ratel/util"
 )
