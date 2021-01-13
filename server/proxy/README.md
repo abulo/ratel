@@ -1,170 +1,187 @@
-# Go HTTP proxy server library
+# goproxy
+Go HTTP(S)代理库, 支持中间人代理解密HTTPS
 
-
-## Usage
-
-Library has two significant structs: Proxy and Context.
-
-### Proxy struct
-
-```go
-// Proxy defines parameters for running an HTTP Proxy. It implements
-// http.Handler interface for ListenAndServe function. If you need, you must
-// set Proxy struct before handling requests.
-type Proxy struct {
-	// Session number of last proxy request.
-	SessionNo int64
-
-	// RoundTripper interface to obtain remote response.
-	// By default, it uses &http.Transport{}.
-	Rt http.RoundTripper
-
-	// Certificate key pair.
-	Ca tls.Certificate
-
-	// User data to use free.
-	UserData interface{}
-
-	// Error callback.
-	OnError func(ctx *Context, where string, err *Error, opErr error)
-
-	// Accept callback. It greets proxy request like ServeHTTP function of
-	// http.Handler.
-	// If it returns true, stops processing proxy request.
-	OnAccept func(ctx *Context, w http.ResponseWriter, r *http.Request) bool
-
-	// Auth callback. If you need authentication, set this callback.
-	// If it returns true, authentication succeeded.
-	OnAuth func(ctx *Context, authType string, user string, pass string) bool
-
-	// Connect callback. It sets connect action and new host.
-	// If len(newhost) > 0, host changes.
-	OnConnect func(ctx *Context, host string) (ConnectAction ConnectAction,
-		newHost string)
-
-	// Request callback. It greets remote request.
-	// If it returns non-nil response, stops processing remote request.
-	OnRequest func(ctx *Context, req *http.Request) (resp *http.Response)
-
-	// Response callback. It greets remote response.
-	// Remote response sends after this callback.
-	OnResponse func(ctx *Context, req *http.Request, resp *http.Response)
-
-	// If ConnectAction is ConnectMitm, it sets chunked to Transfer-Encoding.
-	// By default, true.
-	MitmChunked bool
-
-	// HTTP Authentication type. If it's not specified (""), uses "Basic".
-	// By default, "".
-	AuthType string
-}
+安装
+----
+```bash
+go get github.com/ouqiang/goproxy
 ```
 
-### Context struct
-
-```go
-// Context keeps context of each proxy request.
-type Context struct {
-	// Pointer of Proxy struct handled this context.
-	// It's using internally. Don't change in Context struct!
-	Prx *Proxy
-
-	// Session number of this context obtained from Proxy struct.
-	SessionNo int64
-
-	// Sub session number of processing remote connection.
-	SubSessionNo int64
-
-	// Original Proxy request.
-	// It's using internally. Don't change in Context struct!
-	Req *http.Request
-
-	// Original Proxy request, if proxy request method is CONNECT.
-	// It's using internally. Don't change in Context struct!
-	ConnectReq *http.Request
-
-	// Action of after the CONNECT, if proxy request method is CONNECT.
-	// It's using internally. Don't change in Context struct!
-	ConnectAction ConnectAction
-
-	// Remote host, if proxy request method is CONNECT.
-	// It's using internally. Don't change in Context struct!
-	ConnectHost string
-
-	// User data to use free.
-	UserData interface{}
-}
-```
-
-## Examples
-
-
+使用
+----
 
 ```go
 package main
 
 import (
-	"log"
 	"net/http"
+	"time"
 
+	"github.com/ouqiang/goproxy"
 )
 
-func OnError(ctx *proxy.Context, where string,
-	err *proxy.Error, opErr error) {
-	// Log errors.
-	log.Printf("ERR: %s: %s [%s]", where, err, opErr)
-}
-
-func OnAccept(ctx *proxy.Context, w http.ResponseWriter,
-	r *http.Request) bool {
-	// Handle local request has path "/info"
-	if r.Method == "GET" && !r.URL.IsAbs() && r.URL.Path == "/info" {
-		w.Write([]byte("This is go-proxy."))
-		return true
+func main() {
+	proxy := goproxy.New()
+	server := &http.Server{
+		Addr:         ":8080",
+		Handler:      proxy,
+		ReadTimeout:  1 * time.Minute,
+		WriteTimeout: 1 * time.Minute,
 	}
-	return false
-}
-
-func OnAuth(ctx *proxy.Context, authType string, user string, pass string) bool {
-	// Auth test user.
-	if user == "test" && pass == "1234" {
-		return true
+	err := server.ListenAndServe()
+	if err != nil {
+		panic(err)
 	}
-	return false
+}
+```
+
+### 代理测试
+```bash
+curl -x localhost:8080 https://www.baidu.com
+```
+
+中间人代理, 解密HTTPS
+---
+系统需导入根证书 mitm-proxy.crt
+```go
+package main
+
+import (
+	"crypto/tls"
+	"net/http"
+	"sync"
+	"time"
+
+	"github.com/ouqiang/goproxy"
+)
+// 实现证书缓存接口
+type Cache struct {
+	m sync.Map
 }
 
-func OnConnect(ctx *proxy.Context, host string) (
-	ConnectAction proxy.ConnectAction, newHost string) {
-	// Apply "Man in the Middle" to all ssl connections. Never change host.
-	return proxy.ConnectMitm, host
+func (c *Cache) Set(host string, cert *tls.Certificate) {
+	c.m.Store(host, cert)
 }
+func (c *Cache) Get(host string) *tls.Certificate {
+	v, ok := c.m.Load(host)
+	if !ok {
+		return nil
+	}
 
-func OnRequest(ctx *proxy.Context, req *http.Request) (
-	resp *http.Response) {
-	// Log proxying requests.
-	log.Printf("INFO: Proxy: %s %s", req.Method, req.URL.String())
-	return
-}
-
-func OnResponse(ctx *proxy.Context, req *http.Request,
-	resp *http.Response) {
-	// Add header "Via: go-proxy".
-	resp.Header.Add("Via", "go-proxy")
+	return v.(*tls.Certificate)
 }
 
 func main() {
-	// Create a new proxy with default certificate pair.
-	prx, _ := proxy.NewProxy()
-
-	// Set handlers.
-	prx.OnError = OnError
-	prx.OnAccept = OnAccept
-	prx.OnAuth = OnAuth
-	prx.OnConnect = OnConnect
-	prx.OnRequest = OnRequest
-	prx.OnResponse = OnResponse
-
-	// Listen...
-	http.ListenAndServe(":8080", prx)
+	proxy := goproxy.New(goproxy.WithDecryptHTTPS(&Cache{}))
+	server := &http.Server{
+		Addr:         ":8080",
+		Handler:      proxy,
+		ReadTimeout:  1 * time.Minute,
+		WriteTimeout: 1 * time.Minute,
+	}
+	err := server.ListenAndServe()
+	if err != nil {
+		panic(err)
+	}
 }
+```
+
+事件处理
+---
+实现Delegate接口
+```go
+type Delegate interface {
+	// Connect 收到客户端连接
+	Connect(ctx *Context, rw http.ResponseWriter)
+	// Auth 代理身份认证
+	Auth(ctx *Context, rw http.ResponseWriter)
+	// BeforeRequest HTTP请求前 设置X-Forwarded-For, 修改Header、Body
+	BeforeRequest(ctx *Context)
+	// BeforeResponse 响应发送到客户端前, 修改Header、Body、Status Code
+	BeforeResponse(ctx *Context, resp *http.Response, err error)
+	// ParentProxy 上级代理
+	ParentProxy(*http.Request) (*url.URL, error)
+	// Finish 本次请求结束
+	Finish(ctx *Context)
+	// 记录错误信息
+	ErrorLog(err error)
+}
+```
+```go
+type EventHandler struct{}
+
+func (e *EventHandler) Connect(ctx *goproxy.Context, rw http.ResponseWriter) {
+	// 保存的数据可以在后面的回调方法中获取
+	ctx.Data["req_id"] = "uuid"
+
+	// 禁止访问某个域名
+	if strings.Contains(ctx.Req.URL.Host, "example.com") {
+		rw.WriteHeader(http.StatusForbidden)
+		ctx.Abort()
+		return
+	}
+}
+
+func (e *EventHandler) Auth(ctx *goproxy.Context, rw http.ResponseWriter)  {
+	// 身份验证
+}
+
+func (e *EventHandler) BeforeRequest(ctx *goproxy.Context) {
+	// 修改header
+	ctx.Req.Header.Add("X-Request-Id", ctx.Data["req_id"].(string))
+	// 设置X-Forwarded-For
+	if clientIP, _, err := net.SplitHostPort(ctx.Req.RemoteAddr); err == nil {
+		if prior, ok := ctx.Req.Header["X-Forwarded-For"]; ok {
+			clientIP = strings.Join(prior, ", ") + ", " + clientIP
+		}
+		ctx.Req.Header.Set("X-Forwarded-For", clientIP)
+	}
+	// 读取Body
+	body, err := ioutil.ReadAll(ctx.Req.Body)
+	if err != nil {
+		// 错误处理
+		return
+	}
+	// Request.Body只能读取一次, 读取后必须再放回去
+	// Response.Body同理
+	ctx.Req.Body = ioutil.NopCloser(bytes.NewReader(body))
+
+}
+
+func (e *EventHandler) BeforeResponse(ctx *goproxy.Context, resp *http.Response, err error) {
+    if err != nil {
+        return
+    }
+    // 修改response
+}
+
+// 设置上级代理
+func (e *EventHandler) ParentProxy(req *http.Request) (*url.URL, error) {
+	return url.Parse("http://localhost:1087")
+}
+
+func (e *EventHandler) Finish(ctx *goproxy.Context) {
+	fmt.Printf("请求结束 URL:%s\n", ctx.Req.URL)
+}
+
+// 记录错误日志
+func (e *EventHandler) ErrorLog(err error) {
+	log.Println(err)
+}
+
+
+func main() {
+	proxy := goproxy.New(goproxy.WithDelegate(&EventHandler{}))
+	server := &http.Server{
+		Addr:         ":8080",
+		Handler:      proxy,
+		ReadTimeout:  1 * time.Minute,
+		WriteTimeout: 1 * time.Minute,
+	}
+	err := server.ListenAndServe()
+	if err != nil {
+		panic(err)
+	}
+}
+
 ```
