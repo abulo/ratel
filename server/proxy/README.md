@@ -17,7 +17,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ouqiang/goproxy"
+	goproxy "github.com/abulo/ratel/server/proxy"
 )
 
 func main() {
@@ -52,7 +52,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ouqiang/goproxy"
+	goproxy "github.com/abulo/ratel/server/proxy"
 )
 // 实现证书缓存接口
 type Cache struct {
