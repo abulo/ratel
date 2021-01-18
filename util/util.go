@@ -618,6 +618,15 @@ func Strlen(str string) int {
 	return len(str)
 }
 
+//StrLastChar 删除最后一个
+func StrLastChar(s string) string {
+	r, size := utf8.DecodeLastRuneInString(s)
+	if r == utf8.RuneError && (size == 0 || size == 1) {
+		size = 0
+	}
+	return s[:len(s)-size]
+}
+
 // MbStrlen mb_strlen()
 func MbStrlen(str string) int {
 	return utf8.RuneCountInString(str)
