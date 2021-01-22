@@ -19,7 +19,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-playground/validator/v10 v10.4.1
-	github.com/go-redis/redis/v8 v8.4.8
+	github.com/go-redis/redis/v8 v8.4.10
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
@@ -43,7 +43,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.12.0
 	github.com/prometheus/client_golang v1.9.0
-	github.com/segmentio/kafka-go v0.4.8
+	github.com/segmentio/kafka-go v0.4.9
 	github.com/shirou/gopsutil v3.20.12+incompatible
 	github.com/sirupsen/logrus v1.7.0
 	github.com/streadway/amqp v1.0.0
@@ -53,7 +53,7 @@ require (
 	github.com/ugorji/go/codec v1.2.3
 	github.com/valyala/fasthttp v1.19.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	go.mongodb.org/mongo-driver v1.4.4
+	go.mongodb.org/mongo-driver v1.4.5
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
@@ -62,7 +62,7 @@ require (
 	golang.org/x/mod v0.3.1-0.20200828183125-ce943fd02449 // indirect
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 	golang.org/x/tools v0.0.0-20201112185108-eeaa07dd7696 // indirect
-	google.golang.org/genproto v0.0.0-20210114201628-6edceaf6022f
+	google.golang.org/genproto v0.0.0-20210121164019-fc48d45331c7
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
