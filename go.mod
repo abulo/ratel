@@ -24,6 +24,7 @@ require (
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.4.3
+	github.com/google/btree v1.0.0
 	github.com/google/uuid v1.1.5
 	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -51,6 +52,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.0+incompatible
 	github.com/ugorji/go/codec v1.2.3
 	github.com/valyala/fasthttp v1.19.0
+	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	go.mongodb.org/mongo-driver v1.4.4
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
