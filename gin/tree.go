@@ -751,23 +751,23 @@ walk: // Outer loop for walking the tree
 				return nil
 			}
 
-				if n.handlers != nil {
-					return ciPath
+			if n.handlers != nil {
+				return ciPath
+			}
+
+			if fixTrailingSlash && len(n.children) == 1 {
+				// No handle found. Check if a handle for this path + a
+				// trailing slash exists
+				n = n.children[0]
+				if n.path == "/" && n.handlers != nil {
+					return append(ciPath, '/')
 				}
+			}
 
-				if fixTrailingSlash && len(n.children) == 1 {
-					// No handle found. Check if a handle for this path + a
-					// trailing slash exists
-					n = n.children[0]
-					if n.path == "/" && n.handlers != nil {
-						return append(ciPath, '/')
-					}
-				}
+			return nil
 
-				return nil
-
-			case catchAll:
-				return append(ciPath, path...)
+		case catchAll:
+			return append(ciPath, path...)
 
 		default:
 			panic("invalid node type")

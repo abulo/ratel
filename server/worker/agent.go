@@ -4,20 +4,19 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
-	"log"
 	"net"
 	"sync"
+
+	"github.com/abulo/ratel/logger"
 )
 
 type Agent struct {
 	sync.Mutex
-
-	net, addr string
-	conn      net.Conn
-	rw        *bufio.ReadWriter
-
+	net    string
+	addr   string
+	conn   net.Conn
+	rw     *bufio.ReadWriter
 	Worker *Worker
 	Req    *Request
 	Res    *Response
@@ -40,13 +39,11 @@ func (a *Agent) Connect() (err error) {
 	a.conn, err = net.Dial(a.net, a.addr)
 	//a.conn, err = net.DialTimeout(a.net, a.addr, 2 * time.Second)
 	if err != nil {
-		log.Println("dial error:", err)
+		logger.Logger.Info("dial error:", err)
 		return err
 	}
 	a.rw = bufio.NewReadWriter(bufio.NewReader(a.conn), bufio.NewWriter(a.conn))
-
 	go a.Work()
-
 	return nil
 }
 
@@ -92,10 +89,8 @@ func (a *Agent) Write() (err error) {
 	var n int
 	buf := a.Req.EncodePack()
 
-	connType := uint32(binary.BigEndian.Uint32(buf[:4]))
-	fmt.Println("######worker agent write connType-", connType)
-	dataType := uint32(binary.BigEndian.Uint32(buf[4:8]))
-	fmt.Println("######worker agent write dataType-", dataType)
+	// connType := uint32(binary.BigEndian.Uint32(buf[:4]))
+	// dataType := uint32(binary.BigEndian.Uint32(buf[4:8]))
 
 	for i := 0; i < len(buf); i += n {
 		if n, err = a.rw.Write(buf); err != nil {
@@ -138,9 +133,6 @@ func (a *Agent) Work() {
 			leftData = data
 			continue
 		} else {
-			fmt.Println("######worker agent read DataType-", resp.DataType)
-			fmt.Println("######worker agent read StrParams-", resp.StrParams)
-
 			leftData = nil
 			resp.Agent = a
 			a.Worker.Resps <- resp

@@ -35,23 +35,23 @@ const (
 
 // QueryBuilder 查询构造器
 type QueryBuilder struct {
-	ctx        context.Context
-	connection Connection
-	table      []string
-	columns    []string
-	where      []w
-	orders     []string
-	groups     []string
-	limit      int64
-	offset     int64
-	distinct   bool
+	ctx         context.Context
+	connection  Connection
+	table       []string
+	columns     []string
+	where       []w
+	orders      []string
+	groups      []string
+	limit       int64
+	offset      int64
+	distinct    bool
 	transaction bool
-	binds      []string
-	joins      []join
-	unions     []union
-	unlimmit   int64
-	unoffset   int64
-	unorders   []string
+	binds       []string
+	joins       []join
+	unions      []union
+	unlimmit    int64
+	unoffset    int64
+	unorders    []string
 
 	args      []interface{}
 	whereArgs []interface{}
