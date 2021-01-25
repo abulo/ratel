@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/util"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -265,18 +264,20 @@ func (sqlRaw Sql) ToString() string {
 			v = "NULL"
 		} else {
 			switch reflect.ValueOf(v).Interface().(type) {
-			case sql.NullString:
-				v = sqlRaw.nullString(v.(sql.NullString))
-			case sql.NullInt64:
-				v = sqlRaw.nullInt64(v.(sql.NullInt64))
-			case sql.NullInt32:
-				v = sqlRaw.nullInt32(v.(sql.NullInt32))
-			case sql.NullFloat64:
-				v = sqlRaw.nullFloat64(v.(sql.NullFloat64))
-			case sql.NullBool:
-				v = sqlRaw.nullBool(v.(sql.NullBool))
-			case sql.NullTime:
-				v = sqlRaw.nullTime(v.(sql.NullTime))
+			case NullString:
+				v = v.(NullString).Result()
+			case NullInt64:
+				v = v.(NullInt64).Result()
+			case NullInt32:
+				v = v.(NullInt32).Result()
+			case NullFloat64:
+				v = v.(NullFloat64).Result()
+			case NullBool:
+				v = v.(NullBool).Result()
+			case NullDateTime:
+				v = v.(NullDateTime).Result()
+			case NullDate:
+				v = v.(NullDate).Result()
 			}
 		}
 		s = convert(s, v)
@@ -305,51 +306,6 @@ func convert(s string, v interface{}) string {
 		}
 	}
 	return strings.Replace(s, "?", fmt.Sprintf("%v", v), 1)
-}
-
-func (sqlRaw Sql) nullTime(s sql.NullTime) interface{} {
-	if s.Valid {
-		return util.Date("Y-m-d H:i:s", s.Time)
-	}
-	return "NULL"
-}
-
-func (sqlRaw Sql) nullBool(s sql.NullBool) interface{} {
-	if s.Valid {
-		if s.Bool {
-			return 1
-		} else {
-			return 0
-		}
-	}
-	return "NULL"
-}
-
-func (sqlRaw Sql) nullFloat64(s sql.NullFloat64) interface{} {
-	if s.Valid {
-		return s.Float64
-	}
-	return "NULL"
-}
-
-func (sqlRaw Sql) nullInt32(s sql.NullInt32) interface{} {
-	if s.Valid {
-		return s.Int32
-	}
-	return "NULL"
-}
-
-func (sqlRaw Sql) nullInt64(s sql.NullInt64) interface{} {
-	if s.Valid {
-		return s.Int64
-	}
-	return "NULL"
-}
-func (sqlRaw Sql) nullString(s sql.NullString) interface{} {
-	if s.Valid {
-		return s.String
-	}
-	return "NULL"
 }
 
 // ToJson sql语句转出json

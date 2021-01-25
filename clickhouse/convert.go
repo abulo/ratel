@@ -1,7 +1,6 @@
 package clickhouse
 
 import (
-	"database/sql"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -107,17 +106,19 @@ func extractTagInfo(st reflect.Value) (tagList map[string]reflect.Value, err err
 			switch v.Interface().(type) {
 			case time.Time:
 				ignore = true
-			case sql.NullTime:
+			case NullDateTime:
 				ignore = true
-			case sql.NullString:
+			case NullString:
 				ignore = true
-			case sql.NullBool:
+			case NullBool:
 				ignore = true
-			case sql.NullInt64:
+			case NullInt64:
 				ignore = true
-			case sql.NullInt32:
+			case NullInt32:
 				ignore = true
-			case sql.NullFloat64:
+			case NullFloat64:
+				ignore = true
+			case NullDate:
 				ignore = true
 			}
 
