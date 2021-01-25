@@ -45,6 +45,7 @@ func (config *Config) URI() string {
 	if !util.Empty(config.LoadBalance) {
 		param = append(param, "alt_hosts="+config.LoadBalance)
 	}
+	param = append(param, "&parseTime=true")
 	return link + "?" + util.Implode("&", param)
 }
 

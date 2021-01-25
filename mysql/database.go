@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abulo/ratel/util"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -308,7 +309,7 @@ func convert(s string, v interface{}) string {
 
 func (sqlRaw Sql) nullTime(s sql.NullTime) interface{} {
 	if s.Valid {
-		return s.Time.Unix()
+		return util.Date("Y-m-d H:i:s", s.Time)
 	}
 	return "NULL"
 }

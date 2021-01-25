@@ -35,7 +35,7 @@ func (config *Config) URI() string {
 		config.Host + ":" +
 		config.Port + ")/" +
 		config.Database + "?charset=" +
-		config.Charset + "&loc=" + time.Local.String()
+		config.Charset + "&loc=" + time.Local.String() + "&parseTime=true"
 }
 
 //connect 数据库连接

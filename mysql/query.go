@@ -424,7 +424,7 @@ func (b *QueryBuilder) getInsertMap(data interface{}) (columns []string, values 
 				}
 			}
 
-			tag := stValue.Type().Field(i).Tag.Get("json")
+			tag := stValue.Type().Field(i).Tag.Get("db")
 			attrList := strings.Split(tag, ",")
 			ignore = false
 
