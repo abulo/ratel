@@ -4,10 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"reflect"
-	"strings"
-	"time"
 
 	"github.com/abulo/ratel/util"
 )
@@ -73,66 +70,66 @@ func (n NullString) Convert() string {
 	return ""
 }
 
-var nullTime, _ = time.Parse(time.RFC3339, "0000-00-00T00:00:00Z00:00")
+//NullDate 空字符串
+type NullDateTime struct {
+	sql.NullString
+}
 
-type NullDateTime struct{ sql.NullTime }
-
-func NewDateTime(t time.Time) NullDateTime {
-	return NullDateTime{sql.NullTime{Time: t, Valid: true}}
+func NewDateTime(s interface{}) NullDateTime {
+	return NullDateTime{sql.NullString{String: util.Date("Y-m-d H:i:s", util.ToTime(s)), Valid: true}}
 }
 
 func NewNullDateTime() NullDateTime {
-	return NullDateTime{sql.NullTime{Time: nullTime, Valid: false}}
+	return NullDateTime{sql.NullString{String: "", Valid: false}}
 }
 
-func (nt NullDateTime) MarshalJSON() ([]byte, error) {
-	if !nt.Valid {
-		return nullJSON, nil
-	}
-	val := fmt.Sprintf("\"%s\"", nt.Time.Format(time.RFC3339))
-	return []byte(val), nil
-}
-
-func (nt *NullDateTime) UnmarshalJSON(b []byte) error {
-	if bytes.Equal(nullJSON, b) {
-		nt.Time = nullTime
-		nt.Valid = false
+func (nt *NullDateTime) Scan(value interface{}) error {
+	if reflect.TypeOf(value) == nil {
+		*nt = NewNullDateTime()
+		return nil
 	} else {
-		s := string(b)
-		s = strings.Trim(s, "\"")
-
-		x, err := time.Parse(time.RFC3339, s)
-		if err != nil {
-			nt.Valid = false
+		var s sql.NullString
+		if err := s.Scan(value); err != nil {
+			return err
+		} else {
+			*nt, err = NewDateTime(s.String), nil
 			return err
 		}
-
-		nt.Time = x
-		nt.Valid = true
 	}
-	return nil
 }
 
-func (n NullDateTime) IsEmpty() bool {
-	return !n.Valid
+func (ns NullDateTime) MarshalJSON() ([]byte, error) {
+	if !ns.Valid {
+		return nullJSON, nil
+	}
+	return json.Marshal(ns.String)
 }
 
-func (n NullDateTime) IsValid() bool {
-	return n.Valid
+func (ns *NullDateTime) UnmarshalJSON(b []byte) error {
+	var err error = nil
+	if bytes.Equal(nullJSON, b) {
+		ns.String = ""
+		ns.Valid = false
+	} else {
+		err = json.Unmarshal(b, &ns.String)
+		ns.Valid = (err == nil)
+	}
+	return err
+}
+
+func (ns NullDateTime) IsEmpty() bool {
+	return !ns.Valid || ns.String == ""
+}
+
+func (ns NullDateTime) IsValid() bool {
+	return ns.Valid
 }
 
 func (ns NullDateTime) Result() interface{} {
 	if ns.Valid {
-		return util.ToString(util.Date("Y-m-d H:i:s", ns.Time))
+		return ns.String
 	}
 	return "NULL"
-}
-
-func (n NullDateTime) Convert() string {
-	if n.Valid {
-		return util.ToString(util.Date("Y-m-d H:i:s", n.Time))
-	}
-	return ""
 }
 
 type NullInt64 struct{ sql.NullInt64 }
@@ -352,8 +349,8 @@ type NullDate struct {
 	sql.NullString
 }
 
-func NewDate(s string) NullDate {
-	return NullDate{sql.NullString{String: s, Valid: true}}
+func NewDate(s interface{}) NullDate {
+	return NullDate{sql.NullString{String: util.Date("Y-m-d", util.ToTime(s)), Valid: true}}
 }
 
 func NewNullDate() NullDate {
@@ -362,14 +359,14 @@ func NewNullDate() NullDate {
 
 func (nt *NullDate) Scan(value interface{}) error {
 	if reflect.TypeOf(value) == nil {
-		*nt = NullDate{sql.NullString{String: "", Valid: false}}
+		*nt = NewNullDate()
 		return nil
 	} else {
 		var s sql.NullString
 		if err := s.Scan(value); err != nil {
 			return err
 		} else {
-			*nt, err = NullDate{sql.NullString{String: s.String, Valid: true}}, nil
+			*nt, err = NewDate(s.String), nil
 			return err
 		}
 	}
