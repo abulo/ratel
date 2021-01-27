@@ -2378,8 +2378,12 @@ func UnixTimeFormatDate(str interface{}) string {
 	return Date("Y-m-d H:i:s", ToTime(ToInt64(str)))
 }
 
-func FormatDate(str interface{}) string {
+func FormatDateTime(str interface{}) string {
 	return Date("Y-m-d H:i:s", ToTime(str))
+}
+
+func FormatDate(str interface{}) string {
+	return Date("Y-m-d", ToTime(str))
 }
 
 //ZhCharToFirstPinyin 将中文转换成小写字母
