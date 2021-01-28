@@ -98,6 +98,20 @@ var errNegativeNotAllowed = errors.New("unable to cast negative value")
 //timeZone 默认时区
 var timeZone *time.Location
 
+//GetHourDiffer 获取相差时间
+func GetHourDiffer(startTime, endTime interface{}) int64 {
+	var hour int64
+	t1 := ToTime(startTime)
+	t2 := ToTime(endTime)
+	if t1.Before(t2) {
+		diff := t2.Unix() - t1.Unix() //
+		hour = diff / 3600
+		return hour
+	} else {
+		return hour
+	}
+}
+
 //GetTimeZone 获取时区
 func GetTimeZone() *time.Location {
 	if timeZone == nil {
