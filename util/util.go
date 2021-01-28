@@ -98,17 +98,37 @@ var errNegativeNotAllowed = errors.New("unable to cast negative value")
 //timeZone 默认时区
 var timeZone *time.Location
 
+//DateTimeParse 时间解析
+func DateTimeParse(st string) (int, error) {
+	var h, m, s int
+	n, err := fmt.Sscanf(st, "%d:%d:%d", &h, &m, &s)
+	if err != nil || n != 3 {
+		return 0, err
+	}
+	return h*3600 + m*60 + s, nil
+}
+
+//FormatDuring 格式化秒
+func FormatDuring(ms interface{}) string {
+	mss := ToInt(ms)
+	days := ToInt(mss / (1000 * 60 * 60 * 24))
+	hours := ToInt((mss % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+	minutes := ToInt((mss % (1000 * 60 * 60)) / (1000 * 60))
+	seconds := ToInt((mss % (1000 * 60)) / 1000)
+	return ToString(days) + "天" + ToString(hours) + "小时" + ToString(minutes) + "分钟" + ToString(seconds) + "秒"
+}
+
 //GetHourDiffer 获取相差时间
 func GetHourDiffer(startTime, endTime interface{}) int64 {
-	var hour int64
+	var s int64
 	t1 := ToTime(startTime)
 	t2 := ToTime(endTime)
 	if t1.Before(t2) {
 		diff := t2.Unix() - t1.Unix() //
-		hour = diff / 3600
-		return hour
+		s = diff
+		return s
 	} else {
-		return hour
+		return s
 	}
 }
 
