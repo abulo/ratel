@@ -158,7 +158,7 @@ func (app *Ratel) GracefulStop(ctx context.Context) (err error) {
 		//stop workers
 		for _, w := range app.workers {
 			func(w worker.Worker) {
-				app.cycle.Run(w.Stop)
+				app.cycle.Run(w.WorkerStop)
 			}(w)
 		}
 
@@ -190,7 +190,7 @@ func (app *Ratel) Stop() (err error) {
 		//stop workers
 		for _, w := range app.workers {
 			func(w worker.Worker) {
-				app.cycle.Run(w.Stop)
+				app.cycle.Run(w.WorkerStop)
 			}(w)
 		}
 		<-app.cycle.Done()
@@ -221,7 +221,7 @@ func (app *Ratel) startWorkers() error {
 	for _, w := range app.workers {
 		w := w
 		eg.Go(func() error {
-			return w.Run()
+			return w.WorkerStart()
 		})
 	}
 	return eg.Wait()
