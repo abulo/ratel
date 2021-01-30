@@ -5,8 +5,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-
-	"github.com/abulo/ratel/logger"
 )
 
 // Cron keeps track of any number of entries, invoking the associated func as
@@ -247,13 +245,13 @@ func (c *Cron) Run() {
 // run the scheduler.. this is private just due to the need to synchronize
 // access to the 'running' state variable.
 func (c *Cron) run() {
-	logger.Logger.Info("start")
+	// logger.Logger.Info("start")
 
 	// Figure out the next activation times for each entry.
 	now := c.now()
 	for _, entry := range c.entries {
 		entry.Next = entry.Schedule.Next(now)
-		logger.Logger.Info("schedule", "now", now, "entry", entry.ID, "next", entry.Next)
+		// logger.Logger.Info("schedule", "now", now, "entry", entry.ID, "next", entry.Next)
 	}
 
 	for {
@@ -273,7 +271,7 @@ func (c *Cron) run() {
 			select {
 			case now = <-timer.C:
 				now = now.In(c.location)
-				logger.Logger.Info("wake", "now", now)
+				// logger.Logger.Info("wake", "now", now)
 
 				// Run every entry whose next time was less than now
 				for _, e := range c.entries {
@@ -283,7 +281,7 @@ func (c *Cron) run() {
 					c.startJob(e.WrappedJob)
 					e.Prev = e.Next
 					e.Next = e.Schedule.Next(now)
-					logger.Logger.Info("run", "now", now, "entry", e.ID, "next", e.Next)
+					// logger.Logger.Info("run", "now", now, "entry", e.ID, "next", e.Next)
 				}
 
 			case newEntry := <-c.add:
@@ -291,7 +289,7 @@ func (c *Cron) run() {
 				now = c.now()
 				newEntry.Next = newEntry.Schedule.Next(now)
 				c.entries = append(c.entries, newEntry)
-				logger.Logger.Info("added", "now", now, "entry", newEntry.ID, "next", newEntry.Next)
+				// logger.Logger.Info("added", "now", now, "entry", newEntry.ID, "next", newEntry.Next)
 
 			case replyChan := <-c.snapshot:
 				replyChan <- c.entrySnapshot()
@@ -299,14 +297,14 @@ func (c *Cron) run() {
 
 			case <-c.stop:
 				timer.Stop()
-				logger.Logger.Info("stop")
+				// logger.Logger.Info("stop")
 				return
 
 			case id := <-c.remove:
 				timer.Stop()
 				now = c.now()
 				c.removeEntry(id)
-				logger.Logger.Info("removed", "entry", id)
+				// logger.Logger.Info("removed", "entry", id)
 			}
 
 			break
