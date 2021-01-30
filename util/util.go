@@ -109,13 +109,28 @@ func DateTimeParse(st string) (int, error) {
 }
 
 //FormatDuring 格式化秒
-func FormatDuring(ms interface{}) string {
-	mss := ToInt(ms)
-	days := ToInt(mss / (1000 * 60 * 60 * 24))
-	hours := ToInt((mss % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-	minutes := ToInt((mss % (1000 * 60 * 60)) / (1000 * 60))
-	seconds := ToInt((mss % (1000 * 60)) / 1000)
-	return ToString(days) + "天" + ToString(hours) + "小时" + ToString(minutes) + "分钟" + ToString(seconds) + "秒"
+func FormatDuring(t time.Time) string {
+	const (
+		Decisecond = 100 * time.Millisecond
+		Day        = 24 * time.Hour
+	)
+	ts := time.Since(t)
+	sign := time.Duration(1)
+	if ts < 0 {
+		sign = -1
+		ts = -ts
+	}
+	ts += +Decisecond / 2
+	d := sign * (ts / Day)
+	ts = ts % Day
+	h := ts / time.Hour
+	ts = ts % time.Hour
+	m := ts / time.Minute
+	ts = ts % time.Minute
+	s := ts / time.Second
+	ts = ts % time.Second
+	f := ts / Decisecond
+	return fmt.Sprintf("%d天%d小时%d分钟%d.%d秒", d, h, m, s, f)
 }
 
 //GetHourDiffer 获取相差时间
