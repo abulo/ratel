@@ -1,4 +1,4 @@
-*
+/*
 Package cron implements a cron spec parser and job runner.
 Import it in your program as:
 	import "github.com/robfig/cron/v3"
