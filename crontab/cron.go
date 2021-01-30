@@ -206,6 +206,10 @@ func (c *Cron) Remove(id EntryID) {
 	}
 }
 
+func (c *Cron) Len() int {
+	return len(c.entries)
+}
+
 func (c *Cron) WorkerStart() error {
 	c.Start()
 	return nil
