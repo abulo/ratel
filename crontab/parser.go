@@ -90,35 +90,35 @@ func (p Parser) Parse(spec string) (Schedule, error) {
 		return nil, fmt.Errorf("empty spec string")
 	}
 
-	// Extract timezone if present
+	// // Extract timezone if present
 	var loc = time.Local
-	if strings.HasPrefix(spec, "TZ=") || strings.HasPrefix(spec, "CRON_TZ=") {
-		var err error
-		i := strings.Index(spec, " ")
-		eq := strings.Index(spec, "=")
-		if loc, err = time.LoadLocation(spec[eq+1 : i]); err != nil {
-			return nil, fmt.Errorf("provided bad location %s: %v", spec[eq+1:i], err)
-		}
-		spec = strings.TrimSpace(spec[i:])
-	}
+	// if strings.HasPrefix(spec, "TZ=") || strings.HasPrefix(spec, "CRON_TZ=") {
+	// 	var err error
+	// 	i := strings.Index(spec, " ")
+	// 	eq := strings.Index(spec, "=")
+	// 	if loc, err = time.LoadLocation(spec[eq+1 : i]); err != nil {
+	// 		return nil, fmt.Errorf("provided bad location %s: %v", spec[eq+1:i], err)
+	// 	}
+	// 	spec = strings.TrimSpace(spec[i:])
+	// }
 
-	// Handle named schedules (descriptors), if configured
-	if strings.HasPrefix(spec, "@") {
-		if p.options&Descriptor == 0 {
-			return nil, fmt.Errorf("parser does not accept descriptors: %v", spec)
-		}
-		return parseDescriptor(spec, loc)
-	}
+	// // Handle named schedules (descriptors), if configured
+	// if strings.HasPrefix(spec, "@") {
+	// 	if p.options&Descriptor == 0 {
+	// 		return nil, fmt.Errorf("parser does not accept descriptors: %v", spec)
+	// 	}
+	// 	return parseDescriptor(spec, loc)
+	// }
 
 	// Split on whitespace.
 	fields := strings.Fields(spec)
 
 	// Validate & fill in any omitted or optional fields
 	var err error
-	fields, err = normalizeFields(fields, p.options)
-	if err != nil {
-		return nil, err
-	}
+	// fields, err = normalizeFields(fields, p.options)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	field := func(field string, r bounds) uint64 {
 		if err != nil {
