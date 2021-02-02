@@ -72,9 +72,9 @@ func (r *Row) ToStruct(st interface{}) error {
 	if r.rs.rs == nil {
 		return r.lastError
 	}
-	if r.transaction {
-		defer r.rs.rs.Close()
-	}
+	// if r.transaction {
+	defer r.rs.rs.Close()
+	// }
 	v := reflect.New(stTypeInd)
 
 	tagList, err := extractTagInfo(v)
@@ -126,9 +126,9 @@ func (r *Rows) ToArray() (data [][]string, err error) {
 		return nil, r.lastError
 	}
 
-	if r.transaction {
-		defer r.rs.Close()
-	}
+	// if r.transaction {
+	defer r.rs.Close()
+	// }
 
 	//获取查询的字段
 	fields, err := r.rs.Columns()
@@ -186,9 +186,9 @@ func (r *Rows) ToInterface() (data []map[string]interface{}, err error) {
 	if r.rs == nil {
 		return nil, r.lastError
 	}
-	if r.transaction {
-		defer r.rs.Close()
-	}
+	// if r.transaction {
+	defer r.rs.Close()
+	// }
 	fields, err := r.rs.Columns()
 
 	if err != nil {
@@ -231,9 +231,9 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 	if r.rs == nil {
 		return nil, r.lastError
 	}
-	if r.transaction {
-		defer r.rs.Close()
-	}
+	// if r.transaction {
+	defer r.rs.Close()
+	// }
 
 	fields, err := r.rs.Columns()
 
@@ -300,9 +300,9 @@ func (r *Rows) ToStruct(st interface{}) error {
 	if r.rs == nil {
 		return r.lastError
 	}
-	if r.transaction {
-		defer r.rs.Close()
-	}
+	// if r.transaction {
+	defer r.rs.Close()
+	// }
 
 	//初始化struct
 	v := reflect.New(stTypeInd.Elem())
