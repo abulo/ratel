@@ -25,7 +25,7 @@ type Config struct {
 //New 新连接
 func New(config *Config) *QueryDb {
 	db := connect(config)
-	return &QueryDb{db: db}
+	return &QueryDb{db: db, config: config}
 }
 
 //URI 构造数据库连接

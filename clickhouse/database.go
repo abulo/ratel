@@ -35,12 +35,14 @@ type Sql struct {
 type QueryDb struct {
 	db      *sql.DB
 	lastsql Sql
+	config  *Config
 }
 
 //QueryTx 事务
 type QueryTx struct {
 	Tx      *sql.Tx
 	lastsql Sql
+	config  *Config
 }
 
 //NewQuery 生成一个新的查询构造器
@@ -57,7 +59,7 @@ func (querydb *QueryDb) Begin() (*QueryTx, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &QueryTx{Tx: tx}, nil
+	return &QueryTx{Tx: tx, config: querydb.config}, nil
 }
 
 //Exec 复用执行语句

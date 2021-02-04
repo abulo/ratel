@@ -65,5 +65,5 @@ func connect(config *Config) *sql.DB {
 //New 新连接
 func New(config *Config) *QueryDb {
 	db := connect(config)
-	return &QueryDb{db: db}
+	return &QueryDb{db: db, config: config}
 }
