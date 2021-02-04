@@ -34,23 +34,22 @@ const (
 
 // QueryBuilder 查询构造器
 type QueryBuilder struct {
-	ctx         context.Context
-	connection  Connection
-	table       []string
-	columns     []string
-	where       []w
-	orders      []string
-	groups      []string
-	limit       int64
-	offset      int64
-	distinct    bool
-	transaction bool
-	binds       []string
-	joins       []join
-	unions      []union
-	unlimmit    int64
-	unoffset    int64
-	unorders    []string
+	ctx        context.Context
+	connection Connection
+	table      []string
+	columns    []string
+	where      []w
+	orders     []string
+	groups     []string
+	limit      int64
+	offset     int64
+	distinct   bool
+	binds      []string
+	joins      []join
+	unions     []union
+	unlimmit   int64
+	unoffset   int64
+	unorders   []string
 
 	args      []interface{}
 	whereArgs []interface{}
@@ -826,9 +825,9 @@ func (query *QueryBuilder) QueryRows(sql string, args ...interface{}) *Rows {
 	rows, err := query.connection.Query(query.ctx, sql, args...)
 	if err != nil {
 		err = NewDBError(err.Error(), query.connection.GetLastSql())
-		return &Rows{rs: nil, lastError: err, transaction: query.transaction}
+		return &Rows{rs: nil, lastError: err}
 	}
-	return &Rows{rs: rows, lastError: err, transaction: query.transaction}
+	return &Rows{rs: rows, lastError: err}
 }
 
 //QueryRowsSQL ...
@@ -848,7 +847,6 @@ func (query *QueryBuilder) QueryRow(sql string, args ...interface{}) *Row {
 	rs := query.QueryRows(sql, args...)
 	r := new(Row)
 	r.rs = rs
-	r.transaction = query.transaction
 	return r
 }
 
@@ -859,7 +857,6 @@ func (query *QueryBuilder) Row() *Row {
 	rs := query.Rows()
 	r := new(Row)
 	r.rs = rs
-	r.transaction = query.transaction
 	return r
 }
 
@@ -888,7 +885,7 @@ func (query *QueryBuilder) Rows() *Rows {
 	rows, err := query.connection.Query(query.ctx, sql, query.args...)
 	if err != nil {
 		err = NewDBError(err.Error(), query.connection.GetLastSql())
-		return &Rows{rs: nil, lastError: err, transaction: query.transaction}
+		return &Rows{rs: nil, lastError: err}
 	}
-	return &Rows{rs: rows, lastError: err, transaction: query.transaction}
+	return &Rows{rs: rows, lastError: err}
 }

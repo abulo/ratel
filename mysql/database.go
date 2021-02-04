@@ -48,7 +48,7 @@ func (querydb *QueryDb) NewQuery(ctx context.Context) *QueryBuilder {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	return &QueryBuilder{connection: querydb, ctx: ctx, transaction: false}
+	return &QueryBuilder{connection: querydb, ctx: ctx}
 }
 
 //Begin 开启一个事务
@@ -91,7 +91,7 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 
 	//添加预处理
 	stmt, err := querydb.db.PrepareContext(ctx, query)
-	defer stmt.Close()
+
 	if err != nil {
 		querydb.db.PingContext(ctx)
 		return res, err
@@ -132,7 +132,7 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 
 	//添加预处理
 	stmt, err := querydb.db.PrepareContext(ctx, query)
-	defer stmt.Close()
+
 	if err != nil {
 		querydb.db.PingContext(ctx)
 		return res, err
@@ -162,7 +162,7 @@ func (querytx *QueryTx) NewQuery(ctx context.Context) *QueryBuilder {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	return &QueryBuilder{connection: querytx, ctx: ctx, transaction: true}
+	return &QueryBuilder{connection: querytx, ctx: ctx}
 }
 
 //Exec 复用执行语句
@@ -198,7 +198,7 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 
 	//添加预处理
 	stmt, err := querytx.Tx.PrepareContext(ctx, query)
-	defer stmt.Close()
+
 	if err != nil {
 		return res, err
 	}
@@ -238,7 +238,7 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 
 	//添加预处理
 	stmt, err := querytx.Tx.PrepareContext(ctx, query)
-	defer stmt.Close()
+
 	if err != nil {
 		return res, err
 	}
