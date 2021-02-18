@@ -45,7 +45,7 @@ require (
 	github.com/prometheus/client_golang v1.9.0
 	github.com/segmentio/kafka-go v0.4.9
 	github.com/shirou/gopsutil v3.21.1+incompatible
-	github.com/sirupsen/logrus v1.7.1
+	github.com/sirupsen/logrus v1.8.0
 	github.com/streadway/amqp v1.0.0
 	github.com/tsuna/gohbase v0.0.0-20201125011725-348991136365
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
