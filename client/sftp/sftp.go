@@ -41,7 +41,7 @@ func (iorp *IOReaderProgress) Read(p []byte) (int, error) {
 }
 
 //New 新建连接
-func (config *Config) New() *Client {
+func (config *Config) New() (*Client, error) {
 	clientConfig := &ssh.ClientConfig{
 		User: config.User,
 		Auth: []ssh.AuthMethod{
@@ -54,18 +54,18 @@ func (config *Config) New() *Client {
 	conn, err := ssh.Dial("tcp", config.Host+":"+config.Port, clientConfig)
 	if err != nil {
 		logger.Logger.Error(err)
-		return nil
+		return nil, err
 	}
 	client, err := sftp.NewClient(conn)
 	if err != nil {
 		logger.Logger.Error(err)
-		return nil
+		return nil, err
 	}
 
 	return &Client{
 		SSHClient:  conn,
 		SFTPClient: client,
-	}
+	}, nil
 }
 
 // DownFile 下载文件到本地
