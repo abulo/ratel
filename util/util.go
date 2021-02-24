@@ -2429,7 +2429,7 @@ func UnixTimeFormatDate(str interface{}) string {
 
 func FormatDateTime(str interface{}) string {
 	if Empty(str) {
-		return "00-00-00 00:00:00"
+		return ""
 	}
 	return Date("Y-m-d H:i:s", ToTime(str))
 }
