@@ -20,6 +20,11 @@ jobs:
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
+    
+    - name: Install linux deps
+      run: |
+          sudo add-apt-repository -y ppa:tonimelisma/ppa
+          sudo apt-get -y install libvips-dev
 
     - name: Get dependencies
       run: |
