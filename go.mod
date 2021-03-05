@@ -31,7 +31,7 @@ require (
 	github.com/h2non/bimg v1.1.5
 	github.com/hashicorp/hcl v1.0.0
 	github.com/imdario/mergo v0.3.11
-	github.com/jlaffaye/ftp v0.0.0-20201112195030-9aae4d151126
+	github.com/jlaffaye/ftp v0.0.0-20210302195756-c3c8c7ac6590
 	github.com/json-iterator/go v1.1.10
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.12
