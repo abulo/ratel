@@ -35,8 +35,8 @@ jobs:
         go mod verify
         go mod why
 
-    - name: Test
-      run: go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./... | grep -v /vendor/ | grep -v /example/)
+    # - name: Test
+      # run: go test -race -coverprofile=coverage.txt -covermode=atomic $(go list ./... | grep -v /vendor/ | grep -v /example/)
 
     - name: Codecov
       uses: codecov/codecov-action@v1.0.6
