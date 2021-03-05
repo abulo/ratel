@@ -74,7 +74,7 @@ func (reg *etcdRegistry) ListServices(ctx context.Context, name string, scheme s
 	for _, kv := range getResp.Kvs {
 		var service server.ServiceInfo
 		if err := json.Unmarshal(kv.Value, &service); err != nil {
-			logger.Logger.Warnf("invalid service", err)
+			logger.Logger.Info("invalid service", err)
 			continue
 		}
 		services = append(services, &service)
