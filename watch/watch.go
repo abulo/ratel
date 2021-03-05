@@ -25,7 +25,7 @@ func AppPath() string {
 
 	dir, err := os.Getwd()
 	if err != nil {
-		Fatalf("不能获取程序执行的目录:", err)
+		Fatalf("不能获取程序执行的目录: [ %s ]", err.Error())
 	}
 	return strings.Replace(dir, "\\", "/", -1)
 

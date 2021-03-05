@@ -811,7 +811,7 @@ func Explode(delimiter, str string) []string {
 
 // Chr chr()
 func Chr(ascii int) string {
-	return string(ascii)
+	return ToString(ascii)
 }
 
 // Ord ord()
