@@ -46,6 +46,7 @@ require (
 	github.com/shirou/gopsutil v3.21.2+incompatible
 	github.com/sirupsen/logrus v1.8.0
 	github.com/streadway/amqp v1.0.0
+	github.com/tklauser/go-sysconf v0.3.4 // indirect
 	github.com/tsuna/gohbase v0.0.0-20201125011725-348991136365
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible
