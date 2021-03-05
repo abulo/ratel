@@ -23,7 +23,13 @@ jobs:
 
     - name: Get dependencies
       run: |
-        go get -v -t -d ./...
+        go mod tidy
+        go mod download
+        go mod graph
+        go mod vendor
+        go mod verify
+        go mod why
+
     - name: Test
       run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
