@@ -1135,3 +1135,8 @@ func (c *Context) Value(key interface{}) interface{} {
 func (c *Context) GetRoute() string {
 	return c.routeName
 }
+
+//Routes 获取所有方法
+func (c *Context) Routes() map[string]string {
+	return c.engine.routes
+}
