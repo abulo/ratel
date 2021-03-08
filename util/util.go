@@ -15,7 +15,6 @@ import (
 	"html"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"math/rand"
@@ -926,7 +925,7 @@ func Md5(str string) string {
 
 // Md5File md5_file()
 func Md5File(path string) (string, error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
@@ -944,7 +943,7 @@ func Sha1(str string) string {
 
 // Sha1File sha1_file()
 func Sha1File(path string) (string, error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
@@ -1673,12 +1672,12 @@ func FileSize(filename string) (int64, error) {
 
 // FilePutContents file_put_contents()
 func FilePutContents(filename string, data string, mode os.FileMode) error {
-	return ioutil.WriteFile(filename, []byte(data), mode)
+	return os.WriteFile(filename, []byte(data), mode)
 }
 
 // FileGetContents file_get_contents()
 func FileGetContents(filename string) (string, error) {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	return string(data), err
 }
 

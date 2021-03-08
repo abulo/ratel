@@ -2,7 +2,7 @@ package watch
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
@@ -202,7 +202,7 @@ var (
 )
 
 func readAppDirectories(directory string, paths *[]string) {
-	fileInfos, err := ioutil.ReadDir(directory)
+	fileInfos, err := os.ReadDir(directory)
 	if err != nil {
 		return
 	}
@@ -210,7 +210,7 @@ func readAppDirectories(directory string, paths *[]string) {
 	useDirectory := false
 	for _, fileInfo := range fileInfos {
 		// fmt.Println(fileInfo.Name())
-		if ok := ignoreDir(fileInfo); ok {
+		if ok := ignoreDirFunc(fileInfo); ok {
 			continue
 		}
 		if fileInfo.IsDir() == true && fileInfo.Name()[0] != '.' {
@@ -226,7 +226,7 @@ func readAppDirectories(directory string, paths *[]string) {
 	return
 }
 
-func ignoreDir(f os.FileInfo) bool {
+func ignoreDirFunc(f fs.DirEntry) bool {
 	ignoredir := cfg.Strings("ignoredir")
 	if len(ignoredir) == 0 {
 		return false
@@ -234,10 +234,8 @@ func ignoreDir(f os.FileInfo) bool {
 	appPath := AppPath()
 	fullpath, _ := filepath.Abs(filepath.Dir(f.Name()))
 	fullpath = filepath.FromSlash(strings.Replace(fullpath+"/"+f.Name(), "\\", "/", -1))
-	// fmt.Println(fullpath)
 	for _, dir := range ignoredir {
 		runFile := filepath.FromSlash(strings.Replace(appPath+"/"+dir, "\\", "/", -1))
-		// fmt.Println(runFile)
 		if ok := strings.HasPrefix(fullpath, runFile); ok {
 			return true
 		}
@@ -245,7 +243,7 @@ func ignoreDir(f os.FileInfo) bool {
 	return false
 }
 
-func ignoreFile(file string) bool {
+func ignoreFileFun(file string) bool {
 	ignorefile := cfg.Strings("ignorefile")
 	if len(ignorefile) == 0 {
 		return false
@@ -292,7 +290,7 @@ func NewWatcher(paths []string, files []string) {
 			case e := <-watcher.Events:
 				isbuild := true
 				// Skip ignored files
-				if ignoreFile(e.Name) {
+				if ignoreFileFun(e.Name) {
 					continue
 				}
 				mt := getFileModTime(e.Name)

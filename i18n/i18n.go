@@ -3,7 +3,6 @@ package i18n
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -313,7 +312,7 @@ func (l *I18n) loadDirFiles() {
 
 	for lang := range l.languages {
 		dirPath := l.langDir + pathSep + lang
-		files, err := ioutil.ReadDir(dirPath)
+		files, err := os.ReadDir(dirPath)
 		if err != nil {
 			panic("read dir fail: " + dirPath + ", error " + err.Error())
 		}

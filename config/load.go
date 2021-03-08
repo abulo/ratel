@@ -3,7 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -84,7 +84,7 @@ func (c *Config) LoadRemote(format, url string) (err error) {
 	}
 
 	// read response content
-	bts, err := ioutil.ReadAll(resp.Body)
+	bts, err := io.ReadAll(resp.Body)
 	if err == nil {
 		// parse file content
 		if err = c.parseSourceCode(format, bts); err != nil {
@@ -257,7 +257,7 @@ func (c *Config) loadFile(file string, loadExist bool) (err error) {
 	defer fd.Close()
 
 	// read file content
-	bts, err := ioutil.ReadAll(fd)
+	bts, err := io.ReadAll(fd)
 	if err == nil {
 		// get format for file ext
 		format := strings.Trim(filepath.Ext(file), ".")

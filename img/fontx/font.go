@@ -2,7 +2,7 @@ package fontx
 
 import (
 	"image/color"
-	"io/ioutil"
+	"os"
 
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
@@ -22,7 +22,7 @@ type TrueTypeFont struct {
 // LoadFont loads a font file and returns *truetype.Font.
 func LoadFont(fontFile string) (*TrueTypeFont, error) {
 	// Read the font data.
-	fontBytes, err := ioutil.ReadFile(fontFile)
+	fontBytes, err := os.ReadFile(fontFile)
 	if err != nil {
 		return nil, err
 	}

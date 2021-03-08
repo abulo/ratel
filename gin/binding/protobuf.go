@@ -5,7 +5,7 @@
 package binding
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/golang/protobuf/proto"
@@ -18,7 +18,7 @@ func (protobufBinding) Name() string {
 }
 
 func (b protobufBinding) Bind(req *http.Request, obj interface{}) error {
-	buf, err := ioutil.ReadAll(req.Body)
+	buf, err := io.ReadAll(req.Body)
 	if err != nil {
 		return err
 	}

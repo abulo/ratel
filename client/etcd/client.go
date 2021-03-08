@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -71,7 +71,7 @@ func newClient(config *Config) *Client {
 		InsecureSkipVerify: false,
 	}
 	if config.CaCert != "" {
-		certBytes, err := ioutil.ReadFile(config.CaCert)
+		certBytes, err := os.ReadFile(config.CaCert)
 		if err != nil {
 			logger.Logger.Panic("parse CaCert failed", err)
 		}

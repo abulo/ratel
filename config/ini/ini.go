@@ -2,7 +2,7 @@ package ini
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -284,7 +284,7 @@ func (c *Ini) loadFile(file string, loadExist bool) (err error) {
 	defer fd.Close()
 
 	// read file content
-	bts, err := ioutil.ReadAll(fd)
+	bts, err := io.ReadAll(fd)
 	if err == nil {
 		err = c.parse(string(bts))
 		if err != nil {

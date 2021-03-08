@@ -1,7 +1,7 @@
 package ftp
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -76,12 +76,12 @@ func (client *Client) DownFile(serverPath, destPath string) error {
 	if err != nil {
 		return err
 	}
-	fileData, err := ioutil.ReadAll(resp)
+	fileData, err := io.ReadAll(resp)
 	if err != nil {
 		return err
 	}
 	resp.Close()
-	return ioutil.WriteFile(destPath, fileData, 0664)
+	return os.WriteFile(destPath, fileData, 0664)
 }
 
 // UploadFile 上传本地文件到服务器
