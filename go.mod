@@ -14,7 +14,7 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/disintegration/imaging v1.6.2
-	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210305160311-265434a3b4ca
+	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210311100734-5d6b0c808457
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
@@ -30,7 +30,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.5
 	github.com/hashicorp/hcl v1.0.0
-	github.com/imdario/mergo v0.3.11
+	github.com/imdario/mergo v0.3.12
 	github.com/jlaffaye/ftp v0.0.0-20210307004419-5d4190119067
 	github.com/json-iterator/go v1.1.10
 	github.com/kr/text v0.2.0 // indirect
@@ -44,7 +44,7 @@ require (
 	github.com/prometheus/client_golang v1.9.0
 	github.com/segmentio/kafka-go v0.4.10
 	github.com/shirou/gopsutil v3.21.2+incompatible
-	github.com/sirupsen/logrus v1.8.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
 	github.com/tklauser/go-sysconf v0.3.4 // indirect
 	github.com/tsuna/gohbase v0.0.0-20201125011725-348991136365
@@ -53,7 +53,7 @@ require (
 	github.com/ugorji/go/codec v1.2.4
 	github.com/valyala/fasthttp v1.22.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	go.mongodb.org/mongo-driver v1.4.6
+	go.mongodb.org/mongo-driver v1.5.0
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
