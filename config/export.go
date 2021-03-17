@@ -5,8 +5,61 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
+
+// MapStruct alias method of the 'Structure'
+// Usage:
+// 	dbInfo := &Db{}
+// 	config.MapStruct("db", dbInfo)
+func MapStruct(key string, dst interface{}) error { return dc.MapStruct(key, dst) }
+
+// MapStruct alias method of the 'Structure'
+func (c *Config) MapStruct(key string, dst interface{}) error {
+	return c.Structure(key, dst)
+}
+
+// BindStruct alias method of the 'Structure'
+func BindStruct(key string, dst interface{}) error { return dc.BindStruct(key, dst) }
+
+// BindStruct alias method of the 'Structure'
+func (c *Config) BindStruct(key string, dst interface{}) error {
+	return c.Structure(key, dst)
+}
+
+// Structure get config data and binding to the dst structure.
+// Usage:
+// 	dbInfo := Db{}
+// 	config.Structure("db", &dbInfo)
+func (c *Config) Structure(key string, dst interface{}) error {
+	var data interface{}
+	if key == "" { // binding all data
+		data = c.data
+	} else { // some data of the config
+		var ok bool
+		data, ok = c.GetValue(key)
+		if !ok {
+			return errNotFound
+		}
+	}
+
+	// err = mapstructure.Decode(data, dst)
+	mapConf := &mapstructure.DecoderConfig{
+		Metadata: nil,
+		Result:   dst,
+		TagName:  c.opts.TagName,
+		// will auto convert string to int/uint
+		WeaklyTypedInput: true,
+	}
+
+	decoder, err := mapstructure.NewDecoder(mapConf)
+	if err != nil {
+		return err
+	}
+
+	return decoder.Decode(data)
+}
 
 // ToJSON string
 func (c *Config) ToJSON() string {
@@ -38,7 +91,7 @@ func (c *Config) DumpTo(out io.Writer, format string) (n int64, err error) {
 
 	format = fixFormat(format)
 	if encoder, ok = c.encoders[format]; !ok {
-		err = errors.New("no exists or no register encoder for the format: " + format)
+		err = errors.New("not exists/register encoder for the format: " + format)
 		return
 	}
 
@@ -54,10 +107,7 @@ func (c *Config) DumpTo(out io.Writer, format string) (n int64, err error) {
 	}
 
 	// write content to out
-	num, err := fmt.Fprintln(out, string(encoded))
-	if err != nil {
-		return
-	}
+	num, _ := fmt.Fprintln(out, string(encoded))
 
 	return int64(num), nil
 }

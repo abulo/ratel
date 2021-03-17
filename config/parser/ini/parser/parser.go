@@ -1,44 +1,14 @@
-/*
-Package parser is a Parser for parse INI format content to golang data
-
-There are example data:
-
-	# comments
-	name = inhere
-	age = 28
-	debug = true
-	hasQuota1 = 'this is val'
-	hasQuota2 = "this is val1"
-	shell = ${SHELL}
-	noEnv = ${NotExist|defValue}
-
-	; array in def section
-	tags[] = a
-	tags[] = b
-	tags[] = c
-
-	; comments
-	[sec1]
-	key = val0
-	some = value
-	stuff = things
-	; array in section
-	types[] = x
-	types[] = y
-
-how to use, please see examples:
-*/
 package parser
 
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
 )
 
 // errSyntax is returned when there is a syntax error in an INI file.

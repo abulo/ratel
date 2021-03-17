@@ -1,4 +1,3 @@
-// Package json use the https://github.com/json-iterator/go for parse json
 package json
 
 import (
@@ -10,8 +9,12 @@ var parser = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // Decoder for json
 var Decoder config.Decoder = func(data []byte, v interface{}) (err error) {
-	s := config.StripJSONComments(string(data))
-	return parser.Unmarshal([]byte(s), v)
+	if config.JSONAllowComments {
+		str := config.StripComments(string(data))
+		return parser.Unmarshal([]byte(str), v)
+	}
+
+	return parser.Unmarshal(data, v)
 }
 
 // Encoder for json

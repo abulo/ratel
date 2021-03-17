@@ -1,10 +1,13 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
+	"text/scanner"
 )
 
 // There are supported config format
@@ -15,6 +18,11 @@ const (
 	JSON = "json"
 	Yaml = "yaml"
 	Toml = "toml"
+
+	// default delimiter
+	defaultDelimiter byte = '.'
+	// default struct tag name for binding data to struct
+	defaultStructTag = "mapstructure"
 )
 
 // internal vars
@@ -49,6 +57,12 @@ type Options struct {
 	Readonly bool
 	// enable config data cache
 	EnableCache bool
+	// parse key, allow find value by key path. eg: 'key.sub' will find `map[key]sub`
+	ParseKey bool
+	// tag name for binding data to struct
+	TagName string
+	// the delimiter char for split key path, if `FindByPath=true`. default is '.'
+	Delimiter byte
 	// default write format
 	DumpFormat string
 	// default input format
@@ -73,6 +87,7 @@ type Config struct {
 
 	// decoders["toml"] = func(blob []byte, v interface{}) (err error){}
 	// decoders["yaml"] = func(blob []byte, v interface{}) (err error){}
+	// drivers map[string]Driver TODO Deprecated decoder and encoder, use driver instead
 	decoders map[string]Decoder
 	encoders map[string]Encoder
 
@@ -90,10 +105,8 @@ type Config struct {
 func New(name string) *Config {
 	return &Config{
 		name: name,
+		opts: newDefaultOption(),
 		data: make(map[string]interface{}),
-
-		// init options
-		opts: &Options{DumpFormat: JSON, ReadFormat: JSON},
 
 		// default add JSON driver
 		encoders: map[string]Encoder{JSON: JSONEncoder},
@@ -105,10 +118,8 @@ func New(name string) *Config {
 func NewEmpty(name string) *Config {
 	return &Config{
 		name: name,
+		opts: newDefaultOption(),
 		data: make(map[string]interface{}),
-
-		// empty options
-		opts: &Options{},
 
 		// don't add any drivers
 		encoders: map[string]Encoder{},
@@ -116,11 +127,14 @@ func NewEmpty(name string) *Config {
 	}
 }
 
+// NewWith create config instance, and you can call some init func
+func NewWith(name string, fn func(c *Config)) *Config {
+	return New(name).With(fn)
+}
+
 // NewWithOptions config instance
 func NewWithOptions(name string, opts ...func(*Options)) *Config {
-	c := New(name)
-	c.WithOptions(opts...)
-	return c
+	return New(name).WithOptions(opts...)
 }
 
 // Default get the default instance
@@ -128,30 +142,42 @@ func Default() *Config {
 	return dc
 }
 
+func newDefaultOption() *Options {
+	return &Options{
+		ParseKey:  true,
+		TagName:   defaultStructTag,
+		Delimiter: defaultDelimiter,
+
+		DumpFormat: JSON,
+		ReadFormat: JSON,
+	}
+}
+
 /*************************************************************
  * config setting
  *************************************************************/
 
 // ParseEnv set parse env
-func ParseEnv(opts *Options) {
-	opts.ParseEnv = true
-}
+func ParseEnv(opts *Options) { opts.ParseEnv = true }
 
 // Readonly set readonly
-func Readonly(opts *Options) {
-	opts.Readonly = true
+func Readonly(opts *Options) { opts.Readonly = true }
+
+// Delimiter set delimiter char
+func Delimiter(sep byte) func(*Options) {
+	return func(opts *Options) {
+		opts.Delimiter = sep
+	}
 }
 
 // EnableCache set readonly
-func EnableCache(opts *Options) {
-	opts.EnableCache = true
-}
+func EnableCache(opts *Options) { opts.EnableCache = true }
 
 // WithOptions with options
 func WithOptions(opts ...func(*Options)) { dc.WithOptions(opts...) }
 
 // WithOptions apply some options
-func (c *Config) WithOptions(opts ...func(*Options)) {
+func (c *Config) WithOptions(opts ...func(*Options)) *Config {
 	if !c.IsEmpty() {
 		panic("config: Cannot set options after data has been loaded")
 	}
@@ -160,6 +186,7 @@ func (c *Config) WithOptions(opts ...func(*Options)) {
 	for _, opt := range opts {
 		opt(c.opts)
 	}
+	return c
 }
 
 // GetOptions get options
@@ -168,6 +195,12 @@ func GetOptions() *Options { return dc.Options() }
 // Options get
 func (c *Config) Options() *Options {
 	return c.opts
+}
+
+// With apply some options
+func (c *Config) With(fn func(c *Config)) *Config {
+	fn(c)
+	return c
 }
 
 // Readonly disable set data to config.
@@ -200,17 +233,23 @@ func (c *Config) HasDecoder(format string) bool {
 }
 
 // SetDecoder add/set a format decoder
+// Deprecated
+// please use driver instead
 func SetDecoder(format string, decoder Decoder) {
 	dc.SetDecoder(format, decoder)
 }
 
 // SetDecoder set decoder
+// Deprecated
+// please use driver instead
 func (c *Config) SetDecoder(format string, decoder Decoder) {
 	format = fixFormat(format)
 	c.decoders[format] = decoder
 }
 
 // SetDecoders set decoders
+// Deprecated
+// please use driver instead
 func (c *Config) SetDecoders(decoders map[string]Decoder) {
 	for format, decoder := range decoders {
 		c.SetDecoder(format, decoder)
@@ -218,17 +257,23 @@ func (c *Config) SetDecoders(decoders map[string]Decoder) {
 }
 
 // SetEncoder set a encoder for the format
+// Deprecated
+// please use driver instead
 func SetEncoder(format string, encoder Encoder) {
 	dc.SetEncoder(format, encoder)
 }
 
 // SetEncoder set a encoder for the format
+// Deprecated
+// please use driver instead
 func (c *Config) SetEncoder(format string, encoder Encoder) {
 	format = fixFormat(format)
 	c.encoders[format] = encoder
 }
 
 // SetEncoders set encoders
+// Deprecated
+// please use driver instead
 func (c *Config) SetEncoders(encoders map[string]Encoder) {
 	for format, encoder := range encoders {
 		c.SetEncoder(format, encoder)
@@ -322,8 +367,16 @@ func (c *Config) addErrorf(format string, a ...interface{}) {
 }
 
 // GetEnv get os ENV value by name
+// Deprecated
+//	please use Getenv() instead
 func GetEnv(name string, defVal ...string) (val string) {
-	name = strings.ToUpper(name)
+	return Getenv(name, defVal...)
+}
+
+// Getenv get os ENV value by name. like os.Getenv, but support default value
+// Notice:
+// - Key is not case sensitive when getting
+func Getenv(name string, defVal ...string) (val string) {
 	if val = os.Getenv(name); val != "" {
 		return
 	}
@@ -334,11 +387,97 @@ func GetEnv(name string, defVal ...string) (val string) {
 	return
 }
 
-// fix yaml format
+// format key
+func formatKey(key, sep string) string {
+	return strings.Trim(strings.TrimSpace(key), sep)
+}
+
+// fix inc/conf/yaml format
 func fixFormat(f string) string {
 	if f == Yml {
 		f = Yaml
 	}
 
+	if f == "inc" {
+		f = Ini
+	}
+
+	// eg nginx config file.
+	if f == "conf" {
+		f = Hcl
+	}
+
 	return f
+}
+
+// `(?s:` enable match multi line
+var jsonMLComments = regexp.MustCompile(`(?s:/\*.*?\*/\s*)`)
+
+// StripComments strip comments for a JSON string
+func StripComments(src string) string {
+	// multi line comments
+	if strings.Contains(src, "/*") {
+		src = jsonMLComments.ReplaceAllString(src, "")
+	}
+
+	// single line comments
+	if !strings.Contains(src, "//") {
+		return strings.TrimSpace(src)
+	}
+
+	var s scanner.Scanner
+
+	s.Init(strings.NewReader(src))
+	s.Filename = "comments"
+	s.Mode ^= scanner.SkipComments // don't skip comments
+
+	buf := new(bytes.Buffer)
+	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
+		txt := s.TokenText()
+		if !strings.HasPrefix(txt, "//") && !strings.HasPrefix(txt, "/*") {
+			buf.WriteString(txt)
+			// } else {
+			// fmt.Printf("%s: %s\n", s.Position, txt)
+		}
+	}
+
+	return buf.String()
+}
+
+var envRegex = regexp.MustCompile(`\${.+?}`)
+
+// EnvValueGetter Env value provider.
+// TIPS: you can custom provide data.
+var EnvValueGetter = func(name string) string {
+	return os.Getenv(name)
+}
+
+// ParseEnvValue parse ENV var value from input string
+func ParseEnvValue(val string) (newVal string) {
+	if strings.Index(val, "${") == -1 {
+		return val
+	}
+
+	var name, def string
+
+	return envRegex.ReplaceAllStringFunc(val, func(eVar string) string {
+		// eVar like "${NotExist|defValue}", first remove "${" and "}", then split it
+		ss := strings.SplitN(eVar[2:len(eVar)-1], "|", 2)
+
+		// with default value. ${NotExist|defValue}
+		if len(ss) == 2 {
+			name, def = strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
+		} else {
+			def = eVar // use raw value
+			name = strings.TrimSpace(ss[0])
+		}
+
+		// get value from ENV
+		// eVal := os.Getenv(name)
+		eVal := EnvValueGetter(name)
+		if eVal == "" {
+			eVal = def
+		}
+		return eVal
+	})
 }

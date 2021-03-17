@@ -1,14 +1,9 @@
-/*
-Package yaml is a driver use YAML format content as config source
+package yamlv3
 
-Usage please see example:
-
-*/
-package yaml
-
+// see https://pkg.go.dev/gopkg.in/yaml.v3
 import (
 	"github.com/abulo/ratel/config"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // Decoder the yaml content decoder

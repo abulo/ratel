@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/abulo/ratel/config/ini"
+	"github.com/abulo/ratel/config/parser/ini"
 	"github.com/pkg/errors"
 )
 

@@ -3,7 +3,7 @@ package ini
 import (
 	"strings"
 
-	"github.com/abulo/ratel/config/ini/parser"
+	"github.com/abulo/ratel/config/parser/ini/parser"
 )
 
 // parse and load data
@@ -57,11 +57,14 @@ func (c *Ini) parseVarReference(key, valStr string, sec Section) string {
 		return valStr
 	}
 
+	varOLen := len(c.opts.VarOpen)
+	varCLen := len(c.opts.VarClose)
+
 	var name string
 	var oldNew []string
 	for _, fVar := range vars {
 		realVal := fVar
-		name = fVar[2 : len(fVar)-2]
+		name = fVar[varOLen : len(fVar)-varCLen]
 
 		if val, ok := sec[name]; ok && key != name {
 			realVal = val

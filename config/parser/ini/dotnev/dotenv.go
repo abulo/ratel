@@ -1,4 +1,3 @@
-// Package dotnev provide load .env data to os ENV
 package dotnev
 
 import (
@@ -95,13 +94,15 @@ func LoadFromMap(kv map[string]string) (err error) {
 }
 
 // Get get os ENV value by name
-//
-// NOTICE: if is windows OS, os.Getenv() Key is not case sensitive
 func Get(name string, defVal ...string) (val string) {
+	if UpperEnvKey {
+		name = strings.ToUpper(name)
+	}
 	if val = loadedData[name]; val != "" {
 		return
 	}
 
+	// NOTICE: if is windows OS, os.Getenv() Key is not case sensitive
 	if val = os.Getenv(name); val != "" {
 		return
 	}
@@ -112,9 +113,24 @@ func Get(name string, defVal ...string) (val string) {
 	return
 }
 
+// Bool get a bool value by key
+func Bool(name string, defVal ...bool) (val bool) {
+	if str := Get(name); str != "" {
+		val, err := strconv.ParseBool(str)
+		if err == nil {
+			return val
+		}
+	}
+
+	if len(defVal) > 0 {
+		val = defVal[0]
+	}
+	return
+}
+
 // Int get a int value by key
 func Int(name string, defVal ...int) (val int) {
-	if str := os.Getenv(name); str != "" {
+	if str := Get(name); str != "" {
 		val, err := strconv.ParseInt(str, 10, 0)
 		if err == nil {
 			return int(val)
