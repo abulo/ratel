@@ -103,7 +103,7 @@ func Init(langDir string, defLang string, languages map[string]string) *I18n {
 // New an i18n instance
 func New(langDir string, defLang string, languages map[string]string) *I18n {
 	return &I18n{
-		data: make(map[string]*ini.Ini, 0),
+		data: make(map[string]*ini.Ini),
 		// language data config
 		langDir:   langDir,
 		languages: languages,
@@ -115,9 +115,9 @@ func New(langDir string, defLang string, languages map[string]string) *I18n {
 // NewEmpty nwe an empty i18n instance
 func NewEmpty() *I18n {
 	return &I18n{
-		data: make(map[string]*ini.Ini, 0),
+		data: make(map[string]*ini.Ini),
 		// init languages
-		languages: make(map[string]string, 0),
+		languages: make(map[string]string),
 	}
 }
 
