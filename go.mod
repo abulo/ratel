@@ -23,7 +23,7 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
-	github.com/golang/protobuf v1.5.1
+	github.com/golang/protobuf v1.5.2
 	github.com/google/btree v1.0.1
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
@@ -50,9 +50,9 @@ require (
 	github.com/tklauser/go-sysconf v0.3.4 // indirect
 	github.com/tsuna/gohbase v0.0.0-20201125011725-348991136365
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
-	github.com/uber/jaeger-lib v2.4.0+incompatible
+	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.4
-	github.com/valyala/fasthttp v1.22.0
+	github.com/valyala/fasthttp v1.23.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	go.mongodb.org/mongo-driver v1.5.0
 	go.uber.org/multierr v1.6.0
