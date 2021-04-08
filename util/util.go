@@ -4259,6 +4259,30 @@ func DebugFormat(i interface{}) string {
 	return res
 }
 
+func ToWeekDay(t interface{}) string {
+	weekday := [7]string{"周日", "周一", "周二", "周三", "周四", "周五", "周六"}
+	now := ToTime(t)
+	var y, m, c, year, month, day uint16
+	year, month, day = ToUint16(Date("Y", now)), ToUint16(Date("m", now)), ToUint16(Date("d", now))
+	if month >= 3 {
+		m = month
+		y = year % 100
+		c = year / 100
+	} else {
+		m = month + 12
+		y = (year - 1) % 100
+		c = (year - 1) / 100
+	}
+	week := y + (y / 4) + (c / 4) - 2*c + ((26 * (m + 1)) / 10) + day - 1
+	if week < 0 {
+		week = 7 - (-week)%7
+	} else {
+		week = week % 7
+	}
+	which_week := int(week)
+	return weekday[which_week]
+}
+
 //Tag 数据标签
 func Tag(i interface{}) string {
 	replacer := strings.NewReplacer(tagPatterns...)
