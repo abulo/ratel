@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/abulo/ratel/gin/internal/bytesconv"
