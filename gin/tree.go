@@ -80,6 +80,16 @@ func longestCommonPrefix(a, b string) int {
 	return i
 }
 
+// addChild will add a child node, keeping wildcards at the end
+func (n *node) addChild(child *node) {
+	if n.wildChild && len(n.children) > 0 {
+		wildcardChild := n.children[len(n.children)-1]
+		n.children = append(n.children[:len(n.children)-1], child, wildcardChild)
+	} else {
+		n.children = append(n.children, child)
+	}
+}
+
 func countParams(path string) uint16 {
 	var n uint16
 	s := bytesconv.StringToBytes(path)
@@ -103,7 +113,7 @@ type node struct {
 	wildChild bool
 	nType     nodeType
 	priority  uint32
-	children  []*node
+	children  []*node // child nodes, at most 1 :param style node at the end of the array
 	handlers  HandlersChain
 	fullPath  string
 	routeName string
@@ -181,36 +191,9 @@ walk:
 		// Make new node a child of this node
 		if i < len(path) {
 			path = path[i:]
-
-			if n.wildChild {
-				parentFullPathIndex += len(n.path)
-				n = n.children[0]
-				n.priority++
-
-				// Check if the wildcard matches
-				if len(path) >= len(n.path) && n.path == path[:len(n.path)] &&
-					// Adding a child to a catchAll is not possible
-					n.nType != catchAll &&
-					// Check for longer wildcard, e.g. :name and :names
-					(len(n.path) >= len(path) || path[len(n.path)] == '/') {
-					continue walk
-				}
-
-				pathSeg := path
-				if n.nType != catchAll {
-					pathSeg = strings.SplitN(path, "/", 2)[0]
-				}
-				prefix := fullPath[:strings.Index(fullPath, pathSeg)] + n.path
-				panic("'" + pathSeg +
-					"' in new path '" + fullPath +
-					"' conflicts with existing wildcard '" + n.path +
-					"' in existing prefix '" + prefix +
-					"'")
-			}
-
 			c := path[0]
 
-			// slash after param
+			// '/' after param
 			if n.nType == param && c == '/' && len(n.children) == 1 {
 				parentFullPathIndex += len(n.path)
 				n = n.children[0]
@@ -229,22 +212,47 @@ walk:
 			}
 
 			// Otherwise insert it
-			if c != ':' && c != '*' {
+			if c != ':' && c != '*' && n.nType != catchAll {
 				// []byte for proper unicode char conversion, see #65
 				n.indices += bytesconv.BytesToString([]byte{c})
 				child := &node{
 					fullPath:  fullPath,
 					routeName: routeName,
 				}
-				n.children = append(n.children, child)
+				n.addChild(child)
 				n.incrementChildPrio(len(n.indices) - 1)
 				n = child
+			} else if n.wildChild {
+				// inserting a wildcard node, need to check if it conflicts with the existing wildcard
+				n = n.children[len(n.children)-1]
+				n.priority++
+
+				// Check if the wildcard matches
+				if len(path) >= len(n.path) && n.path == path[:len(n.path)] &&
+					// Adding a child to a catchAll is not possible
+					n.nType != catchAll &&
+					// Check for longer wildcard, e.g. :name and :names
+					(len(n.path) >= len(path) || path[len(n.path)] == '/') {
+					continue walk
+				}
+
+				// Wildcard conflict
+				pathSeg := path
+				if n.nType != catchAll {
+					pathSeg = strings.SplitN(pathSeg, "/", 2)[0]
+				}
+				prefix := fullPath[:strings.Index(fullPath, pathSeg)] + n.path
+				panic("'" + pathSeg +
+					"' in new path '" + fullPath +
+					"' conflicts with existing wildcard '" + n.path +
+					"' in existing prefix '" + prefix +
+					"'")
 			}
 			n.insertChild(path, routeName, fullPath, handlers)
 			return
 		}
 
-		// Otherwise and handle to current node
+		// Otherwise add handle to current node
 		if n.handlers != nil {
 			panic("handlers are already registered for path '" + fullPath + "'")
 		}
@@ -298,13 +306,6 @@ func (n *node) insertChild(path, routeName string, fullPath string, handlers Han
 			panic("wildcards must be named with a non-empty name in path '" + fullPath + "'")
 		}
 
-		// Check if this node has existing children which would be
-		// unreachable if we insert the wildcard here
-		if len(n.children) > 0 {
-			panic("wildcard segment '" + wildcard +
-				"' conflicts with existing children in path '" + fullPath + "'")
-		}
-
 		if wildcard[0] == ':' { // param
 			if i > 0 {
 				// Insert prefix before the current wildcard
@@ -312,14 +313,14 @@ func (n *node) insertChild(path, routeName string, fullPath string, handlers Han
 				path = path[i:]
 			}
 
-			n.wildChild = true
 			child := &node{
 				nType:     param,
 				path:      wildcard,
 				fullPath:  fullPath,
 				routeName: routeName,
 			}
-			n.children = []*node{child}
+			n.addChild(child)
+			n.wildChild = true
 			n = child
 			n.priority++
 
@@ -333,7 +334,7 @@ func (n *node) insertChild(path, routeName string, fullPath string, handlers Han
 					fullPath:  fullPath,
 					routeName: routeName,
 				}
-				n.children = []*node{child}
+				n.addChild(child)
 				n = child
 				continue
 			}
@@ -368,7 +369,7 @@ func (n *node) insertChild(path, routeName string, fullPath string, handlers Han
 			routeName: routeName,
 		}
 
-		n.children = []*node{child}
+		n.addChild(child)
 		n.indices = string('/')
 		n = child
 		n.priority++
@@ -415,18 +416,18 @@ walk: // Outer loop for walking the tree
 		if len(path) > len(prefix) {
 			if path[:len(prefix)] == prefix {
 				path = path[len(prefix):]
-				// If this node does not have a wildcard (param or catchAll)
-				// child, we can just look up the next child node and continue
-				// to walk down the tree
-				if !n.wildChild {
-					idxc := path[0]
-					for i, c := range []byte(n.indices) {
-						if c == idxc {
-							n = n.children[i]
-							continue walk
-						}
-					}
 
+				// Try all the non-wildcard children first by matching the indices
+				idxc := path[0]
+				for i, c := range []byte(n.indices) {
+					if c == idxc {
+						n = n.children[i]
+						continue walk
+					}
+				}
+
+				// If there is no wildcard pattern, recommend a redirection
+				if !n.wildChild {
 					// Nothing found.
 					// We can recommend to redirect to the same URL without a
 					// trailing slash if a leaf exists for that path.
@@ -435,8 +436,9 @@ walk: // Outer loop for walking the tree
 					return
 				}
 
-				// Handle wildcard child
-				n = n.children[0]
+				// Handle wildcard child, which is always at the end of the array
+				n = n.children[len(n.children)-1]
+
 				switch n.nType {
 				case param:
 					// Find param end (either '/' or path end)
