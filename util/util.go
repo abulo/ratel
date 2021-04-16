@@ -2511,6 +2511,14 @@ func ArrayKeyPluck(data []map[string]string, value, key string) map[string]strin
 	return res
 }
 
+func ArrayMultiPluck(data []map[string]string, key string) map[string]map[string]string {
+	res := make(map[string]map[string]string)
+	for _, v := range data {
+		res[v[key]] = v
+	}
+	return res
+}
+
 // jsonStringToObject attempts to unmarshall a string as JSON into
 // the object passed as pointer.
 func jsonStringToObject(s string, v interface{}) error {

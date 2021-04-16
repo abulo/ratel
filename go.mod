@@ -14,7 +14,7 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/disintegration/imaging v1.6.2
-	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210317102009-a9d74cec0186
+	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210414074309-f7ffd04b8d6a
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
@@ -57,7 +57,7 @@ require (
 	go.mongodb.org/mongo-driver v1.5.1
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0 // indirect
-	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
+	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc
 	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/mod v0.3.1-0.20200828183125-ce943fd02449 // indirect
