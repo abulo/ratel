@@ -32,7 +32,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.10.0
 	github.com/imdario/mergo v0.3.12
 	github.com/jlaffaye/ftp v0.0.0-20210307004419-5d4190119067
-	github.com/json-iterator/go v1.1.10
+	github.com/json-iterator/go v1.1.11
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mitchellh/mapstructure v1.4.1
