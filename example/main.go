@@ -2,9 +2,12 @@ package main
 
 import (
 	"github.com/abulo/ratel"
+	ccc "github.com/abulo/ratel/config"
 	"github.com/abulo/ratel/gin"
+	"github.com/abulo/ratel/gin/multitemplate"
 	"github.com/abulo/ratel/logger"
 	"github.com/abulo/ratel/server/http"
+	"github.com/abulo/ratel/util"
 )
 
 type Engine struct {
@@ -40,6 +43,26 @@ func (eng *Engine) serveHTTP() error {
 	server := config.Build()
 
 	server.Use(gin.Logger(), gin.Recovery())
+
+	//辅助函数
+	server.InitFuncMap()
+	server.AddFuncMap("config", ccc.String)
+	server.AddFuncMap("marshalHtml", util.MarshalHTML)
+	server.AddFuncMap("marshalJs", util.MarshalJS)
+	server.AddFuncMap("static", util.Static)
+	server.AddFuncMap("js", util.JS)
+	server.AddFuncMap("formatDate", util.FormatDate)
+	server.AddFuncMap("formatDateTime", util.FormatDateTime)
+	server.AddFuncMap("inArray", util.InArray)
+	server.AddFuncMap("multiArray", util.MultiArray)
+	server.AddFuncMap("empty", util.Empty)
+	server.AddFuncMap("divide", util.Divide)
+	server.AddFuncMap("add", util.Add)
+	server.AddFuncMap("strReplace", util.StrReplace)
+	server.AddFuncMap("debugFormat", util.DebugFormat)
+	// server.HTMLRender = LoadTemplateFiles("templates", ".html", funcMap)
+	server.HTMLRender = multitemplate.LoadTemplateFiles("/Users/abulo/WorkSpace/golang/src/school-smart/plato/view", ".html", server.FuncMap)
+	// server.LoadHTMLGlob("/Users/abulo/WorkSpace/golang/src/school-smart/plato/view", ".html")
 	server.GET("/ping", "ping", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
 			"status": "7777",
