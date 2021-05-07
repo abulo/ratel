@@ -4,7 +4,8 @@ import (
 	"github.com/abulo/ratel"
 	ccc "github.com/abulo/ratel/config"
 	"github.com/abulo/ratel/gin"
-	"github.com/abulo/ratel/gin/multitemplate"
+
+	// "github.com/abulo/ratel/gin/multitemplate"
 	"github.com/abulo/ratel/logger"
 	"github.com/abulo/ratel/server/http"
 	"github.com/abulo/ratel/util"
@@ -60,9 +61,6 @@ func (eng *Engine) serveHTTP() error {
 	server.AddFuncMap("add", util.Add)
 	server.AddFuncMap("strReplace", util.StrReplace)
 	server.AddFuncMap("debugFormat", util.DebugFormat)
-	// server.HTMLRender = LoadTemplateFiles("templates", ".html", funcMap)
-	server.HTMLRender = multitemplate.LoadTemplateFiles("/Users/abulo/WorkSpace/golang/src/school-smart/plato/view", ".html", server.FuncMap)
-	// server.LoadHTMLGlob("/Users/abulo/WorkSpace/golang/src/school-smart/plato/view", ".html")
 	server.GET("/ping", "ping", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
 			"status": "7777",
