@@ -119,6 +119,11 @@ type node struct {
 	routeName string
 }
 
+type skip struct {
+	path      string
+	paramNode *node
+}
+
 // Increments priority of the given child and reorders if necessary
 func (n *node) incrementChildPrio(pos int) int {
 	cs := n.children
@@ -410,6 +415,8 @@ type nodeValue struct {
 // made if a handle exists with an extra (without the) trailing slash for the
 // given path.
 func (n *node) getValue(path string, params *Params, unescape bool) (value nodeValue) {
+	var skipped *skip
+
 walk: // Outer loop for walking the tree
 	for {
 		prefix := n.path
@@ -421,6 +428,22 @@ walk: // Outer loop for walking the tree
 				idxc := path[0]
 				for i, c := range []byte(n.indices) {
 					if c == idxc {
+						if strings.HasPrefix(n.children[len(n.children)-1].path, ":") {
+							skipped = &skip{
+								path: prefix + path,
+								paramNode: &node{
+									path:      n.path,
+									wildChild: n.wildChild,
+									nType:     n.nType,
+									priority:  n.priority,
+									children:  n.children,
+									handlers:  n.handlers,
+									fullPath:  n.fullPath,
+									routeName: n.routeName,
+								},
+							}
+						}
+
 						n = n.children[i]
 						continue walk
 					}
@@ -554,6 +577,13 @@ walk: // Outer loop for walking the tree
 			}
 
 			return
+		}
+
+		if path != "/" && skipped != nil && strings.HasSuffix(skipped.path, path) {
+			path = skipped.path
+			n = skipped.paramNode
+			skipped = nil
+			continue walk
 		}
 
 		// Nothing found. We can recommend to redirect to the same URL with an
