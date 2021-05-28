@@ -19,7 +19,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-playground/validator/v10 v10.6.1
-	github.com/go-redis/redis/v8 v8.8.3
+	github.com/go-redis/redis/v8 v8.9.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
@@ -34,7 +34,7 @@ require (
 	github.com/jlaffaye/ftp v0.0.0-20210307004419-5d4190119067
 	github.com/json-iterator/go v1.1.11
 	github.com/kr/text v0.2.0 // indirect
-	github.com/mattn/go-isatty v0.0.12
+	github.com/mattn/go-isatty v0.0.13
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/mozillazg/go-pinyin v0.18.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
@@ -48,7 +48,7 @@ require (
 	github.com/streadway/amqp v1.0.0
 	github.com/tklauser/go-sysconf v0.3.4 // indirect
 	github.com/tsuna/gohbase v0.0.0-20201125011725-348991136365
-	github.com/uber/jaeger-client-go v2.29.0+incompatible
+	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.6
 	github.com/valyala/fasthttp v1.25.0
