@@ -14,7 +14,6 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/disintegration/imaging v1.6.2
-	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210519083322-55daf7425ecb
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
@@ -38,12 +37,13 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/mozillazg/go-pinyin v0.18.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/olivere/elastic/v7 v7.0.24
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.0
 	github.com/prometheus/client_golang v1.10.0
 	github.com/segmentio/kafka-go v0.4.16
-	github.com/shirou/gopsutil v3.21.4+incompatible
+	github.com/shirou/gopsutil v3.21.5+incompatible
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
 	github.com/tklauser/go-sysconf v0.3.4 // indirect
@@ -51,8 +51,8 @@ require (
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.6
-	github.com/valyala/fasthttp v1.25.0
-	go.mongodb.org/mongo-driver v1.5.2
+	github.com/valyala/fasthttp v1.26.0
+	go.mongodb.org/mongo-driver v1.5.3
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
