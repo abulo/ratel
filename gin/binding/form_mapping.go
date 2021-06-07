@@ -15,7 +15,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-var errUnknownType = errors.New("unknown type")
+var (
+	errUnknownType = errors.New("unknown type")
+
+	// ErrConvertMapStringSlice can not covert to map[string][]string
+	ErrConvertMapStringSlice = errors.New("can not convert to map slices of strings")
+
+	// ErrConvertToMapString can not convert to map[string]string
+	ErrConvertToMapString = errors.New("can not convert to map of strings")
+)
 
 func mapUri(ptr interface{}, m map[string][]string) error {
 	return mapFormByTag(ptr, m, "uri")
@@ -108,7 +116,7 @@ func mapping(value reflect.Value, field reflect.StructField, setter setter, tag 
 			if sf.PkgPath != "" && !sf.Anonymous { // unexported
 				continue
 			}
-			ok, err := mapping(value.Field(i), tValue.Field(i), setter, tag)
+			ok, err := mapping(value.Field(i), sf, setter, tag)
 			if err != nil {
 				return false, err
 			}
@@ -370,7 +378,7 @@ func setFormMap(ptr interface{}, form map[string][]string) error {
 	if el.Kind() == reflect.Slice {
 		ptrMap, ok := ptr.(map[string][]string)
 		if !ok {
-			return errors.New("cannot convert to map slices of strings")
+			return ErrConvertMapStringSlice
 		}
 		for k, v := range form {
 			ptrMap[k] = v
@@ -381,7 +389,7 @@ func setFormMap(ptr interface{}, form map[string][]string) error {
 
 	ptrMap, ok := ptr.(map[string]string)
 	if !ok {
-		return errors.New("cannot convert to map of strings")
+		return ErrConvertToMapString
 	}
 	for k, v := range form {
 		ptrMap[k] = v[len(v)-1] // pick last
