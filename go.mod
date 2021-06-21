@@ -43,7 +43,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/mozillazg/go-pinyin v0.18.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
-	github.com/olivere/elastic/v7 v7.0.24
+	github.com/olivere/elastic/v7 v7.0.25
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.1
@@ -64,7 +64,7 @@ require (
 	go.mongodb.org/mongo-driver v1.5.3
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.16.0 // indirect
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 	golang.org/x/image v0.0.0-20210607152325-775e3b0c77b9
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/mod v0.3.1-0.20200828183125-ce943fd02449 // indirect
