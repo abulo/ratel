@@ -59,13 +59,13 @@ require (
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.6
-	github.com/valyala/fasthttp v1.26.0
+	github.com/valyala/fasthttp v1.27.0
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	go.mongodb.org/mongo-driver v1.5.3
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
-	golang.org/x/image v0.0.0-20210607152325-775e3b0c77b9
+	golang.org/x/image v0.0.0-20210622092929-e6eecd499c2c
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/mod v0.3.1-0.20200828183125-ce943fd02449 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c

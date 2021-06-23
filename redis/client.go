@@ -58,9 +58,10 @@ const RedisNil = redis.Nil
 
 // Client a struct representing the redis client
 type Client struct {
-	opts      Options
-	client    redis.Cmdable
-	fmtString string
+	opts          Options
+	client        *redis.Client
+	clusterClient *redis.ClusterClient
+	fmtString     string
 }
 
 // NewClient 新客户端
@@ -79,7 +80,7 @@ func NewClient(opts Options) *Client {
 				return nil
 			})
 		}
-		r.client = tc
+		r.clusterClient = tc
 	// 标准客户端也是默认值
 	case ClientNormal:
 		fallthrough
@@ -91,6 +92,7 @@ func NewClient(opts Options) *Client {
 		r.client = tc
 	}
 	r.fmtString = opts.KeyPrefix + "%s"
+
 	return r
 }
 
@@ -123,6 +125,9 @@ func (r *Client) ks(key ...string) []string {
 
 // GetClient 返回客户端
 func (r *Client) GetClient() redis.Cmdable {
+	if r.IsCluster() {
+		return r.clusterClient
+	}
 	return r.client
 }
 
@@ -201,6 +206,9 @@ func (r *Client) MGetByPipeline(ctx context.Context, keys ...string) ([]string, 
 
 // Pipeline 获取管道
 func (r *Client) Pipeline() redis.Pipeliner {
+	if r.IsCluster() {
+		return r.clusterClient.Pipeline()
+	}
 	return r.client.Pipeline()
 }
 
@@ -209,11 +217,17 @@ func (r *Client) Pipelined(ctx context.Context, fn func(redis.Pipeliner) error) 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	return r.Pipelined(ctx, fn)
+	if r.IsCluster() {
+		r.clusterClient.Pipelined(ctx, fn)
+	}
+	return r.client.Pipelined(ctx, fn)
 }
 
 //TxPipeline 获取管道
 func (r *Client) TxPipeline() redis.Pipeliner {
+	if r.IsCluster() {
+		return r.clusterClient.TxPipeline()
+	}
 	return r.client.TxPipeline()
 }
 
@@ -222,7 +236,11 @@ func (r *Client) TxPipelined(ctx context.Context, fn func(redis.Pipeliner) error
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	return r.TxPipelined(ctx, fn)
+
+	if r.IsCluster() {
+		return r.clusterClient.TxPipelined(ctx, fn)
+	}
+	return r.client.TxPipelined(ctx, fn)
 }
 
 //Command 返回有关所有Redis命令的详细信息的Array回复
@@ -230,6 +248,10 @@ func (r *Client) Command(ctx context.Context) *redis.CommandsInfoCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Command(ctx)
+	}
+
 	return r.client.Command(ctx)
 }
 
@@ -238,6 +260,9 @@ func (r *Client) ClientGetName(ctx context.Context) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClientGetName(ctx)
+	}
 	return r.client.ClientGetName(ctx)
 }
 
@@ -245,6 +270,9 @@ func (r *Client) ClientGetName(ctx context.Context) *redis.StringCmd {
 func (r *Client) Echo(ctx context.Context, message interface{}) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Echo(ctx, message)
 	}
 	return r.client.Echo(ctx, message)
 }
@@ -256,6 +284,9 @@ func (r *Client) Ping(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Ping(ctx)
+	}
 	return r.client.Ping(ctx)
 }
 
@@ -263,6 +294,9 @@ func (r *Client) Ping(ctx context.Context) *redis.StatusCmd {
 func (r *Client) Quit(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Quit(ctx)
 	}
 	return r.client.Quit(ctx)
 }
@@ -273,6 +307,9 @@ func (r *Client) Del(ctx context.Context, keys ...string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Del(ctx, r.ks(keys...)...)
+	}
 	return r.client.Del(ctx, r.ks(keys...)...)
 }
 
@@ -280,6 +317,9 @@ func (r *Client) Del(ctx context.Context, keys ...string) *redis.IntCmd {
 func (r *Client) Unlink(ctx context.Context, keys ...string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Unlink(ctx, r.ks(keys...)...)
 	}
 	return r.client.Unlink(ctx, r.ks(keys...)...)
 }
@@ -291,6 +331,9 @@ func (r *Client) Dump(ctx context.Context, key string) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Dump(ctx, r.k(key))
+	}
 	return r.client.Dump(ctx, r.k(key))
 }
 
@@ -299,6 +342,9 @@ func (r *Client) Dump(ctx context.Context, key string) *redis.StringCmd {
 func (r *Client) Exists(ctx context.Context, key ...string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Exists(ctx, r.ks(key...)...)
 	}
 	return r.client.Exists(ctx, r.ks(key...)...)
 }
@@ -310,6 +356,10 @@ func (r *Client) Expire(ctx context.Context, key string, expiration time.Duratio
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+
+	if r.IsCluster() {
+		return r.clusterClient.Expire(ctx, r.k(key), expiration)
+	}
 	return r.client.Expire(ctx, r.k(key), expiration)
 }
 
@@ -319,6 +369,9 @@ func (r *Client) ExpireAt(ctx context.Context, key string, tm time.Time) *redis.
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ExpireAt(ctx, r.k(key), tm)
+	}
 	return r.client.ExpireAt(ctx, r.k(key), tm)
 }
 
@@ -327,6 +380,9 @@ func (r *Client) Keys(ctx context.Context, pattern string) *redis.StringSliceCmd
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Keys(ctx, r.k(pattern))
+	}
 	return r.client.Keys(ctx, r.k(pattern))
 }
 
@@ -334,6 +390,10 @@ func (r *Client) Keys(ctx context.Context, pattern string) *redis.StringSliceCmd
 func (r *Client) Migrate(ctx context.Context, host, port, key string, db int, timeout time.Duration) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+
+	if r.IsCluster() {
+		return r.clusterClient.Migrate(ctx, host, port, r.k(key), db, timeout)
 	}
 	return r.client.Migrate(ctx, host, port, r.k(key), db, timeout)
 }
