@@ -404,6 +404,9 @@ func (r *Client) Move(ctx context.Context, key string, db int) *redis.BoolCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Move(ctx, r.k(key), db)
+	}
 	return r.client.Move(ctx, r.k(key), db)
 }
 
@@ -411,6 +414,9 @@ func (r *Client) Move(ctx context.Context, key string, db int) *redis.BoolCmd {
 func (r *Client) ObjectRefCount(ctx context.Context, key string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ObjectRefCount(ctx, r.k(key))
 	}
 	return r.client.ObjectRefCount(ctx, r.k(key))
 }
@@ -420,6 +426,9 @@ func (r *Client) ObjectEncoding(ctx context.Context, key string) *redis.StringCm
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ObjectEncoding(ctx, r.k(key))
+	}
 	return r.client.ObjectEncoding(ctx, r.k(key))
 }
 
@@ -427,6 +436,9 @@ func (r *Client) ObjectEncoding(ctx context.Context, key string) *redis.StringCm
 func (r *Client) ObjectIdleTime(ctx context.Context, key string) *redis.DurationCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ObjectIdleTime(ctx, r.k(key))
 	}
 	return r.client.ObjectIdleTime(ctx, r.k(key))
 }
@@ -438,6 +450,9 @@ func (r *Client) Persist(ctx context.Context, key string) *redis.BoolCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Persist(ctx, r.k(key))
+	}
 	return r.client.Persist(ctx, r.k(key))
 }
 
@@ -445,6 +460,9 @@ func (r *Client) Persist(ctx context.Context, key string) *redis.BoolCmd {
 func (r *Client) PExpire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.PExpire(ctx, r.k(key), expiration)
 	}
 	return r.client.PExpire(ctx, r.k(key), expiration)
 }
@@ -454,6 +472,9 @@ func (r *Client) PExpire(ctx context.Context, key string, expiration time.Durati
 func (r *Client) PExpireAt(ctx context.Context, key string, tm time.Time) *redis.BoolCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.PExpireAt(ctx, r.k(key), tm)
 	}
 	return r.client.PExpireAt(ctx, r.k(key), tm)
 }
@@ -466,6 +487,9 @@ func (r *Client) PTTL(ctx context.Context, key string) *redis.DurationCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.PTTL(ctx, r.k(key))
+	}
 	return r.client.PTTL(ctx, r.k(key))
 }
 
@@ -473,6 +497,9 @@ func (r *Client) PTTL(ctx context.Context, key string) *redis.DurationCmd {
 func (r *Client) RandomKey(ctx context.Context) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.RandomKey(ctx)
 	}
 	return r.client.RandomKey(ctx)
 }
@@ -484,6 +511,9 @@ func (r *Client) Rename(ctx context.Context, key, newkey string) *redis.StatusCm
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Rename(ctx, r.k(key), r.k(newkey))
+	}
 	return r.client.Rename(ctx, r.k(key), r.k(newkey))
 }
 
@@ -492,6 +522,9 @@ func (r *Client) Rename(ctx context.Context, key, newkey string) *redis.StatusCm
 func (r *Client) RenameNX(ctx context.Context, key, newkey string) *redis.BoolCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.RenameNX(ctx, r.k(key), r.k(newkey))
 	}
 	return r.client.RenameNX(ctx, r.k(key), r.k(newkey))
 }
@@ -503,6 +536,9 @@ func (r *Client) Restore(ctx context.Context, key string, ttl time.Duration, val
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Restore(ctx, r.k(key), ttl, value)
+	}
 	return r.client.Restore(ctx, r.k(key), ttl, value)
 }
 
@@ -510,6 +546,9 @@ func (r *Client) Restore(ctx context.Context, key string, ttl time.Duration, val
 func (r *Client) RestoreReplace(ctx context.Context, key string, ttl time.Duration, value string) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.RestoreReplace(ctx, r.k(key), ttl, value)
 	}
 	return r.client.RestoreReplace(ctx, r.k(key), ttl, value)
 }
@@ -520,6 +559,9 @@ func (r *Client) Sort(ctx context.Context, key string, sort *redis.Sort) *redis.
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Sort(ctx, r.k(key), sort)
+	}
 	return r.client.Sort(ctx, r.k(key), sort)
 }
 
@@ -527,6 +569,9 @@ func (r *Client) Sort(ctx context.Context, key string, sort *redis.Sort) *redis.
 func (r *Client) SortStore(ctx context.Context, key, store string, sort *redis.Sort) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SortStore(ctx, r.k(key), store, sort)
 	}
 	return r.client.SortStore(ctx, r.k(key), store, sort)
 }
@@ -536,6 +581,9 @@ func (r *Client) SortInterfaces(ctx context.Context, key string, sort *redis.Sor
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SortInterfaces(ctx, r.k(key), sort)
+	}
 	return r.client.SortInterfaces(ctx, r.k(key), sort)
 }
 
@@ -543,6 +591,9 @@ func (r *Client) SortInterfaces(ctx context.Context, key string, sort *redis.Sor
 func (r *Client) Touch(ctx context.Context, keys ...string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Touch(ctx, r.ks(keys...)...)
 	}
 	return r.client.Touch(ctx, r.ks(keys...)...)
 }
@@ -555,6 +606,9 @@ func (r *Client) TTL(ctx context.Context, key string) *redis.DurationCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.TTL(ctx, r.k(key))
+	}
 	return r.client.TTL(ctx, r.k(key))
 }
 
@@ -562,6 +616,9 @@ func (r *Client) TTL(ctx context.Context, key string) *redis.DurationCmd {
 func (r *Client) Type(ctx context.Context, key string) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Type(ctx, r.k(key))
 	}
 	return r.client.Type(ctx, r.k(key))
 }
@@ -571,6 +628,9 @@ func (r *Client) Scan(ctx context.Context, cursor uint64, match string, count in
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Scan(ctx, cursor, r.k(match), count)
+	}
 	return r.client.Scan(ctx, cursor, r.k(match), count)
 }
 
@@ -578,6 +638,9 @@ func (r *Client) Scan(ctx context.Context, cursor uint64, match string, count in
 func (r *Client) SScan(ctx context.Context, key string, cursor uint64, match string, count int64) *redis.ScanCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SScan(ctx, r.k(key), cursor, match, count)
 	}
 	return r.client.SScan(ctx, r.k(key), cursor, match, count)
 }
@@ -587,6 +650,9 @@ func (r *Client) HScan(ctx context.Context, key string, cursor uint64, match str
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.HScan(ctx, r.k(key), cursor, match, count)
+	}
 	return r.client.HScan(ctx, r.k(key), cursor, match, count)
 }
 
@@ -594,6 +660,9 @@ func (r *Client) HScan(ctx context.Context, key string, cursor uint64, match str
 func (r *Client) ZScan(ctx context.Context, key string, cursor uint64, match string, count int64) *redis.ScanCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZScan(ctx, r.k(key), cursor, match, count)
 	}
 	return r.client.ZScan(ctx, r.k(key), cursor, match, count)
 }
@@ -603,6 +672,9 @@ func (r *Client) ZScan(ctx context.Context, key string, cursor uint64, match str
 func (r *Client) Append(ctx context.Context, key, value string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Append(ctx, r.k(key), value)
 	}
 	return r.client.Append(ctx, r.k(key), value)
 }
@@ -615,6 +687,9 @@ func (r *Client) BitCount(ctx context.Context, key string, bitCount *redis.BitCo
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.BitCount(ctx, r.k(key), bitCount)
+	}
 	return r.client.BitCount(ctx, r.k(key), bitCount)
 }
 
@@ -622,6 +697,9 @@ func (r *Client) BitCount(ctx context.Context, key string, bitCount *redis.BitCo
 func (r *Client) BitOpAnd(ctx context.Context, destKey string, keys ...string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.BitOpAnd(ctx, r.k(destKey), r.ks(keys...)...)
 	}
 	return r.client.BitOpAnd(ctx, r.k(destKey), r.ks(keys...)...)
 }
@@ -631,6 +709,9 @@ func (r *Client) BitOpOr(ctx context.Context, destKey string, keys ...string) *r
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.BitOpOr(ctx, r.k(destKey), r.ks(keys...)...)
+	}
 	return r.client.BitOpOr(ctx, r.k(destKey), r.ks(keys...)...)
 }
 
@@ -638,6 +719,9 @@ func (r *Client) BitOpOr(ctx context.Context, destKey string, keys ...string) *r
 func (r *Client) BitOpXor(ctx context.Context, destKey string, keys ...string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.BitOpXor(ctx, r.k(destKey), r.ks(keys...)...)
 	}
 	return r.client.BitOpXor(ctx, r.k(destKey), r.ks(keys...)...)
 }
@@ -647,6 +731,9 @@ func (r *Client) BitOpNot(ctx context.Context, destKey string, key string) *redi
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.BitOpXor(ctx, r.k(destKey), r.k(key))
+	}
 	return r.client.BitOpXor(ctx, r.k(destKey), r.k(key))
 }
 
@@ -655,6 +742,9 @@ func (r *Client) BitPos(ctx context.Context, key string, bit int64, pos ...int64
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.BitPos(ctx, r.k(key), bit, pos...)
+	}
 	return r.client.BitPos(ctx, r.k(key), bit, pos...)
 }
 
@@ -662,6 +752,9 @@ func (r *Client) BitPos(ctx context.Context, key string, bit int64, pos ...int64
 func (r *Client) BitField(ctx context.Context, key string, args ...interface{}) *redis.IntSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.BitField(ctx, r.k(key), args...)
 	}
 	return r.client.BitField(ctx, r.k(key), args...)
 }
@@ -676,6 +769,9 @@ func (r *Client) Decr(ctx context.Context, key string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Decr(ctx, r.k(key))
+	}
 	return r.client.Decr(ctx, r.k(key))
 }
 
@@ -689,6 +785,9 @@ func (r *Client) DecrBy(ctx context.Context, key string, value int64) *redis.Int
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.DecrBy(ctx, r.k(key), value)
+	}
 	return r.client.DecrBy(ctx, r.k(key), value)
 }
 
@@ -701,6 +800,9 @@ func (r *Client) Get(ctx context.Context, key string) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Get(ctx, r.k(key))
+	}
 	return r.client.Get(ctx, r.k(key))
 }
 
@@ -710,6 +812,9 @@ func (r *Client) Get(ctx context.Context, key string) *redis.StringCmd {
 func (r *Client) GetBit(ctx context.Context, key string, offset int64) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.GetBit(ctx, r.k(key), offset)
 	}
 	return r.client.GetBit(ctx, r.k(key), offset)
 }
@@ -722,6 +827,9 @@ func (r *Client) GetRange(ctx context.Context, key string, start, end int64) *re
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.GetRange(ctx, r.k(key), start, end)
+	}
 	return r.client.GetRange(ctx, r.k(key), start, end)
 }
 
@@ -732,6 +840,9 @@ func (r *Client) GetRange(ctx context.Context, key string, start, end int64) *re
 func (r *Client) GetSet(ctx context.Context, key string, value interface{}) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.GetSet(ctx, r.k(key), value)
 	}
 	return r.client.GetSet(ctx, r.k(key), value)
 }
@@ -744,6 +855,9 @@ func (r *Client) GetSet(ctx context.Context, key string, value interface{}) *red
 func (r *Client) Incr(ctx context.Context, key string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Incr(ctx, r.k(key))
 	}
 	return r.client.Incr(ctx, r.k(key))
 }
@@ -758,6 +872,9 @@ func (r *Client) IncrBy(ctx context.Context, key string, value int64) *redis.Int
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.IncrBy(ctx, r.k(key), value)
+	}
 	return r.client.IncrBy(ctx, r.k(key), value)
 }
 
@@ -767,6 +884,9 @@ func (r *Client) IncrBy(ctx context.Context, key string, value int64) *redis.Int
 func (r *Client) IncrByFloat(ctx context.Context, key string, value float64) *redis.FloatCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.IncrByFloat(ctx, r.k(key), value)
 	}
 	return r.client.IncrByFloat(ctx, r.k(key), value)
 }
@@ -778,6 +898,9 @@ func (r *Client) MGet(ctx context.Context, keys ...string) *redis.SliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.MGet(ctx, r.ks(keys...)...)
+	}
 	return r.client.MGet(ctx, r.ks(keys...)...)
 }
 
@@ -785,6 +908,9 @@ func (r *Client) MGet(ctx context.Context, keys ...string) *redis.SliceCmd {
 func (r *Client) MSet(ctx context.Context, values ...interface{}) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.MSet(ctx, values...)
 	}
 	return r.client.MSet(ctx, values...)
 }
@@ -796,6 +922,9 @@ func (r *Client) MSetNX(ctx context.Context, values ...interface{}) *redis.BoolC
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.MSetNX(ctx, values...)
+	}
 	return r.client.MSetNX(ctx, values...)
 }
 
@@ -805,6 +934,9 @@ func (r *Client) MSetNX(ctx context.Context, values ...interface{}) *redis.BoolC
 func (r *Client) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Set(ctx, r.k(key), value, expiration)
 	}
 	return r.client.Set(ctx, r.k(key), value, expiration)
 }
@@ -818,6 +950,9 @@ func (r *Client) SetBit(ctx context.Context, key string, offset int64, value int
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SetBit(ctx, r.k(key), offset, value)
+	}
 	return r.client.SetBit(ctx, r.k(key), offset, value)
 }
 
@@ -828,6 +963,9 @@ func (r *Client) SetNX(ctx context.Context, key string, value interface{}, expir
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SetNX(ctx, r.k(key), value, expiration)
+	}
 	return r.client.SetNX(ctx, r.k(key), value, expiration)
 }
 
@@ -835,6 +973,9 @@ func (r *Client) SetNX(ctx context.Context, key string, value interface{}, expir
 func (r *Client) SetXX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SetXX(ctx, r.k(key), value, expiration)
 	}
 	return r.client.SetXX(ctx, r.k(key), value, expiration)
 }
@@ -845,6 +986,9 @@ func (r *Client) SetRange(ctx context.Context, key string, offset int64, value s
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SetRange(ctx, r.k(key), offset, value)
+	}
 	return r.client.SetRange(ctx, r.k(key), offset, value)
 }
 
@@ -854,6 +998,9 @@ func (r *Client) StrLen(ctx context.Context, key string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.StrLen(ctx, r.k(key))
+	}
 	return r.client.StrLen(ctx, r.k(key))
 }
 
@@ -861,6 +1008,9 @@ func (r *Client) StrLen(ctx context.Context, key string) *redis.IntCmd {
 func (r *Client) HDel(ctx context.Context, key string, fields ...string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.HDel(ctx, r.k(key), fields...)
 	}
 	return r.client.HDel(ctx, r.k(key), fields...)
 }
@@ -870,6 +1020,9 @@ func (r *Client) HExists(ctx context.Context, key, field string) *redis.BoolCmd 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.HExists(ctx, r.k(key), field)
+	}
 	return r.client.HExists(ctx, r.k(key), field)
 }
 
@@ -877,6 +1030,9 @@ func (r *Client) HExists(ctx context.Context, key, field string) *redis.BoolCmd 
 func (r *Client) HGet(ctx context.Context, key, field string) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.HGet(ctx, r.k(key), field)
 	}
 	return r.client.HGet(ctx, r.k(key), field)
 }
@@ -886,6 +1042,9 @@ func (r *Client) HGet(ctx context.Context, key, field string) *redis.StringCmd {
 func (r *Client) HGetAll(ctx context.Context, key string) *redis.StringStringMapCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.HGetAll(ctx, r.k(key))
 	}
 	return r.client.HGetAll(ctx, r.k(key))
 }
@@ -900,6 +1059,9 @@ func (r *Client) HIncrBy(ctx context.Context, key, field string, incr int64) *re
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.HIncrBy(ctx, r.k(key), field, incr)
+	}
 	return r.client.HIncrBy(ctx, r.k(key), field, incr)
 }
 
@@ -910,6 +1072,9 @@ func (r *Client) HIncrByFloat(ctx context.Context, key, field string, incr float
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.HIncrByFloat(ctx, r.k(key), field, incr)
+	}
 	return r.client.HIncrByFloat(ctx, r.k(key), field, incr)
 }
 
@@ -918,6 +1083,9 @@ func (r *Client) HKeys(ctx context.Context, key string) *redis.StringSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.HKeys(ctx, r.k(key))
+	}
 	return r.client.HKeys(ctx, r.k(key))
 }
 
@@ -925,6 +1093,9 @@ func (r *Client) HKeys(ctx context.Context, key string) *redis.StringSliceCmd {
 func (r *Client) HLen(ctx context.Context, key string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.HLen(ctx, r.k(key))
 	}
 	return r.client.HLen(ctx, r.k(key))
 }
@@ -936,6 +1107,9 @@ func (r *Client) HMGet(ctx context.Context, key string, fields ...string) *redis
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.HMGet(ctx, r.k(key), fields...)
+	}
 	return r.client.HMGet(ctx, r.k(key), fields...)
 }
 
@@ -945,6 +1119,9 @@ func (r *Client) HMGet(ctx context.Context, key string, fields ...string) *redis
 func (r *Client) HSet(ctx context.Context, key string, value ...interface{}) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.HSet(ctx, r.k(key), value...)
 	}
 	return r.client.HSet(ctx, r.k(key), value...)
 }
@@ -956,6 +1133,9 @@ func (r *Client) HMSet(ctx context.Context, key string, value ...interface{}) *r
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.HMSet(ctx, r.k(key), value...)
+	}
 	return r.client.HMSet(ctx, r.k(key), value...)
 }
 
@@ -966,6 +1146,9 @@ func (r *Client) HSetNX(ctx context.Context, key, field string, value interface{
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.HSetNX(ctx, r.k(key), field, value)
+	}
 	return r.client.HSetNX(ctx, r.k(key), field, value)
 }
 
@@ -973,6 +1156,9 @@ func (r *Client) HSetNX(ctx context.Context, key, field string, value interface{
 func (r *Client) HVals(ctx context.Context, key string) *redis.StringSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.HVals(ctx, r.k(key))
 	}
 	return r.client.HVals(ctx, r.k(key))
 }
@@ -984,6 +1170,9 @@ func (r *Client) BLPop(ctx context.Context, timeout time.Duration, keys ...strin
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.BLPop(ctx, timeout, r.ks(keys...)...)
+	}
 	return r.client.BLPop(ctx, timeout, r.ks(keys...)...)
 }
 
@@ -992,6 +1181,9 @@ func (r *Client) BLPop(ctx context.Context, timeout time.Duration, keys ...strin
 func (r *Client) BRPopLPush(ctx context.Context, source, destination string, timeout time.Duration) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.BRPopLPush(ctx, r.k(source), r.k(destination), timeout)
 	}
 	return r.client.BRPopLPush(ctx, r.k(source), r.k(destination), timeout)
 }
@@ -1004,6 +1196,9 @@ func (r *Client) LIndex(ctx context.Context, key string, index int64) *redis.Str
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.LIndex(ctx, r.k(key), index)
+	}
 	return r.client.LIndex(ctx, r.k(key), index)
 }
 
@@ -1015,6 +1210,9 @@ func (r *Client) LInsert(ctx context.Context, key, op string, pivot, value inter
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.LInsert(ctx, r.k(key), op, pivot, value)
+	}
 	return r.client.LInsert(ctx, r.k(key), op, pivot, value)
 }
 
@@ -1023,6 +1221,9 @@ func (r *Client) LInsertAfter(ctx context.Context, key string, pivot, value inte
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.LInsertAfter(ctx, r.k(key), pivot, value)
+	}
 	return r.client.LInsertAfter(ctx, r.k(key), pivot, value)
 }
 
@@ -1030,6 +1231,9 @@ func (r *Client) LInsertAfter(ctx context.Context, key string, pivot, value inte
 func (r *Client) LInsertBefore(ctx context.Context, key string, pivot, value interface{}) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.LInsertBefore(ctx, r.k(key), pivot, value)
 	}
 	return r.client.LInsertBefore(ctx, r.k(key), pivot, value)
 }
@@ -1041,6 +1245,9 @@ func (r *Client) LLen(ctx context.Context, key string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.LLen(ctx, r.k(key))
+	}
 	return r.client.LLen(ctx, r.k(key))
 }
 
@@ -1048,6 +1255,9 @@ func (r *Client) LLen(ctx context.Context, key string) *redis.IntCmd {
 func (r *Client) LPop(ctx context.Context, key string) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.LPop(ctx, r.k(key))
 	}
 	return r.client.LPop(ctx, r.k(key))
 }
@@ -1060,6 +1270,9 @@ func (r *Client) LPush(ctx context.Context, key string, values ...interface{}) *
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.LPush(ctx, r.k(key), values...)
+	}
 	return r.client.LPush(ctx, r.k(key), values...)
 }
 
@@ -1068,6 +1281,9 @@ func (r *Client) LPush(ctx context.Context, key string, values ...interface{}) *
 func (r *Client) LPushX(ctx context.Context, key string, value interface{}) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.LPushX(ctx, r.k(key), value)
 	}
 	return r.client.LPushX(ctx, r.k(key), value)
 }
@@ -1079,6 +1295,9 @@ func (r *Client) LRange(ctx context.Context, key string, start, stop int64) *red
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.LRange(ctx, r.k(key), start, stop)
+	}
 	return r.client.LRange(ctx, r.k(key), start, stop)
 }
 
@@ -1086,6 +1305,9 @@ func (r *Client) LRange(ctx context.Context, key string, start, stop int64) *red
 func (r *Client) LRem(ctx context.Context, key string, count int64, value interface{}) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.LRem(ctx, r.k(key), count, value)
 	}
 	return r.client.LRem(ctx, r.k(key), count, value)
 }
@@ -1096,6 +1318,9 @@ func (r *Client) LRem(ctx context.Context, key string, count int64, value interf
 func (r *Client) LSet(ctx context.Context, key string, index int64, value interface{}) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.LSet(ctx, r.k(key), index, value)
 	}
 	return r.client.LSet(ctx, r.k(key), index, value)
 }
@@ -1109,6 +1334,9 @@ func (r *Client) LTrim(ctx context.Context, key string, start, stop int64) *redi
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.LTrim(ctx, r.k(key), start, stop)
+	}
 	return r.client.LTrim(ctx, r.k(key), start, stop)
 }
 
@@ -1119,6 +1347,9 @@ func (r *Client) LTrim(ctx context.Context, key string, start, stop int64) *redi
 func (r *Client) BRPop(ctx context.Context, timeout time.Duration, keys ...string) *redis.StringSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.BRPop(ctx, timeout, r.ks(keys...)...)
 	}
 	return r.client.BRPop(ctx, timeout, r.ks(keys...)...)
 }
@@ -1133,6 +1364,9 @@ func (r *Client) RPopLPush(ctx context.Context, source, destination string) *red
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.RPopLPush(ctx, r.k(source), r.k(destination))
+	}
 	return r.client.RPopLPush(ctx, r.k(source), r.k(destination))
 }
 
@@ -1144,6 +1378,9 @@ func (r *Client) RPush(ctx context.Context, key string, values ...interface{}) *
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.RPush(ctx, r.k(key), values...)
+	}
 	return r.client.RPush(ctx, r.k(key), values...)
 }
 
@@ -1153,6 +1390,9 @@ func (r *Client) RPushX(ctx context.Context, key string, value interface{}) *red
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.RPushX(ctx, r.k(key), value)
+	}
 	return r.client.RPushX(ctx, r.k(key), value)
 }
 
@@ -1160,6 +1400,9 @@ func (r *Client) RPushX(ctx context.Context, key string, value interface{}) *red
 func (r *Client) RPop(ctx context.Context, key string) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.RPop(ctx, r.k(key))
 	}
 	return r.client.RPop(ctx, r.k(key))
 }
@@ -1171,6 +1414,9 @@ func (r *Client) SAdd(ctx context.Context, key string, members ...interface{}) *
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SAdd(ctx, r.k(key), members...)
+	}
 	return r.client.SAdd(ctx, r.k(key), members...)
 }
 
@@ -1178,6 +1424,9 @@ func (r *Client) SAdd(ctx context.Context, key string, members ...interface{}) *
 func (r *Client) SCard(ctx context.Context, key string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SCard(ctx, r.k(key))
 	}
 	return r.client.SCard(ctx, r.k(key))
 }
@@ -1187,6 +1436,9 @@ func (r *Client) SCard(ctx context.Context, key string) *redis.IntCmd {
 func (r *Client) SDiff(ctx context.Context, keys ...string) *redis.StringSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SDiff(ctx, r.ks(keys...)...)
 	}
 	return r.client.SDiff(ctx, r.ks(keys...)...)
 }
@@ -1198,6 +1450,9 @@ func (r *Client) SDiffStore(ctx context.Context, destination string, keys ...str
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SDiffStore(ctx, r.k(destination), r.ks(keys...)...)
+	}
 	return r.client.SDiffStore(ctx, r.k(destination), r.ks(keys...)...)
 }
 
@@ -1207,6 +1462,9 @@ func (r *Client) SDiffStore(ctx context.Context, destination string, keys ...str
 func (r *Client) SInter(ctx context.Context, keys ...string) *redis.StringSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SInter(ctx, r.ks(keys...)...)
 	}
 	return r.client.SInter(ctx, r.ks(keys...)...)
 }
@@ -1218,6 +1476,9 @@ func (r *Client) SInterStore(ctx context.Context, destination string, keys ...st
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SInterStore(ctx, r.k(destination), r.ks(keys...)...)
+	}
 	return r.client.SInterStore(ctx, r.k(destination), r.ks(keys...)...)
 }
 
@@ -1225,6 +1486,9 @@ func (r *Client) SInterStore(ctx context.Context, destination string, keys ...st
 func (r *Client) SIsMember(ctx context.Context, key string, member interface{}) *redis.BoolCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SIsMember(ctx, r.k(key), member)
 	}
 	return r.client.SIsMember(ctx, r.k(key), member)
 }
@@ -1235,6 +1499,9 @@ func (r *Client) SMembers(ctx context.Context, key string) *redis.StringSliceCmd
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SMembers(ctx, r.k(key))
+	}
 	return r.client.SMembers(ctx, r.k(key))
 }
 
@@ -1242,6 +1509,9 @@ func (r *Client) SMembers(ctx context.Context, key string) *redis.StringSliceCmd
 func (r *Client) SMembersMap(ctx context.Context, key string) *redis.StringStructMapCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SMembersMap(ctx, r.k(key))
 	}
 	return r.client.SMembersMap(ctx, r.k(key))
 }
@@ -1255,6 +1525,9 @@ func (r *Client) SMove(ctx context.Context, source, destination string, member i
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SMove(ctx, r.k(source), r.k(destination), member)
+	}
 	return r.client.SMove(ctx, r.k(source), r.k(destination), member)
 }
 
@@ -1264,6 +1537,9 @@ func (r *Client) SPop(ctx context.Context, key string) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SPop(ctx, r.k(key))
+	}
 	return r.client.SPop(ctx, r.k(key))
 }
 
@@ -1271,6 +1547,9 @@ func (r *Client) SPop(ctx context.Context, key string) *redis.StringCmd {
 func (r *Client) SPopN(ctx context.Context, key string, count int64) *redis.StringSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SPopN(ctx, r.k(key), count)
 	}
 	return r.client.SPopN(ctx, r.k(key), count)
 }
@@ -1284,6 +1563,9 @@ func (r *Client) SRandMember(ctx context.Context, key string) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SRandMember(ctx, r.k(key))
+	}
 	return r.client.SRandMember(ctx, r.k(key))
 }
 
@@ -1291,6 +1573,9 @@ func (r *Client) SRandMember(ctx context.Context, key string) *redis.StringCmd {
 func (r *Client) SRandMemberN(ctx context.Context, key string, count int64) *redis.StringSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SRandMemberN(ctx, r.k(key), count)
 	}
 	return r.client.SRandMemberN(ctx, r.k(key), count)
 }
@@ -1301,6 +1586,9 @@ func (r *Client) SRem(ctx context.Context, key string, members ...interface{}) *
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SRem(ctx, r.k(key), members...)
+	}
 	return r.client.SRem(ctx, r.k(key), members...)
 }
 
@@ -1309,6 +1597,9 @@ func (r *Client) SRem(ctx context.Context, key string, members ...interface{}) *
 func (r *Client) SUnion(ctx context.Context, keys ...string) *redis.StringSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SUnion(ctx, r.ks(keys...)...)
 	}
 	return r.client.SUnion(ctx, r.ks(keys...)...)
 }
@@ -1320,6 +1611,9 @@ func (r *Client) SUnionStore(ctx context.Context, destination string, keys ...st
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.SUnionStore(ctx, r.k(destination), r.ks(keys...)...)
+	}
 	return r.client.SUnionStore(ctx, r.k(destination), r.ks(keys...)...)
 }
 
@@ -1328,6 +1622,9 @@ func (r *Client) XAdd(ctx context.Context, a *redis.XAddArgs) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.XAdd(ctx, a)
+	}
 	return r.client.XAdd(ctx, a)
 }
 
@@ -1335,6 +1632,9 @@ func (r *Client) XAdd(ctx context.Context, a *redis.XAddArgs) *redis.StringCmd {
 func (r *Client) XDel(ctx context.Context, stream string, ids ...string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.XDel(ctx, stream, ids...)
 	}
 	return r.client.XDel(ctx, stream, ids...)
 }
@@ -1345,6 +1645,9 @@ func (r *Client) XLen(ctx context.Context, stream string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.XLen(ctx, stream)
+	}
 	return r.client.XLen(ctx, stream)
 }
 
@@ -1352,6 +1655,9 @@ func (r *Client) XLen(ctx context.Context, stream string) *redis.IntCmd {
 func (r *Client) XRange(ctx context.Context, stream, start, stop string) *redis.XMessageSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.XRange(ctx, stream, start, stop)
 	}
 	return r.client.XRange(ctx, stream, start, stop)
 }
@@ -1361,6 +1667,9 @@ func (r *Client) XRangeN(ctx context.Context, stream, start, stop string, count 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.XRangeN(ctx, stream, start, stop, count)
+	}
 	return r.client.XRangeN(ctx, stream, start, stop, count)
 }
 
@@ -1368,6 +1677,9 @@ func (r *Client) XRangeN(ctx context.Context, stream, start, stop string, count 
 func (r *Client) XRevRange(ctx context.Context, stream string, start, stop string) *redis.XMessageSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.XRevRange(ctx, stream, start, stop)
 	}
 	return r.client.XRevRange(ctx, stream, start, stop)
 }
@@ -1377,6 +1689,9 @@ func (r *Client) XRevRangeN(ctx context.Context, stream string, start, stop stri
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.XRevRangeN(ctx, stream, start, stop, count)
+	}
 	return r.client.XRevRangeN(ctx, stream, start, stop, count)
 }
 
@@ -1384,6 +1699,9 @@ func (r *Client) XRevRangeN(ctx context.Context, stream string, start, stop stri
 func (r *Client) XRead(ctx context.Context, a *redis.XReadArgs) *redis.XStreamSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.XRead(ctx, a)
 	}
 	return r.client.XRead(ctx, a)
 }
@@ -1393,6 +1711,9 @@ func (r *Client) XReadStreams(ctx context.Context, streams ...string) *redis.XSt
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.XReadStreams(ctx, streams...)
+	}
 	return r.client.XReadStreams(ctx, streams...)
 }
 
@@ -1400,6 +1721,9 @@ func (r *Client) XReadStreams(ctx context.Context, streams ...string) *redis.XSt
 func (r *Client) XGroupCreate(ctx context.Context, stream, group, start string) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.XGroupCreate(ctx, stream, group, start)
 	}
 	return r.client.XGroupCreate(ctx, stream, group, start)
 }
@@ -1409,6 +1733,9 @@ func (r *Client) XGroupCreateMkStream(ctx context.Context, stream, group, start 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.XGroupCreateMkStream(ctx, stream, group, start)
+	}
 	return r.client.XGroupCreateMkStream(ctx, stream, group, start)
 }
 
@@ -1416,6 +1743,9 @@ func (r *Client) XGroupCreateMkStream(ctx context.Context, stream, group, start 
 func (r *Client) XGroupSetID(ctx context.Context, stream, group, start string) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.XGroupSetID(ctx, stream, group, start)
 	}
 	return r.client.XGroupSetID(ctx, stream, group, start)
 }
@@ -1425,6 +1755,9 @@ func (r *Client) XGroupDestroy(ctx context.Context, stream, group string) *redis
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.XGroupDestroy(ctx, stream, group)
+	}
 	return r.client.XGroupDestroy(ctx, stream, group)
 }
 
@@ -1432,6 +1765,9 @@ func (r *Client) XGroupDestroy(ctx context.Context, stream, group string) *redis
 func (r *Client) XGroupDelConsumer(ctx context.Context, stream, group, consumer string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.XGroupDelConsumer(ctx, stream, group, consumer)
 	}
 	return r.client.XGroupDelConsumer(ctx, stream, group, consumer)
 }
@@ -1441,6 +1777,9 @@ func (r *Client) XReadGroup(ctx context.Context, a *redis.XReadGroupArgs) *redis
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.XReadGroup(ctx, a)
+	}
 	return r.client.XReadGroup(ctx, a)
 }
 
@@ -1448,6 +1787,9 @@ func (r *Client) XReadGroup(ctx context.Context, a *redis.XReadGroupArgs) *redis
 func (r *Client) XAck(ctx context.Context, stream, group string, ids ...string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.XAck(ctx, stream, group, ids...)
 	}
 	return r.client.XAck(ctx, stream, group, ids...)
 }
@@ -1457,6 +1799,9 @@ func (r *Client) XPending(ctx context.Context, stream, group string) *redis.XPen
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.XPending(ctx, stream, group)
+	}
 	return r.client.XPending(ctx, stream, group)
 }
 
@@ -1464,6 +1809,9 @@ func (r *Client) XPending(ctx context.Context, stream, group string) *redis.XPen
 func (r *Client) XPendingExt(ctx context.Context, a *redis.XPendingExtArgs) *redis.XPendingExtCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.XPendingExt(ctx, a)
 	}
 	return r.client.XPendingExt(ctx, a)
 }
@@ -1473,6 +1821,9 @@ func (r *Client) XClaim(ctx context.Context, a *redis.XClaimArgs) *redis.XMessag
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.XClaim(ctx, a)
+	}
 	return r.client.XClaim(ctx, a)
 }
 
@@ -1480,6 +1831,9 @@ func (r *Client) XClaim(ctx context.Context, a *redis.XClaimArgs) *redis.XMessag
 func (r *Client) XClaimJustID(ctx context.Context, a *redis.XClaimArgs) *redis.StringSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.XClaimJustID(ctx, a)
 	}
 	return r.client.XClaimJustID(ctx, a)
 }
@@ -1489,6 +1843,9 @@ func (r *Client) XTrim(ctx context.Context, key string, maxLen int64) *redis.Int
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.XTrim(ctx, key, maxLen)
+	}
 	return r.client.XTrim(ctx, key, maxLen)
 }
 
@@ -1496,6 +1853,9 @@ func (r *Client) XTrim(ctx context.Context, key string, maxLen int64) *redis.Int
 func (r *Client) XTrimApprox(ctx context.Context, key string, maxLen int64) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.XTrimApprox(ctx, key, maxLen)
 	}
 	return r.client.XTrimApprox(ctx, key, maxLen)
 }
@@ -1505,6 +1865,9 @@ func (r *Client) XInfoGroups(ctx context.Context, key string) *redis.XInfoGroups
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.XInfoGroups(ctx, key)
+	}
 	return r.client.XInfoGroups(ctx, key)
 }
 
@@ -1513,6 +1876,9 @@ func (r *Client) BZPopMax(ctx context.Context, timeout time.Duration, keys ...st
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.BZPopMax(ctx, timeout, r.ks(keys...)...)
+	}
 	return r.client.BZPopMax(ctx, timeout, r.ks(keys...)...)
 }
 
@@ -1520,6 +1886,9 @@ func (r *Client) BZPopMax(ctx context.Context, timeout time.Duration, keys ...st
 func (r *Client) BZPopMin(ctx context.Context, timeout time.Duration, keys ...string) *redis.ZWithKeyCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.BZPopMin(ctx, timeout, r.ks(keys...)...)
 	}
 	return r.client.BZPopMin(ctx, timeout, r.ks(keys...)...)
 }
@@ -1533,6 +1902,9 @@ func (r *Client) ZAdd(ctx context.Context, key string, members ...*redis.Z) *red
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZAdd(ctx, r.k(key), members...)
+	}
 	return r.client.ZAdd(ctx, r.k(key), members...)
 }
 
@@ -1540,6 +1912,9 @@ func (r *Client) ZAdd(ctx context.Context, key string, members ...*redis.Z) *red
 func (r *Client) ZAddNX(ctx context.Context, key string, members ...*redis.Z) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZAddNX(ctx, r.k(key), members...)
 	}
 	return r.client.ZAddNX(ctx, r.k(key), members...)
 }
@@ -1549,6 +1924,9 @@ func (r *Client) ZAddXX(ctx context.Context, key string, members ...*redis.Z) *r
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZAddXX(ctx, r.k(key), members...)
+	}
 	return r.client.ZAddXX(ctx, r.k(key), members...)
 }
 
@@ -1556,6 +1934,9 @@ func (r *Client) ZAddXX(ctx context.Context, key string, members ...*redis.Z) *r
 func (r *Client) ZAddCh(ctx context.Context, key string, members ...*redis.Z) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZAddCh(ctx, r.k(key), members...)
 	}
 	return r.client.ZAddCh(ctx, r.k(key), members...)
 }
@@ -1565,6 +1946,9 @@ func (r *Client) ZAddNXCh(ctx context.Context, key string, members ...*redis.Z) 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZAddNXCh(ctx, r.k(key), members...)
+	}
 	return r.client.ZAddNXCh(ctx, r.k(key), members...)
 }
 
@@ -1572,6 +1956,9 @@ func (r *Client) ZAddNXCh(ctx context.Context, key string, members ...*redis.Z) 
 func (r *Client) ZAddXXCh(ctx context.Context, key string, members ...*redis.Z) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZAddXXCh(ctx, r.k(key), members...)
 	}
 	return r.client.ZAddXXCh(ctx, r.k(key), members...)
 }
@@ -1581,6 +1968,9 @@ func (r *Client) ZIncr(ctx context.Context, key string, member *redis.Z) *redis.
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZIncr(ctx, r.k(key), member)
+	}
 	return r.client.ZIncr(ctx, r.k(key), member)
 }
 
@@ -1588,6 +1978,9 @@ func (r *Client) ZIncr(ctx context.Context, key string, member *redis.Z) *redis.
 func (r *Client) ZIncrNX(ctx context.Context, key string, member *redis.Z) *redis.FloatCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZIncrNX(ctx, r.k(key), member)
 	}
 	return r.client.ZIncrNX(ctx, r.k(key), member)
 }
@@ -1597,6 +1990,9 @@ func (r *Client) ZIncrXX(ctx context.Context, key string, member *redis.Z) *redi
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZIncrXX(ctx, r.k(key), member)
+	}
 	return r.client.ZIncrXX(ctx, r.k(key), member)
 }
 
@@ -1604,6 +2000,9 @@ func (r *Client) ZIncrXX(ctx context.Context, key string, member *redis.Z) *redi
 func (r *Client) ZCard(ctx context.Context, key string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZCard(ctx, r.k(key))
 	}
 	return r.client.ZCard(ctx, r.k(key))
 }
@@ -1614,6 +2013,9 @@ func (r *Client) ZCount(ctx context.Context, key, min, max string) *redis.IntCmd
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZCount(ctx, r.k(key), min, max)
+	}
 	return r.client.ZCount(ctx, r.k(key), min, max)
 }
 
@@ -1621,6 +2023,9 @@ func (r *Client) ZCount(ctx context.Context, key, min, max string) *redis.IntCmd
 func (r *Client) ZLexCount(ctx context.Context, key, min, max string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZLexCount(ctx, r.k(key), min, max)
 	}
 	return r.client.ZLexCount(ctx, r.k(key), min, max)
 }
@@ -1634,6 +2039,9 @@ func (r *Client) ZIncrBy(ctx context.Context, key string, increment float64, mem
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZIncrBy(ctx, r.k(key), increment, member)
+	}
 	return r.client.ZIncrBy(ctx, r.k(key), increment, member)
 }
 
@@ -1644,6 +2052,9 @@ func (r *Client) ZInterStore(ctx context.Context, key string, store *redis.ZStor
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZInterStore(ctx, r.k(key), store)
+	}
 	return r.client.ZInterStore(ctx, r.k(key), store)
 }
 
@@ -1652,6 +2063,9 @@ func (r *Client) ZPopMax(ctx context.Context, key string, count ...int64) *redis
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZPopMax(ctx, r.k(key), count...)
+	}
 	return r.client.ZPopMax(ctx, r.k(key), count...)
 }
 
@@ -1659,6 +2073,9 @@ func (r *Client) ZPopMax(ctx context.Context, key string, count ...int64) *redis
 func (r *Client) ZPopMin(ctx context.Context, key string, count ...int64) *redis.ZSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZPopMin(ctx, r.k(key), count...)
 	}
 	return r.client.ZPopMin(ctx, r.k(key), count...)
 }
@@ -1669,6 +2086,9 @@ func (r *Client) ZRange(ctx context.Context, key string, start, stop int64) *red
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRange(ctx, r.k(key), start, stop)
+	}
 	return r.client.ZRange(ctx, r.k(key), start, stop)
 }
 
@@ -1676,6 +2096,9 @@ func (r *Client) ZRange(ctx context.Context, key string, start, stop int64) *red
 func (r *Client) ZRangeWithScores(ctx context.Context, key string, start, stop int64) *redis.ZSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRangeWithScores(ctx, r.k(key), start, stop)
 	}
 	return r.client.ZRangeWithScores(ctx, r.k(key), start, stop)
 }
@@ -1685,6 +2108,9 @@ func (r *Client) ZRangeByScore(ctx context.Context, key string, opt *redis.ZRang
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRangeByScore(ctx, r.k(key), opt)
+	}
 	return r.client.ZRangeByScore(ctx, r.k(key), opt)
 }
 
@@ -1693,6 +2119,9 @@ func (r *Client) ZRangeByLex(ctx context.Context, key string, opt *redis.ZRangeB
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRangeByLex(ctx, r.k(key), opt)
+	}
 	return r.client.ZRangeByLex(ctx, r.k(key), opt)
 }
 
@@ -1700,6 +2129,9 @@ func (r *Client) ZRangeByLex(ctx context.Context, key string, opt *redis.ZRangeB
 func (r *Client) ZRangeByScoreWithScores(ctx context.Context, key string, opt *redis.ZRangeBy) *redis.ZSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRangeByScoreWithScores(ctx, r.k(key), opt)
 	}
 	return r.client.ZRangeByScoreWithScores(ctx, r.k(key), opt)
 }
@@ -1711,6 +2143,9 @@ func (r *Client) ZRank(ctx context.Context, key, member string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRank(ctx, r.k(key), member)
+	}
 	return r.client.ZRank(ctx, r.k(key), member)
 }
 
@@ -1719,6 +2154,9 @@ func (r *Client) ZRank(ctx context.Context, key, member string) *redis.IntCmd {
 func (r *Client) ZRem(ctx context.Context, key string, members ...interface{}) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRem(ctx, r.k(key), members...)
 	}
 	return r.client.ZRem(ctx, r.k(key), members...)
 }
@@ -1731,6 +2169,9 @@ func (r *Client) ZRemRangeByRank(ctx context.Context, key string, start, stop in
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRemRangeByRank(ctx, r.k(key), start, stop)
+	}
 	return r.client.ZRemRangeByRank(ctx, r.k(key), start, stop)
 }
 
@@ -1740,6 +2181,9 @@ func (r *Client) ZRemRangeByScore(ctx context.Context, key, min, max string) *re
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRemRangeByScore(ctx, r.k(key), min, max)
+	}
 	return r.client.ZRemRangeByScore(ctx, r.k(key), min, max)
 }
 
@@ -1747,6 +2191,9 @@ func (r *Client) ZRemRangeByScore(ctx context.Context, key, min, max string) *re
 func (r *Client) ZRemRangeByLex(ctx context.Context, key, min, max string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRemRangeByLex(ctx, r.k(key), min, max)
 	}
 	return r.client.ZRemRangeByLex(ctx, r.k(key), min, max)
 }
@@ -1759,6 +2206,9 @@ func (r *Client) ZRevRange(ctx context.Context, key string, start, stop int64) *
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRevRange(ctx, r.k(key), start, stop)
+	}
 	return r.client.ZRevRange(ctx, r.k(key), start, stop)
 }
 
@@ -1766,6 +2216,9 @@ func (r *Client) ZRevRange(ctx context.Context, key string, start, stop int64) *
 func (r *Client) ZRevRangeWithScores(ctx context.Context, key string, start, stop int64) *redis.ZSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRevRangeWithScores(ctx, r.k(key), start, stop)
 	}
 	return r.client.ZRevRangeWithScores(ctx, r.k(key), start, stop)
 }
@@ -1777,6 +2230,9 @@ func (r *Client) ZRevRangeByScore(ctx context.Context, key string, opt *redis.ZR
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRevRangeByScore(ctx, r.k(key), opt)
+	}
 	return r.client.ZRevRangeByScore(ctx, r.k(key), opt)
 }
 
@@ -1785,6 +2241,9 @@ func (r *Client) ZRevRangeByLex(ctx context.Context, key string, opt *redis.ZRan
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRevRangeByLex(ctx, r.k(key), opt)
+	}
 	return r.client.ZRevRangeByLex(ctx, r.k(key), opt)
 }
 
@@ -1792,6 +2251,9 @@ func (r *Client) ZRevRangeByLex(ctx context.Context, key string, opt *redis.ZRan
 func (r *Client) ZRevRangeByScoreWithScores(ctx context.Context, key string, opt *redis.ZRangeBy) *redis.ZSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRevRangeByScoreWithScores(ctx, r.k(key), opt)
 	}
 	return r.client.ZRevRangeByScoreWithScores(ctx, r.k(key), opt)
 }
@@ -1803,6 +2265,9 @@ func (r *Client) ZRevRank(ctx context.Context, key, member string) *redis.IntCmd
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ZRevRank(ctx, r.k(key), member)
+	}
 	return r.client.ZRevRank(ctx, r.k(key), member)
 }
 
@@ -1811,6 +2276,9 @@ func (r *Client) ZRevRank(ctx context.Context, key, member string) *redis.IntCmd
 func (r *Client) ZScore(ctx context.Context, key, member string) *redis.FloatCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ZScore(ctx, r.k(key), member)
 	}
 	return r.client.ZScore(ctx, r.k(key), member)
 }
@@ -1821,6 +2289,9 @@ func (r *Client) ZUnionStore(ctx context.Context, dest string, store *redis.ZSto
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient..ZUnionStore(ctx, r.k(dest), store)
+	}
 	return r.client.ZUnionStore(ctx, r.k(dest), store)
 }
 
@@ -1828,6 +2299,9 @@ func (r *Client) ZUnionStore(ctx context.Context, dest string, store *redis.ZSto
 func (r *Client) PFAdd(ctx context.Context, key string, els ...interface{}) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.PFAdd(ctx, r.k(key), els...)
 	}
 	return r.client.PFAdd(ctx, r.k(key), els...)
 }
@@ -1837,6 +2311,9 @@ func (r *Client) PFCount(ctx context.Context, keys ...string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.PFCount(ctx, r.ks(keys...)...)
+	}
 	return r.client.PFCount(ctx, r.ks(keys...)...)
 }
 
@@ -1844,6 +2321,9 @@ func (r *Client) PFCount(ctx context.Context, keys ...string) *redis.IntCmd {
 func (r *Client) PFMerge(ctx context.Context, dest string, keys ...string) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.PFMerge(ctx, r.k(dest), r.ks(keys...)...)
 	}
 	return r.client.PFMerge(ctx, r.k(dest), r.ks(keys...)...)
 }
@@ -1853,6 +2333,9 @@ func (r *Client) BgRewriteAOF(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.BgRewriteAOF(ctx)
+	}
 	return r.client.BgRewriteAOF(ctx)
 }
 
@@ -1861,6 +2344,9 @@ func (r *Client) BgSave(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.BgSave(ctx)
+	}
 	return r.client.BgSave(ctx)
 }
 
@@ -1868,6 +2354,9 @@ func (r *Client) BgSave(ctx context.Context) *redis.StatusCmd {
 func (r *Client) ClientKill(ctx context.Context, ipPort string) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ClientKill(ctx, ipPort)
 	}
 	return r.client.ClientKill(ctx, ipPort)
 }
@@ -1878,6 +2367,9 @@ func (r *Client) ClientKillByFilter(ctx context.Context, keys ...string) *redis.
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClientKillByFilter(ctx, r.ks(keys...)...)
+	}
 	return r.client.ClientKillByFilter(ctx, r.ks(keys...)...)
 }
 
@@ -1885,6 +2377,9 @@ func (r *Client) ClientKillByFilter(ctx context.Context, keys ...string) *redis.
 func (r *Client) ClientList(ctx context.Context) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ClientList(ctx)
 	}
 	return r.client.ClientList(ctx)
 }
@@ -1894,6 +2389,9 @@ func (r *Client) ClientPause(ctx context.Context, dur time.Duration) *redis.Bool
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClientPause(ctx, dur)
+	}
 	return r.client.ClientPause(ctx, dur)
 }
 
@@ -1902,11 +2400,20 @@ func (r *Client) ClientID(ctx context.Context) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClientID(ctx)
+	}
 	return r.client.ClientID(ctx)
 }
 
 // ConfigGet 获取指定配置参数的值
 func (r *Client) ConfigGet(ctx context.Context, parameter string) *redis.SliceCmd {
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ConfigGet(ctx, parameter)
+	}
 	return r.client.ConfigGet(ctx, parameter)
 }
 
@@ -1914,6 +2421,9 @@ func (r *Client) ConfigGet(ctx context.Context, parameter string) *redis.SliceCm
 func (r *Client) ConfigResetStat(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ConfigResetStat(ctx)
 	}
 	return r.client.ConfigResetStat(ctx)
 }
@@ -1923,6 +2433,9 @@ func (r *Client) ConfigSet(ctx context.Context, parameter, value string) *redis.
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ConfigSet(ctx, parameter, value)
+	}
 	return r.client.ConfigSet(ctx, parameter, value)
 }
 
@@ -1930,6 +2443,9 @@ func (r *Client) ConfigSet(ctx context.Context, parameter, value string) *redis.
 func (r *Client) ConfigRewrite(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ConfigRewrite(ctx)
 	}
 	return r.client.ConfigRewrite(ctx)
 }
@@ -1939,6 +2455,9 @@ func (r *Client) DBSize(ctx context.Context) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.DBSize(ctx)
+	}
 	return r.client.DBSize(ctx)
 }
 
@@ -1946,6 +2465,9 @@ func (r *Client) DBSize(ctx context.Context) *redis.IntCmd {
 func (r *Client) FlushAll(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.FlushAll(ctx)
 	}
 	return r.client.FlushAll(ctx)
 }
@@ -1955,6 +2477,9 @@ func (r *Client) FlushAllAsync(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.FlushAllAsync(ctx)
+	}
 	return r.client.FlushAllAsync(ctx)
 }
 
@@ -1962,6 +2487,9 @@ func (r *Client) FlushAllAsync(ctx context.Context) *redis.StatusCmd {
 func (r *Client) FlushDB(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.FlushDB(ctx)
 	}
 	return r.client.FlushDB(ctx)
 }
@@ -1971,6 +2499,9 @@ func (r *Client) FlushDBAsync(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.FlushDBAsync(ctx)
+	}
 	return r.client.FlushDBAsync(ctx)
 }
 
@@ -1978,6 +2509,9 @@ func (r *Client) FlushDBAsync(ctx context.Context) *redis.StatusCmd {
 func (r *Client) Info(ctx context.Context, section ...string) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Info(ctx, section...)
 	}
 	return r.client.Info(ctx, section...)
 }
@@ -1987,6 +2521,9 @@ func (r *Client) LastSave(ctx context.Context) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.LastSave(ctx)
+	}
 	return r.client.LastSave(ctx)
 }
 
@@ -1994,6 +2531,9 @@ func (r *Client) LastSave(ctx context.Context) *redis.IntCmd {
 func (r *Client) Save(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Save(ctx)
 	}
 	return r.client.Save(ctx)
 }
@@ -2003,6 +2543,9 @@ func (r *Client) Shutdown(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Shutdown(ctx)
+	}
 	return r.client.Shutdown(ctx)
 }
 
@@ -2010,6 +2553,9 @@ func (r *Client) Shutdown(ctx context.Context) *redis.StatusCmd {
 func (r *Client) ShutdownSave(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ShutdownSave(ctx)
 	}
 	return r.client.ShutdownSave(ctx)
 }
@@ -2019,6 +2565,9 @@ func (r *Client) ShutdownNoSave(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ShutdownNoSave(ctx)
+	}
 	return r.client.ShutdownNoSave(ctx)
 }
 
@@ -2026,6 +2575,9 @@ func (r *Client) ShutdownNoSave(ctx context.Context) *redis.StatusCmd {
 func (r *Client) SlaveOf(ctx context.Context, host, port string) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SlaveOf(ctx, host, port)
 	}
 	return r.client.SlaveOf(ctx, host, port)
 }
@@ -2035,6 +2587,9 @@ func (r *Client) Time(ctx context.Context) *redis.TimeCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Time(ctx)
+	}
 	return r.client.Time(ctx)
 }
 
@@ -2042,6 +2597,9 @@ func (r *Client) Time(ctx context.Context) *redis.TimeCmd {
 func (r *Client) Eval(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Eval(ctx, script, r.ks(keys...), args...)
 	}
 	return r.client.Eval(ctx, script, r.ks(keys...), args...)
 }
@@ -2051,6 +2609,9 @@ func (r *Client) EvalSha(ctx context.Context, sha1 string, keys []string, args .
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.EvalSha(ctx, sha1, r.ks(keys...), args...)
+	}
 	return r.client.EvalSha(ctx, sha1, r.ks(keys...), args...)
 }
 
@@ -2058,6 +2619,9 @@ func (r *Client) EvalSha(ctx context.Context, sha1 string, keys []string, args .
 func (r *Client) ScriptExists(ctx context.Context, hashes ...string) *redis.BoolSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ScriptExists(ctx, hashes...)
 	}
 	return r.client.ScriptExists(ctx, hashes...)
 }
@@ -2067,6 +2631,9 @@ func (r *Client) ScriptFlush(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ScriptFlush(ctx)
+	}
 	return r.client.ScriptFlush(ctx)
 }
 
@@ -2074,6 +2641,9 @@ func (r *Client) ScriptFlush(ctx context.Context) *redis.StatusCmd {
 func (r *Client) ScriptKill(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ScriptKill(ctx)
 	}
 	return r.client.ScriptKill(ctx)
 
@@ -2084,6 +2654,9 @@ func (r *Client) ScriptLoad(ctx context.Context, script string) *redis.StringCmd
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ScriptLoad(ctx, script)
+	}
 	return r.client.ScriptLoad(ctx, script)
 }
 
@@ -2091,6 +2664,9 @@ func (r *Client) ScriptLoad(ctx context.Context, script string) *redis.StringCmd
 func (r *Client) DebugObject(ctx context.Context, key string) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.DebugObject(ctx, r.k(key))
 	}
 	return r.client.DebugObject(ctx, r.k(key))
 }
@@ -2100,6 +2676,9 @@ func (r *Client) Publish(ctx context.Context, channel string, message interface{
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.Publish(ctx, r.k(channel), message)
+	}
 	return r.client.Publish(ctx, r.k(channel), message)
 }
 
@@ -2107,6 +2686,9 @@ func (r *Client) Publish(ctx context.Context, channel string, message interface{
 func (r *Client) PubSubChannels(ctx context.Context, pattern string) *redis.StringSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.PubSubChannels(ctx, r.k(pattern))
 	}
 	return r.client.PubSubChannels(ctx, r.k(pattern))
 }
@@ -2116,6 +2698,9 @@ func (r *Client) PubSubNumSub(ctx context.Context, channels ...string) *redis.St
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.PubSubNumSub(ctx, r.ks(channels...)...)
+	}
 	return r.client.PubSubNumSub(ctx, r.ks(channels...)...)
 }
 
@@ -2123,6 +2708,9 @@ func (r *Client) PubSubNumSub(ctx context.Context, channels ...string) *redis.St
 func (r *Client) PubSubNumPat(ctx context.Context) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.PubSubNumPat(ctx)
 	}
 	return r.client.PubSubNumPat(ctx)
 }
@@ -2132,6 +2720,9 @@ func (r *Client) ClusterSlots(ctx context.Context) *redis.ClusterSlotsCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterSlots(ctx)
+	}
 	return r.client.ClusterSlots(ctx)
 }
 
@@ -2139,6 +2730,9 @@ func (r *Client) ClusterSlots(ctx context.Context) *redis.ClusterSlotsCmd {
 func (r *Client) ClusterNodes(ctx context.Context) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterNodes(ctx)
 	}
 	return r.client.ClusterNodes(ctx)
 }
@@ -2148,6 +2742,9 @@ func (r *Client) ClusterMeet(ctx context.Context, host, port string) *redis.Stat
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterMeet(ctx, host, port)
+	}
 	return r.client.ClusterMeet(ctx, host, port)
 }
 
@@ -2156,6 +2753,9 @@ func (r *Client) ClusterForget(ctx context.Context, nodeID string) *redis.Status
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterForget(ctx, nodeID)
+	}
 	return r.client.ClusterForget(ctx, nodeID)
 }
 
@@ -2163,6 +2763,9 @@ func (r *Client) ClusterForget(ctx context.Context, nodeID string) *redis.Status
 func (r *Client) ClusterReplicate(ctx context.Context, nodeID string) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterReplicate(ctx, nodeID)
 	}
 	return r.client.ClusterReplicate(ctx, nodeID)
 
@@ -2173,6 +2776,9 @@ func (r *Client) ClusterResetSoft(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterResetSoft(ctx)
+	}
 	return r.client.ClusterResetSoft(ctx)
 }
 
@@ -2180,6 +2786,9 @@ func (r *Client) ClusterResetSoft(ctx context.Context) *redis.StatusCmd {
 func (r *Client) ClusterResetHard(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterResetHard(ctx)
 	}
 	return r.client.ClusterResetHard(ctx)
 }
@@ -2189,6 +2798,9 @@ func (r *Client) ClusterInfo(ctx context.Context) *redis.StringCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterInfo(ctx)
+	}
 	return r.client.ClusterInfo(ctx)
 }
 
@@ -2196,6 +2808,9 @@ func (r *Client) ClusterInfo(ctx context.Context) *redis.StringCmd {
 func (r *Client) ClusterKeySlot(ctx context.Context, key string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterKeySlot(ctx, r.k(key))
 	}
 	return r.client.ClusterKeySlot(ctx, r.k(key))
 }
@@ -2205,6 +2820,9 @@ func (r *Client) ClusterGetKeysInSlot(ctx context.Context, slot int, count int) 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterGetKeysInSlot(ctx, slot, count)
+	}
 	return r.client.ClusterGetKeysInSlot(ctx, slot, count)
 }
 
@@ -2212,6 +2830,9 @@ func (r *Client) ClusterGetKeysInSlot(ctx context.Context, slot int, count int) 
 func (r *Client) ClusterCountFailureReports(ctx context.Context, nodeID string) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterCountFailureReports(ctx, nodeID)
 	}
 	return r.client.ClusterCountFailureReports(ctx, nodeID)
 }
@@ -2221,6 +2842,9 @@ func (r *Client) ClusterCountKeysInSlot(ctx context.Context, slot int) *redis.In
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterCountKeysInSlot(ctx, slot)
+	}
 	return r.client.ClusterCountKeysInSlot(ctx, slot)
 }
 
@@ -2228,6 +2852,9 @@ func (r *Client) ClusterCountKeysInSlot(ctx context.Context, slot int) *redis.In
 func (r *Client) ClusterDelSlots(ctx context.Context, slots ...int) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterDelSlots(ctx, slots...)
 	}
 	return r.client.ClusterDelSlots(ctx, slots...)
 }
@@ -2237,6 +2864,9 @@ func (r *Client) ClusterDelSlotsRange(ctx context.Context, min, max int) *redis.
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterDelSlotsRange(ctx, min, max)
+	}
 	return r.client.ClusterDelSlotsRange(ctx, min, max)
 }
 
@@ -2244,6 +2874,9 @@ func (r *Client) ClusterDelSlotsRange(ctx context.Context, min, max int) *redis.
 func (r *Client) ClusterSaveConfig(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterSaveConfig(ctx)
 	}
 	return r.client.ClusterSaveConfig(ctx)
 }
@@ -2253,6 +2886,9 @@ func (r *Client) ClusterSlaves(ctx context.Context, nodeID string) *redis.String
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterSlaves(ctx, nodeID)
+	}
 	return r.client.ClusterSlaves(ctx, nodeID)
 }
 
@@ -2260,6 +2896,9 @@ func (r *Client) ClusterSlaves(ctx context.Context, nodeID string) *redis.String
 func (r *Client) ClusterFailover(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterFailover(ctx)
 	}
 	return r.client.ClusterFailover(ctx)
 }
@@ -2269,6 +2908,9 @@ func (r *Client) ClusterAddSlots(ctx context.Context, slots ...int) *redis.Statu
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterAddSlots(ctx, slots...)
+	}
 	return r.client.ClusterAddSlots(ctx, slots...)
 }
 
@@ -2276,6 +2918,9 @@ func (r *Client) ClusterAddSlots(ctx context.Context, slots ...int) *redis.Statu
 func (r *Client) ClusterAddSlotsRange(ctx context.Context, min, max int) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.ClusterAddSlotsRange(ctx, min, max)
 	}
 	return r.client.ClusterAddSlotsRange(ctx, min, max)
 }
@@ -2285,6 +2930,9 @@ func (r *Client) GeoAdd(ctx context.Context, key string, geoLocation ...*redis.G
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.GeoAdd(ctx, r.k(key), geoLocation...)
+	}
 	return r.client.GeoAdd(ctx, r.k(key), geoLocation...)
 }
 
@@ -2292,6 +2940,9 @@ func (r *Client) GeoAdd(ctx context.Context, key string, geoLocation ...*redis.G
 func (r *Client) GeoPos(ctx context.Context, key string, members ...string) *redis.GeoPosCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.GeoPos(ctx, r.k(key), members...)
 	}
 	return r.client.GeoPos(ctx, r.k(key), members...)
 }
@@ -2301,6 +2952,9 @@ func (r *Client) GeoRadius(ctx context.Context, key string, longitude, latitude 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.GeoRadius(ctx, r.k(key), longitude, latitude, query)
+	}
 	return r.client.GeoRadius(ctx, r.k(key), longitude, latitude, query)
 }
 
@@ -2308,6 +2962,9 @@ func (r *Client) GeoRadius(ctx context.Context, key string, longitude, latitude 
 func (r *Client) GeoRadiusStore(ctx context.Context, key string, longitude, latitude float64, query *redis.GeoRadiusQuery) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.GeoRadiusStore(ctx, r.k(key), longitude, latitude, query)
 	}
 	return r.client.GeoRadiusStore(ctx, r.k(key), longitude, latitude, query)
 }
@@ -2317,6 +2974,9 @@ func (r *Client) GeoRadiusByMember(ctx context.Context, key, member string, quer
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.GeoRadiusByMember(ctx, r.k(key), member, query)
+	}
 	return r.client.GeoRadiusByMember(ctx, r.k(key), member, query)
 }
 
@@ -2324,6 +2984,9 @@ func (r *Client) GeoRadiusByMember(ctx context.Context, key, member string, quer
 func (r *Client) GeoRadiusByMemberStore(ctx context.Context, key, member string, query *redis.GeoRadiusQuery) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.GeoRadiusByMemberStore(ctx, r.k(key), member, query)
 	}
 	return r.client.GeoRadiusByMemberStore(ctx, r.k(key), member, query)
 }
@@ -2333,6 +2996,9 @@ func (r *Client) GeoDist(ctx context.Context, key string, member1, member2, unit
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.GeoDist(ctx, r.k(key), member1, member2, unit)
+	}
 	return r.client.GeoDist(ctx, r.k(key), member1, member2, unit)
 }
 
@@ -2340,6 +3006,9 @@ func (r *Client) GeoDist(ctx context.Context, key string, member1, member2, unit
 func (r *Client) GeoHash(ctx context.Context, key string, members ...string) *redis.StringSliceCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.GeoHash(ctx, r.k(key), members...)
 	}
 	return r.client.GeoHash(ctx, r.k(key), members...)
 }
@@ -2349,6 +3018,9 @@ func (r *Client) ReadOnly(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ReadOnly(ctx)
+	}
 	return r.client.ReadOnly(ctx)
 }
 
@@ -2357,6 +3029,9 @@ func (r *Client) ReadWrite(ctx context.Context) *redis.StatusCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	if r.IsCluster() {
+		return r.clusterClient.ReadWrite(ctx)
+	}
 	return r.client.ReadWrite(ctx)
 }
 
@@ -2364,6 +3039,9 @@ func (r *Client) ReadWrite(ctx context.Context) *redis.StatusCmd {
 func (r *Client) MemoryUsage(ctx context.Context, key string, samples ...int) *redis.IntCmd {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.MemoryUsage(ctx, r.k(key), samples...)
 	}
 	return r.client.MemoryUsage(ctx, r.k(key), samples...)
 }
