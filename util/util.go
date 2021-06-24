@@ -4331,6 +4331,10 @@ func Static(p, v string) string {
 	return "/" + p + "/" + v
 }
 
+func DomainStatic(p, v string) string {
+	return p + "/" + v
+}
+
 func UnescapeString(v interface{}) string {
 	a, _ := json.Marshal(v)
 	return html.EscapeString(string(a))
