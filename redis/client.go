@@ -2290,7 +2290,7 @@ func (r *Client) ZUnionStore(ctx context.Context, dest string, store *redis.ZSto
 		ctx = context.TODO()
 	}
 	if r.IsCluster() {
-		return r.clusterClient..ZUnionStore(ctx, r.k(dest), store)
+		return r.clusterClient.ZUnionStore(ctx, r.k(dest), store)
 	}
 	return r.client.ZUnionStore(ctx, r.k(dest), store)
 }
@@ -3044,6 +3044,30 @@ func (r *Client) MemoryUsage(ctx context.Context, key string, samples ...int) *r
 		return r.clusterClient.MemoryUsage(ctx, r.k(key), samples...)
 	}
 	return r.client.MemoryUsage(ctx, r.k(key), samples...)
+}
+
+// Subscribe subscribes the client to the specified channels.
+// Channels can be omitted to create empty subscription.
+func (r *Client) Subscribe(ctx context.Context, channels ...string) *redis.PubSub {
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.Subscribe(ctx, channels...)
+	}
+	return r.client.Subscribe(ctx, channels...)
+}
+
+// PSubscribe subscribes the client to the given patterns.
+// Patterns can be omitted to create empty subscription.
+func (r *Client) PSubscribe(ctx context.Context, channels ...string) *redis.PubSub {
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.PSubscribe(ctx, channels...)
+	}
+	return r.client.PSubscribe(ctx, channels...)
 }
 
 // ErrNotImplemented not implemented error
