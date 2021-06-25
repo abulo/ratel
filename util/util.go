@@ -4547,3 +4547,65 @@ func ArrayStringUniq(arr []string) (newArr []string) {
 	}
 	return
 }
+
+func NewReplacer(endpoint string, values ...interface{}) string {
+	if len(endpoint) < 1 {
+		return endpoint
+	}
+	if len(values)%2 != 0 {
+		return endpoint
+	}
+	params := make(map[string]string)
+	if len(values) > 0 {
+		key := ""
+		for k, v := range values {
+			if k%2 == 0 {
+				key = fmt.Sprint(v)
+			} else {
+				params[key] = fmt.Sprint(v)
+			}
+		}
+	}
+	urls := strings.Split(endpoint, "/")
+	for _, v := range urls {
+		if v == "" {
+			continue
+		}
+		if v[0:1] == ":" {
+			if u, ok := params[v]; ok {
+				delete(params, v)
+				endpoint = string(ByteReplace([]byte(endpoint), []byte(v), []byte(u), 1))
+			}
+		}
+	}
+	return endpoint
+}
+
+func ByteReplace(s, old, new []byte, n int) []byte {
+	if n == 0 {
+		return s
+	}
+
+	if len(old) < len(new) {
+		return bytes.Replace(s, old, new, n)
+	}
+
+	if n < 0 {
+		n = len(s)
+	}
+
+	var wid, i, j, w int
+	for i, j = 0, 0; i < len(s) && j < n; j++ {
+		wid = bytes.Index(s[i:], old)
+		if wid < 0 {
+			break
+		}
+
+		w += copy(s[w:], s[i:i+wid])
+		w += copy(s[w:], new)
+		i += wid + len(old)
+	}
+
+	w += copy(s[w:], s[i:])
+	return s[0:w]
+}
