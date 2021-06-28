@@ -1,9 +1,8 @@
-package elasticsearch
+package elastic
 
 import (
 	"github.com/abulo/ratel/logger"
 	"github.com/olivere/elastic/v7"
-	"github.com/olivere/elastic/v7/config"
 )
 
 // Client --
@@ -12,8 +11,8 @@ type Client struct {
 }
 
 // NewClient --
-func NewClient(options *config.Config) *Client {
-	client, err := elastic.NewClientFromConfig(options)
+func NewClient(options ...elastic.ClientOptionFunc) *Client {
+	client, err := elastic.NewClient(options...)
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
