@@ -2518,6 +2518,24 @@ func ArrayPluck(data []map[string]string, value string) []string {
 	return res
 }
 
+//ArrayRemoveRepeatedElement 数组去重
+func ArrayRemoveRepeatedElement(arr []string) (newArr []string) {
+	newArr = make([]string, 0)
+	for i := 0; i < len(arr); i++ {
+		repeat := false
+		for j := i + 1; j < len(arr); j++ {
+			if arr[i] == arr[j] {
+				repeat = true
+				break
+			}
+		}
+		if !repeat {
+			newArr = append(newArr, arr[i])
+		}
+	}
+	return
+}
+
 func ArrayKeyPluck(data []map[string]string, value, key string) map[string]string {
 	res := make(map[string]string, 0)
 	for _, v := range data {

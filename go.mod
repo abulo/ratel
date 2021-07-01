@@ -20,7 +20,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-playground/validator/v10 v10.6.1
-	github.com/go-redis/redis/v8 v8.10.0
+	github.com/go-redis/redis/v8 v8.11.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
@@ -49,7 +49,7 @@ require (
 	github.com/pkg/sftp v1.13.1
 	github.com/prometheus/client_golang v1.11.0
 	github.com/segmentio/kafka-go v0.4.16
-	github.com/shirou/gopsutil v3.21.5+incompatible
+	github.com/shirou/gopsutil v3.21.6+incompatible
 	github.com/sirupsen/logrus v1.8.1
 	github.com/soheilhy/cmux v0.1.4 // indirect
 	github.com/streadway/amqp v1.0.0
@@ -59,7 +59,7 @@ require (
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.6
-	github.com/valyala/fasthttp v1.27.0
+	github.com/valyala/fasthttp v1.28.0
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	go.mongodb.org/mongo-driver v1.5.3
 	go.uber.org/multierr v1.7.0
@@ -71,7 +71,7 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	google.golang.org/genproto v0.0.0-20210212180131-e7f2df4ecc2d
-	google.golang.org/grpc v1.38.0
+	google.golang.org/grpc v1.39.0
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b

@@ -164,7 +164,7 @@ func function(pc uintptr) []byte {
 	return name
 }
 
+// timeFormat returns a customized time string for logger.
 func timeFormat(t time.Time) string {
-	timeString := t.Format("2006/01/02 - 15:04:05")
-	return timeString
+	return t.Format("2006/01/02 - 15:04:05")
 }
