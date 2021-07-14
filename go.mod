@@ -26,7 +26,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/btree v1.0.0 // indirect
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -61,7 +61,7 @@ require (
 	github.com/ugorji/go/codec v1.2.6
 	github.com/valyala/fasthttp v1.28.0
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
-	go.mongodb.org/mongo-driver v1.5.4
+	go.mongodb.org/mongo-driver v1.6.0
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
