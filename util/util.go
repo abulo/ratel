@@ -4584,18 +4584,27 @@ func NewReplacer(endpoint string, values ...interface{}) string {
 			}
 		}
 	}
-	urls := strings.Split(endpoint, "/")
-	for _, v := range urls {
-		if v == "" {
-			continue
-		}
-		if v[0:1] == ":" {
-			if u, ok := params[v]; ok {
-				delete(params, v)
-				endpoint = string(ByteReplace([]byte(endpoint), []byte(v), []byte(u), 1))
-			}
-		}
+
+	if len(params) < 1 || Empty(params) {
+		return endpoint
 	}
+
+	for pk, pv := range params {
+		endpoint = string(ByteReplace([]byte(endpoint), []byte(pk), []byte(pv), 1))
+	}
+
+	// urls := strings.Split(endpoint, "/")
+	// for _, v := range urls {
+	// 	if v == "" {
+	// 		continue
+	// 	}
+	// 	if v[0:1] == ":" {
+	// 		if u, ok := params[v]; ok {
+	// 			delete(params, v)
+	// 			endpoint = string(ByteReplace([]byte(endpoint), []byte(v), []byte(u), 1))
+	// 		}
+	// 	}
+	// }
 	return endpoint
 }
 
