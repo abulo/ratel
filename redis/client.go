@@ -941,6 +941,16 @@ func (r *Client) Set(ctx context.Context, key string, value interface{}, expirat
 	return r.client.Set(ctx, r.k(key), value, expiration)
 }
 
+func (r *Client) SetEX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	if r.IsCluster() {
+		return r.clusterClient.SetEX(ctx, r.k(key), value, expiration)
+	}
+	return r.client.SetEX(ctx, r.k(key), value, expiration)
+}
+
 // SetBit 对 key 所储存的字符串值，设置或清除指定偏移量上的位(bit)。
 // 位的设置或清除取决于 value 参数，可以是 0 也可以是 1 。
 // 当 key 不存在时，自动生成一个新的字符串值。

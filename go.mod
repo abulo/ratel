@@ -38,11 +38,9 @@ require (
 	github.com/jlaffaye/ftp v0.0.0-20210307004419-5d4190119067
 	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/json-iterator/go v1.1.11
-	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.13
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/mozillazg/go-pinyin v0.18.0
-	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/olivere/elastic/v7 v7.0.26
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
@@ -50,6 +48,7 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	github.com/segmentio/kafka-go v0.4.17
 	github.com/shirou/gopsutil v3.21.6+incompatible
+	github.com/silenceper/wechat/v2 v2.0.6
 	github.com/sirupsen/logrus v1.8.1
 	github.com/soheilhy/cmux v0.1.4 // indirect
 	github.com/streadway/amqp v1.0.0
