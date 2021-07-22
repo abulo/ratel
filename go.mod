@@ -33,7 +33,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.9.5 // indirect
 	github.com/h2non/bimg v1.1.5
 	github.com/hashicorp/hcl v1.0.0
-	github.com/hashicorp/hcl/v2 v2.10.0
+	github.com/hashicorp/hcl/v2 v2.10.1
 	github.com/imdario/mergo v0.3.12
 	github.com/jlaffaye/ftp v0.0.0-20210307004419-5d4190119067
 	github.com/jonboulle/clockwork v0.1.0 // indirect
@@ -54,13 +54,13 @@ require (
 	github.com/streadway/amqp v1.0.0
 	github.com/tklauser/go-sysconf v0.3.4 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8 // indirect
-	github.com/tsuna/gohbase v0.0.0-20201125011725-348991136365
+	github.com/tsuna/gohbase v0.0.0-20210721183200-2b1c330433e3
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.6
 	github.com/valyala/fasthttp v1.28.0
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
-	go.mongodb.org/mongo-driver v1.6.0
+	go.mongodb.org/mongo-driver v1.7.0
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
