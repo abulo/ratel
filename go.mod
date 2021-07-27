@@ -19,7 +19,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/go-playground/validator/v10 v10.7.0
+	github.com/go-playground/validator/v10 v10.8.0
 	github.com/go-redis/redis/v8 v8.11.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gogo/protobuf v1.3.1 // indirect
