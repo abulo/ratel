@@ -130,6 +130,7 @@ func (n *node) incrementChildPrio(pos int) int {
 	for ; newPos > 0 && cs[newPos-1].priority < prio; newPos-- {
 		// Swap node positions
 		cs[newPos-1], cs[newPos] = cs[newPos], cs[newPos-1]
+
 	}
 
 	// Build new index char string
@@ -247,7 +248,6 @@ walk:
 					"' in existing prefix '" + prefix +
 					"'")
 			}
-
 			n.insertChild(path, routeName, fullPath, handlers)
 			return
 		}
@@ -430,15 +430,14 @@ walk: // Outer loop for walking the tree
 						if n.wildChild {
 							skippedPath = prefix + path
 							latestNode = &node{
-									path:      n.path,
-									wildChild: n.wildChild,
-									nType:     n.nType,
-									priority:  n.priority,
-									children:  n.children,
-									handlers:  n.handlers,
-									fullPath:  n.fullPath,
-									routeName: n.routeName,
-								},
+								path:      n.path,
+								wildChild: n.wildChild,
+								nType:     n.nType,
+								priority:  n.priority,
+								children:  n.children,
+								handlers:  n.handlers,
+								fullPath:  n.fullPath,
+								routeName: n.routeName,
 							}
 						}
 
