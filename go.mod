@@ -3,7 +3,8 @@ module github.com/abulo/ratel
 go 1.16
 
 require (
-	github.com/BurntSushi/toml v0.4.0
+	github.com/BurntSushi/toml v0.4.1
+	github.com/BurntSushi/toml-test v0.1.1-0.20210723065233-facb9eccd4da // indirect
 	github.com/HdrHistogram/hdrhistogram-go v0.9.0 // indirect
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/abulo/clickhouse-go v1.4.9
@@ -60,7 +61,7 @@ require (
 	github.com/ugorji/go/codec v1.2.6
 	github.com/valyala/fasthttp v1.28.0
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
-	go.mongodb.org/mongo-driver v1.7.0
+	go.mongodb.org/mongo-driver v1.7.1
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
@@ -70,7 +71,7 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	google.golang.org/genproto v0.0.0-20210212180131-e7f2df4ecc2d
-	google.golang.org/grpc v1.39.0
+	google.golang.org/grpc v1.39.1
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
