@@ -8,7 +8,7 @@ require (
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/coreos/etcd v3.3.25+incompatible
 	github.com/disintegration/imaging v1.6.2
-	github.com/fsnotify/fsnotify v1.5.0
+	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/go-redis/redis/v8 v8.11.3
@@ -34,7 +34,7 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	github.com/segmentio/kafka-go v0.4.17
 	github.com/shirou/gopsutil v3.21.7+incompatible
-	github.com/silenceper/wechat/v2 v2.0.6
+	github.com/silenceper/wechat/v2 v2.0.8
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
 	github.com/tsuna/gohbase v0.0.0-20210721183200-2b1c330433e3
@@ -47,7 +47,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20210818220304-27ea9cc85d9f
+	google.golang.org/genproto v0.0.0-20210828152312-66f60bf46e71
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0

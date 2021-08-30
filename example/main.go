@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/abulo/ratel"
 	ccc "github.com/abulo/ratel/config"
 	"github.com/abulo/ratel/gin"
@@ -16,12 +18,12 @@ type Engine struct {
 }
 
 func main() {
+
 	eng := NewEngine()
 
 	if err := eng.Run(); err != nil {
 		logger.Logger.Panic(err)
 	}
-
 }
 
 func NewEngine() *Engine {
@@ -63,7 +65,7 @@ func (eng *Engine) serveHTTP() error {
 	server.AddFuncMap("debugFormat", util.DebugFormat)
 	server.GET("/ping", "ping", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
-			"status": "7777",
+			"status": os.Getpid(),
 		})
 	})
 

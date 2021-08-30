@@ -2,7 +2,13 @@ package ratel
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"runtime"
+	"runtime/debug"
 	"sync"
+	"syscall"
+	"time"
 
 	"github.com/abulo/ratel/cycle"
 	"github.com/abulo/ratel/goroutine"
@@ -10,9 +16,17 @@ import (
 	"github.com/abulo/ratel/registry"
 	"github.com/abulo/ratel/server"
 	"github.com/abulo/ratel/signals"
+	"github.com/abulo/ratel/stack"
 	"github.com/abulo/ratel/trace"
 	"github.com/abulo/ratel/worker"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	//StageAfterStop after app stop
+	StageAfterStop uint32 = iota + 1
+	//StageBeforeStop before app stop
+	StageBeforeStop
 )
 
 // Ratel Create an instance of Application, by using &Ratel{}
@@ -25,6 +39,8 @@ type Ratel struct {
 	servers     []server.Server
 	workers     []worker.Worker
 	registerer  registry.Registry
+	hooks       map[uint32]*stack.DeferStack
+	stopped     chan struct{}
 }
 
 //New new a Application
@@ -53,8 +69,38 @@ func (app *Ratel) initialize() {
 		app.smu = &sync.RWMutex{}
 		app.servers = make([]server.Server, 0)
 		app.workers = make([]worker.Worker, 0)
+		app.stopped = make(chan struct{})
+
+		//private method
+		app.initHooks(StageBeforeStop, StageAfterStop)
 		app.Registry(registry.Nop{})
 	})
+}
+
+//init hooks
+func (app *Ratel) initHooks(hookKeys ...uint32) {
+	app.hooks = make(map[uint32]*stack.DeferStack, len(hookKeys))
+	for _, k := range hookKeys {
+		app.hooks[k] = stack.NewStack()
+	}
+}
+
+//run hooks
+func (app *Ratel) runHooks(k uint32) {
+	hooks, ok := app.hooks[k]
+	if ok {
+		hooks.Clean()
+	}
+}
+
+//RegisterHooks register a stage Hook
+func (app *Ratel) RegisterHooks(k uint32, fns ...func() error) error {
+	hooks, ok := app.hooks[k]
+	if ok {
+		hooks.Push(fns...)
+		return nil
+	}
+	return fmt.Errorf("hook stage not found")
 }
 
 // start up application
@@ -125,19 +171,42 @@ func (app *Ratel) Run(servers ...server.Server) error {
 // waitSignals wait signal
 func (app *Ratel) waitSignals() {
 	logger.Logger.Info("init listen signal")
-	signals.Shutdown(func(grace bool) { //when get shutdown signal
+	signals.Listen(func(signal os.Signal) { //when get shutdown signal
 		//todo: support timeout
-		if grace {
-			app.GracefulStop(context.TODO())
-		} else {
+		// if grace {
+		// 	app.GracefulStop(context.TODO())
+		// } else {
+		// 	app.Stop()
+		// }
+		ctx := context.Background()
+		switch signal {
+		case syscall.SIGQUIT:
+			app.GracefulStop(ctx)
+			os.Exit(128 + int(signal.(syscall.Signal)))
+		case syscall.SIGKILL:
 			app.Stop()
+			os.Exit(128 + int(signal.(syscall.Signal)))
+		case syscall.SIGHUP:
+			app.Reload()
+			logger.Logger.Info("重启")
 		}
 	})
+}
+
+func (app *Ratel) Reload() error {
+	// 手动将内存归还给操作系统
+	debug.FreeOSMemory()
+	runtime.GC()
+	return nil
 }
 
 // GracefulStop application after necessary cleanup
 func (app *Ratel) GracefulStop(ctx context.Context) (err error) {
 	app.stopOnce.Do(func() {
+
+		app.stopped <- struct{}{}
+		app.runHooks(StageBeforeStop)
+
 		if app.registerer != nil {
 			err = app.registerer.Close()
 			if err != nil {
@@ -163,6 +232,7 @@ func (app *Ratel) GracefulStop(ctx context.Context) (err error) {
 		}
 
 		<-app.cycle.Done()
+		app.runHooks(StageAfterStop)
 		app.cycle.Close()
 	})
 	return nil
@@ -171,6 +241,8 @@ func (app *Ratel) GracefulStop(ctx context.Context) (err error) {
 // Stop application immediately after necessary cleanup
 func (app *Ratel) Stop() (err error) {
 	app.stopOnce.Do(func() {
+		app.stopped <- struct{}{}
+		app.runHooks(StageBeforeStop)
 
 		if app.registerer != nil {
 			err = app.registerer.Close()
@@ -194,6 +266,7 @@ func (app *Ratel) Stop() (err error) {
 			}(w)
 		}
 		<-app.cycle.Done()
+		app.runHooks(StageAfterStop)
 		app.cycle.Close()
 	})
 	return nil
@@ -201,12 +274,19 @@ func (app *Ratel) Stop() (err error) {
 
 func (app *Ratel) startServers() error {
 	var eg errgroup.Group
+
+	var ctx, cancel = context.WithTimeout(context.Background(), time.Second*10)
+	go func() {
+		<-app.stopped
+		cancel()
+	}()
+
 	// start multi servers
 	for _, s := range app.servers {
 		s := s
 		eg.Go(func() (err error) {
-			_ = app.registerer.RegisterService(context.TODO(), s.Info())
-			defer app.registerer.UnregisterService(context.TODO(), s.Info())
+			_ = app.registerer.RegisterService(ctx, s.Info())
+			defer app.registerer.UnregisterService(ctx, s.Info())
 			logger.Logger.Info("start server:", s.Info().Name, ":", s.Info().Label(), ":", s.Info().Scheme)
 			err = s.Serve()
 			return
