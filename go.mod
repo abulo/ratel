@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/BurntSushi/toml v0.4.1
-	github.com/abulo/clickhouse-go v1.4.9
+	github.com/abulo/clickhouse-go v1.4.10
 	github.com/alibaba/sentinel-golang v1.0.3
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/coreos/etcd v3.3.25+incompatible
