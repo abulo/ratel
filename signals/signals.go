@@ -3,19 +3,20 @@ package signals
 import (
 	"os"
 	"os/signal"
+	"syscall"
 )
 
 //Shutdown suport twice signal must exit
-func Listen(ln func(grace os.Signal)) {
-	sig := make(chan os.Signal, 3)
+func Shutdown(stop func(grace bool)) {
+	sig := make(chan os.Signal, 2)
 	signal.Notify(
 		sig,
 		shutdownSignals...,
 	)
 	go func() {
 		s := <-sig
-		go ln(s)
+		go stop(s != syscall.SIGQUIT)
 		<-sig
-		// os.Exit(128 + int(s.(syscall.Signal))) // second signal. Exit directly.
+		os.Exit(128 + int(s.(syscall.Signal))) // second signal. Exit directly.
 	}()
 }

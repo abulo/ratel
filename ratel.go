@@ -3,11 +3,7 @@ package ratel
 import (
 	"context"
 	"fmt"
-	"os"
-	"runtime"
-	"runtime/debug"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/abulo/ratel/cycle"
@@ -171,29 +167,16 @@ func (app *Ratel) Run(servers ...server.Server) error {
 }
 
 // waitSignals wait signal
+// waitSignals wait signal
 func (app *Ratel) waitSignals() {
 	logger.Logger.Info("init listen signal")
-	signals.Listen(func(signal os.Signal) { //when get shutdown signal
-		ctx := context.Background()
-		switch signal {
-		case syscall.SIGQUIT:
-			app.GracefulStop(ctx)
-			os.Exit(128 + int(signal.(syscall.Signal)))
-		case syscall.SIGKILL:
+	signals.Shutdown(func(grace bool) { //when get shutdown signal
+		if grace {
+			app.GracefulStop(context.TODO())
+		} else {
 			app.Stop()
-			os.Exit(128 + int(signal.(syscall.Signal)))
-		case syscall.SIGHUP:
-			logger.Logger.Info("重启")
-			app.Reload()
 		}
 	})
-}
-
-func (app *Ratel) Reload() error {
-	// 手动将内存归还给操作系统
-	debug.FreeOSMemory()
-	runtime.GC()
-	return nil
 }
 
 // GracefulStop application after necessary cleanup

@@ -1,3 +1,5 @@
+//go:build !windows
+
 package signals
 
 import (
@@ -5,4 +7,4 @@ import (
 	"syscall"
 )
 
-var shutdownSignals = []os.Signal{syscall.SIGQUIT, syscall.SIGKILL, syscall.SIGHUP}
+var shutdownSignals = []os.Signal{syscall.SIGQUIT, os.Interrupt, syscall.SIGTERM}
