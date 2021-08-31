@@ -43,13 +43,15 @@ type Ratel struct {
 	stopped     chan struct{}
 }
 
+var App *Ratel
+
 //New new a Application
 func New(fns ...func() error) (*Ratel, error) {
-	app := &Ratel{}
-	if err := app.Startup(fns...); err != nil {
+	App = &Ratel{}
+	if err := App.Startup(fns...); err != nil {
 		return nil, err
 	}
-	return app, nil
+	return App, nil
 }
 
 //Startup ..
@@ -151,7 +153,7 @@ func (app *Ratel) Run(servers ...server.Server) error {
 	app.smu.Lock()
 	app.servers = append(app.servers, servers...)
 	app.smu.Unlock()
-	app.waitSignals() //start signal listen task in goroutine
+	// app.waitSignals() //start signal listen task in goroutine
 
 	// start servers and govern server
 	app.cycle.Run(app.startServers)
@@ -172,12 +174,6 @@ func (app *Ratel) Run(servers ...server.Server) error {
 func (app *Ratel) waitSignals() {
 	logger.Logger.Info("init listen signal")
 	signals.Listen(func(signal os.Signal) { //when get shutdown signal
-		//todo: support timeout
-		// if grace {
-		// 	app.GracefulStop(context.TODO())
-		// } else {
-		// 	app.Stop()
-		// }
 		ctx := context.Background()
 		switch signal {
 		case syscall.SIGQUIT:
@@ -187,8 +183,8 @@ func (app *Ratel) waitSignals() {
 			app.Stop()
 			os.Exit(128 + int(signal.(syscall.Signal)))
 		case syscall.SIGHUP:
-			app.Reload()
 			logger.Logger.Info("重启")
+			app.Reload()
 		}
 	})
 }
