@@ -76,6 +76,11 @@ func (s *Server) GracefulStop(ctx context.Context) error {
 	return nil
 }
 
+func (s *Server) Shutdown() error {
+	s.Server.GracefulStop()
+	return nil
+}
+
 func (s *Server) Info() *server.ServiceInfo {
 	info := server.ApplyOptions(
 		server.WithScheme("grpc"),

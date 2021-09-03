@@ -3,7 +3,10 @@ package ratel
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/abulo/ratel/cycle"
@@ -11,7 +14,6 @@ import (
 	"github.com/abulo/ratel/logger"
 	"github.com/abulo/ratel/registry"
 	"github.com/abulo/ratel/server"
-	"github.com/abulo/ratel/signals"
 	"github.com/abulo/ratel/stack"
 	"github.com/abulo/ratel/trace"
 	"github.com/abulo/ratel/worker"
@@ -37,6 +39,7 @@ type Ratel struct {
 	registerer  registry.Registry
 	hooks       map[uint32]*stack.DeferStack
 	stopped     chan struct{}
+	sig         chan os.Signal
 }
 
 var App *Ratel
@@ -149,7 +152,7 @@ func (app *Ratel) Run(servers ...server.Server) error {
 	app.smu.Lock()
 	app.servers = append(app.servers, servers...)
 	app.smu.Unlock()
-	// app.waitSignals() //start signal listen task in goroutine
+	app.waitSignals() //start signal listen task in goroutine
 
 	// start servers and govern server
 	app.cycle.Run(app.startServers)
@@ -169,14 +172,27 @@ func (app *Ratel) Run(servers ...server.Server) error {
 // waitSignals wait signal
 // waitSignals wait signal
 func (app *Ratel) waitSignals() {
-	logger.Logger.Info("init listen signal")
-	signals.Shutdown(func(grace bool) { //when get shutdown signal
-		if grace {
-			app.GracefulStop(context.TODO())
-		} else {
-			app.Stop()
+	logger.Logger.Info("init listen signal, pid:", syscall.Getpid())
+	signals := []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGTSTP, syscall.SIGUSR1, syscall.SIGQUIT, os.Interrupt}
+	app.sig = make(chan os.Signal)
+	signal.Notify(app.sig, signals...)
+	go app.exitHandler()
+}
+
+func (app *Ratel) exitHandler() {
+	sig := <-app.sig
+	logger.Logger.Info(fmt.Sprintf("Received SIG. [PID:%d, SIG:%v]", syscall.Getpid(), sig))
+
+	switch sig {
+	case syscall.SIGHUP:
+		if err := app.Run(); err != nil {
+			logger.Logger.Error(fmt.Sprintf("Received SIG. [PID:%d, SIG:%v]", syscall.Getpid(), sig))
 		}
-	})
+		app.GracefulStop(context.Background())
+	case syscall.SIGINT, syscall.SIGTERM, syscall.SIGTSTP, syscall.SIGUSR1, syscall.SIGQUIT, os.Interrupt:
+		logger.Logger.Info("close server")
+		os.Exit(128 + int(sig.(syscall.Signal)))
+	}
 }
 
 // GracefulStop application after necessary cleanup

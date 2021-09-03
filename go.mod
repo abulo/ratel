@@ -28,13 +28,13 @@ require (
 	github.com/mattn/go-isatty v0.0.13
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/mozillazg/go-pinyin v0.18.0
-	github.com/olivere/elastic/v7 v7.0.27
+	github.com/olivere/elastic/v7 v7.0.28
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.2
 	github.com/prometheus/client_golang v1.11.0
 	github.com/segmentio/kafka-go v0.4.17
-	github.com/shirou/gopsutil v3.21.7+incompatible
+	github.com/shirou/gopsutil v3.21.8+incompatible
 	github.com/silenceper/wechat/v2 v2.0.8
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
@@ -43,12 +43,12 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.6
 	github.com/valyala/fasthttp v1.29.0
-	go.mongodb.org/mongo-driver v1.7.1
+	go.mongodb.org/mongo-driver v1.7.2
 	go.uber.org/multierr v1.7.0
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20210828152312-66f60bf46e71
+	google.golang.org/genproto v0.0.0-20210831024726-fe130286e0e2
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -107,9 +107,13 @@ require (
 	github.com/zclconf/go-cty v1.8.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/zap v1.16.0 // indirect
+	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
+	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
 	golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069 // indirect
 	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/tools v0.1.5 // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	modernc.org/b v1.0.0 // indirect
 )
 

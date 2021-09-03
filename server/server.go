@@ -3,9 +3,13 @@ package server
 import (
 	"context"
 	"fmt"
+
+	"github.com/abulo/ratel/util"
 )
 
 type Option func(c *ServiceInfo)
+
+var nextId = util.ToInt(1)
 
 // ServiceInfo represents service info
 type ServiceInfo struct {

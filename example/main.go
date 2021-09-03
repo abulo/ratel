@@ -29,12 +29,28 @@ func main() {
 func NewEngine() *Engine {
 	eng := &Engine{}
 	if err := eng.Startup(
+		// eng.serveG,
 		eng.serveHTTP,
 	); err != nil {
 		logger.Logger.Panic("startup", err)
 	}
 	return eng
 }
+
+// func (eng *Engine) serveG() error {
+// 	config := &grace.Config{
+// 		Host:    "127.0.0.1",
+// 		Port:    17777,
+// 		Name:    "grace",
+// 		Network: "tcp4",
+// 	}
+// 	server := config.Build()
+// 	server.HandleFunc("/", func(w oldhttp.ResponseWriter, r *oldhttp.Request) {
+// 		w.Write([]byte(fmt.Sprintf("pid:%d", syscall.Getpid())))
+// 	})
+
+// 	return eng.Serve(server)
+// }
 
 func (eng *Engine) serveHTTP() error {
 	config := &http.Config{

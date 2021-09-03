@@ -122,6 +122,10 @@ func (s *Server) GracefulStop(ctx context.Context) error {
 	return s.Server.Shutdown(ctx)
 }
 
+func (s *Server) Shutdown() error {
+	return s.Server.Shutdown(context.Background())
+}
+
 // Info returns server info, used by governor and consumer balancer
 func (s *Server) Info() *server.ServiceInfo {
 	info := server.ApplyOptions(
