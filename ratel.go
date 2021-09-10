@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"sync"
 	"syscall"
 	"time"
@@ -180,9 +181,9 @@ func (app *Ratel) waitSignals() {
 }
 
 func (app *Ratel) exitHandler() {
+	debug.FreeOSMemory()
 	sig := <-app.sig
 	logger.Logger.Info(fmt.Sprintf("Received SIG. [PID:%d, SIG:%v]", syscall.Getpid(), sig))
-
 	switch sig {
 	case syscall.SIGHUP:
 		if err := app.Run(); err != nil {
