@@ -65,7 +65,7 @@ require (
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
-	github.com/coreos/bbolt v0.0.0-00010101000000-000000000000 // indirect
+	github.com/coreos/bbolt v1.3.3 // indirect
 	github.com/coreos/go-semver v0.2.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20180511133405-39ca1b05acc7 // indirect
 	github.com/coreos/pkg v0.0.0-20160727233714-3ac0863d7acf // indirect
