@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/abulo/ratel/gin/internal/json"
 	"github.com/pkg/errors"
 )
 
