@@ -27,16 +27,16 @@ require (
 	github.com/jlaffaye/ftp v0.0.0-20210307004419-5d4190119067
 	github.com/json-iterator/go v1.1.12
 	github.com/mattn/go-isatty v0.0.14
-	github.com/mitchellh/mapstructure v1.4.1
+	github.com/mitchellh/mapstructure v1.4.2
 	github.com/mozillazg/go-pinyin v0.18.0
 	github.com/olivere/elastic/v7 v7.0.28
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.3
 	github.com/prometheus/client_golang v1.11.0
-	github.com/segmentio/kafka-go v0.4.18
+	github.com/segmentio/kafka-go v0.4.19
 	github.com/shirou/gopsutil v3.21.8+incompatible
-	github.com/silenceper/wechat/v2 v2.0.8
+	github.com/silenceper/wechat/v2 v2.0.9
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
 	github.com/tsuna/gohbase v0.0.0-20210721183200-2b1c330433e3
@@ -46,10 +46,10 @@ require (
 	github.com/valyala/fasthttp v1.30.0
 	go.mongodb.org/mongo-driver v1.7.2
 	go.uber.org/multierr v1.7.0
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/crypto v0.0.0-20210915214749-c084706c2272
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20210909211513-a8c4777a87af
+	google.golang.org/genproto v0.0.0-20210916144049-3192f974c780
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -79,7 +79,7 @@ require (
 	github.com/go-zookeeper/zk v1.0.2 // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/gomodule/redigo v1.8.4 // indirect
+	github.com/gomodule/redigo v1.8.5 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.13.4 // indirect
