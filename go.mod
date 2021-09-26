@@ -29,28 +29,28 @@ require (
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/mozillazg/go-pinyin v0.18.0
-	github.com/olivere/elastic/v7 v7.0.28
+	github.com/olivere/elastic/v7 v7.0.29
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.3
 	github.com/prometheus/client_golang v1.11.0
-	github.com/segmentio/kafka-go v0.4.19
+	github.com/segmentio/kafka-go v0.4.20
 	github.com/shirou/gopsutil v3.21.8+incompatible
 	github.com/silenceper/wechat/v2 v2.0.9
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
-	github.com/tsuna/gohbase v0.0.0-20210721183200-2b1c330433e3
+	github.com/tsuna/gohbase v0.0.0-20210915142822-2d0b4a649730
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.6
 	github.com/valyala/fasthttp v1.30.0
 	go.mongodb.org/mongo-driver v1.7.2
 	go.uber.org/multierr v1.7.0
-	golang.org/x/crypto v0.0.0-20210915214749-c084706c2272
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20210916144049-3192f974c780
-	google.golang.org/grpc v1.40.0
+	google.golang.org/genproto v0.0.0-20210924002016-3dee208752a0
+	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
