@@ -32,7 +32,7 @@ require (
 	github.com/olivere/elastic/v7 v7.0.29
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
-	github.com/pkg/sftp v1.13.3
+	github.com/pkg/sftp v1.13.4
 	github.com/prometheus/client_golang v1.11.0
 	github.com/segmentio/kafka-go v0.4.20
 	github.com/shirou/gopsutil v3.21.8+incompatible
