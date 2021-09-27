@@ -1437,6 +1437,34 @@ func InArray(needle interface{}, haystack interface{}) bool {
 	return false
 }
 
+// InMultiArray in_array()
+// haystack supported types: slice, array or map
+func InMultiArray(haystack interface{}, needle ...interface{}) bool {
+	val := reflect.ValueOf(haystack)
+	vals := reflect.ValueOf(needle)
+	switch val.Kind() {
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < val.Len(); i++ {
+			for j := 0; j < vals.Len(); j++ {
+				if reflect.DeepEqual(vals.Index(j).Interface(), val.Index(i).Interface()) {
+					return true
+				}
+			}
+		}
+	case reflect.Map:
+		for _, k := range val.MapKeys() {
+			for _, v := range vals.MapKeys() {
+				if reflect.DeepEqual(vals.MapIndex(v).Interface(), val.MapIndex(k).Interface()) {
+					return true
+				}
+			}
+		}
+	default:
+		panic("haystack: haystack type muset be slice, array or map")
+	}
+	return false
+}
+
 //判断二维数组里面是不是只有一条数据
 func MultiArray(haystack interface{}) bool {
 	val := reflect.ValueOf(haystack)
