@@ -47,13 +47,13 @@ type QueryBuilder struct {
 	binds      []string
 	joins      []join
 	unions     []union
-	unlimmit   int64
-	unoffset   int64
-	unorders   []string
+	unLimit    int64
+	unOffset   int64
+	unOrders   []string
 
 	args      []interface{}
 	whereArgs []interface{}
-	datas     []map[string]interface{}
+	data      []map[string]interface{}
 }
 type join struct {
 	table    string
@@ -273,13 +273,13 @@ func (query *QueryBuilder) Union(unions ...QueryBuilder) *QueryBuilder {
 
 //UnionOffset .
 func (query *QueryBuilder) UnionOffset(offset int64) *QueryBuilder {
-	query.unoffset = offset
+	query.unOffset = offset
 	return query
 }
 
 //UnionLimit .
 func (query *QueryBuilder) UnionLimit(limit int64) *QueryBuilder {
-	query.unlimmit = limit
+	query.unLimit = limit
 	return query
 }
 
@@ -290,7 +290,7 @@ func (query *QueryBuilder) UnionOrderBy(column string, direction string) *QueryB
 	} else {
 		column += " " + ASC
 	}
-	query.unorders = append(query.unorders, column)
+	query.unOrders = append(query.unOrders, column)
 	return query
 }
 
@@ -363,8 +363,8 @@ func (query *QueryBuilder) beforeArg(value ...interface{}) {
 	query.whereArgs = append(query.whereArgs, value...)
 }
 
-func (query *QueryBuilder) setData(datas ...map[string]interface{}) {
-	query.datas = datas
+func (query *QueryBuilder) setData(data ...map[string]interface{}) {
+	query.data = data
 }
 
 func (b *QueryBuilder) getInsertMap(data interface{}) (columns []string, values map[string][]interface{}, err error) {

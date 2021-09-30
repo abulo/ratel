@@ -29,10 +29,10 @@ func (g Grammar) compileTable(from bool) string {
 	}
 
 }
-func (g Grammar) compileOrder(isunion bool) string {
+func (g Grammar) compileOrder(isUnion bool) string {
 	orders := g.builder.orders
-	if isunion {
-		orders = g.builder.unorders
+	if isUnion {
+		orders = g.builder.unOrders
 	}
 	if len(orders) < 1 {
 		return ""
@@ -47,11 +47,11 @@ func (g Grammar) compileGroup() string {
 	return " GROUP BY " + strings.Join(g.builder.groups, ",")
 }
 
-func (g Grammar) compileLimit(isunion bool) string {
+func (g Grammar) compileLimit(isUnion bool) string {
 	limit := g.builder.limit
 	offset := g.builder.offset
-	if isunion {
-		limit = g.builder.unlimmit
+	if isUnion {
+		limit = g.builder.unLimit
 		offset = g.builder.offset
 	}
 	if limit > 0 {
@@ -166,7 +166,7 @@ func (g Grammar) Replace() string {
 }
 func (g Grammar) compileInsertValue() string {
 	sql := " ("
-	for k, v := range g.builder.datas {
+	for k, v := range g.builder.data {
 		for kv, _ := range v {
 			if k == 0 { //取第一列
 				g.builder.columns = append(g.builder.columns, kv)
@@ -175,8 +175,8 @@ func (g Grammar) compileInsertValue() string {
 	}
 	columns := g.builder.columns
 	columnsLen := len(g.builder.columns)
-	for index := 0; index < len(g.builder.datas); index++ {
-		d := g.builder.datas[index]
+	for index := 0; index < len(g.builder.data); index++ {
+		d := g.builder.data[index]
 		for i := 0; i < columnsLen; i++ {
 			field := columns[i]
 			g.builder.addArg(d[field])
@@ -185,7 +185,7 @@ func (g Grammar) compileInsertValue() string {
 	sql += strings.Join(g.builder.columns, ",")
 	collen := len(g.builder.columns)
 	sql += ") VALUES (?" + strings.Repeat(",?", collen-1) + ")"
-	len := len(g.builder.datas)
+	len := len(g.builder.data)
 	if len > 1 {
 		for i := 1; i < len; i++ {
 			sql += " ,(?" + strings.Repeat(",?", collen-1) + ")"
@@ -205,7 +205,7 @@ func (g Grammar) Delete() string {
 }
 func (g Grammar) compileUpdateValue() string {
 	sql := ""
-	data := g.builder.datas[0] //取一个
+	data := g.builder.data[0] //取一个
 	for k, v := range data {
 		switch vv := v.(type) {
 		case Epr:
@@ -232,14 +232,14 @@ func (g Grammar) Update() string {
 	return sql
 }
 func (g Grammar) InsertUpdate() string {
-	old := g.builder.datas
+	old := g.builder.data
 	//insert
-	g.builder.datas = old[:1]
+	g.builder.data = old[:1]
 	sql := "INSERT INTO "
 	sql += g.compileTable(false)
 	sql += " " + g.compileInsertValue()
 	sql += " ON DUPLICATE KEY UPDATE "
-	g.builder.datas = old[1:]
+	g.builder.data = old[1:]
 	sql += g.compileUpdateValue()
 	return sql
 }
