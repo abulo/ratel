@@ -84,9 +84,9 @@ func (g Grammar) compileWhere() string {
 			case BETWEEN, NOTBETWEEN:
 				sql += " " + w[i].operator + " ? AND ?"
 			case IN, NOTIN:
-				int64_num := w[i].valuenum - 1
-				int_num := *(*int)(unsafe.Pointer(&int64_num))
-				sql += " " + w[i].operator + "(?" + strings.Repeat(",?", int_num) + ")"
+				int64Num := w[i].valuenum - 1
+				intNum := *(*int)(unsafe.Pointer(&int64Num))
+				sql += " " + w[i].operator + "(?" + strings.Repeat(",?", intNum) + ")"
 			case ISNULL, ISNOTNULL:
 				sql += " " + w[i].operator
 				break
