@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/BurntSushi/toml v0.4.1
-	github.com/abulo/clickhouse-go v1.4.12
+	github.com/abulo/clickhouse-go v1.4.13
 	github.com/alibaba/sentinel-golang v1.0.3
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/coreos/etcd v3.3.26+incompatible
@@ -43,13 +43,13 @@ require (
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.6
-	github.com/valyala/fasthttp v1.30.0
+	github.com/valyala/fasthttp v1.31.0
 	go.mongodb.org/mongo-driver v1.7.3
 	go.uber.org/multierr v1.7.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20211008145708-270636b82663
+	google.golang.org/genproto v0.0.0-20211013025323-ce878158c4d4
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -120,5 +120,4 @@ replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.5
 
 replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
 
-// replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.1.0
 replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.3.2
