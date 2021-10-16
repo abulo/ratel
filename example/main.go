@@ -8,9 +8,10 @@ import (
 	"github.com/abulo/ratel"
 	"github.com/abulo/ratel/logger"
 	"github.com/abulo/ratel/logger/hook"
-	"github.com/abulo/ratel/mongodb"
-	"github.com/abulo/ratel/mysql"
-	"github.com/abulo/ratel/redis"
+	"github.com/abulo/ratel/store/base"
+	"github.com/abulo/ratel/store/mongodb"
+	"github.com/abulo/ratel/store/mysql"
+	"github.com/abulo/ratel/store/redis"
 	"github.com/abulo/ratel/util"
 	"github.com/sirupsen/logrus"
 )
@@ -29,14 +30,14 @@ var MySQL *mysql.ProxyPool = mysql.NewProxyPool()
 // }
 
 type AdminPermission struct {
-	ID         int64              `db:"id" json:"id"`
-	ParentID   int64              `db:"parent_id" json:"parent_id"` //父ID
-	Title      string             `db:"title" json:"title"`         // 权限名称
-	Handle     string             `db:"handle" json:"handle"`       //路由别名
-	Weight     int64              `db:"weight" json:"weight"`       //权重
-	URI        string             `db:"url,-" json:"url"`
-	CreateDate mysql.NullDateTime `db:"create_date"`
-	UpdateDate mysql.NullDateTime `db:"update_date"`
+	ID         int64             `db:"id" json:"id"`
+	ParentID   int64             `db:"parent_id" json:"parent_id"` //父ID
+	Title      string            `db:"title" json:"title"`         // 权限名称
+	Handle     string            `db:"handle" json:"handle"`       //路由别名
+	Weight     int64             `db:"weight" json:"weight"`       //权重
+	URI        string            `db:"url,-" json:"url"`
+	CreateDate base.NullDateTime `db:"create_date"`
+	UpdateDate base.NullDateTime `db:"update_date"`
 }
 
 func main() {
@@ -90,8 +91,8 @@ func main() {
 
 	a1 := new(AdminPermission)
 	a1.Title = "张三"
-	a1.UpdateDate = mysql.NewNullDateTime()
-	a1.CreateDate = mysql.NewDateTime(util.Now())
+	a1.UpdateDate = base.NewNullDateTime()
+	a1.CreateDate = base.NewDateTime(util.Now())
 	a1.ParentID = 0
 	a1.Handle = "abulo1"
 	a1.Weight = 1

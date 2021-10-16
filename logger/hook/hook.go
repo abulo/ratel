@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/abulo/ratel/mongodb"
 	"github.com/abulo/ratel/queue"
+	"github.com/abulo/ratel/store/mongodb"
 	"github.com/sirupsen/logrus"
 )
 

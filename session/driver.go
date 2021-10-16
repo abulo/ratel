@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/redis"
+	"github.com/abulo/ratel/store/redis"
 )
 
 type Session struct {
