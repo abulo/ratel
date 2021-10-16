@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/abulo/ratel/logger"
-	"github.com/abulo/ratel/store/base"
+	"github.com/abulo/ratel/store/query"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -25,9 +25,9 @@ type Config struct {
 }
 
 //New 新连接
-func New(config *Config) *base.QueryDb {
+func New(config *Config) *query.QueryDb {
 	db := connect(config)
-	return &base.QueryDb{DB: db, DriverName: config.DriverName}
+	return &query.QueryDb{DB: db, DriverName: config.DriverName}
 }
 
 //URI 构造数据库连接

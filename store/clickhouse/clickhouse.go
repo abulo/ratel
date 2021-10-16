@@ -5,7 +5,7 @@ import (
 
 	_ "github.com/abulo/clickhouse-go"
 	"github.com/abulo/ratel/logger"
-	"github.com/abulo/ratel/store/base"
+	"github.com/abulo/ratel/store/query"
 	"github.com/abulo/ratel/util"
 )
 
@@ -65,7 +65,7 @@ func connect(config *Config) *sql.DB {
 }
 
 //New 新连接
-func New(config *Config) *base.QueryDb {
+func New(config *Config) *query.QueryDb {
 	db := connect(config)
-	return &base.QueryDb{DB: db, DriverName: config.DriverName}
+	return &query.QueryDb{DB: db, DriverName: config.DriverName}
 }

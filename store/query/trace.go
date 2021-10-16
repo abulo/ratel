@@ -1,4 +1,4 @@
-package base
+package query
 
 var trace bool
 
