@@ -1,4 +1,4 @@
-package clickhouse
+package base
 
 type DbError struct {
 	msg string

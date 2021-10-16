@@ -26,6 +26,7 @@ require (
 	github.com/imdario/mergo v0.3.12
 	github.com/jlaffaye/ftp v0.0.0-20210307004419-5d4190119067
 	github.com/json-iterator/go v1.1.12
+	github.com/lib/pq v1.10.3
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/mozillazg/go-pinyin v0.18.0

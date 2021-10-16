@@ -1,4 +1,4 @@
-package clickhouse
+package base
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/abulo/clickhouse-go"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
@@ -33,16 +32,16 @@ type Sql struct {
 
 // QueryDb mysql 配置
 type QueryDb struct {
-	db      *sql.DB
-	lastsql Sql
-	config  *Config
+	DB         *sql.DB
+	lastsql    Sql
+	DriverName string
 }
 
 //QueryTx 事务
 type QueryTx struct {
-	Tx      *sql.Tx
-	lastsql Sql
-	config  *Config
+	TX         *sql.Tx
+	lastsql    Sql
+	DriverName string
 }
 
 //NewQuery 生成一个新的查询构造器
@@ -55,11 +54,11 @@ func (querydb *QueryDb) NewQuery(ctx context.Context) *QueryBuilder {
 
 //Begin 开启一个事务
 func (querydb *QueryDb) Begin() (*QueryTx, error) {
-	tx, err := querydb.db.Begin()
+	tx, err := querydb.DB.Begin()
 	if err != nil {
 		return nil, err
 	}
-	return &QueryTx{Tx: tx, config: querydb.config}, nil
+	return &QueryTx{TX: tx, DriverName: querydb.DriverName}, nil
 }
 
 //Exec 复用执行语句
@@ -78,9 +77,9 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
-			span := opentracing.StartSpan("clickhouse", opentracing.ChildOf(parentCtx))
+			span := opentracing.StartSpan(querydb.DriverName, opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
-			ext.PeerService.Set(span, "clickhouse")
+			ext.PeerService.Set(span, querydb.DriverName)
 			span.LogFields(log.String("sql", query))
 			span.LogFields(log.Object("param", args))
 			defer span.Finish()
@@ -92,14 +91,15 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 	var err error
 
 	//添加预处理
-	stmt, err := querydb.db.PrepareContext(ctx, query)
+	stmt, err := querydb.DB.PrepareContext(ctx, query)
 
 	if err != nil {
-		querydb.db.PingContext(ctx)
+		querydb.DB.PingContext(ctx)
 		return res, err
 	}
 	res, err = stmt.ExecContext(ctx, args...)
-	querydb.db.PingContext(ctx)
+	querydb.DB.PingContext(ctx)
+
 	return res, err
 }
 
@@ -119,9 +119,9 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
-			span := opentracing.StartSpan("clickhouse", opentracing.ChildOf(parentCtx))
+			span := opentracing.StartSpan(querydb.DriverName, opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
-			ext.PeerService.Set(span, "clickhouse")
+			ext.PeerService.Set(span, querydb.DriverName)
 			span.LogFields(log.String("sql", query))
 			span.LogFields(log.Object("param", args))
 			defer span.Finish()
@@ -132,14 +132,14 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 	var err error
 
 	//添加预处理
-	stmt, err := querydb.db.PrepareContext(ctx, query)
+	stmt, err := querydb.DB.PrepareContext(ctx, query)
 
 	if err != nil {
-		querydb.db.PingContext(ctx)
+		querydb.DB.PingContext(ctx)
 		return res, err
 	}
 	res, err = stmt.QueryContext(ctx, args...)
-	querydb.db.PingContext(ctx)
+	querydb.DB.PingContext(ctx)
 	return res, err
 }
 
@@ -150,12 +150,12 @@ func (querydb *QueryDb) GetLastSql() Sql {
 
 // Commit 事务提交
 func (querytx *QueryTx) Commit() error {
-	return querytx.Tx.Commit()
+	return querytx.TX.Commit()
 }
 
 // Rollback 事务回滚
 func (querytx *QueryTx) Rollback() error {
-	return querytx.Tx.Rollback()
+	return querytx.TX.Rollback()
 }
 
 // NewQuery 生成一个新的查询构造器
@@ -184,9 +184,9 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
-			span := opentracing.StartSpan("clickhouse", opentracing.ChildOf(parentCtx))
+			span := opentracing.StartSpan(querytx.DriverName, opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
-			ext.PeerService.Set(span, "clickhouse")
+			ext.PeerService.Set(span, querytx.DriverName)
 			span.LogFields(log.String("sql", query))
 			span.LogFields(log.Object("param", args))
 			defer span.Finish()
@@ -198,7 +198,7 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 	var err error
 
 	//添加预处理
-	stmt, err := querytx.Tx.PrepareContext(ctx, query)
+	stmt, err := querytx.TX.PrepareContext(ctx, query)
 
 	if err != nil {
 		return res, err
@@ -225,9 +225,9 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
-			span := opentracing.StartSpan("clickhouse", opentracing.ChildOf(parentCtx))
+			span := opentracing.StartSpan(querytx.DriverName, opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
-			ext.PeerService.Set(span, "clickhouse")
+			ext.PeerService.Set(span, querytx.DriverName)
 			span.LogFields(log.String("sql", query))
 			span.LogFields(log.Object("param", args))
 			defer span.Finish()
@@ -238,7 +238,7 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 	var err error
 
 	//添加预处理
-	stmt, err := querytx.Tx.PrepareContext(ctx, query)
+	stmt, err := querytx.TX.PrepareContext(ctx, query)
 
 	if err != nil {
 		return res, err

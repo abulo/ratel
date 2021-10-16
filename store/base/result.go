@@ -1,11 +1,10 @@
-package mysql
+package base
 
 import (
 	"database/sql"
 	"fmt"
 	"reflect"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
 )
 

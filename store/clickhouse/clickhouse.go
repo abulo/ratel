@@ -5,6 +5,7 @@ import (
 
 	_ "github.com/abulo/clickhouse-go"
 	"github.com/abulo/ratel/logger"
+	"github.com/abulo/ratel/store/base"
 	"github.com/abulo/ratel/util"
 )
 
@@ -18,6 +19,7 @@ type Config struct {
 	ReadTimeout  int
 	WriteTimeout int
 	LoadBalance  string //负载均衡
+	DriverName   string
 }
 
 //URI 构造数据库连接
@@ -52,7 +54,7 @@ func (config *Config) URI() string {
 //connect 数据库连接
 func connect(config *Config) *sql.DB {
 	//数据库连接
-	db, err := sql.Open("clickhouse", config.URI())
+	db, err := sql.Open(config.DriverName, config.URI())
 	if err != nil {
 		logger.Logger.Fatal(err.Error())
 	}
@@ -63,7 +65,7 @@ func connect(config *Config) *sql.DB {
 }
 
 //New 新连接
-func New(config *Config) *QueryDb {
+func New(config *Config) *base.QueryDb {
 	db := connect(config)
-	return &QueryDb{db: db, config: config}
+	return &base.QueryDb{DB: db, DriverName: config.DriverName}
 }

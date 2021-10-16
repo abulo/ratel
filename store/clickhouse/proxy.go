@@ -1,16 +1,17 @@
-package mysql
+package clickhouse
 
 import (
 	"sync"
 
+	"github.com/abulo/ratel/store/base"
 	"github.com/abulo/ratel/util"
 )
 
 type (
 	//Proxy 代理
 	Proxy struct {
-		write []*QueryDb
-		read  []*QueryDb
+		write []*base.QueryDb
+		read  []*base.QueryDb
 	}
 	//ProxyPool 代理池
 	ProxyPool struct {
@@ -29,8 +30,8 @@ func NewProxyPool() *ProxyPool {
 //NewProxy 代理池
 func NewProxy() *Proxy {
 	return &Proxy{
-		write: make([]*QueryDb, 0),
-		read:  make([]*QueryDb, 0),
+		write: make([]*base.QueryDb, 0),
+		read:  make([]*base.QueryDb, 0),
 	}
 }
 
@@ -50,24 +51,24 @@ func (proxypool *ProxyPool) NameSpace(group string) *Proxy {
 }
 
 //SetWrite 设置写库
-func (proxy *Proxy) SetWrite(query *QueryDb) {
+func (proxy *Proxy) SetWrite(query *base.QueryDb) {
 	proxy.write = append(proxy.write, query)
 }
 
 //SetRead 设置读库
-func (proxy *Proxy) SetRead(query *QueryDb) {
+func (proxy *Proxy) SetRead(query *base.QueryDb) {
 	proxy.read = append(proxy.read, query)
 }
 
 //Write 获取写库
-func (proxy *Proxy) Write() *QueryDb {
+func (proxy *Proxy) Write() *base.QueryDb {
 	len := len(proxy.write)
 	write := util.Rand(0, len-1)
 	return proxy.write[write]
 }
 
 //Read 获取读库
-func (proxy *Proxy) Read() *QueryDb {
+func (proxy *Proxy) Read() *base.QueryDb {
 	len := len(proxy.read)
 	if len < 1 {
 		return proxy.Write()

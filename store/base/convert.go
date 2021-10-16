@@ -1,4 +1,4 @@
-package clickhouse
+package base
 
 import (
 	"fmt"
@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	_ "github.com/abulo/clickhouse-go"
 )
 
 //转换成string
