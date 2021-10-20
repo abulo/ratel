@@ -1,8 +1,6 @@
 package clickhouse
 
 import (
-	"database/sql"
-
 	_ "github.com/abulo/clickhouse-go"
 	"github.com/abulo/ratel/logger"
 	"github.com/abulo/ratel/store/query"
@@ -52,20 +50,23 @@ func (config *Config) URI() string {
 }
 
 //connect 数据库连接
-func connect(config *Config) *sql.DB {
-	//数据库连接
-	db, err := sql.Open(config.DriverName, config.URI())
-	if err != nil {
-		logger.Logger.Fatal(err.Error())
-	}
-	if err = db.Ping(); err != nil {
-		logger.Logger.Fatal(err.Error())
-	}
-	return db
-}
+// func connect(config *Config) *sql.DB {
+// 	//数据库连接
+// 	db, err := sql.Open(config.DriverName, config.URI())
+// 	if err != nil {
+// 		logger.Logger.Fatal(err.Error())
+// 	}
+// 	if err = db.Ping(); err != nil {
+// 		logger.Logger.Fatal(err.Error())
+// 	}
+// 	return db
+// }
 
 //New 新连接
 func New(config *Config) *query.QueryDb {
-	db := connect(config)
+	db, err := query.NewSqlConn(config.DriverName, config.URI())
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
 	return &query.QueryDb{DB: db, DriverName: config.DriverName}
 }

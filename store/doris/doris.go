@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/abulo/ratel/logger"
@@ -26,7 +25,10 @@ type Config struct {
 
 //New 新连接
 func New(config *Config) *query.QueryDb {
-	db := connect(config)
+	db, err := query.NewSqlConn(config.DriverName, config.URI())
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
 	return &query.QueryDb{DB: db, DriverName: config.DriverName}
 }
 
@@ -41,18 +43,18 @@ func (config *Config) URI() string {
 }
 
 //connect 数据库连接
-func connect(config *Config) *sql.DB {
-	//数据库连接
-	db, err := sql.Open(config.DriverName, config.URI())
-	if err != nil {
-		logger.Logger.Fatal(err.Error())
-	}
-	if err = db.Ping(); err != nil {
-		logger.Logger.Fatal(err.Error())
-	}
-	db.SetMaxIdleConns(config.MaxIdleConns)
-	db.SetMaxOpenConns(config.MaxOpenConns)
-	db.SetConnMaxLifetime(config.ConnMaxLifetime)
-	db.SetConnMaxIdleTime(config.ConnMaxIdleTime)
-	return db
-}
+// func connect(config *Config) *sql.DB {
+// 	//数据库连接
+// 	db, err := sql.Open(config.DriverName, config.URI())
+// 	if err != nil {
+// 		logger.Logger.Fatal(err.Error())
+// 	}
+// 	if err = db.Ping(); err != nil {
+// 		logger.Logger.Fatal(err.Error())
+// 	}
+// 	db.SetMaxIdleConns(config.MaxIdleConns)
+// 	db.SetMaxOpenConns(config.MaxOpenConns)
+// 	db.SetConnMaxLifetime(config.ConnMaxLifetime)
+// 	db.SetConnMaxIdleTime(config.ConnMaxIdleTime)
+// 	return db
+// }
