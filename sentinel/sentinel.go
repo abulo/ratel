@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 
 	"github.com/abulo/ratel/logger"
-	sentinel "github.com/alibaba/sentinel-golang/api"
+	"github.com/alibaba/sentinel-golang/api"
 	"github.com/alibaba/sentinel-golang/core/base"
-	sentinel_config "github.com/alibaba/sentinel-golang/core/config"
+	"github.com/alibaba/sentinel-golang/core/config"
 	"github.com/alibaba/sentinel-golang/core/flow"
 )
 
@@ -19,10 +19,10 @@ type Config struct {
 	FlowRulesFile string
 }
 
-func (config *Config) Build() error {
-	if config.FlowRulesFile != "" {
+func (cfg *Config) Build() error {
+	if cfg.FlowRulesFile != "" {
 		var rules []*flow.Rule
-		content, err := ioutil.ReadFile(config.FlowRulesFile)
+		content, err := ioutil.ReadFile(cfg.FlowRulesFile)
 		if err != nil {
 			logger.Logger.Error("load sentinel flow rules")
 		}
@@ -31,19 +31,19 @@ func (config *Config) Build() error {
 			logger.Logger.Error("load sentinel flow rules")
 		}
 
-		config.FlowRules = append(config.FlowRules, rules...)
+		cfg.FlowRules = append(cfg.FlowRules, rules...)
 	}
 
-	configEntity := sentinel_config.NewDefaultConfig()
-	configEntity.Sentinel.App.Name = config.AppName
-	configEntity.Sentinel.Log.Dir = config.LogPath
+	configEntity := config.NewDefaultConfig()
+	configEntity.Sentinel.App.Name = cfg.AppName
+	configEntity.Sentinel.Log.Dir = cfg.LogPath
 
-	if len(config.FlowRules) > 0 {
-		_, _ = flow.LoadRules(config.FlowRules)
+	if len(cfg.FlowRules) > 0 {
+		_, _ = flow.LoadRules(cfg.FlowRules)
 	}
-	return sentinel.InitWithConfig(configEntity)
+	return api.InitWithConfig(configEntity)
 }
 
 func Entry(resource string) (*base.SentinelEntry, *base.BlockError) {
-	return sentinel.Entry(resource)
+	return api.Entry(resource)
 }
