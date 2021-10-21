@@ -31,7 +31,7 @@ func (c *Config) LoadDir(dir, suffix string) (err error) {
 	}
 
 	for _, file := range fileList {
-		if err = c.loadFile(file, false); err != nil {
+		if err = c.loadFile(file, false, ""); err != nil {
 			return
 		}
 	}
@@ -44,7 +44,7 @@ func LoadFiles(sourceFiles ...string) error { return dc.LoadFiles(sourceFiles...
 // LoadFiles load and parse config files
 func (c *Config) LoadFiles(sourceFiles ...string) (err error) {
 	for _, file := range sourceFiles {
-		if err = c.loadFile(file, false); err != nil {
+		if err = c.loadFile(file, false, ""); err != nil {
 			return
 		}
 	}
@@ -57,7 +57,7 @@ func LoadExists(sourceFiles ...string) error { return dc.LoadExists(sourceFiles.
 // LoadExists load and parse config files, but will ignore not exists file.
 func (c *Config) LoadExists(sourceFiles ...string) (err error) {
 	for _, file := range sourceFiles {
-		if err = c.loadFile(file, true); err != nil {
+		if err = c.loadFile(file, true, ""); err != nil {
 			return
 		}
 	}
@@ -258,8 +258,38 @@ func (c *Config) LoadStrings(format string, str string, more ...string) (err err
 	return
 }
 
+// LoadFilesByFormat load one or multi files by give format
+func LoadFilesByFormat(format string, sourceFiles ...string) error {
+	return dc.LoadFilesByFormat(format, sourceFiles...)
+}
+
+// LoadFilesByFormat load one or multi files by give format
+func (c *Config) LoadFilesByFormat(format string, sourceFiles ...string) (err error) {
+	for _, file := range sourceFiles {
+		if err = c.loadFile(file, false, format); err != nil {
+			return
+		}
+	}
+	return
+}
+
+// LoadExistsByFormat load one or multi files by give format
+func LoadExistsByFormat(format string, sourceFiles ...string) error {
+	return dc.LoadExistsByFormat(format, sourceFiles...)
+}
+
+// LoadExistsByFormat load one or multi files by give format
+func (c *Config) LoadExistsByFormat(format string, sourceFiles ...string) (err error) {
+	for _, file := range sourceFiles {
+		if err = c.loadFile(file, true, format); err != nil {
+			return
+		}
+	}
+	return
+}
+
 // load config file
-func (c *Config) loadFile(file string, loadExist bool) (err error) {
+func (c *Config) loadFile(file string, loadExist bool, format string) (err error) {
 	// open file
 	fd, err := os.Open(file)
 	if err != nil {
@@ -275,8 +305,10 @@ func (c *Config) loadFile(file string, loadExist bool) (err error) {
 	// read file content
 	bts, err := io.ReadAll(fd)
 	if err == nil {
-		// get format for file ext
-		format := strings.Trim(filepath.Ext(file), ".")
+		if format == "" {
+			// get format for file ext
+			format = strings.Trim(filepath.Ext(file), ".")
+		}
 
 		// parse file content
 		if err = c.parseSourceCode(format, bts); err != nil {
