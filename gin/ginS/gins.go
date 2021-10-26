@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/abulo/ratel/v1/gin"
+	"github.com/abulo/ratel/gin"
 )
 
 var once sync.Once

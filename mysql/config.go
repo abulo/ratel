@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/abulo/ratel/v1/logger"
+	"github.com/abulo/ratel/logger"
 	_ "github.com/go-sql-driver/mysql"
 )
 

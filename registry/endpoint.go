@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"github.com/abulo/ratel/v1/server"
+	"github.com/abulo/ratel/server"
 )
 
 // Endpoints ...

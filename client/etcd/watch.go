@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/abulo/ratel/v1/goroutine"
-	"github.com/abulo/ratel/v1/logger"
+	"github.com/abulo/ratel/goroutine"
+	"github.com/abulo/ratel/logger"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 )

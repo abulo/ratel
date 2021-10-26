@@ -3,7 +3,7 @@ package hook
 import (
 	"context"
 
-	"github.com/abulo/ratel/v1/mongodb"
+	"github.com/abulo/ratel/mongodb"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 )

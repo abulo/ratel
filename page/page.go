@@ -5,7 +5,7 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/abulo/ratel/v1/util"
+	"github.com/abulo/ratel/util"
 )
 
 type Pager struct {

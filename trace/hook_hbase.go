@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/abulo/ratel/v1/hbase"
+	"github.com/abulo/ratel/hbase"
 	"github.com/tsuna/gohbase/hrpc"
 )
 

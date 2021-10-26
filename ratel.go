@@ -10,14 +10,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/abulo/ratel/v1/cycle"
-	"github.com/abulo/ratel/v1/goroutine"
-	"github.com/abulo/ratel/v1/logger"
-	"github.com/abulo/ratel/v1/registry"
-	"github.com/abulo/ratel/v1/server"
-	"github.com/abulo/ratel/v1/stack"
-	"github.com/abulo/ratel/v1/trace"
-	"github.com/abulo/ratel/v1/worker"
+	"github.com/abulo/ratel/cycle"
+	"github.com/abulo/ratel/goroutine"
+	"github.com/abulo/ratel/logger"
+	"github.com/abulo/ratel/registry"
+	"github.com/abulo/ratel/server"
+	"github.com/abulo/ratel/stack"
+	"github.com/abulo/ratel/trace"
+	"github.com/abulo/ratel/worker"
 	"golang.org/x/sync/errgroup"
 )
 

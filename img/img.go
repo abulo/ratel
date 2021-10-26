@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/abulo/ratel/v1/img/fontx"
-	"github.com/abulo/ratel/v1/util"
+	"github.com/abulo/ratel/img/fontx"
+	"github.com/abulo/ratel/util"
 	"github.com/disintegration/imaging"
 	"github.com/golang/freetype"
 	"github.com/h2non/bimg"

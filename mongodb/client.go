@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/abulo/ratel/v1/logger"
-	"github.com/abulo/ratel/v1/util"
+	"github.com/abulo/ratel/logger"
+	"github.com/abulo/ratel/util"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"

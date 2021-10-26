@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/abulo/ratel/v1/logger"
+	"github.com/abulo/ratel/logger"
 	sentinel "github.com/alibaba/sentinel-golang/api"
 	"github.com/alibaba/sentinel-golang/core/base"
 	sentinel_config "github.com/alibaba/sentinel-golang/core/config"

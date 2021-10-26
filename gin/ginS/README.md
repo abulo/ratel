@@ -6,8 +6,8 @@ This is API experiment for Gin.
 package main
 
 import (
-	"github.com/abulo/ratel/v1/gin"
-	"github.com/abulo/ratel/v1/gin/ginS"
+	"github.com/abulo/ratel/gin"
+	"github.com/abulo/ratel/gin/ginS"
 )
 
 func main() {

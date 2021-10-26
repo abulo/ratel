@@ -1,7 +1,7 @@
 package elasticsearch
 
 import (
-	"github.com/abulo/ratel/v1/logger"
+	"github.com/abulo/ratel/logger"
 	"github.com/olivere/elastic/v7"
 )
 

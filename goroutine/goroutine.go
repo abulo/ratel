@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/abulo/ratel/v1/logger"
+	"github.com/abulo/ratel/logger"
 	"github.com/codegangsta/inject"
 )
 

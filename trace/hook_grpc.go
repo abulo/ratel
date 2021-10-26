@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/v1/ecode"
-	"github.com/abulo/ratel/v1/metric"
+	"github.com/abulo/ratel/ecode"
+	"github.com/abulo/ratel/metric"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )

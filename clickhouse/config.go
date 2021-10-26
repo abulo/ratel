@@ -4,8 +4,8 @@ import (
 	"database/sql"
 
 	_ "github.com/abulo/clickhouse-go"
-	"github.com/abulo/ratel/v1/logger"
-	"github.com/abulo/ratel/v1/util"
+	"github.com/abulo/ratel/logger"
+	"github.com/abulo/ratel/util"
 )
 
 //Config 数据库配置

@@ -20,7 +20,7 @@ lang/
 ### 初始化
 
 ```go
-    import "github.com/abulo/ratel/v1/i18n"
+    import "github.com/abulo/ratel/i18n"
 
     languages := map[string]string{
         "en": "English",

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/v1/gin/internal/bytesconv"
-	"github.com/abulo/ratel/v1/gin/internal/json"
+	"github.com/abulo/ratel/gin/internal/bytesconv"
+	"github.com/abulo/ratel/gin/internal/json"
 	"github.com/pkg/errors"
 )
 

@@ -51,8 +51,8 @@ arr1:
 package main
 
 import (
-    "github.com/abulo/ratel/v1/config"
-    "github.com/abulo/ratel/v1/config/yaml"
+    "github.com/abulo/ratel/config"
+    "github.com/abulo/ratel/config/yaml"
 )
 
 // go run ./examples/yaml.go

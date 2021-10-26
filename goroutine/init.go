@@ -3,8 +3,8 @@ package goroutine
 import (
 	"fmt"
 
-	"github.com/abulo/ratel/v1/logger"
-	"github.com/abulo/ratel/v1/util"
+	"github.com/abulo/ratel/logger"
+	"github.com/abulo/ratel/util"
 	"github.com/pkg/errors"
 )
 

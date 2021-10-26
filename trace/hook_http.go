@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/abulo/ratel/v1/gin"
-	"github.com/abulo/ratel/v1/metric"
-	"github.com/abulo/ratel/v1/util"
+	"github.com/abulo/ratel/gin"
+	"github.com/abulo/ratel/metric"
+	"github.com/abulo/ratel/util"
 )
 
 //HTTPMetricServerInterceptor 监控程序跟踪

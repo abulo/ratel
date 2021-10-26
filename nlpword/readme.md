@@ -10,7 +10,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/abulo/ratel/v1/nlpword"
+	"github.com/abulo/ratel/nlpword"
 )
 
 func main() {
