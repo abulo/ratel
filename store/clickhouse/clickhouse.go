@@ -18,6 +18,7 @@ type Config struct {
 	WriteTimeout int
 	LoadBalance  string //负载均衡
 	DriverName   string
+	Trace        bool
 }
 
 //URI 构造数据库连接
@@ -68,5 +69,5 @@ func New(config *Config) *query.QueryDb {
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
-	return &query.QueryDb{DB: db, DriverName: config.DriverName}
+	return &query.QueryDb{DB: db, DriverName: config.DriverName, Trace: config.Trace}
 }

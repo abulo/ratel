@@ -21,6 +21,7 @@ type Config struct {
 	MaxIdleConns    int           //设置闲置的连接数,连接池里面允许Idel的最大连接数, 这些Idel的连接 就是并发时可以同时获取的连接,也是用完后放回池里面的互用的连接, 从而提升性能
 	MaxOpenConns    int           //设置最大打开的连接数，默认值为0表示不限制。控制应用于数据库建立连接的数量，避免过多连接压垮数据库。
 	DriverName      string
+	Trace           bool
 }
 
 //New 新连接
@@ -29,7 +30,7 @@ func New(config *Config) *query.QueryDb {
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
-	return &query.QueryDb{DB: db, DriverName: config.DriverName}
+	return &query.QueryDb{DB: db, DriverName: config.DriverName, Trace: config.Trace}
 }
 
 //URI 构造数据库连接
