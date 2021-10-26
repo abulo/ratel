@@ -11,7 +11,7 @@ const (
 	maxIdleConns = 64
 	maxOpenConns = 64
 	maxLifetime  = time.Minute
-	maxIdleTime  = time.Minute
+	maxIdletime  = time.Minute
 )
 
 var connManager = NewResourceManager()
@@ -68,7 +68,7 @@ func newDBConnection(driverName, datasource string) (*sql.DB, error) {
 	conn.SetMaxIdleConns(maxIdleConns)
 	conn.SetMaxOpenConns(maxOpenConns)
 	conn.SetConnMaxLifetime(maxLifetime)
-	conn.SetConnMaxIdleTime(maxIdleTime)
+	conn.SetConnMaxIdleTime(maxIdletime)
 
 	return conn, nil
 }
