@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/abulo/ratel/logger"
+	"github.com/abulo/ratel/v1/logger"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 )

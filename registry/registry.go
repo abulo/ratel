@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/abulo/ratel/server"
+	"github.com/abulo/ratel/v1/server"
 )
 
 type Registry interface {

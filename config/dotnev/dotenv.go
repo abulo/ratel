@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/abulo/ratel/config/parser/ini/parser"
+	"github.com/abulo/ratel/v1/config/parser/ini/parser"
 )
 
 var (

@@ -3,7 +3,7 @@ package hclv2
 import (
 	"errors"
 
-	"github.com/abulo/ratel/config"
+	"github.com/abulo/ratel/v1/config"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclsyntax"

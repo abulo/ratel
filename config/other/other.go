@@ -1,8 +1,8 @@
 package other
 
 import (
-	"github.com/abulo/ratel/config"
-	"github.com/abulo/ratel/config/ini"
+	"github.com/abulo/ratel/v1/config"
+	"github.com/abulo/ratel/v1/config/ini"
 )
 
 const driverName = "other"

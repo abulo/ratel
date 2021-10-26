@@ -7,7 +7,7 @@ package gin
 import (
 	"log"
 
-	"github.com/abulo/ratel/gin/binding"
+	"github.com/abulo/ratel/v1/gin/binding"
 )
 
 // BindWith binds the passed struct pointer using the specified binding engine.

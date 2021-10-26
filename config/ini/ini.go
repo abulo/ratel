@@ -1,8 +1,8 @@
 package ini
 
 import (
-	"github.com/abulo/ratel/config"
-	"github.com/abulo/ratel/config/parser/ini/parser"
+	"github.com/abulo/ratel/v1/config"
+	"github.com/abulo/ratel/v1/config/parser/ini/parser"
 )
 
 // Decoder the ini content decoder

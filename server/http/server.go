@@ -6,9 +6,9 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/abulo/ratel/gin"
-	"github.com/abulo/ratel/logger"
-	"github.com/abulo/ratel/server"
+	"github.com/abulo/ratel/v1/gin"
+	"github.com/abulo/ratel/v1/logger"
+	"github.com/abulo/ratel/v1/server"
 )
 
 // Config HTTP config
