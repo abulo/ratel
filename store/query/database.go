@@ -35,6 +35,7 @@ type QueryDb struct {
 	DB         *sql.DB
 	lastsql    Sql
 	DriverName string
+	trace      bool
 }
 
 //QueryTx 事务
@@ -42,6 +43,11 @@ type QueryTx struct {
 	TX         *sql.Tx
 	lastsql    Sql
 	DriverName string
+	trace      bool
+}
+
+func (querydb *QueryDb) SetTrace(t bool) {
+	querydb.trace = t
 }
 
 //NewQuery 生成一个新的查询构造器
@@ -58,7 +64,7 @@ func (querydb *QueryDb) Begin() (*QueryTx, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &QueryTx{TX: tx, DriverName: querydb.DriverName}, nil
+	return &QueryTx{TX: tx, DriverName: querydb.DriverName, trace: querydb.trace}, nil
 }
 
 //Exec 复用执行语句
@@ -73,7 +79,7 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if querydb.trace {
 
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
@@ -115,7 +121,7 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if querydb.trace {
 
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
@@ -180,7 +186,7 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 		ctx = context.TODO()
 	}
 
-	if trace {
+	if querytx.trace {
 
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
@@ -221,7 +227,7 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 		ctx = context.TODO()
 	}
 
-	if trace {
+	if querytx.trace {
 
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
