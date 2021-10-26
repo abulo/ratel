@@ -22,6 +22,7 @@ import (
 type MongoDB struct {
 	Client *mongo.Client
 	Name   string
+	trace  bool
 }
 
 //collection *mongo.Client
@@ -33,6 +34,7 @@ type collection struct {
 	skip     int64
 	sort     bson.D
 	fields   bson.M
+	trace    bool
 }
 
 //Config 配置
@@ -43,6 +45,10 @@ type Config struct {
 	MaxConnIdleTime time.Duration
 	MaxPoolSize     uint64
 	MinPoolSize     uint64
+}
+
+func (mongodb *MongoDB) SetTrace(t bool) {
+	mongodb.trace = t
 }
 
 //New 数据库连接
@@ -86,6 +92,7 @@ func (collection *collection) reset() {
 	collection.sort = nil
 	collection.fields = nil
 	collection.Table = nil
+	collection.trace = false
 }
 
 // Collection 得到一个mongo操作对象
@@ -96,6 +103,7 @@ func (client *MongoDB) Collection(table string) *collection {
 		Table:    database.Collection(table),
 		filter:   make(bson.D, 0),
 		sort:     make(bson.D, 0),
+		trace:    client.trace,
 	}
 }
 
@@ -134,7 +142,7 @@ func (collection *collection) CreateIndex(ctx context.Context, key bson.D, op *o
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -161,7 +169,7 @@ func (collection *collection) ListIndexes(ctx context.Context, opts *options.Lis
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -196,7 +204,7 @@ func (collection *collection) DropIndex(ctx context.Context, name string, opts *
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -227,7 +235,7 @@ func (collection *collection) InsertOne(ctx context.Context, document interface{
 		ctx = context.TODO()
 	}
 	data = BeforeCreate(document)
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -254,7 +262,7 @@ func (collection *collection) InsertMany(ctx context.Context, documents interfac
 		ctx = context.TODO()
 	}
 	data = BeforeCreate(documents).([]interface{})
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -278,7 +286,7 @@ func (collection *collection) Aggregate(ctx context.Context, pipeline interface{
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -312,7 +320,7 @@ func (collection *collection) UpdateOrInsert(ctx context.Context, documents []in
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -341,7 +349,7 @@ func (collection *collection) UpdateOne(ctx context.Context, document interface{
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -368,7 +376,7 @@ func (collection *collection) UpdateOneRaw(ctx context.Context, document interfa
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -396,7 +404,7 @@ func (collection *collection) UpdateMany(ctx context.Context, document interface
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -423,7 +431,7 @@ func (collection *collection) FindOne(ctx context.Context, document interface{})
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -461,7 +469,7 @@ func (collection *collection) FindMany(ctx context.Context, documents interface{
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -521,7 +529,7 @@ func (collection *collection) Delete(ctx context.Context) (count int64, err erro
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -557,7 +565,7 @@ func (collection *collection) Drop(ctx context.Context) error {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -579,7 +587,7 @@ func (collection *collection) Count(ctx context.Context) (result int64, err erro
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
+	if collection.trace {
 		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))

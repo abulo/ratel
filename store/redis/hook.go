@@ -26,15 +26,13 @@ func (OpenTelemetryHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (co
 		ctx = context.TODO()
 	}
 
-	if trace {
-		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
-			parentCtx := parentSpan.Context()
-			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
-			ext.SpanKindRPCClient.Set(span)
-			ext.PeerService.Set(span, "redis")
-			span.LogFields(log.String("cmd", String(b)))
-			ctx = opentracing.ContextWithSpan(ctx, span)
-		}
+	if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
+		parentCtx := parentSpan.Context()
+		span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
+		ext.SpanKindRPCClient.Set(span)
+		ext.PeerService.Set(span, "redis")
+		span.LogFields(log.String("cmd", String(b)))
+		ctx = opentracing.ContextWithSpan(ctx, span)
 	}
 	return ctx, nil
 }
@@ -43,11 +41,9 @@ func (OpenTelemetryHook) AfterProcess(ctx context.Context, cmd redis.Cmder) erro
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
-		span := opentracing.SpanFromContext(ctx)
-		if span != nil {
-			defer span.Finish()
-		}
+	span := opentracing.SpanFromContext(ctx)
+	if span != nil {
+		defer span.Finish()
 	}
 	return nil
 }
@@ -57,46 +53,43 @@ func (OpenTelemetryHook) BeforeProcessPipeline(ctx context.Context, cmds []redis
 		ctx = context.TODO()
 	}
 
-	if trace {
+	const numCmdLimit = 100
+	const numNameLimit = 10
 
-		const numCmdLimit = 100
-		const numNameLimit = 10
+	seen := make(map[string]struct{}, len(cmds))
+	unqNames := make([]string, 0, len(cmds))
 
-		seen := make(map[string]struct{}, len(cmds))
-		unqNames := make([]string, 0, len(cmds))
+	b := make([]byte, 0, 32*len(cmds))
 
-		b := make([]byte, 0, 32*len(cmds))
-
-		for i, cmd := range cmds {
-			if i > numCmdLimit {
-				break
-			}
-
-			if i > 0 {
-				b = append(b, '\n')
-			}
-			b = appendCmd(b, cmd)
-
-			if len(unqNames) >= numNameLimit {
-				continue
-			}
-
-			name := cmd.FullName()
-			if _, ok := seen[name]; !ok {
-				seen[name] = struct{}{}
-				unqNames = append(unqNames, name)
-			}
+	for i, cmd := range cmds {
+		if i > numCmdLimit {
+			break
 		}
 
-		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
-			parentCtx := parentSpan.Context()
-			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
-			ext.SpanKindRPCClient.Set(span)
-			ext.PeerService.Set(span, "redis")
-			// span.SetTag("redis.cmds", String(b))
-			span.LogFields(log.String("cmds", String(b)))
-			ctx = opentracing.ContextWithSpan(ctx, span)
+		if i > 0 {
+			b = append(b, '\n')
 		}
+		b = appendCmd(b, cmd)
+
+		if len(unqNames) >= numNameLimit {
+			continue
+		}
+
+		name := cmd.FullName()
+		if _, ok := seen[name]; !ok {
+			seen[name] = struct{}{}
+			unqNames = append(unqNames, name)
+		}
+	}
+
+	if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
+		parentCtx := parentSpan.Context()
+		span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
+		ext.SpanKindRPCClient.Set(span)
+		ext.PeerService.Set(span, "redis")
+		// span.SetTag("redis.cmds", String(b))
+		span.LogFields(log.String("cmds", String(b)))
+		ctx = opentracing.ContextWithSpan(ctx, span)
 	}
 
 	return ctx, nil
@@ -110,11 +103,9 @@ func (OpenTelemetryHook) AfterProcessPipeline(ctx context.Context, cmds []redis.
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if trace {
-		span := opentracing.SpanFromContext(ctx)
-		if span != nil {
-			defer span.Finish()
-		}
+	span := opentracing.SpanFromContext(ctx)
+	if span != nil {
+		defer span.Finish()
 	}
 	return nil
 }

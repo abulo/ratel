@@ -19,6 +19,7 @@ type Config struct {
 	Database  int      //数据库
 	PoolSize  int      //连接池大小
 	KeyPrefix string
+	Trace     bool
 }
 
 //New 新连接
@@ -45,6 +46,10 @@ func New(config *Config) *Client {
 	if config.Password != "" {
 		opts.Password = config.Password
 	}
+	if config.Trace {
+		opts.Trace = config.Trace
+	}
+
 	client := NewClient(opts)
 	ctx := context.TODO()
 	if err := client.Ping(ctx).Err(); err != nil {
@@ -73,7 +78,7 @@ func NewClient(opts Options) *Client {
 	case ClientCluster:
 
 		tc := redis.NewClusterClient(opts.GetClusterConfig())
-		if trace {
+		if opts.Trace {
 			ctx := context.TODO()
 			tc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
 				shard.AddHook(OpenTelemetryHook{})
@@ -86,7 +91,7 @@ func NewClient(opts Options) *Client {
 		fallthrough
 	default:
 		tc := redis.NewClient(opts.GetNormalConfig())
-		if trace {
+		if opts.Trace {
 			tc.AddHook(OpenTelemetryHook{})
 		}
 		r.client = tc

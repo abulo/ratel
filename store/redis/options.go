@@ -72,6 +72,8 @@ type Options struct {
 	// TLS Config to use. When set TLS will be negotiated.
 	// Only for normal client
 	TLSConfig *tls.Config
+
+	Trace bool
 }
 
 // GetClusterConfig translates current configuration into a *redis.ClusterOptions
