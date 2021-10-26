@@ -24,9 +24,9 @@ func (proxypool *ProxyPool) StoreKafka(group string, proxy *ProxyKafka) {
 }
 
 //LoadEs 获取分组
-func (proxypool *ProxyPool) LoadKafka(group string) *ProxyKafka {
+func (proxypool *ProxyPool) LoadKafka(group string) *kafka.Clientkafka {
 	if f, ok := proxypool.m.Load(group); ok {
-		return f.(*ProxyKafka)
+		return f.(*ProxyKafka).Clientkafka
 	}
 	return nil
 }

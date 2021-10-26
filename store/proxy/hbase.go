@@ -24,9 +24,9 @@ func (proxypool *ProxyPool) StoreHbase(group string, proxy *ProxyHbase) {
 }
 
 //LoadEs 获取分组
-func (proxypool *ProxyPool) LoadHbase(group string) *ProxyHbase {
+func (proxypool *ProxyPool) LoadHbase(group string) *hbase.Client {
 	if f, ok := proxypool.m.Load(group); ok {
-		return f.(*ProxyHbase)
+		return f.(*ProxyHbase).Client
 	}
 	return nil
 }

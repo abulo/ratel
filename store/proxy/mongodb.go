@@ -22,9 +22,9 @@ func (proxypool *ProxyPool) StoreMongoDB(group string, proxy *ProxyMongoDB) {
 }
 
 //LoadNoSQL 获取分组
-func (proxypool *ProxyPool) LoadMongoDB(group string) *ProxyMongoDB {
+func (proxypool *ProxyPool) LoadMongoDB(group string) *mongodb.MongoDB {
 	if f, ok := proxypool.m.Load(group); ok {
-		return f.(*ProxyMongoDB)
+		return f.(*ProxyMongoDB).MongoDB
 	}
 	return nil
 }

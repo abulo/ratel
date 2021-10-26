@@ -24,9 +24,9 @@ func (proxypool *ProxyPool) StoreKylin(group string, proxy *ProxyKylin) {
 }
 
 //LoadEs 获取分组
-func (proxypool *ProxyPool) LoadKylin(group string) *ProxyKylin {
+func (proxypool *ProxyPool) LoadKylin(group string) *kylin.Client {
 	if f, ok := proxypool.m.Load(group); ok {
-		return f.(*ProxyKylin)
+		return f.(*ProxyKylin).Client
 	}
 	return nil
 }

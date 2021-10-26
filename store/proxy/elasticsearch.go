@@ -22,9 +22,9 @@ func (proxypool *ProxyPool) StoreElasticSearch(group string, proxy *ProxyElastic
 }
 
 //LoadEs 获取分组
-func (proxypool *ProxyPool) LoadElasticSearch(group string) *ProxyElasticSearch {
+func (proxypool *ProxyPool) LoadElasticSearch(group string) *elasticsearch.Client {
 	if f, ok := proxypool.m.Load(group); ok {
-		return f.(*ProxyElasticSearch)
+		return f.(*ProxyElasticSearch).Client
 	}
 	return nil
 }

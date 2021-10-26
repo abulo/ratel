@@ -22,9 +22,9 @@ func (proxypool *ProxyPool) StoreRedis(group string, proxy *ProxyRedis) {
 }
 
 //LoadCache 获取分组
-func (proxypool *ProxyPool) LoadRedis(group string) *ProxyRedis {
+func (proxypool *ProxyPool) LoadRedis(group string) *redis.Client {
 	if f, ok := proxypool.m.Load(group); ok {
-		return f.(*ProxyRedis)
+		return f.(*ProxyRedis).Client
 	}
 	return nil
 }
