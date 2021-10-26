@@ -1,7 +1,7 @@
 package json
 
 import (
-	"github.com/abulo/ratel/config"
+	"github.com/abulo/ratel/v2/config"
 	jsoniter "github.com/json-iterator/go"
 )
 

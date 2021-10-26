@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"github.com/abulo/ratel/store/hbase"
+	"github.com/abulo/ratel/v2/store/hbase"
 )
 
 type ProxyHbase struct {

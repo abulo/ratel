@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/abulo/ratel/logger"
-	"github.com/abulo/ratel/server"
+	"github.com/abulo/ratel/v2/logger"
+	"github.com/abulo/ratel/v2/server"
 	"google.golang.org/grpc"
 )
 

@@ -1,4 +1,4 @@
-module github.com/abulo/ratel
+module github.com/abulo/ratel/v2
 
 go 1.17
 

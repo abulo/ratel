@@ -3,8 +3,8 @@ package mysql
 import (
 	"sync"
 
-	"github.com/abulo/ratel/store/query"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v2/store/query"
+	"github.com/abulo/ratel/v2/util"
 )
 
 type (

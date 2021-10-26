@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/logger"
+	"github.com/abulo/ratel/v2/logger"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/concurrency"
 	"github.com/coreos/etcd/mvcc/mvccpb"

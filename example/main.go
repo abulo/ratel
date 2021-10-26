@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/abulo/ratel"
-	"github.com/abulo/ratel/logger"
-	"github.com/abulo/ratel/logger/hook"
-	"github.com/abulo/ratel/store/mongodb"
-	"github.com/abulo/ratel/store/mysql"
-	"github.com/abulo/ratel/store/query"
-	"github.com/abulo/ratel/store/redis"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v2"
+	"github.com/abulo/ratel/v2/logger"
+	"github.com/abulo/ratel/v2/logger/hook"
+	"github.com/abulo/ratel/v2/store/mongodb"
+	"github.com/abulo/ratel/v2/store/mysql"
+	"github.com/abulo/ratel/v2/store/query"
+	"github.com/abulo/ratel/v2/store/redis"
+	"github.com/abulo/ratel/v2/util"
 	"github.com/sirupsen/logrus"
 )
 

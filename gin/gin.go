@@ -16,8 +16,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/abulo/ratel/gin/internal/bytesconv"
-	"github.com/abulo/ratel/gin/render"
+	"github.com/abulo/ratel/v2/gin/internal/bytesconv"
+	"github.com/abulo/ratel/v2/gin/render"
 )
 
 const defaultMultipartMemory = 32 << 20 // 32 MB

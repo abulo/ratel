@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 
-	"github.com/abulo/ratel/gin"
+	"github.com/abulo/ratel/v2/gin"
 )
 
 const (

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/abulo/ratel/store/redis"
+	"github.com/abulo/ratel/v2/store/redis"
 )
 
 type Cache struct {

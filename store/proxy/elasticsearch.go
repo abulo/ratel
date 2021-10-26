@@ -1,6 +1,6 @@
 package proxy
 
-import "github.com/abulo/ratel/store/elasticsearch"
+import "github.com/abulo/ratel/v2/store/elasticsearch"
 
 type ProxyElasticSearch struct {
 	*elasticsearch.Client

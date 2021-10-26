@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/abulo/ratel/gin/internal/bytesconv"
+	"github.com/abulo/ratel/v2/gin/internal/bytesconv"
 )
 
 // String contains the given interface object slice and its format.

@@ -7,7 +7,7 @@ Usage please see example:
 package yaml
 
 import (
-	"github.com/abulo/ratel/config"
+	"github.com/abulo/ratel/v2/config"
 	"gopkg.in/yaml.v2"
 )
 

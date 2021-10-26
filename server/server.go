@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v2/util"
 )
 
 type Option func(c *ServiceInfo)

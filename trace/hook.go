@@ -1,7 +1,7 @@
 package trace
 
 import (
-	"github.com/abulo/ratel/gin"
+	"github.com/abulo/ratel/v2/gin"
 )
 
 func ginExtractAID(ctx *gin.Context) string {

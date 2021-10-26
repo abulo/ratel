@@ -5,7 +5,7 @@ package main
 import (
         "fmt"
         "math/big"
-        "github.com/abulo/ratel/alpha"
+        "github.com/abulo/ratel/v2/alpha"
 )
 
 func main() {

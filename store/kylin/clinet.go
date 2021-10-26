@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v2/util"
 	"github.com/valyala/fasthttp"
 )
 

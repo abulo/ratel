@@ -2,9 +2,9 @@ package clickhouse
 
 import (
 	_ "github.com/abulo/clickhouse-go"
-	"github.com/abulo/ratel/logger"
-	"github.com/abulo/ratel/store/query"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v2/logger"
+	"github.com/abulo/ratel/v2/store/query"
+	"github.com/abulo/ratel/v2/util"
 )
 
 //Config 数据库配置

@@ -3,8 +3,8 @@ package inject
 import (
 	"context"
 
-	"github.com/abulo/ratel/registry"
-	"github.com/abulo/ratel/server"
+	"github.com/abulo/ratel/v2/registry"
+	"github.com/abulo/ratel/v2/server"
 	"golang.org/x/sync/errgroup"
 )
 
