@@ -24,7 +24,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/hcl/v2 v2.10.1
 	github.com/imdario/mergo v0.3.12
-	github.com/jlaffaye/ftp v0.0.0-20210307004419-5d4190119067
+	github.com/jlaffaye/ftp v0.0.0-20211029032751-b1140299f4df
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.3
 	github.com/mattn/go-isatty v0.0.14
@@ -49,9 +49,9 @@ require (
 	go.mongodb.org/mongo-driver v1.7.3
 	go.uber.org/multierr v1.7.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
-	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
+	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20211021150943-2b146023228c
+	google.golang.org/genproto v0.0.0-20211028162531-8db9c33dc351
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
