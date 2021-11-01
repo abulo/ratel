@@ -1,6 +1,8 @@
 package clickhouse
 
 import (
+	"time"
+
 	_ "github.com/abulo/clickhouse-go"
 	"github.com/abulo/ratel/v2/logger"
 	"github.com/abulo/ratel/v2/store/query"
@@ -16,7 +18,11 @@ type Config struct {
 	Database     string //默认连接数据库
 	ReadTimeout  int
 	WriteTimeout int
-	LoadBalance  string //负载均衡
+	LoadBalance  string        //负载均衡
+	MaxOpenConns int           //连接池最多同时打开的连接数
+	MaxIdleConns int           //连接池里最大空闲连接数。必须要比maxOpenConns小
+	MaxLifetime  time.Duration //连接池里面的连接最大存活时长
+	MaxIdleTime  time.Duration //连接池里面的连接最大空闲时长
 	DriverName   string
 	Trace        bool
 }
@@ -65,7 +71,14 @@ func (config *Config) URI() string {
 
 //New 新连接
 func New(config *Config) *query.QueryDb {
-	db, err := query.NewSqlConn(config.DriverName, config.URI())
+	opt := &query.Opt{
+		MaxOpenConns: config.MaxOpenConns,
+		MaxIdleConns: config.MaxIdleConns,
+		MaxLifetime:  config.MaxLifetime,
+		MaxIdleTime:  config.MaxIdleTime,
+	}
+
+	db, err := query.NewSqlConn(config.DriverName, config.URI(), opt)
 	if err != nil {
 		logger.Logger.Panic(err)
 	}

@@ -4,14 +4,6 @@ import (
 	"database/sql"
 	"io"
 	"sync"
-	"time"
-)
-
-const (
-	maxIdleConns = 128
-	maxOpenConns = 128
-	maxLifetime  = time.Minute
-	maxIdletime  = time.Minute
 )
 
 var connManager = NewResourceManager()
@@ -21,9 +13,9 @@ type pingedDB struct {
 	once sync.Once
 }
 
-func getCachedSqlConn(driverName, server string) (*pingedDB, error) {
+func getCachedSqlConn(driverName, server string, opt *Opt) (*pingedDB, error) {
 	val, err := connManager.GetResource(server, func() (io.Closer, error) {
-		conn, err := newDBConnection(driverName, server)
+		conn, err := newDBConnection(driverName, server, opt)
 		if err != nil {
 			return nil, err
 		}
@@ -39,8 +31,8 @@ func getCachedSqlConn(driverName, server string) (*pingedDB, error) {
 	return val.(*pingedDB), nil
 }
 
-func NewSqlConn(driverName, server string) (*sql.DB, error) {
-	pdb, err := getCachedSqlConn(driverName, server)
+func NewSqlConn(driverName, server string, opt *Opt) (*sql.DB, error) {
+	pdb, err := getCachedSqlConn(driverName, server, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -55,20 +47,21 @@ func NewSqlConn(driverName, server string) (*sql.DB, error) {
 	return pdb.DB, nil
 }
 
-func newDBConnection(driverName, datasource string) (*sql.DB, error) {
+func newDBConnection(driverName, datasource string, opt *Opt) (*sql.DB, error) {
 	conn, err := sql.Open(driverName, datasource)
 	if err != nil {
 		return nil, err
 	}
 
-	// we need to do this until the issue https://github.com/golang/go/issues/9851 get fixed
-	// discussed here https://github.com/go-sql-driver/mysql/issues/257
-	// if the discussed SetMaxIdleTimeout methods added, we'll change this behavior
-	// 8 means we can't have more than 8 goroutines to concurrently access the same database.
-	conn.SetMaxIdleConns(maxIdleConns)
-	conn.SetMaxOpenConns(maxOpenConns)
-	conn.SetConnMaxLifetime(5 * maxLifetime)
-	conn.SetConnMaxIdleTime(5 * maxIdletime)
+	// MaxOpenConns int           //连接池最多同时打开的连接数
+	// MaxIdleConns int           //连接池里最大空闲连接数。必须要比maxOpenConns小
+	// MaxLifetime  time.Duration //连接池里面的连接最大存活时长
+	// MaxIdleTime  time.Duration //连接池里面的连接最大空闲时长
+
+	conn.SetMaxOpenConns(opt.MaxOpenConns)
+	conn.SetMaxIdleConns(opt.MaxIdleConns)
+	conn.SetConnMaxLifetime(opt.MaxLifetime)
+	conn.SetConnMaxIdleTime(opt.MaxIdleTime)
 
 	// SetMaxOpenConns(maxOpenConns)
 	// 连接池最多同时打开的连接数。
