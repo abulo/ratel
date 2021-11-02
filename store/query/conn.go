@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"database/sql"
 	"io"
 	"sync"
@@ -38,7 +39,7 @@ func NewSqlConn(driverName, server string, opt *Opt) (*sql.DB, error) {
 	}
 
 	pdb.once.Do(func() {
-		err = pdb.Ping()
+		err = pdb.PingContext(context.TODO())
 	})
 	if err != nil {
 		return nil, err

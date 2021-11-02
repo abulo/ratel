@@ -148,6 +148,13 @@ func (r *Rows) ToArray() (data [][]string, err error) {
 		refs[i] = &ref
 	}
 
+	if !r.rs.Next() {
+		if err := r.rs.Err(); err != nil {
+			return nil, err
+		}
+		return nil, sql.ErrNoRows
+	}
+
 	for r.rs.Next() {
 
 		result := make([]string, len(fields))
@@ -204,6 +211,14 @@ func (r *Rows) ToInterface() (data []map[string]interface{}, err error) {
 		var ref interface{}
 		refs[i] = &ref
 	}
+
+	if !r.rs.Next() {
+		if err := r.rs.Err(); err != nil {
+			return nil, err
+		}
+		return nil, sql.ErrNoRows
+	}
+
 	for r.rs.Next() {
 		result := make(map[string]interface{})
 		if err := r.rs.Scan(refs...); err != nil {
@@ -249,6 +264,13 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 	for i := 0; i < num; i++ {
 		var ref interface{}
 		refs[i] = &ref
+	}
+
+	if !r.rs.Next() {
+		if err := r.rs.Err(); err != nil {
+			return nil, err
+		}
+		return nil, sql.ErrNoRows
 	}
 
 	for r.rs.Next() {
@@ -328,6 +350,13 @@ func (r *Rows) ToStruct(st interface{}) error {
 		} else {
 			refs[i] = new(interface{})
 		}
+	}
+
+	if !r.rs.Next() {
+		if err := r.rs.Err(); err != nil {
+			return err
+		}
+		return sql.ErrNoRows
 	}
 
 	for r.rs.Next() {
