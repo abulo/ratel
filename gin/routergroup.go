@@ -14,6 +14,13 @@ import (
 var (
 	// reg match english letters for http method name
 	regEnLetter = regexp.MustCompile("^[A-Z]+$")
+
+	// anyMethods for RouterGroup Any method
+	anyMethods = []string{
+		http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch,
+		http.MethodHead, http.MethodOptions, http.MethodDelete, http.MethodConnect,
+		http.MethodTrace,
+	}
 )
 
 // IRouter defines all router handle interface includes single and group router.
@@ -136,15 +143,9 @@ func (group *RouterGroup) HEAD(relativePath, routeName string, handlers ...Handl
 // Any registers a route that matches all the HTTP methods.
 // GET, POST, PUT, PATCH, HEAD, OPTIONS, DELETE, CONNECT, TRACE.
 func (group *RouterGroup) Any(relativePath, routeName string, handlers ...HandlerFunc) IRoutes {
-	group.handle(http.MethodGet, relativePath, routeName+"_"+strings.ToLower(http.MethodGet), handlers)
-	group.handle(http.MethodPost, relativePath, routeName+"_"+strings.ToLower(http.MethodPost), handlers)
-	group.handle(http.MethodPut, relativePath, routeName+"_"+strings.ToLower(http.MethodPut), handlers)
-	group.handle(http.MethodPatch, relativePath, routeName+"_"+strings.ToLower(http.MethodPatch), handlers)
-	group.handle(http.MethodHead, relativePath, routeName+"_"+strings.ToLower(http.MethodHead), handlers)
-	group.handle(http.MethodOptions, relativePath, routeName+"_"+strings.ToLower(http.MethodOptions), handlers)
-	group.handle(http.MethodDelete, relativePath, routeName+"_"+strings.ToLower(http.MethodDelete), handlers)
-	group.handle(http.MethodConnect, relativePath, routeName+"_"+strings.ToLower(http.MethodConnect), handlers)
-	group.handle(http.MethodTrace, relativePath, routeName+"_"+strings.ToLower(http.MethodTrace), handlers)
+	for _, method := range anyMethods {
+		group.handle(method, relativePath, routeName+"_"+strings.ToLower(method), handlers)
+	}
 	return group.returnObj()
 }
 
@@ -214,9 +215,7 @@ func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileS
 
 func (group *RouterGroup) combineHandlers(handlers HandlersChain) HandlersChain {
 	finalSize := len(group.Handlers) + len(handlers)
-	if finalSize >= int(abortIndex) {
-		panic("too many handlers")
-	}
+	assert1(finalSize < int(abortIndex), "too many handlers")
 	mergedHandlers := make(HandlersChain, finalSize)
 	copy(mergedHandlers, group.Handlers)
 	copy(mergedHandlers[len(group.Handlers):], handlers)

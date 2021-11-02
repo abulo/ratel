@@ -8,6 +8,7 @@ import (
 	"github.com/abulo/ratel/v2/store/mysql"
 	"github.com/abulo/ratel/v2/store/proxy"
 	"github.com/abulo/ratel/v2/store/query"
+	"github.com/abulo/ratel/v2/util"
 )
 
 //MongoDB 代理
@@ -50,13 +51,14 @@ func init() {
 }
 
 func main() {
-	db := Store.LoadSQL("mysql").Read()
+
 	for {
+		db := Store.LoadSQL("mysql").Read()
 		sql := "select * from admin_user where username='admin'"
 
 		ddd, err := db.NewQuery(context.Background()).QueryRow(sql).ToMap()
 
-		fmt.Println(ddd, err)
+		fmt.Println(util.Now().GoString(), ddd, err)
 	}
 
 	// optm := &mysql.Config{}
