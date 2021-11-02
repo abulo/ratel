@@ -212,12 +212,12 @@ func (r *Rows) ToInterface() (data []map[string]interface{}, err error) {
 		refs[i] = &ref
 	}
 
-	if !r.rs.Next() {
-		if err := r.rs.Err(); err != nil {
-			return nil, err
-		}
-		return nil, sql.ErrNoRows
-	}
+	// if !r.rs.Next() {
+	// 	if err := r.rs.Err(); err != nil {
+	// 		return nil, err
+	// 	}
+	// 	return nil, sql.ErrNoRows
+	// }
 
 	for r.rs.Next() {
 		result := make(map[string]interface{})
@@ -266,12 +266,12 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 		refs[i] = &ref
 	}
 
-	if !r.rs.Next() {
-		if err := r.rs.Err(); err != nil {
-			return nil, err
-		}
-		return nil, sql.ErrNoRows
-	}
+	// if !r.rs.Next() {
+	// 	if err := r.rs.Err(); err != nil {
+	// 		return nil, err
+	// 	}
+	// 	return nil, sql.ErrNoRows
+	// }
 
 	for r.rs.Next() {
 		result := make(map[string]string)
@@ -352,12 +352,12 @@ func (r *Rows) ToStruct(st interface{}) error {
 		}
 	}
 
-	if !r.rs.Next() {
-		if err := r.rs.Err(); err != nil {
-			return err
-		}
-		return sql.ErrNoRows
-	}
+	// if !r.rs.Next() {
+	// 	if err := r.rs.Err(); err != nil {
+	// 		return err
+	// 	}
+	// 	return sql.ErrNoRows
+	// }
 
 	for r.rs.Next() {
 		if err := r.rs.Scan(refs...); err != nil {

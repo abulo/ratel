@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/abulo/ratel/v2/store/mysql"
@@ -51,9 +52,11 @@ func init() {
 func main() {
 	db := Store.LoadSQL("mysql").Read()
 	for {
-		sql := "select * from admin_permission"
+		sql := "select * from admin_user where username='admin'"
 
-		db.NewQuery(context.Background()).QueryRow(sql).ToMap()
+		ddd, err := db.NewQuery(context.Background()).QueryRow(sql).ToMap()
+
+		fmt.Println(ddd, err)
 	}
 
 	// optm := &mysql.Config{}
