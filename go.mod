@@ -35,7 +35,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.4
 	github.com/prometheus/client_golang v1.11.0
-	github.com/segmentio/kafka-go v0.4.22
+	github.com/segmentio/kafka-go v0.4.23
 	github.com/shirou/gopsutil v3.21.9+incompatible
 	github.com/silenceper/wechat/v2 v2.0.9
 	github.com/sirupsen/logrus v1.8.1
