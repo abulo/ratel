@@ -93,7 +93,7 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 
 	//添加预处理
 	stmt, err := querydb.db.PrepareContext(ctx, query)
-
+	defer stmt.Close()
 	if err != nil {
 		querydb.db.PingContext(ctx)
 		return res, err
@@ -134,7 +134,7 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 
 	//添加预处理
 	stmt, err := querydb.db.PrepareContext(ctx, query)
-
+	defer stmt.Close()
 	if err != nil {
 		querydb.db.PingContext(ctx)
 		return res, err
@@ -200,7 +200,7 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 
 	//添加预处理
 	stmt, err := querytx.Tx.PrepareContext(ctx, query)
-
+	defer stmt.Close()
 	if err != nil {
 		return res, err
 	}
@@ -240,7 +240,7 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 
 	//添加预处理
 	stmt, err := querytx.Tx.PrepareContext(ctx, query)
-
+	defer stmt.Close()
 	if err != nil {
 		return res, err
 	}
