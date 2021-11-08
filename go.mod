@@ -7,7 +7,7 @@ require (
 	github.com/abulo/clickhouse-go v1.4.13
 	github.com/alibaba/sentinel-golang v1.0.3
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
-	github.com/coreos/etcd v3.3.26+incompatible
+	github.com/coreos/etcd v3.3.27+incompatible
 	github.com/disintegration/imaging v1.6.2
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gin-contrib/sse v0.1.0
