@@ -46,7 +46,7 @@ require (
 	github.com/valyala/fasthttp v1.31.0
 	go.mongodb.org/mongo-driver v1.7.4
 	go.uber.org/multierr v1.7.0
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/genproto v0.0.0-20211104193956-4c6863e31247
