@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"io"
 	"regexp"
-	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/html"
 )
 
@@ -30,8 +30,8 @@ func UnformatHTML(body string, options ...UnformatOption) (out string, err error
 
 func processHTML(body string, fn func(plainText string) string) (out string, err error) {
 	w := &bytes.Buffer{}
-	lex := html.NewLexer(strings.NewReader(body))
-	defer lex.Restore()
+	lex := html.NewLexer(parse.NewInputString(body))
+	// defer lex.Restore()
 	out = body
 
 	ignoreTag := false
@@ -45,7 +45,7 @@ func processHTML(body string, fn func(plainText string) string) (out string, err
 				return w.String(), nil
 			}
 
-			err = errors.Errorf("Error on line %d, %v", lex.Offset(), lex.Err())
+			err = errors.Errorf("Error on line %v", lex.Err())
 			return
 		case html.TextToken:
 			if ignoreTag {
