@@ -40,6 +40,7 @@ require (
 	github.com/silenceper/wechat/v2 v2.0.9
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
+	github.com/tdewolff/parse/v2 v2.5.22
 	github.com/tsuna/gohbase v0.0.0-20211118233222-1c6789fac7d4
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
