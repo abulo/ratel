@@ -24,7 +24,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/hcl/v2 v2.10.1
 	github.com/imdario/mergo v0.3.12
-	github.com/jlaffaye/ftp v0.0.0-20211029032751-b1140299f4df
+	github.com/jlaffaye/ftp v0.0.0-20211117213618-11820403398b
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.4
 	github.com/mattn/go-isatty v0.0.14
@@ -40,7 +40,7 @@ require (
 	github.com/silenceper/wechat/v2 v2.0.9
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
-	github.com/tsuna/gohbase v0.0.0-20211111115509-d372164354a1
+	github.com/tsuna/gohbase v0.0.0-20211118233222-1c6789fac7d4
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.6
@@ -48,10 +48,10 @@ require (
 	github.com/yosuke-furukawa/json5 v0.1.1
 	go.mongodb.org/mongo-driver v1.7.4
 	go.uber.org/multierr v1.7.0
-	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
+	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20211112145013-271947fe86fd
+	google.golang.org/genproto v0.0.0-20211118181313-81c1377c94b1
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -113,7 +113,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/zap v1.13.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	golang.org/x/tools v0.1.5 // indirect
