@@ -26,7 +26,7 @@ func (r *Row) ToArray() (result []string, err error) {
 	if len(items) > 0 {
 		return items[0], nil
 	}
-	return nil, errors.New("data is empty")
+	return nil, sql.ErrNoRows
 }
 
 //ToMap get Map
@@ -39,7 +39,7 @@ func (r *Row) ToMap() (result map[string]string, err error) {
 	if len(items) > 0 {
 		return items[0], nil
 	}
-	return nil, errors.New("data is empty")
+	return nil, sql.ErrNoRows
 }
 
 func (r *Row) ToInterface() (result map[string]interface{}, err error) {
@@ -53,7 +53,7 @@ func (r *Row) ToInterface() (result map[string]interface{}, err error) {
 	if len(items) > 0 {
 		return items[0], nil
 	}
-	return nil, errors.New("data is empty")
+	return nil, sql.ErrNoRows
 }
 
 //ToStruct get Struct
@@ -149,6 +149,13 @@ func (r *Rows) ToArray() (data [][]string, err error) {
 		refs[i] = &ref
 	}
 
+	if !r.rs.Next() {
+		if err := r.rs.Err(); err != nil {
+			return nil, err
+		}
+		return nil, sql.ErrNoRows
+	}
+
 	for r.rs.Next() {
 
 		result := make([]string, len(fields))
@@ -175,7 +182,7 @@ func (r *Rows) ToArray() (data [][]string, err error) {
 	}
 
 	if len(data) < 1 {
-		return nil, errors.New("data is empty")
+		return nil, sql.ErrNoRows
 	}
 
 	return data, nil
@@ -205,6 +212,14 @@ func (r *Rows) ToInterface() (data []map[string]interface{}, err error) {
 		var ref interface{}
 		refs[i] = &ref
 	}
+
+	// if !r.rs.Next() {
+	// 	if err := r.rs.Err(); err != nil {
+	// 		return nil, err
+	// 	}
+	// 	return nil, sql.ErrNoRows
+	// }
+
 	for r.rs.Next() {
 		result := make(map[string]interface{})
 		if err := r.rs.Scan(refs...); err != nil {
@@ -220,7 +235,7 @@ func (r *Rows) ToInterface() (data []map[string]interface{}, err error) {
 		data = append(data, result)
 	}
 	if len(data) < 1 {
-		return nil, errors.New("data is empty")
+		return nil, sql.ErrNoRows
 	}
 	return data, nil
 
@@ -252,6 +267,13 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 		refs[i] = &ref
 	}
 
+	// if !r.rs.Next() {
+	// 	if err := r.rs.Err(); err != nil {
+	// 		return nil, err
+	// 	}
+	// 	return nil, sql.ErrNoRows
+	// }
+
 	for r.rs.Next() {
 		result := make(map[string]string)
 		if err := r.rs.Scan(refs...); err != nil {
@@ -270,7 +292,7 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 
 	}
 	if len(data) < 1 {
-		return nil, errors.New("data is empty")
+		return nil, sql.ErrNoRows
 	}
 	return data, nil
 }
@@ -330,6 +352,13 @@ func (r *Rows) ToStruct(st interface{}) error {
 			refs[i] = new(interface{})
 		}
 	}
+
+	// if !r.rs.Next() {
+	// 	if err := r.rs.Err(); err != nil {
+	// 		return err
+	// 	}
+	// 	return sql.ErrNoRows
+	// }
 
 	for r.rs.Next() {
 		if err := r.rs.Scan(refs...); err != nil {

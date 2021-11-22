@@ -250,12 +250,10 @@ func (c *Config) getString(key string) (value string, ok bool) {
 		return
 	}
 
-	switch val.(type) {
-	// from json int always is float64
-	case bool, int, uint, int8, uint8, int16, uint16, int32, uint64, int64, float32, float64:
-		value = fmt.Sprintf("%v", val)
+	switch typVal := val.(type) {
+	// from json `int` always is float64
 	case string:
-		value = fmt.Sprintf("%v", val)
+		value = typVal
 		if c.opts.ParseEnv {
 			value = ParseEnvValue(value)
 		}
@@ -529,13 +527,31 @@ func (c *Config) StringMap(key string) (mp map[string]string) {
 	case map[string]interface{}: // decode from json,toml
 		mp = make(map[string]string)
 		for k, v := range typeData {
-			mp[k] = fmt.Sprintf("%v", v)
+			switch v.(type) {
+			case string:
+				if c.opts.ParseEnv {
+					mp[k] = ParseEnvValue(v.(string))
+				} else {
+					mp[k] = v.(string)
+				}
+			default:
+				mp[k] = fmt.Sprintf("%v", v)
+			}
 		}
 	case map[interface{}]interface{}: // decode from yaml
 		mp = make(map[string]string)
 		for k, v := range typeData {
 			sk := fmt.Sprintf("%v", k)
-			mp[sk] = fmt.Sprintf("%v", v)
+			switch typVal := v.(type) {
+			case string:
+				if c.opts.ParseEnv {
+					mp[sk] = ParseEnvValue(typVal)
+				} else {
+					mp[sk] = typVal
+				}
+			default:
+				mp[sk] = fmt.Sprintf("%v", v)
+			}
 		}
 	default:
 		c.addErrorf("value cannot be convert to map[string]string, key is '%s'", key)

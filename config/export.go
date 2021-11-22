@@ -44,16 +44,24 @@ func (c *Config) Structure(key string, dst interface{}) error {
 		}
 	}
 
-	// err = mapstructure.Decode(data, dst)
-	mapConf := &mapstructure.DecoderConfig{
-		Metadata: nil,
-		Result:   dst,
-		TagName:  c.opts.TagName,
-		// will auto convert string to int/uint
-		WeaklyTypedInput: true,
+	var bindConf *mapstructure.DecoderConfig
+	if c.opts.DecoderConfig == nil {
+		bindConf = newDefaultDecoderConfig()
+	} else {
+		bindConf = c.opts.DecoderConfig
+		// Compatible with previous settings opts.TagName
+		if bindConf.TagName == "" {
+			bindConf.TagName = c.opts.TagName
+		}
 	}
 
-	decoder, err := mapstructure.NewDecoder(mapConf)
+	// parse env var
+	if c.opts.ParseEnv && bindConf.DecodeHook == nil {
+		bindConf.DecodeHook = ParseEnvVarStringHookFunc()
+	}
+
+	bindConf.Result = dst // set result struct ptr
+	decoder, err := mapstructure.NewDecoder(bindConf)
 	if err != nil {
 		return err
 	}
@@ -101,7 +109,7 @@ func (c *Config) DumpTo(out io.Writer, format string) (n int64, err error) {
 	}
 
 	// encode data to string
-	encoded, err := encoder(&c.data)
+	encoded, err := encoder(c.data)
 	if err != nil {
 		return
 	}
