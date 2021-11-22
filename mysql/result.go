@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/pkg/errors"
 )
 
 // Row 获取记录
