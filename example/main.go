@@ -54,11 +54,19 @@ func main() {
 
 	for {
 		db := Store.LoadSQL("mysql").Read()
-		sql := "select * from admin_user where username='admin'"
 
-		ddd, err := db.NewQuery(context.Background()).QueryRow(sql).ToMap()
+		dbr, _ := db.Begin()
+		sql := "delete from admin_user where username='mayan'"
 
+		ddd, err := dbr.NewQuery(context.Background()).QueryRow(sql).ToMap()
 		fmt.Println(util.Now().GoString(), ddd, err)
+
+		sql1 := "select * from admin_user where username='mayan'"
+
+		ddd1, err1 := dbr.NewQuery(context.Background()).QueryRow(sql1).ToMap()
+		fmt.Println(util.Now().GoString(), ddd1, err1)
+
+		dbr.Rollback()
 	}
 
 	// optm := &mysql.Config{}
