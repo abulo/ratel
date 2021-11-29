@@ -1,18 +1,28 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"time"
+	"os"
 
+	"github.com/abulo/ratel/v2"
+	"github.com/abulo/ratel/v2/gin"
+	"github.com/abulo/ratel/v2/logger"
+	"github.com/abulo/ratel/v2/logger/hook"
+	"github.com/abulo/ratel/v2/server/http"
+	"github.com/abulo/ratel/v2/store/mongodb"
 	"github.com/abulo/ratel/v2/store/mysql"
-	"github.com/abulo/ratel/v2/store/proxy"
 	"github.com/abulo/ratel/v2/store/query"
-	"github.com/abulo/ratel/v2/util"
+	"github.com/abulo/ratel/v2/store/redis"
+	"github.com/sirupsen/logrus"
 )
 
+type Engine struct {
+	ratel.Ratel
+}
+
 //MongoDB 代理
-var Store *proxy.ProxyPool
+var MongoDB *mongodb.Proxy = mongodb.NewProxy()
+var Redis *redis.Proxy = redis.NewProxy()
+var MySQL *mysql.ProxyPool = mysql.NewProxyPool()
 
 // func init() {
 
@@ -29,44 +39,37 @@ type AdminPermission struct {
 	UpdateDate query.NullDateTime `db:"update_date"`
 }
 
-func init() {
-	Store = proxy.NewProxyPool()
-	optm := &mysql.Config{}
-	optm.Username = "root"
-	optm.Password = "mysql"
-	optm.Host = "127.0.0.1"
-	optm.Port = "3306"
-	optm.Charset = "utf8mb4"
-	optm.Database = "ratel"
-	optm.MaxLifetime = time.Duration(2) * time.Minute
-	optm.MaxIdleTime = time.Duration(2) * time.Minute
-	optm.MaxIdleConns = 100
-	optm.MaxOpenConns = 100
-	optm.DriverName = "mysql"
-	conn := mysql.New(optm)
-	proxyPool := proxy.NewProxySQL()
-	proxyPool.SetWrite(conn)
-	proxyPool.SetRead(conn)
-	Store.StoreSQL("mysql", proxyPool)
-}
-
 func main() {
+	// mongodb.SetTrace(true)
+	opt := &mongodb.Config{}
+	opt.URI = "mongodb://root:654321@127.0.0.1:27017/admin_request_log?authSource=admin"
+	opt.MaxConnIdleTime = 5
+	opt.MaxPoolSize = 64
+	opt.MinPoolSize = 10
+	MongoDB.SetNameSpace("common", mongodb.New(opt))
 
-	for {
-		db := Store.LoadSQL("mysql").Read()
+	// // redis.SetTrace(true)
 
-		dbr, _ := db.Begin()
-		sql := "delete from admin_user where username='mayan'"
+	// optr := &redis.Config{}
+	// optr.KeyPrefix = "abulo"
+	// optr.Password = ""
+	// optr.PoolSize = 10
+	// optr.Database = 0
+	// optr.Hosts = []string{"127.0.0.1:6379"}
+	// optr.Type = false
 
-		ddd, err := dbr.NewQuery(context.Background()).QueryRow(sql).ToMap()
-		fmt.Println(util.Now().GoString(), ddd, err)
+	// Redis.SetNameSpace("common", redis.New(optr))
 
-		sql1 := "select * from admin_user where username='mayan'"
+	loggerHook := hook.DefaultWithURL(MongoDB.NameSpace("common"))
+	defer loggerHook.Flush()
+	logger.Logger.AddHook(loggerHook)
+	logger.Logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.Logger.SetReportCaller(true)
+	logger.Logger.SetOutput(os.Stdout)
+	eng := NewEngine()
 
-		ddd1, err1 := dbr.NewQuery(context.Background()).QueryRow(sql1).ToMap()
-		fmt.Println(util.Now().GoString(), ddd1, err1)
-
-		dbr.Rollback()
+	if err := eng.Run(); err != nil {
+		logger.Logger.Panic(err)
 	}
 
 	// optm := &mysql.Config{}
@@ -76,8 +79,8 @@ func main() {
 	// optm.Port = "3306"
 	// optm.Charset = "utf8mb4"
 	// optm.Database = "ratel"
-	// optm.MaxLifetime = 100
-	// optm.MaxIdleTime = 100
+	// // optm.ConnMaxLifetime = 100
+	// // optm.ConnMaxIdleTime = 100
 	// optm.MaxIdleConns = 100
 	// optm.MaxOpenConns = 100
 	// MySQL = mysql.NewProxyPool()
@@ -107,3 +110,79 @@ func main() {
 	// err := db.NewQuery(ctx).Table("admin_permission").Where("id", 527).Row().ToStruct(&result)
 	// fmt.Println(err, result)
 }
+
+func NewEngine() *Engine {
+	eng := &Engine{}
+	if err := eng.Startup(
+		eng.serveHTTP,
+		// eng.serveHTTPTwo,
+	); err != nil {
+		logger.Logger.Panic("startup", err)
+	}
+	// eng.Tracer("ratel", "127.0.0.1:6831")
+	return eng
+}
+func (eng *Engine) serveHTTP() error {
+	config := &http.Config{
+		Host:    "127.0.0.1",
+		Port:    17777,
+		Mode:    gin.DebugMode,
+		Name:    "admin",
+		Network: "tcp",
+	}
+	server := config.Build()
+	// server.Use(trace.HTTPMetricServerInterceptor())
+	// server.Use(trace.HTTPTraceServerInterceptor())
+	server.GET("/ping", "ping", func(ctx *gin.Context) {
+		// e := Redis.NameSpace("common").Set(ctx.Request.Context(), "aaaaa", "daadasd", time.Minute*5).Err()
+		ctx.JSON(200, gin.H{
+			"status": "7777",
+		})
+	})
+
+	if gin.IsDebugging() {
+		gin.App.Table.Render()
+	}
+
+	// data := [][]string{
+	// 	[]string{"A", "The Good", "500"},
+	// 	[]string{"B", "The Very very Bad Man", "288"},
+	// 	[]string{"C", "The Ugly", "120"},
+	// 	[]string{"D", "The Gopher", "800"},
+	// }
+
+	// table := tablewriter.NewWriter(os.Stdout)
+	// table.SetHeader([]string{"Name", "Sign", "Rating"})
+
+	// for _, v := range data {
+	// 	table.Append(v)
+	// }
+	// table.Render()
+	// }
+
+	return eng.Serve(server)
+}
+
+// func (eng *Engine) serveHTTPTwo() error {
+// 	config := &monitor.Config{
+// 		Host:    "127.0.0.1",
+// 		Port:    17777,
+// 		Network: "tcp4",
+// 		Name:    "monitor",
+// 	}
+// 	// monitor.HandleFunc("/metrics", func(w ohttp.ResponseWriter, r *ohttp.Request) {
+// 	// 	promhttp.Handler().ServeHTTP(w, r)
+// 	// })
+// 	server := config.Build()
+
+// 	server.HandleFunc("/metrics", func(w ohttp.ResponseWriter, r *ohttp.Request) {
+// 		promhttp.Handler().ServeHTTP(w, r)
+// 	})
+
+// 	server.Use(trace.HTTPTraceServerInterceptor())
+
+// 	server.InitFuncMap()
+// 	pprof.Register(server.Engine)
+
+// 	return eng.Serve(server)
+// }

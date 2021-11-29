@@ -45,18 +45,16 @@ const abortIndex int8 = math.MaxInt8 >> 1
 // Context is the most important part of gin. It allows us to pass variables between middleware,
 // manage the flow, validate the JSON of a request and render a JSON response for example.
 type Context struct {
-	writermem responseWriter
-	Request   *http.Request
-	Writer    ResponseWriter
-
-	Params    Params
-	handlers  HandlersChain
-	index     int8
-	fullPath  string
-	routeName string
-
-	engine *Engine
-	params *Params
+	writermem    responseWriter
+	Request      *http.Request
+	Writer       ResponseWriter
+	Params       Params
+	handlers     HandlersChain
+	index        int8
+	fullPath     string
+	routeName    string
+	engine       *Engine
+	params       *Params
 	skippedNodes *[]skippedNode
 
 	// This mutex protect Keys map
@@ -1103,7 +1101,7 @@ type Negotiate struct {
 	Data     interface{}
 }
 
-// Negotiate calls different Render according acceptable Accept format.
+// Negotiate calls different Render according to acceptable Accept format.
 func (c *Context) Negotiate(code int, config Negotiate) {
 	switch c.NegotiateFormat(config.Offered...) {
 	case binding.MIMEJSON:
