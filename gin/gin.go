@@ -18,6 +18,7 @@ import (
 
 	"github.com/abulo/ratel/gin/internal/bytesconv"
 	"github.com/abulo/ratel/gin/render"
+	"github.com/olekukonko/tablewriter"
 )
 
 const defaultMultipartMemory = 32 << 20 // 32 MB
@@ -149,6 +150,7 @@ type Engine struct {
 	trustedProxies   []string
 	trustedCIDRs     []*net.IPNet
 	routes           map[string]string
+	Table            *tablewriter.Table
 }
 
 var (
@@ -189,6 +191,14 @@ func New() *Engine {
 		trustedProxies:         []string{"0.0.0.0/0"},
 		trustedCIDRs:           defaultTrustedCIDRs,
 		routes:                 make(map[string]string),
+	}
+	if IsDebugging() {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"METHOD", "PATH", "HANDLER", "NUMBER"})
+		table.SetRowLine(true)
+		table.SetBorder(false)
+		table.SetCenterSeparator("|")
+		App.Table = table
 	}
 	App.RouterGroup.engine = App
 	App.pool.New = func() interface{} {
@@ -311,7 +321,7 @@ func (engine *Engine) NoMethod(handlers ...HandlerFunc) {
 	engine.rebuild405Handlers()
 }
 
-// Use attaches a global middleware to the router. ie. the middleware attached though Use() will be
+// Use attaches a global middleware to the router. ie. the middleware attached through Use() will be
 // included in the handlers chain for every single request. Even 404, 405, static files...
 // For example, this is the right place for a logger or error management middleware.
 func (engine *Engine) Use(middleware ...HandlerFunc) IRoutes {

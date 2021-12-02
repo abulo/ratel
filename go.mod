@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/BurntSushi/toml v0.4.1
-	github.com/abulo/clickhouse-go v1.4.13
+	github.com/abulo/clickhouse-go v1.4.14
 	github.com/alibaba/sentinel-golang v1.0.3
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/coreos/etcd v3.3.27+incompatible
@@ -29,12 +29,13 @@ require (
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/mozillazg/go-pinyin v0.18.0
+	github.com/olekukonko/tablewriter v0.0.5
 	github.com/olivere/elastic/v7 v7.0.29
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.4
 	github.com/prometheus/client_golang v1.11.0
-	github.com/segmentio/kafka-go v0.4.23
+	github.com/segmentio/kafka-go v0.4.25
 	github.com/shirou/gopsutil v3.21.10+incompatible
 	github.com/silenceper/wechat/v2 v2.0.9
 	github.com/sirupsen/logrus v1.8.1
@@ -46,7 +47,7 @@ require (
 	github.com/ugorji/go/codec v1.2.6
 	github.com/valyala/fasthttp v1.31.0
 	github.com/yosuke-furukawa/json5 v0.1.1
-	go.mongodb.org/mongo-driver v1.7.4
+	go.mongodb.org/mongo-driver v1.8.0
 	go.uber.org/multierr v1.7.0
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
@@ -88,6 +89,7 @@ require (
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -125,3 +127,5 @@ replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.5
 replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
 
 replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.3.2
+
+replace github.com/go-sql-driver/mysql => github.com/abulo/mysql v1.7.0

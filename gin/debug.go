@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/abulo/ratel/util"
 )
 
 const ginSupportMinGoVer = 13
@@ -28,7 +30,13 @@ func debugPrintRoute(httpMethod, absolutePath string, handlers HandlersChain) {
 		nuHandlers := len(handlers)
 		handlerName := nameOfFunction(handlers.Last())
 		if DebugPrintRouteFunc == nil {
-			debugPrint("%-6s %-25s --> %s (%d handlers)\n", httpMethod, absolutePath, handlerName, nuHandlers)
+			// debugPrint("%-6s %-25s --> %s (%d handlers)\n", httpMethod, absolutePath, handlerName, nuHandlers)
+			data := make([]string, 4)
+			data[0] = httpMethod
+			data[1] = absolutePath
+			data[2] = handlerName
+			data[3] = util.ToString(nuHandlers)
+			App.Table.Append(data)
 		} else {
 			DebugPrintRouteFunc(httpMethod, absolutePath, handlerName, nuHandlers)
 		}
