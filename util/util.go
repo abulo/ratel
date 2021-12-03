@@ -4305,29 +4305,6 @@ func StrPad(str1, str2 string, i int) string {
 	return str1 + str2
 }
 
-//DebugFormat debug
-func DebugFormat(i interface{}) string {
-	s := ToString(i)
-	res := "Unknown"
-	switch s {
-	case "0":
-		res = "Panic"
-	case "1":
-		res = "Fatal"
-	case "2":
-		res = "Error"
-	case "3":
-		res = "Warn"
-	case "4":
-		res = "Info"
-	case "5":
-		res = "Debug"
-	case "6":
-		res = "Trace"
-	}
-	return res
-}
-
 func ToWeekDay(t interface{}) string {
 	weekday := [7]string{"周日", "周一", "周二", "周三", "周四", "周五", "周六"}
 	now := ToTime(t)

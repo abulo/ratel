@@ -6,12 +6,14 @@ import (
 	"github.com/abulo/ratel/v2"
 	"github.com/abulo/ratel/v2/gin"
 	"github.com/abulo/ratel/v2/logger"
-	"github.com/abulo/ratel/v2/logger/hook"
+	"github.com/abulo/ratel/v2/logger/es"
 	"github.com/abulo/ratel/v2/server/http"
+	"github.com/abulo/ratel/v2/store/elasticsearch"
 	"github.com/abulo/ratel/v2/store/mongodb"
 	"github.com/abulo/ratel/v2/store/mysql"
 	"github.com/abulo/ratel/v2/store/query"
 	"github.com/abulo/ratel/v2/store/redis"
+	"github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,6 +25,7 @@ type Engine struct {
 var MongoDB *mongodb.Proxy = mongodb.NewProxy()
 var Redis *redis.Proxy = redis.NewProxy()
 var MySQL *mysql.ProxyPool = mysql.NewProxyPool()
+var Elastic *elasticsearch.Proxy = elasticsearch.NewProxy()
 
 // func init() {
 
@@ -48,6 +51,14 @@ func main() {
 	opt.MinPoolSize = 10
 	MongoDB.SetNameSpace("common", mongodb.New(opt))
 
+	esOpt := []elastic.ClientOptionFunc{}
+
+	urls := make([]string, 0)
+	urls = append(urls, "http://127.0.0.1:9200")
+	esOpt = append(esOpt, elastic.SetURL(urls...))
+	esOpt = append(esOpt, elastic.SetSniff(false))
+	Elastic.SetNameSpace("common", elasticsearch.NewClient(esOpt...))
+
 	// // redis.SetTrace(true)
 
 	// optr := &redis.Config{}
@@ -60,13 +71,20 @@ func main() {
 
 	// Redis.SetNameSpace("common", redis.New(optr))
 
-	loggerHook := hook.DefaultWithURL(MongoDB.NameSpace("common"))
+	// loggerHook := mongo.DefaultWithURL(MongoDB.NameSpace("common"))
+	loggerHook := es.DefaultWithURL(Elastic.NameSpace("common"))
 	defer loggerHook.Flush()
 	logger.Logger.AddHook(loggerHook)
 	logger.Logger.SetFormatter(&logrus.JSONFormatter{})
 	logger.Logger.SetReportCaller(true)
 	logger.Logger.SetOutput(os.Stdout)
 	eng := NewEngine()
+
+	logger.Logger.Info("adasdasd")
+
+	logger.Logger.WithFields(logrus.Fields{
+		"animal": "walrus",
+	}).Info("A walrus appears")
 
 	if err := eng.Run(); err != nil {
 		logger.Logger.Panic(err)
