@@ -2,7 +2,6 @@ package es
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/abulo/ratel/v2/store/elasticsearch"
 	"github.com/pkg/errors"
@@ -56,7 +55,6 @@ func CreateIndex(client *elasticsearch.Client) error {
 	if !exists {
 		// Create a new index.
 		createIndex, err := client.CreateIndex("logger").BodyJson(IndexString()).Do(ctx)
-		fmt.Println(createIndex, err)
 		if err != nil {
 			return err
 		}
