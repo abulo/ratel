@@ -14,7 +14,7 @@ require (
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/goccy/go-json v0.7.10
+	github.com/goccy/go-json v0.8.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
@@ -22,13 +22,13 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.5
 	github.com/hashicorp/hcl v1.0.0
-	github.com/hashicorp/hcl/v2 v2.10.1
+	github.com/hashicorp/hcl/v2 v2.11.1
 	github.com/imdario/mergo v0.3.12
 	github.com/jlaffaye/ftp v0.0.0-20211117213618-11820403398b
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.4
 	github.com/mattn/go-isatty v0.0.14
-	github.com/mitchellh/mapstructure v1.4.2
+	github.com/mitchellh/mapstructure v1.4.3
 	github.com/mozillazg/go-pinyin v0.18.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/olivere/elastic/v7 v7.0.29
@@ -37,7 +37,7 @@ require (
 	github.com/pkg/sftp v1.13.4
 	github.com/prometheus/client_golang v1.11.0
 	github.com/segmentio/kafka-go v0.4.25
-	github.com/shirou/gopsutil v3.21.10+incompatible
+	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/silenceper/wechat/v2 v2.0.9
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
@@ -50,10 +50,10 @@ require (
 	github.com/yosuke-furukawa/json5 v0.1.1
 	go.mongodb.org/mongo-driver v1.8.0
 	go.uber.org/multierr v1.7.0
-	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
+	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20211118181313-81c1377c94b1
+	google.golang.org/genproto v0.0.0-20211203200212-54befc351ae9
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
