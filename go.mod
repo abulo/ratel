@@ -47,7 +47,7 @@ require (
 	github.com/ugorji/go/codec v1.2.6
 	github.com/valyala/fasthttp v1.31.0
 	github.com/yosuke-furukawa/json5 v0.1.1
-	go.mongodb.org/mongo-driver v1.8.0
+	go.mongodb.org/mongo-driver v1.8.1
 	go.uber.org/multierr v1.7.0
 	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
