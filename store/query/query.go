@@ -559,7 +559,6 @@ func (query *QueryBuilder) MultiInsert(datas ...interface{}) (int64, error) {
 		}
 		result, err := query.connection.Exec(query.ctx, sql, query.args...)
 		if err != nil {
-			err = NewDBError(err.Error(), query.connection.GetLastSql())
 			return 0, err
 		}
 		return result.RowsAffected()
@@ -629,7 +628,6 @@ func (query *QueryBuilder) Replace(datas ...interface{}) (int64, error) {
 		}
 		result, err := query.connection.Exec(query.ctx, sql, query.args...)
 		if err != nil {
-			err = NewDBError(err.Error(), query.connection.GetLastSql())
 			return 0, err
 		}
 		return result.RowsAffected()
@@ -696,7 +694,6 @@ func (query *QueryBuilder) InsertUpdate(insert interface{}, update interface{}) 
 	sql := grammar.InsertUpdate()
 	result, err := query.connection.Exec(query.ctx, sql, query.args...)
 	if err != nil {
-		err = NewDBError(err.Error(), query.connection.GetLastSql())
 		return 0, err
 	}
 	return result.RowsAffected()
@@ -745,7 +742,6 @@ func (query *QueryBuilder) Insert(data interface{}) (int64, error) {
 	sql := grammar.Insert()
 	result, err := query.connection.Exec(query.ctx, sql, query.args...)
 	if err != nil {
-		err = NewDBError(err.Error(), query.connection.GetLastSql())
 		return 0, err
 	}
 	return result.LastInsertId()
@@ -785,7 +781,6 @@ func (query *QueryBuilder) Update(data interface{}) (int64, error) {
 
 	result, err := query.connection.Exec(query.ctx, sql, args...)
 	if err != nil {
-		err = NewDBError(err.Error(), query.connection.GetLastSql())
 		return 0, err
 	}
 	return result.RowsAffected()
@@ -815,7 +810,6 @@ func (query *QueryBuilder) Delete() (int64, error) {
 	sql := grammar.Delete()
 	result, err := query.connection.Exec(query.ctx, sql, query.args...)
 	if err != nil {
-		err = NewDBError(err.Error(), query.connection.GetLastSql())
 		return 0, err
 	}
 	return result.RowsAffected()
@@ -847,7 +841,6 @@ func (query *QueryBuilder) Count() (int64, error) {
 func (query *QueryBuilder) Exec(sql string, args ...interface{}) (int64, error) {
 	result, err := query.connection.Exec(query.ctx, sql, args...)
 	if err != nil {
-		err = NewDBError(err.Error(), query.connection.GetLastSql())
 		return 0, err
 	}
 	return result.RowsAffected()
@@ -863,7 +856,6 @@ func (query *QueryBuilder) ExecSQL(sql string, args ...interface{}) string {
 func (query *QueryBuilder) QueryRows(sql string, args ...interface{}) *Rows {
 	rows, err := query.connection.Query(query.ctx, sql, args...)
 	if err != nil {
-		err = NewDBError(err.Error(), query.connection.GetLastSql())
 		return &Rows{rs: nil, lastError: err}
 	}
 	return &Rows{rs: rows, lastError: err}
@@ -923,7 +915,6 @@ func (query *QueryBuilder) Rows() *Rows {
 	sql := grammar.Select()
 	rows, err := query.connection.Query(query.ctx, sql, query.args...)
 	if err != nil {
-		err = NewDBError(err.Error(), query.connection.GetLastSql())
 		return &Rows{rs: nil, lastError: err}
 	}
 	return &Rows{rs: rows, lastError: err}

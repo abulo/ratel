@@ -209,7 +209,6 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 	if err != nil {
 		return res, err
 	}
-	// defer stmt.Close()
 	res, err = stmt.ExecContext(ctx, args...)
 	return res, err
 
@@ -249,7 +248,6 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 	if err != nil {
 		return res, err
 	}
-	// defer stmt.Close()
 	res, err = stmt.QueryContext(ctx, args...)
 	return res, err
 }
