@@ -8,6 +8,7 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 )
 
 const MaxContentLength = 1 << 16
@@ -51,6 +52,7 @@ func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err
 			return nil, err
 		}
 		span.SetTag(string(ext.DBStatement), string(buf))
+		span.LogFields(log.String("params", string(buf)))
 		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 	}
 
