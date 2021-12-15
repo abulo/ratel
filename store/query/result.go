@@ -23,7 +23,7 @@ func (r *Row) ToArray() (result []string, err error) {
 	if len(items) > 0 {
 		return items[0], nil
 	}
-	return result, nil
+	return nil, sql.ErrNoRows
 }
 
 //ToMap get Map
@@ -36,7 +36,7 @@ func (r *Row) ToMap() (result map[string]string, err error) {
 	if len(items) > 0 {
 		return items[0], nil
 	}
-	return result, nil
+	return nil, sql.ErrNoRows
 }
 
 func (r *Row) ToInterface() (result map[string]interface{}, err error) {
@@ -48,7 +48,7 @@ func (r *Row) ToInterface() (result map[string]interface{}, err error) {
 	if len(items) > 0 {
 		return items[0], nil
 	}
-	return result, nil
+	return nil, sql.ErrNoRows
 }
 
 //ToStruct get Struct
@@ -150,7 +150,7 @@ func (r *Rows) ToArray() (data [][]string, err error) {
 		data = append(data, result)
 	}
 	if len(data) < 1 {
-		return data, nil
+		return nil, sql.ErrNoRows
 	}
 	return data, nil
 }
@@ -188,7 +188,7 @@ func (r *Rows) ToInterface() (data []map[string]interface{}, err error) {
 		data = append(data, result)
 	}
 	if len(data) < 1 {
-		return data, nil
+		return nil, sql.ErrNoRows
 	}
 	return data, nil
 
@@ -227,7 +227,7 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 		data = append(data, result)
 	}
 	if len(data) < 1 {
-		return data, nil
+		return nil, sql.ErrNoRows
 	}
 	return data, nil
 }
