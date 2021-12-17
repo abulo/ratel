@@ -87,7 +87,7 @@ func EnableJsonDecoderDisallowUnknownFields() {
 	binding.EnableDecoderDisallowUnknownFields = true
 }
 
-// Mode returns currently gin mode.
+// Mode returns current gin mode.
 func Mode() string {
 	return modeName
 }
