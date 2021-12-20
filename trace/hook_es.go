@@ -2,6 +2,7 @@ package trace
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"strconv"
@@ -20,15 +21,37 @@ type ESTracedTransport struct {
 }
 
 func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err error) {
-	span, ctx := StartSpanFromContext(
-		r.Context(),
-		"elastic",
-		TagComponent("http"),
-		TagSpanKind("server"),
-		HeaderExtractor(r.Header),
-		CustomTag("http.url", r.URL.Path),
-		CustomTag("http.method", r.Method),
-	)
+
+	ctx := r.Context()
+	var span opentracing.Span
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	if parentSpan := opentracing.SpanFromContext(r.Context()); parentSpan != nil {
+		parentCtx := parentSpan.Context()
+		span = opentracing.StartSpan("elastic", opentracing.ChildOf(parentCtx))
+		ext.SpanKindRPCClient.Set(span)
+		ext.PeerService.Set(span, "elastic")
+
+		span.SetTag(string(ext.DBType), "elastic")
+		span.SetTag(string(ext.DBInstance), r.URL.Host)
+		span.SetTag("elastic.method", r.Method)
+		span.SetTag("elastic.url", r.URL.Path)
+		span.SetTag("elastic.params", r.URL.Query().Encode())
+		// defer span.Finish()
+		ctx = opentracing.ContextWithSpan(ctx, span)
+	}
+	r = r.WithContext(ctx)
+
+	// span, ctx := StartSpanFromContext(
+	// 	r.Context(),
+	// 	"elastic",
+	// 	TagComponent("http"),
+	// 	TagSpanKind("server"),
+	// 	HeaderExtractor(r.Header),
+	// 	CustomTag("http.url", r.URL.Path),
+	// 	CustomTag("http.method", r.Method),
+	// )
 	r = r.WithContext(ctx)
 	defer func() {
 		if err != nil {
@@ -38,11 +61,11 @@ func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err
 		span.Finish()
 	}()
 
-	span.SetTag(string(ext.DBType), "elastic")
-	span.SetTag(string(ext.DBInstance), r.URL.Host)
-	span.SetTag("elastic.method", r.Method)
-	span.SetTag("elastic.url", r.URL.Path)
-	span.SetTag("elastic.params", r.URL.Query().Encode())
+	// span.SetTag(string(ext.DBType), "elastic")
+	// span.SetTag(string(ext.DBInstance), r.URL.Host)
+	// span.SetTag("elastic.method", r.Method)
+	// span.SetTag("elastic.url", r.URL.Path)
+	// span.SetTag("elastic.params", r.URL.Query().Encode())
 
 	contentLength, _ := strconv.Atoi(r.Header.Get("Content-Length"))
 
