@@ -29,6 +29,10 @@ func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err
 		ext.PeerService.Set(span, "elastic")
 		ctx = opentracing.ContextWithSpan(ctx, span)
 	}
+
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
 	// span, ctx := StartSpanFromContext(
 	// 	r.Context(),
 	// 	"elastic",
