@@ -2,7 +2,6 @@ package trace
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"net/http"
 	"strconv"
@@ -14,34 +13,22 @@ import (
 
 const MaxContentLength = 1 << 16
 
+var elasticComponent = opentracing.Tag{string(ext.Component), "elastic"}
+
 type ESTracedTransport struct {
 	*http.Transport
 }
 
 func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err error) {
-
-	var span opentracing.Span
-	var ctx context.Context
-	if parentSpan := opentracing.SpanFromContext(r.Context()); parentSpan != nil {
-		parentCtx := parentSpan.Context()
-		span = opentracing.StartSpan("elastic", opentracing.ChildOf(parentCtx))
-		ext.SpanKindRPCClient.Set(span)
-		ext.PeerService.Set(span, "elastic")
-		ctx = opentracing.ContextWithSpan(ctx, span)
-	}
-
-	if ctx == nil || ctx.Err() != nil {
-		ctx = context.TODO()
-	}
-	// span, ctx := StartSpanFromContext(
-	// 	r.Context(),
-	// 	"elastic",
-	// 	TagComponent("http"),
-	// 	TagSpanKind("server"),
-	// 	HeaderExtractor(r.Header),
-	// 	CustomTag("http.url", r.URL.Path),
-	// 	CustomTag("http.method", r.Method),
-	// )
+	span, ctx := StartSpanFromContext(
+		r.Context(),
+		"elastic",
+		CustomTag("peer.service", "elastic"),
+		TagSpanKind("client"),
+		HeaderExtractor(r.Header),
+		CustomTag("http.url", r.URL.Path),
+		CustomTag("http.method", r.Method),
+	)
 	r = r.WithContext(ctx)
 	defer func() {
 		if err != nil {
