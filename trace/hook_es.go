@@ -20,11 +20,8 @@ type ESTracedTransport struct {
 
 func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err error) {
 
-	ctx := r.Context()
 	var span opentracing.Span
-	if ctx == nil || ctx.Err() != nil {
-		ctx = context.TODO()
-	}
+	var ctx context.Context
 	if parentSpan := opentracing.SpanFromContext(r.Context()); parentSpan != nil {
 		parentCtx := parentSpan.Context()
 		span = opentracing.StartSpan("elastic", opentracing.ChildOf(parentCtx))
@@ -32,7 +29,6 @@ func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err
 		ext.PeerService.Set(span, "elastic")
 		ctx = opentracing.ContextWithSpan(ctx, span)
 	}
-
 	// span, ctx := StartSpanFromContext(
 	// 	r.Context(),
 	// 	"elastic",
@@ -43,13 +39,6 @@ func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err
 	// 	CustomTag("http.method", r.Method),
 	// )
 	r = r.WithContext(ctx)
-
-	span.SetTag(string(ext.DBType), "elastic")
-	span.SetTag(string(ext.DBInstance), r.URL.Host)
-	span.SetTag("elastic.method", r.Method)
-	span.SetTag("elastic.url", r.URL.Path)
-	span.SetTag("elastic.params", r.URL.Query().Encode())
-
 	defer func() {
 		if err != nil {
 			span.SetTag("elastic.error", err.Error())
@@ -58,7 +47,14 @@ func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err
 		span.Finish()
 	}()
 
+	span.SetTag(string(ext.DBType), "elastic")
+	span.SetTag(string(ext.DBInstance), r.URL.Host)
+	span.SetTag("elastic.method", r.Method)
+	span.SetTag("elastic.url", r.URL.Path)
+	span.SetTag("elastic.params", r.URL.Query().Encode())
+
 	contentLength, _ := strconv.Atoi(r.Header.Get("Content-Length"))
+
 	if r.Body != nil && contentLength < MaxContentLength {
 		buf, err := io.ReadAll(r.Body)
 		if err != nil {
