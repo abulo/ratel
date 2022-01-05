@@ -57,7 +57,7 @@ type Context struct {
 	params       *Params
 	skippedNodes *[]skippedNode
 
-	// This mutex protect Keys map
+	// This mutex protects Keys map.
 	mu sync.RWMutex
 
 	// Keys is a key/value pair exclusively for the context of each request.
@@ -69,10 +69,10 @@ type Context struct {
 	// Accepted defines a list of manually accepted formats for content negotiation.
 	Accepted []string
 
-	// queryCache use url.ParseQuery cached the param query result from c.Request.URL.Query()
+	// queryCache caches the query result from c.Request.URL.Query().
 	queryCache url.Values
 
-	// formCache use url.ParseQuery cached PostForm contains the parsed form data from POST, PATCH,
+	// formCache caches c.Request.PostForm, which contains the parsed form data from POST, PATCH,
 	// or PUT body parameters.
 	formCache url.Values
 
@@ -842,7 +842,7 @@ func (c *Context) GetHeader(key string) string {
 	return c.requestHeader(key)
 }
 
-// GetRawData return stream data.
+// GetRawData returns stream data.
 func (c *Context) GetRawData() ([]byte, error) {
 	return io.ReadAll(c.Request.Body)
 }
