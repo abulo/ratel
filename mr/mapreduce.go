@@ -5,31 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"sync/atomic"
 
+	"github.com/abulo/ratel/v2/errorx"
 	"github.com/abulo/ratel/v2/lang"
 	"github.com/abulo/ratel/v2/thread"
 )
-
-// AtomicError defines an atomic error.
-type AtomicError struct {
-	err atomic.Value // error
-}
-
-// Set sets the error.
-func (ae *AtomicError) Set(err error) {
-	if err != nil {
-		ae.err.Store(err)
-	}
-}
-
-// Load returns the error.
-func (ae *AtomicError) Load() error {
-	if v := ae.err.Load(); v != nil {
-		return v.(error)
-	}
-	return nil
-}
 
 const (
 	defaultWorkers = 16
@@ -144,7 +124,7 @@ func MapReduceWithSource(source <-chan interface{}, mapper MapperFunc, reducer R
 	done := make(chan lang.PlaceholderType)
 	writer := newGuardedWriter(options.ctx, output, done)
 	var closeOnce sync.Once
-	var retErr AtomicError
+	var retErr errorx.AtomicError
 	finish := func() {
 		closeOnce.Do(func() {
 			close(done)

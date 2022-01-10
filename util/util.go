@@ -1706,6 +1706,7 @@ func FilePutContents(filename string, data string, mode os.FileMode) error {
 // FileGetContents file_get_contents()
 func FileGetContents(filename string) (string, error) {
 	data, err := os.ReadFile(filename)
+
 	return string(data), err
 }
 
@@ -1767,7 +1768,7 @@ func Touch(filename string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	fd.Close()
+	defer fd.Close()
 	return true, nil
 }
 
