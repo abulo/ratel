@@ -3,9 +3,9 @@ module github.com/abulo/ratel/v2
 go 1.17
 
 require (
-	github.com/BurntSushi/toml v0.4.1
+	github.com/BurntSushi/toml v1.0.0
 	github.com/abulo/clickhouse-go v1.4.14
-	github.com/alibaba/sentinel-golang v1.0.3
+	github.com/alibaba/sentinel-golang v1.0.4
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/coreos/etcd v3.3.27+incompatible
 	github.com/disintegration/imaging v1.6.2
@@ -14,7 +14,7 @@ require (
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/goccy/go-json v0.9.0
+	github.com/goccy/go-json v0.9.1
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
@@ -31,7 +31,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/mozillazg/go-pinyin v0.19.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/olivere/elastic/v7 v7.0.30
+	github.com/olivere/elastic/v7 v7.0.31
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.4
@@ -45,14 +45,14 @@ require (
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.6
-	github.com/valyala/fasthttp v1.31.0
+	github.com/valyala/fasthttp v1.32.0
 	github.com/yosuke-furukawa/json5 v0.1.1
 	go.mongodb.org/mongo-driver v1.8.2
 	go.uber.org/multierr v1.7.0
-	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
+	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20211223182754-3ac035c7e7cb
+	google.golang.org/genproto v0.0.0-20220112215332-a9c7c0acf9f2
 	google.golang.org/grpc v1.43.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
