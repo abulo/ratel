@@ -14,7 +14,7 @@ require (
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/goccy/go-json v0.9.3
+	github.com/goccy/go-json v0.9.4
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
@@ -35,8 +35,8 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.4
-	github.com/prometheus/client_golang v1.11.0
-	github.com/segmentio/kafka-go v0.4.26
+	github.com/prometheus/client_golang v1.12.0
+	github.com/segmentio/kafka-go v0.4.27
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
@@ -93,8 +93,8 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pierrec/lz4 v2.6.0+incompatible // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.26.0 // indirect
-	github.com/prometheus/procfs v0.6.0 // indirect
+	github.com/prometheus/common v0.32.1 // indirect
+	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/shirou/gopsutil/v3 v3.21.6 // indirect
 	github.com/tklauser/go-sysconf v0.3.6 // indirect
 	github.com/tklauser/numcpus v0.2.2 // indirect
@@ -113,7 +113,7 @@ require (
 	go.uber.org/zap v1.13.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
-	golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069 // indirect
+	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	golang.org/x/tools v0.1.5 // indirect
 	modernc.org/b v1.0.0 // indirect

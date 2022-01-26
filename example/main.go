@@ -1,19 +1,20 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/abulo/ratel/v2"
-	"github.com/abulo/ratel/v2/gin"
 	"github.com/abulo/ratel/v2/logger"
-	"github.com/abulo/ratel/v2/logger/es"
-	"github.com/abulo/ratel/v2/server/http"
+	"github.com/abulo/ratel/v2/logger/mongo"
+	"github.com/abulo/ratel/v2/store/clickhouse"
 	"github.com/abulo/ratel/v2/store/elasticsearch"
 	"github.com/abulo/ratel/v2/store/mongodb"
 	"github.com/abulo/ratel/v2/store/mysql"
 	"github.com/abulo/ratel/v2/store/query"
 	"github.com/abulo/ratel/v2/store/redis"
-	"github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,6 +26,7 @@ type Engine struct {
 var MongoDB *mongodb.Proxy = mongodb.NewProxy()
 var Redis *redis.Proxy = redis.NewProxy()
 var MySQL *mysql.ProxyPool = mysql.NewProxyPool()
+var ClickHouse *clickhouse.ProxyPool = clickhouse.NewProxyPool()
 var Elastic *elasticsearch.Proxy = elasticsearch.NewProxy()
 
 // func init() {
@@ -51,60 +53,92 @@ func main() {
 	opt.MinPoolSize = 10
 	MongoDB.SetNameSpace("common", mongodb.New(opt))
 
-	esOpt := []elastic.ClientOptionFunc{}
+	// esOpt := []elastic.ClientOptionFunc{}
 
-	urls := make([]string, 0)
-	urls = append(urls, "http://127.0.0.1:9200")
-	esOpt = append(esOpt, elastic.SetURL(urls...))
-	esOpt = append(esOpt, elastic.SetSniff(false))
-	Elastic.SetNameSpace("common", elasticsearch.NewClient(esOpt...))
+	// urls := make([]string, 0)
+	// urls = append(urls, "http://127.0.0.1:9200")
+	// esOpt = append(esOpt, elastic.SetURL(urls...))
+	// esOpt = append(esOpt, elastic.SetSniff(false))
+	// Elastic.SetNameSpace("common", elasticsearch.NewClient(esOpt...))
 
-	// // redis.SetTrace(true)
+	optr := &redis.Config{}
+	optr.KeyPrefix = ""
+	optr.Password = ""
+	optr.PoolSize = 10
+	optr.Database = 1
+	optr.Hosts = []string{"127.0.0.1:6379"}
+	optr.Type = false
 
-	// optr := &redis.Config{}
-	// optr.KeyPrefix = "abulo"
-	// optr.Password = ""
-	// optr.PoolSize = 10
-	// optr.Database = 0
-	// optr.Hosts = []string{"127.0.0.1:6379"}
-	// optr.Type = false
+	Redis.SetNameSpace("common", redis.New(optr))
 
-	// Redis.SetNameSpace("common", redis.New(optr))
-
-	// loggerHook := mongo.DefaultWithURL(MongoDB.NameSpace("common"))
-	loggerHook := es.DefaultWithURL(Elastic.NameSpace("common"))
+	// loggerHook := es.DefaultWithURL(Elastic.NameSpace("common"))
+	loggerHook := mongo.DefaultWithURL(MongoDB.NameSpace("common"))
 	defer loggerHook.Flush()
 	logger.Logger.AddHook(loggerHook)
 	logger.Logger.SetFormatter(&logrus.JSONFormatter{})
 	logger.Logger.SetReportCaller(true)
 	logger.Logger.SetOutput(os.Stdout)
-	eng := NewEngine()
+	// eng := NewEngine()
 
-	logger.Logger.Info("adasdasd")
+	// logger.Logger.Info("adasdasd")
 
-	logger.Logger.WithFields(logrus.Fields{
-		"animal": "walrus",
-	}).Info("A walrus appears")
+	// logger.Logger.WithFields(logrus.Fields{
+	// 	"animal": "walrus",
+	// }).Info("A walrus appears")
 
-	if err := eng.Run(); err != nil {
-		logger.Logger.Panic(err)
+	// if err := eng.Run(); err != nil {
+	// 	logger.Logger.Panic(err)
+	// }
+
+	optm := &clickhouse.Config{}
+	optm.Username = "zeus"
+	optm.Password = "zeus"
+	optm.Host = "127.0.0.1"
+	optm.Port = "9000"
+	optm.Database = "xmt"
+	optm.MaxIdleConns = 100
+	optm.MaxOpenConns = 100
+	optm.DriverName = "clickhouse"
+	ClickHouse = clickhouse.NewProxyPool()
+	proxy := clickhouse.NewProxy()
+	proxy.SetWrite(clickhouse.New(optm))
+	ClickHouse.SetNameSpace("common", proxy)
+
+	queueName := "account:queue:login"
+	ctx := context.Background()
+
+	redisHandel := Redis.NameSpace("common")
+	data := make([]interface{}, 0)
+	for i := 0; i < 5; i++ {
+		if result, err := redisHandel.LPop(ctx, queueName).Result(); err == nil {
+			tmp := make(map[string]interface{})
+			fmt.Println(result)
+			if err = json.Unmarshal([]byte(result), &tmp); err == nil {
+				data = append(data, tmp)
+			}
+		}
 	}
 
-	// optm := &mysql.Config{}
-	// optm.Username = "root"
-	// optm.Password = "mysql"
-	// optm.Host = "127.0.0.1"
-	// optm.Port = "3306"
-	// optm.Charset = "utf8mb4"
-	// optm.Database = "ratel"
-	// // optm.ConnMaxLifetime = 100
-	// // optm.ConnMaxIdleTime = 100
-	// optm.MaxIdleConns = 100
-	// optm.MaxOpenConns = 100
-	// MySQL = mysql.NewProxyPool()
-	// proxy := mysql.NewProxy()
-	// proxy.SetWrite(mysql.New(optm))
-	// MySQL.SetNameSpace("common", proxy)
+	clickHouseHandel := ClickHouse.NameSpace("common").Write()
+
+	txClickhouse, err := clickHouseHandel.Begin()
+	if err != nil {
+		fmt.Println("1", err)
+		return
+	}
+
+	fmt.Println(data)
+
+	sql := txClickhouse.NewQuery(ctx).Table("account_login").MultiInsertSQL(data...)
+	fmt.Println(sql)
+	_, err = txClickhouse.NewQuery(ctx).Table("account_login").MultiInsert(data...)
+	fmt.Println("2", err)
+	if err == nil {
+		err = txClickhouse.Commit()
+		fmt.Println("3", err)
+	}
+	err = txClickhouse.Rollback()
+	fmt.Println("4", err)
 
 	// a1 := new(AdminPermission)
 	// a1.Title = "张三"
@@ -129,57 +163,57 @@ func main() {
 	// fmt.Println(err, result)
 }
 
-func NewEngine() *Engine {
-	eng := &Engine{}
-	if err := eng.Startup(
-		eng.serveHTTP,
-		// eng.serveHTTPTwo,
-	); err != nil {
-		logger.Logger.Panic("startup", err)
-	}
-	// eng.Tracer("ratel", "127.0.0.1:6831")
-	return eng
-}
-func (eng *Engine) serveHTTP() error {
-	config := &http.Config{
-		Host:    "127.0.0.1",
-		Port:    17777,
-		Mode:    gin.DebugMode,
-		Name:    "admin",
-		Network: "tcp",
-	}
-	server := config.Build()
-	// server.Use(trace.HTTPMetricServerInterceptor())
-	// server.Use(trace.HTTPTraceServerInterceptor())
-	server.GET("/ping", "ping", func(ctx *gin.Context) {
-		// e := Redis.NameSpace("common").Set(ctx.Request.Context(), "aaaaa", "daadasd", time.Minute*5).Err()
-		ctx.JSON(200, gin.H{
-			"status": "7777",
-		})
-	})
+// func NewEngine() *Engine {
+// 	eng := &Engine{}
+// 	if err := eng.Startup(
+// 		eng.serveHTTP,
+// 		// eng.serveHTTPTwo,
+// 	); err != nil {
+// 		logger.Logger.Panic("startup", err)
+// 	}
+// 	// eng.Tracer("ratel", "127.0.0.1:6831")
+// 	return eng
+// }
+// func (eng *Engine) serveHTTP() error {
+// 	config := &http.Config{
+// 		Host:    "127.0.0.1",
+// 		Port:    17777,
+// 		Mode:    gin.DebugMode,
+// 		Name:    "admin",
+// 		Network: "tcp",
+// 	}
+// 	server := config.Build()
+// 	// server.Use(trace.HTTPMetricServerInterceptor())
+// 	// server.Use(trace.HTTPTraceServerInterceptor())
+// 	server.GET("/ping", "ping", func(ctx *gin.Context) {
+// 		// e := Redis.NameSpace("common").Set(ctx.Request.Context(), "aaaaa", "daadasd", time.Minute*5).Err()
+// 		ctx.JSON(200, gin.H{
+// 			"status": "7777",
+// 		})
+// 	})
 
-	if gin.IsDebugging() {
-		gin.App.Table.Render()
-	}
+// 	if gin.IsDebugging() {
+// 		gin.App.Table.Render()
+// 	}
 
-	// data := [][]string{
-	// 	[]string{"A", "The Good", "500"},
-	// 	[]string{"B", "The Very very Bad Man", "288"},
-	// 	[]string{"C", "The Ugly", "120"},
-	// 	[]string{"D", "The Gopher", "800"},
-	// }
+// 	// data := [][]string{
+// 	// 	[]string{"A", "The Good", "500"},
+// 	// 	[]string{"B", "The Very very Bad Man", "288"},
+// 	// 	[]string{"C", "The Ugly", "120"},
+// 	// 	[]string{"D", "The Gopher", "800"},
+// 	// }
 
-	// table := tablewriter.NewWriter(os.Stdout)
-	// table.SetHeader([]string{"Name", "Sign", "Rating"})
+// 	// table := tablewriter.NewWriter(os.Stdout)
+// 	// table.SetHeader([]string{"Name", "Sign", "Rating"})
 
-	// for _, v := range data {
-	// 	table.Append(v)
-	// }
-	// table.Render()
-	// }
+// 	// for _, v := range data {
+// 	// 	table.Append(v)
+// 	// }
+// 	// table.Render()
+// 	// }
 
-	return eng.Serve(server)
-}
+// 	return eng.Serve(server)
+// }
 
 // func (eng *Engine) serveHTTPTwo() error {
 // 	config := &monitor.Config{
