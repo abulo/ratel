@@ -47,6 +47,11 @@ type Config struct {
 	MinPoolSize     uint64
 }
 
+type index struct {
+	Key  bson.D
+	Name string
+}
+
 func (mongodb *MongoDB) SetTrace(t bool) {
 	mongodb.trace = t
 }
@@ -165,7 +170,7 @@ func (collection *collection) CreateIndex(ctx context.Context, key bson.D, op *o
 
 //ListIndexes 获取所有所有
 func (collection *collection) ListIndexes(ctx context.Context, opts *options.ListIndexesOptions) (interface{}, error) {
-	var results interface{}
+	var results []string
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
@@ -189,10 +194,11 @@ func (collection *collection) ListIndexes(ctx context.Context, opts *options.Lis
 		collection.reset()
 		return nil, err
 	}
-	err = cursor.All(ctx, &results)
-	if err != nil {
-		collection.reset()
-		return nil, err
+	for cursor.Next(ctx) {
+		var idx index
+		if err := cursor.Decode(&idx); err == nil {
+			results = append(results, idx.Name)
+		}
 	}
 	collection.reset()
 	return results, nil
