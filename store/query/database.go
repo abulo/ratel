@@ -98,16 +98,20 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 	var res sql.Result
 	var err error
 
-	//添加预处理
-	stmt, err := querydb.DB.PrepareContext(ctx, query)
-
-	if err != nil {
+	if querydb.Prepare {
+		//添加预处理
+		stmt, err := querydb.DB.PrepareContext(ctx, query)
+		if err != nil {
+			querydb.DB.PingContext(ctx)
+			return res, err
+		}
+		defer stmt.Close()
+		res, err = stmt.ExecContext(ctx, args...)
 		querydb.DB.PingContext(ctx)
-		return res, err
+	} else {
+		res, err = querydb.DB.ExecContext(ctx, query, args...)
+		querydb.DB.PingContext(ctx)
 	}
-	defer stmt.Close()
-	res, err = stmt.ExecContext(ctx, args...)
-	querydb.DB.PingContext(ctx)
 
 	return res, err
 }
@@ -210,13 +214,16 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 	}
 	var res sql.Result
 	var err error
-
-	//添加预处理
-	stmt, err := querytx.TX.PrepareContext(ctx, query)
-	if err != nil {
-		return res, err
+	if querytx.Prepare {
+		//添加预处理
+		stmt, err := querytx.TX.PrepareContext(ctx, query)
+		if err != nil {
+			return res, err
+		}
+		res, err = stmt.ExecContext(ctx, args...)
+	} else {
+		res, err = querytx.TX.ExecContext(ctx, query, args...)
 	}
-	res, err = stmt.ExecContext(ctx, args...)
 	return res, err
 
 }
