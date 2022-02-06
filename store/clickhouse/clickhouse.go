@@ -66,6 +66,8 @@ func (config *Config) URI() string {
 	} else {
 		param = append(param, "debug=false")
 	}
+	param = append(param, "loc="+time.Local.String())
+	param = append(param, "parseTime=false")
 	return link + "?" + util.Implode("&", param)
 }
 
