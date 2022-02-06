@@ -26,7 +26,6 @@ type Config struct {
 	DriverName       string
 	Debug            bool
 	Trace            bool
-	Prepare          bool
 }
 
 //URI 构造数据库连接
@@ -83,5 +82,5 @@ func New(config *Config) *query.QueryDb {
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
-	return &query.QueryDb{DB: db, DriverName: config.DriverName, Trace: config.Trace, Prepare: config.Prepare}
+	return &query.QueryDb{DB: db, DriverName: config.DriverName, Trace: config.Trace, Prepare: false}
 }

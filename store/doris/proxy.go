@@ -1,4 +1,4 @@
-package mysql
+package doris
 
 import (
 	"sync"

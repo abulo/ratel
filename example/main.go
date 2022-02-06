@@ -112,7 +112,6 @@ func main() {
 	optm.MaxExecutionTime = "60"
 	optm.Compress = true
 	optm.Debug = true
-	optm.Prepare = false
 	ClickHouse = clickhouse.NewProxyPool()
 	proxy := clickhouse.NewProxy()
 	proxy.SetWrite(clickhouse.New(optm))

@@ -38,7 +38,7 @@ func New(config *Config) *query.QueryDb {
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
-	return &query.QueryDb{DB: db, DriverName: config.DriverName, Trace: config.Trace}
+	return &query.QueryDb{DB: db, DriverName: config.DriverName, Trace: config.Trace,Prepare: true}
 }
 
 //URI 构造数据库连接
