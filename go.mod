@@ -129,4 +129,4 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
 
 replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.3.2
 
-replace github.com/go-sql-driver/mysql => github.com/abulo/mysql v1.7.0
+replace github.com/go-sql-driver/mysql => github.com/abulo/mysql v1.7.1
