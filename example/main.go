@@ -7,20 +7,25 @@ import (
 
 	cl "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/abulo/ratel/v2"
+	"github.com/abulo/ratel/v2/crontab"
+	"github.com/abulo/ratel/v2/gin"
 	"github.com/abulo/ratel/v2/logger"
 	"github.com/abulo/ratel/v2/logger/mongo"
+	"github.com/abulo/ratel/v2/server"
+	httphttp "github.com/abulo/ratel/v2/server/http"
 	"github.com/abulo/ratel/v2/store/clickhouse"
 	"github.com/abulo/ratel/v2/store/elasticsearch"
 	"github.com/abulo/ratel/v2/store/mongodb"
 	"github.com/abulo/ratel/v2/store/mysql"
 	"github.com/abulo/ratel/v2/store/query"
 	"github.com/abulo/ratel/v2/store/redis"
+	"github.com/abulo/ratel/v2/trace"
+	"github.com/abulo/ratel/v2/util"
+	"github.com/abulo/ratel/v2/worker"
 	"github.com/sirupsen/logrus"
 )
 
-type Engine struct {
-	ratel.Ratel
-}
+var app ratel.Ratel
 
 //MongoDB 代理
 var MongoDB *mongodb.Proxy = mongodb.NewProxy()
@@ -78,7 +83,6 @@ func main() {
 	logger.Logger.SetFormatter(&logrus.JSONFormatter{})
 	logger.Logger.SetReportCaller(true)
 	logger.Logger.SetOutput(os.Stdout)
-	// eng := NewEngine()
 
 	// logger.Logger.Info("adasdasd")
 
@@ -111,7 +115,7 @@ func main() {
 	optm.DriverName = "clickhouse"
 	optm.MaxExecutionTime = "60"
 	optm.Compress = true
-	optm.Debug = true
+	optm.Debug = false
 	ClickHouse = clickhouse.NewProxyPool()
 	proxy := clickhouse.NewProxy()
 	proxy.SetWrite(clickhouse.New(optm))
@@ -142,123 +146,52 @@ func main() {
 
 	// where = append(where, "xmt")
 	// where = append(where, "account_register")
-	data, err := clickHouseHandel.NewQuery(ctx).QueryRow("SELECT * FROM information_schema.tables WHERE table_schema = @Col1 AND table_name = @Col2", where...).ToMap()
-	fmt.Println(data, err)
-
-	// txClickhouse, err := clickHouseHandel.Begin()
-	// if err != nil {
-	// 	fmt.Println("1", err)
-	// 	return
-	// }
-
-	// fmt.Println(data)
-
-	// sql := txClickhouse.NewQuery(ctx).Table("account_login").MultiInsertSQL(data...)
-	// fmt.Println(sql)
-	// _, err = txClickhouse.NewQuery(ctx).Table("account_login").MultiInsert(data...)
-	// fmt.Println("2", err)
-	// if err == nil {
-	// 	err = txClickhouse.Commit()
-	// 	fmt.Println("3", err)
-	// }
-	// err = txClickhouse.Rollback()
-	// fmt.Println("4", err)
-
-	// a1 := new(AdminPermission)
-	// a1.Title = "张三"
-	// a1.UpdateDate = query.NewNullDateTime()
-	// a1.CreateDate = query.NewDateTime(util.Now())
-	// a1.ParentID = 0
-	// a1.Handle = "abulo1"
-	// a1.Weight = 1
-	// // ParentID   int64            `db:"parent_id" json:"parent_id"` //父ID
-	// // Title      string           `db:"title" json:"title"`         // 权限名称
-	// // Handle     string           `db:"handle" json:"handle"`       //路由别名
-	// // Weight     int64            `db:"weight" json:"weight"`       //权重
-	// // URI
-
-	// db := MySQL.NameSpace("common").Write()
-	// ctx := context.TODO()
-	// sql, err := db.NewQuery(ctx).Table("admin_permission").Where("id", 487).Update(a1)
-	// fmt.Println(sql, err)
-
-	// var result AdminPermission
-	// err := db.NewQuery(ctx).Table("admin_permission").Where("id", 527).Row().ToStruct(&result)
-	// fmt.Println(err, result)
+	// data, err := clickHouseHandel.NewQuery(ctx).QueryRow("SELECT * FROM information_schema.tables WHERE table_schema = @Col1 AND table_name = @Col2", where...).ToMap()
+	clickHouseHandel.NewQuery(ctx).QueryRow("SELECT * FROM information_schema.tables WHERE table_schema = @Col1 AND table_name = @Col2", where...).ToMap()
+	// fmt.Println(data, err)
+	app.Startup()
+	app.Serve(serveHTTP())
+	app.Worker(Job())
+	if err := app.Run(); err != nil {
+		logger.Logger.Panic(err)
+	}
 }
 
-// func NewEngine() *Engine {
-// 	eng := &Engine{}
-// 	if err := eng.Startup(
-// 		eng.serveHTTP,
-// 		// eng.serveHTTPTwo,
-// 	); err != nil {
-// 		logger.Logger.Panic("startup", err)
-// 	}
-// 	// eng.Tracer("ratel", "127.0.0.1:6831")
-// 	return eng
-// }
-// func (eng *Engine) serveHTTP() error {
-// 	config := &http.Config{
-// 		Host:    "127.0.0.1",
-// 		Port:    17777,
-// 		Mode:    gin.DebugMode,
-// 		Name:    "admin",
-// 		Network: "tcp",
-// 	}
-// 	server := config.Build()
-// 	// server.Use(trace.HTTPMetricServerInterceptor())
-// 	// server.Use(trace.HTTPTraceServerInterceptor())
-// 	server.GET("/ping", "ping", func(ctx *gin.Context) {
-// 		// e := Redis.NameSpace("common").Set(ctx.Request.Context(), "aaaaa", "daadasd", time.Minute*5).Err()
-// 		ctx.JSON(200, gin.H{
-// 			"status": "7777",
-// 		})
-// 	})
+func serveHTTP() server.Server {
+	config := &httphttp.Config{
+		Host:    "127.0.0.1",
+		Port:    5678,
+		Mode:    gin.DebugMode,
+		Name:    "admin",
+		Network: "tcp4",
+	}
+	server := config.Build()
+	server.Use(trace.HTTPMetricServerInterceptor())
+	server.Use(trace.HTTPTraceServerInterceptor())
+	server.GET("/ping", "ping", func(ctx *gin.Context) {
+		// e := Redis.NameSpace("common").Set(ctx.Request.Context(), "aaaaa", "daadasd", time.Minute*5).Err()
+		ctx.JSON(200, gin.H{
+			"status": "7777",
+		})
+	})
 
-// 	if gin.IsDebugging() {
-// 		gin.App.Table.Render()
-// 	}
+	return server
+}
+func Job() worker.Worker {
+	taskManager := crontab.NewTaskManager()
+	tk1 := crontab.NewTask("tk1", "0/3 * * * * *", func(ctx context.Context) error {
+		now := util.Now()
+		fmt.Println(util.Date("Y-m-d H:i:s", now))
+		return nil
+	})
 
-// 	// data := [][]string{
-// 	// 	[]string{"A", "The Good", "500"},
-// 	// 	[]string{"B", "The Very very Bad Man", "288"},
-// 	// 	[]string{"C", "The Ugly", "120"},
-// 	// 	[]string{"D", "The Gopher", "800"},
-// 	// }
+	// check task
+	// err := tk1.Run(context.Background())
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	taskManager.AddTask("tk1", tk1)
 
-// 	// table := tablewriter.NewWriter(os.Stdout)
-// 	// table.SetHeader([]string{"Name", "Sign", "Rating"})
-
-// 	// for _, v := range data {
-// 	// 	table.Append(v)
-// 	// }
-// 	// table.Render()
-// 	// }
-
-// 	return eng.Serve(server)
-// }
-
-// func (eng *Engine) serveHTTPTwo() error {
-// 	config := &monitor.Config{
-// 		Host:    "127.0.0.1",
-// 		Port:    17777,
-// 		Network: "tcp4",
-// 		Name:    "monitor",
-// 	}
-// 	// monitor.HandleFunc("/metrics", func(w ohttp.ResponseWriter, r *ohttp.Request) {
-// 	// 	promhttp.Handler().ServeHTTP(w, r)
-// 	// })
-// 	server := config.Build()
-
-// 	server.HandleFunc("/metrics", func(w ohttp.ResponseWriter, r *ohttp.Request) {
-// 		promhttp.Handler().ServeHTTP(w, r)
-// 	})
-
-// 	server.Use(trace.HTTPTraceServerInterceptor())
-
-// 	server.InitFuncMap()
-// 	pprof.Register(server.Engine)
-
-// 	return eng.Serve(server)
-// }
+	fmt.Println(taskManager.Len())
+	return taskManager
+}
