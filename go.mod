@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/BurntSushi/toml v1.0.0
-	github.com/ClickHouse/clickhouse-go/v2 v2.0.8
+	github.com/ClickHouse/clickhouse-go/v2 v2.0.10
 	github.com/alibaba/sentinel-golang v1.0.4
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/coreos/etcd v3.3.27+incompatible
@@ -36,12 +36,12 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.4
 	github.com/prometheus/client_golang v1.12.1
-	github.com/segmentio/kafka-go v0.4.27
+	github.com/segmentio/kafka-go v0.4.28
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
 	github.com/tdewolff/parse/v2 v2.5.27
-	github.com/tsuna/gohbase v0.0.0-20211207114337-de5a52263bf4
+	github.com/tsuna/gohbase v0.0.0-20220215113724-170a5138fdd5
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.6
@@ -49,10 +49,10 @@ require (
 	github.com/yosuke-furukawa/json5 v0.1.1
 	go.mongodb.org/mongo-driver v1.8.3
 	go.uber.org/multierr v1.7.0
-	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838
+	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20220204002441-d6cc3cc0770e
+	google.golang.org/genproto v0.0.0-20220211171837-173942840c17
 	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -94,7 +94,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/paulmach/orb v0.4.0 // indirect
 	github.com/pierrec/lz4 v2.6.0+incompatible // indirect
-	github.com/pierrec/lz4/v4 v4.1.12 // indirect
+	github.com/pierrec/lz4/v4 v4.1.14 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
