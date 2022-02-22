@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/abulo/ratel/v2/logger"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/concurrency"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"go.etcd.io/etcd/api/v3/mvccpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
 	"google.golang.org/grpc"
 )
 

@@ -7,7 +7,6 @@ require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.0.12
 	github.com/alibaba/sentinel-golang v1.0.4
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
-	github.com/coreos/etcd v3.3.27+incompatible
 	github.com/disintegration/imaging v1.6.2
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gin-contrib/sse v0.1.0
@@ -46,6 +45,8 @@ require (
 	github.com/ugorji/go/codec v1.2.6
 	github.com/valyala/fasthttp v1.33.0
 	github.com/yosuke-furukawa/json5 v0.1.1
+	go.etcd.io/etcd/api/v3 v3.5.2
+	go.etcd.io/etcd/client/v3 v3.5.2
 	go.mongodb.org/mongo-driver v1.8.3
 	go.uber.org/multierr v1.7.0
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
@@ -66,10 +67,8 @@ require (
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/coreos/bbolt v1.3.3 // indirect
-	github.com/coreos/go-semver v0.2.0 // indirect
-	github.com/coreos/go-systemd v0.0.0-20180511133405-39ca1b05acc7 // indirect
-	github.com/coreos/pkg v0.0.0-20160727233714-3ac0863d7acf // indirect
+	github.com/coreos/go-semver v0.3.0 // indirect
+	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-logr/logr v1.2.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -109,22 +108,15 @@ require (
 	github.com/xdg/stringprep v1.0.0 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.5.2 // indirect
 	go.opentelemetry.io/otel v1.4.1 // indirect
 	go.opentelemetry.io/otel/trace v1.4.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
-	go.uber.org/zap v1.13.0 // indirect
-	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
+	go.uber.org/zap v1.17.0 // indirect
 	golang.org/x/net v0.0.0-20220111093109-d55c255bac03 // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.5 // indirect
 	modernc.org/b v1.0.0 // indirect
 )
-
-replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.5
-
-replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
-
-replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.3.2
 
 replace github.com/go-sql-driver/mysql => github.com/abulo/mysql v1.7.1
