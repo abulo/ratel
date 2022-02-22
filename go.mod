@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/BurntSushi/toml v1.0.0
-	github.com/ClickHouse/clickhouse-go/v2 v2.0.11
+	github.com/ClickHouse/clickhouse-go/v2 v2.0.12
 	github.com/alibaba/sentinel-golang v1.0.4
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/coreos/etcd v3.3.27+incompatible
@@ -51,7 +51,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20220217155828-d576998c0009
+	google.golang.org/genproto v0.0.0-20220218161850-94dd64e39d7c
 	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -109,8 +109,8 @@ require (
 	github.com/xdg/stringprep v1.0.0 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
-	go.opentelemetry.io/otel v1.4.0 // indirect
-	go.opentelemetry.io/otel/trace v1.4.0 // indirect
+	go.opentelemetry.io/otel v1.4.1 // indirect
+	go.opentelemetry.io/otel/trace v1.4.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/zap v1.13.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
