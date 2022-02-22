@@ -2,13 +2,13 @@ package mr
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/abulo/ratel/v2/errorx"
 	"github.com/abulo/ratel/v2/lang"
 	"github.com/abulo/ratel/v2/thread"
+	"github.com/pkg/errors"
 )
 
 const (

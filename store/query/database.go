@@ -254,7 +254,7 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 	}
 	var res *sql.Rows
 	var err error
-	if querytx.DriverName == "clickhouse" {
+	if querytx.Prepare {
 		res, err = querytx.TX.QueryContext(ctx, query, args...)
 	} else {
 		//添加预处理

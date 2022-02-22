@@ -3,12 +3,12 @@ package parser
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 )
 
 // errSyntax is returned when there is a syntax error in an INI file.
