@@ -18,6 +18,8 @@ import (
 	"github.com/abulo/ratel/v2/gin/internal/bytesconv"
 	"github.com/abulo/ratel/v2/gin/render"
 	"github.com/olekukonko/tablewriter"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 const defaultMultipartMemory = 32 << 20 // 32 MB
@@ -143,6 +145,9 @@ type Engine struct {
 	// method call.
 	MaxMultipartMemory int64
 
+	// Enable h2c support.
+	UseH2C bool
+
 	delims           render.Delims
 	secureJSONPrefix string
 	HTMLRender       render.HTMLRender
@@ -221,6 +226,15 @@ func Default() *Engine {
 	engine := New()
 	engine.Use(Logger(), Recovery())
 	return engine
+}
+
+func (engine *Engine) Handler() http.Handler {
+	if !engine.UseH2C {
+		return engine
+	}
+
+	h2s := &http2.Server{}
+	return h2c.NewHandler(engine, h2s)
 }
 
 func (engine *Engine) allocateContext() *Context {
@@ -414,7 +428,7 @@ func (engine *Engine) Run(addr ...string) (err error) {
 
 	address := resolveAddress(addr)
 	debugPrint("Listening and serving HTTP on %s\n", address)
-	err = http.ListenAndServe(address, engine)
+	err = http.ListenAndServe(address, engine.Handler())
 	return
 }
 
@@ -533,7 +547,7 @@ func (engine *Engine) RunTLS(addr, certFile, keyFile string) (err error) {
 			"Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.")
 	}
 
-	err = http.ListenAndServeTLS(addr, certFile, keyFile, engine)
+	err = http.ListenAndServeTLS(addr, certFile, keyFile, engine.Handler())
 	return
 }
 
@@ -556,7 +570,7 @@ func (engine *Engine) RunUnix(file string) (err error) {
 	defer listener.Close()
 	defer os.Remove(file)
 
-	err = http.Serve(listener, engine)
+	err = http.Serve(listener, engine.Handler())
 	return
 }
 
@@ -593,7 +607,7 @@ func (engine *Engine) RunListener(listener net.Listener) (err error) {
 			"Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.")
 	}
 
-	err = http.Serve(listener, engine)
+	err = http.Serve(listener, engine.Handler())
 	return
 }
 
@@ -609,9 +623,9 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	engine.pool.Put(c)
 }
 
-// HandleContext re-enter a context that has been rewritten.
+// HandleContext re-enters a context that has been rewritten.
 // This can be done by setting c.Request.URL.Path to your new target.
-// Disclaimer: You can loop yourself to death with this, use wisely.
+// Disclaimer: You can loop yourself to deal with this, use wisely.
 func (engine *Engine) HandleContext(c *Context) {
 	oldIndexValue := c.index
 	c.reset()
