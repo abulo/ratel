@@ -23,7 +23,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/hcl/v2 v2.11.1
 	github.com/imdario/mergo v0.3.12
-	github.com/jlaffaye/ftp v0.0.0-20220301011324-fed5bc26b7fa
+	github.com/jlaffaye/ftp v0.0.0-20220301181425-a81b090061fa
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.4
 	github.com/mattn/go-isatty v0.0.14
@@ -53,7 +53,7 @@ require (
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 	golang.org/x/net v0.0.0-20220111093109-d55c255bac03
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20220228195345-15d65a4533f7
+	google.golang.org/genproto v0.0.0-20220302033224-9aa15565e42a
 	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
