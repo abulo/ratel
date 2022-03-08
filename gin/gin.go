@@ -255,6 +255,10 @@ func (engine *Engine) SecureJsonPrefix(prefix string) *Engine {
 	return engine
 }
 
+func (engine *Engine) GetDelims() render.Delims {
+	return engine.delims
+}
+
 // LoadHTMLGlob loads HTML files identified by glob pattern
 // and associates the result with HTML renderer.
 func (engine *Engine) LoadHTMLGlob(pattern string) {
