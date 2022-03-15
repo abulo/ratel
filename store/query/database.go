@@ -12,6 +12,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
+	"github.com/pkg/errors"
 )
 
 // Connection 链接
@@ -71,6 +72,9 @@ func (querydb *QueryDb) Begin() (*QueryTx, error) {
 
 //Exec 复用执行语句
 func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	if querydb.DB == nil {
+		return nil, errors.New("invalid memory address or nil pointer dereference")
+	}
 	querydb.lastsql.Sql = query
 	querydb.lastsql.Args = args
 	start := time.Now()
@@ -118,6 +122,9 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 
 //Query 复用查询语句
 func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	if querydb.DB == nil {
+		return nil, errors.New("invalid memory address or nil pointer dereference")
+	}
 	querydb.lastsql.Sql = query
 	querydb.lastsql.Args = args
 	start := time.Now()
@@ -186,6 +193,9 @@ func (querytx *QueryTx) NewQuery(ctx context.Context) *QueryBuilder {
 
 //Exec 复用执行语句
 func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	if querytx.TX == nil {
+		return nil, errors.New("invalid memory address or nil pointer dereference")
+	}
 	querytx.lastsql.Sql = query
 	querytx.lastsql.Args = args
 	start := time.Now()
@@ -230,6 +240,9 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 
 //Query 复用查询语句
 func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	if querytx.TX == nil {
+		return nil, errors.New("invalid memory address or nil pointer dereference")
+	}
 	querytx.lastsql.Sql = query
 	querytx.lastsql.Args = args
 	start := time.Now()
