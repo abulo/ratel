@@ -40,6 +40,8 @@ import (
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // DateFormat pattern rules.
@@ -358,7 +360,8 @@ func LcFirst(str string) string {
 
 // UcWords UcWords()
 func UcWords(str string) string {
-	return strings.Title(str)
+	caser := cases.Title(language.English)
+	return caser.String(str)
 }
 
 // Substr substr()
