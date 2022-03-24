@@ -34,7 +34,6 @@ func AppPath() string {
 func ParseConfig() *config.Viper {
 
 	AppConfig := config.New()
-	AppConfig.SetConfigName("watch")
 	AppConfig.SetConfigType("toml")
 	configFile := AppPath() + "/" + configFile
 	configFile = strings.Replace(configFile, "\\", "/", -1)
