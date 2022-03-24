@@ -896,8 +896,32 @@ func (v *Viper) Get(key string) interface{} {
 		if defVal != nil {
 			valType = defVal
 		}
-
 		switch valType.(type) {
+		case map[string]int:
+			mp := cast.ToStringMap(val)
+			data := make(map[string]int)
+			for k, v := range mp {
+				data[k] = cast.ToInt(v)
+			}
+			return data
+		case map[string]string:
+			mp := cast.ToStringMap(val)
+			data := make(map[string]string)
+			for k, v := range mp {
+				data[k] = cast.ToString(v)
+			}
+			return data
+		case map[string]interface{}:
+			return cast.ToStringMap(val)
+		case map[interface{}]interface{}:
+			mp := val.(map[interface{}]interface{})
+			n := make(map[interface{}]interface{})
+			for i, v := range mp {
+				n[i] = v
+			}
+			return n
+		case []interface{}:
+			return cast.ToSlice(val)
 		case bool:
 			return cast.ToBool(val)
 		case string:
