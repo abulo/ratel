@@ -1,7 +1,7 @@
 //go:build viper_logger
 // +build viper_logger
 
-package viper
+package config
 
 // WithLogger sets a custom logger.
 func WithLogger(l Logger) Option {

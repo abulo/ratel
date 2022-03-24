@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	viper "github.com/abulo/ratel/v2/config"
+	"github.com/abulo/ratel/v2/config"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -31,9 +31,9 @@ func AppPath() string {
 }
 
 //ParseConfig 解析配置文件
-func ParseConfig() *viper.Viper {
+func ParseConfig() *config.Viper {
 
-	AppConfig := viper.New()
+	AppConfig := config.New()
 	AppConfig.SetConfigName("watch")
 	AppConfig.SetConfigType("toml")
 	configFile := AppPath() + "/" + configFile
@@ -425,7 +425,7 @@ func Start(appname string) {
 
 ///main starts
 var (
-	cfg      *viper.Viper
+	cfg      *config.Viper
 	currpath string
 	exit     chan bool
 	runcmd   string

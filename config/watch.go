@@ -1,7 +1,7 @@
 //go:build !js
 // +build !js
 
-package viper
+package config
 
 import "github.com/fsnotify/fsnotify"
 

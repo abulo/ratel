@@ -8,7 +8,7 @@
 // via flags, ENVIRONMENT variables, configuration files retrieved
 // from the file system, or a remote key/value store.
 
-package viper
+package config
 
 import (
 	"fmt"

@@ -17,7 +17,7 @@
 // key/value store
 // default
 
-package viper
+package config
 
 import (
 	"bytes"

@@ -1,4 +1,4 @@
-package viper
+package config
 
 import "github.com/spf13/cast"
 
