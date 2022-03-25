@@ -44,6 +44,7 @@ type IRoutes interface {
 	HEAD(string, string, ...HandlerFunc) IRoutes
 
 	StaticFile(string, string) IRoutes
+	StaticFileFS(string, string, http.FileSystem) IRoutes
 	Static(string, string) IRoutes
 	StaticFS(string, http.FileSystem) IRoutes
 }
@@ -160,6 +161,22 @@ func (group *RouterGroup) StaticFile(relativePath, filepath string) IRoutes {
 	}
 	group.GET(relativePath, "static_file_"+strings.ToLower(http.MethodGet), handler)
 	group.HEAD(relativePath, "static_file_"+strings.ToLower(http.MethodHead), handler)
+	return group.returnObj()
+}
+
+
+// StaticFileFS works just like `StaticFile` but a custom `http.FileSystem` can be used instead..
+// router.StaticFileFS("favicon.ico", "./resources/favicon.ico", Dir{".", false})
+// Gin by default user: gin.Dir()
+func (group *RouterGroup) StaticFileFS(relativePath, filepath string, fs http.FileSystem) IRoutes {
+	if strings.Contains(relativePath, ":") || strings.Contains(relativePath, "*") {
+		panic("URL parameters can not be used when serving a static file")
+	}
+	handler := func(c *Context) {
+		c.File(filepath)
+	}
+	group.GET(relativePath, "static_files_"+strings.ToLower(http.MethodGet), handler)
+	group.HEAD(relativePath, "static_files_"+strings.ToLower(http.MethodHead), handler)
 	return group.returnObj()
 }
 

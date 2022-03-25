@@ -14,7 +14,7 @@ import (
 	"github.com/abulo/ratel/v2/util"
 )
 
-const ginSupportMinGoVer = 13
+const ginSupportMinGoVer = 14
 
 // IsDebugging returns true if the framework is running in debug mode.
 // Use SetMode(gin.ReleaseMode) to disable debug mode.
@@ -55,7 +55,7 @@ func debugPrintLoadTemplate(tmpl *template.Template) {
 	}
 }
 
-func debugPrint(format string, values ...interface{}) {
+func debugPrint(format string, values ...any) {
 	if IsDebugging() {
 		if !strings.HasSuffix(format, "\n") {
 			format += "\n"
@@ -75,7 +75,7 @@ func getMinVer(v string) (uint64, error) {
 
 func debugPrintWARNINGDefault() {
 	if v, e := getMinVer(runtime.Version()); e == nil && v <= ginSupportMinGoVer {
-		debugPrint(`[WARNING] Now Gin requires Go 1.13+.
+		debugPrint(`[WARNING] Now Gin requires Go 1.14+.
 
 `)
 	}

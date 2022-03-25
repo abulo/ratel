@@ -101,13 +101,13 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 
 	var res sql.Result
 	var err error
-
+	var stmt *sql.Stmt
 	if querydb.Prepare {
 		//添加预处理
-		stmt, e := querydb.DB.PrepareContext(ctx, query)
+		stmt, err = querydb.DB.PrepareContext(ctx, query)
 		if err != nil {
 			querydb.DB.PingContext(ctx)
-			return nil, e
+			return nil, err
 		}
 		defer stmt.Close()
 		res, err = stmt.ExecContext(ctx, args...)
@@ -150,13 +150,14 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 	}
 	var res *sql.Rows
 	var err error
+	var stmt *sql.Stmt
 
 	if querydb.Prepare {
 		//添加预处理
-		stmt, e := querydb.DB.PrepareContext(ctx, query)
+		stmt, err = querydb.DB.PrepareContext(ctx, query)
 		if err != nil {
 			querydb.DB.PingContext(ctx)
-			return nil, e
+			return nil, err
 		}
 		defer stmt.Close()
 		res, err = stmt.QueryContext(ctx, args...)
@@ -224,11 +225,12 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 	}
 	var res sql.Result
 	var err error
+	var stmt *sql.Stmt
 	if querytx.Prepare {
 		//添加预处理
-		stmt, e := querytx.TX.PrepareContext(ctx, query)
+		stmt, err = querytx.TX.PrepareContext(ctx, query)
 		if err != nil {
-			return nil, e
+			return nil, err
 		}
 		defer stmt.Close()
 		res, err = stmt.ExecContext(ctx, args...)
@@ -268,16 +270,17 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 	}
 	var res *sql.Rows
 	var err error
+	var stmt *sql.Stmt
 	if querytx.Prepare {
-		res, err = querytx.TX.QueryContext(ctx, query, args...)
-	} else {
 		//添加预处理
-		stmt, e := querytx.TX.PrepareContext(ctx, query)
+		stmt, err = querytx.TX.PrepareContext(ctx, query)
 		if err != nil {
-			return nil, e
+			return nil, err
 		}
 		defer stmt.Close()
 		res, err = stmt.QueryContext(ctx, args...)
+	} else {
+		res, err = querytx.TX.QueryContext(ctx, query, args...)
 	}
 	return res, err
 }
