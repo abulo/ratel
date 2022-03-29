@@ -87,9 +87,6 @@ func (r *Row) ToStruct(st interface{}) error {
 			refs[i] = new(interface{})
 		}
 	}
-	if !r.rs.rs.Next() {
-		return sql.ErrNoRows
-	}
 	if err := r.rs.rs.Scan(refs...); err != nil {
 		return err
 	}

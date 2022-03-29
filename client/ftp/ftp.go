@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/abulo/ratel/v2/logger"
 	"github.com/jlaffaye/ftp"
 )
 
@@ -33,16 +32,15 @@ type Client struct {
 }
 
 //New 新建连接
-func (config *Config) New() *Client {
+func (config *Config) New() (*Client, error) {
 	conn, err := ftp.Dial(config.Host+":"+config.Port, ftp.DialWithTimeout(config.Timeout))
 	if err != nil {
-		logger.Logger.Error(err)
-		return nil
+		return nil, err
 	}
 	return &Client{
 		ftp:    conn,
 		config: config,
-	}
+	}, nil
 }
 
 // ChangeDir 将当前目录更改为指定的路径
@@ -80,7 +78,7 @@ func (client *Client) DownFile(serverPath, destPath string) error {
 	if err != nil {
 		return err
 	}
-	resp.Close()
+	defer resp.Close()
 	return os.WriteFile(destPath, fileData, 0664)
 }
 
