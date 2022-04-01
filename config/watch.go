@@ -36,70 +36,72 @@ func (c *Config) ConfigDir() []string {
 
 // loadDir
 func (c *Config) WatchConfig(suffix string) {
-	watcher, err := newWatcher()
-	if err != nil {
-		return
-	}
-	defer watcher.Close()
-	done := make(chan bool)
-	// Process events
 	go func() {
-		for {
-			select {
-			case ev := <-watcher.Events:
-				//do something
-				if ev.Op&fsnotify.Create == fsnotify.Create {
-					ok := strings.HasSuffix(ev.Name, suffix)
-					if ok {
-						if c.onConfigChange != nil {
-							c.onConfigChange(ev)
+		watcher, err := newWatcher()
+		if err != nil {
+			return
+		}
+		defer watcher.Close()
+		done := make(chan bool)
+		// Process events
+		go func() {
+			for {
+				select {
+				case ev := <-watcher.Events:
+					//do something
+					if ev.Op&fsnotify.Create == fsnotify.Create {
+						ok := strings.HasSuffix(ev.Name, suffix)
+						if ok {
+							if c.onConfigChange != nil {
+								c.onConfigChange(ev)
+							}
 						}
 					}
-				}
-				if ev.Op&fsnotify.Write == fsnotify.Write {
-					ok := strings.HasSuffix(ev.Name, suffix)
-					if ok {
-						if c.onConfigChange != nil {
-							c.onConfigChange(ev)
+					if ev.Op&fsnotify.Write == fsnotify.Write {
+						ok := strings.HasSuffix(ev.Name, suffix)
+						if ok {
+							if c.onConfigChange != nil {
+								c.onConfigChange(ev)
+							}
 						}
 					}
-				}
-				if ev.Op&fsnotify.Remove == fsnotify.Remove {
-					ok := strings.HasSuffix(ev.Name, suffix)
-					if ok {
-						if c.onConfigChange != nil {
-							c.onConfigChange(ev)
+					if ev.Op&fsnotify.Remove == fsnotify.Remove {
+						ok := strings.HasSuffix(ev.Name, suffix)
+						if ok {
+							if c.onConfigChange != nil {
+								c.onConfigChange(ev)
+							}
 						}
 					}
-				}
-				if ev.Op&fsnotify.Rename == fsnotify.Rename {
-					ok := strings.HasSuffix(ev.Name, suffix)
-					if ok {
-						if c.onConfigChange != nil {
-							c.onConfigChange(ev)
+					if ev.Op&fsnotify.Rename == fsnotify.Rename {
+						ok := strings.HasSuffix(ev.Name, suffix)
+						if ok {
+							if c.onConfigChange != nil {
+								c.onConfigChange(ev)
+							}
 						}
 					}
-				}
-				if ev.Op&fsnotify.Chmod == fsnotify.Chmod {
-					ok := strings.HasSuffix(ev.Name, suffix)
-					if ok {
-						if c.onConfigChange != nil {
-							c.onConfigChange(ev)
+					if ev.Op&fsnotify.Chmod == fsnotify.Chmod {
+						ok := strings.HasSuffix(ev.Name, suffix)
+						if ok {
+							if c.onConfigChange != nil {
+								c.onConfigChange(ev)
+							}
 						}
 					}
+				case err := <-watcher.Errors:
+					fmt.Println(err)
 				}
-			case err := <-watcher.Errors:
+			}
+		}()
+		dir := c.ConfigDir()
+		for _, v := range dir {
+			err = watcher.Add(v)
+			if err != nil {
 				fmt.Println(err)
 			}
 		}
+		<-done
+		watcher.Close()
 	}()
-	dir := c.ConfigDir()
-	for _, v := range dir {
-		err = watcher.Add(v)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-	<-done
-	watcher.Close()
 }
