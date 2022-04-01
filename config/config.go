@@ -10,6 +10,7 @@ import (
 	"sync"
 	"text/scanner"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -106,6 +107,8 @@ type Config struct {
 	iMapCache map[string]intMap
 	sArrCache map[string]strArr
 	sMapCache map[string]strMap
+
+	onConfigChange func(fsnotify.Event)
 }
 
 // New config instance
