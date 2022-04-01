@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/abulo/ratel/v2/util"
 	"github.com/fsnotify/fsnotify"
@@ -48,28 +49,43 @@ func (c *Config) WatchConfig(suffix string) {
 			case ev := <-watcher.Events:
 				//do something
 				if ev.Op&fsnotify.Create == fsnotify.Create {
-					if c.onConfigChange != nil {
-						c.onConfigChange(ev)
+					ok := strings.HasSuffix(ev.Name, suffix)
+					if ok {
+						if c.onConfigChange != nil {
+							c.onConfigChange(ev)
+						}
 					}
 				}
 				if ev.Op&fsnotify.Write == fsnotify.Write {
-					if c.onConfigChange != nil {
-						c.onConfigChange(ev)
+					ok := strings.HasSuffix(ev.Name, suffix)
+					if ok {
+						if c.onConfigChange != nil {
+							c.onConfigChange(ev)
+						}
 					}
 				}
 				if ev.Op&fsnotify.Remove == fsnotify.Remove {
-					if c.onConfigChange != nil {
-						c.onConfigChange(ev)
+					ok := strings.HasSuffix(ev.Name, suffix)
+					if ok {
+						if c.onConfigChange != nil {
+							c.onConfigChange(ev)
+						}
 					}
 				}
 				if ev.Op&fsnotify.Rename == fsnotify.Rename {
-					if c.onConfigChange != nil {
-						c.onConfigChange(ev)
+					ok := strings.HasSuffix(ev.Name, suffix)
+					if ok {
+						if c.onConfigChange != nil {
+							c.onConfigChange(ev)
+						}
 					}
 				}
 				if ev.Op&fsnotify.Chmod == fsnotify.Chmod {
-					if c.onConfigChange != nil {
-						c.onConfigChange(ev)
+					ok := strings.HasSuffix(ev.Name, suffix)
+					if ok {
+						if c.onConfigChange != nil {
+							c.onConfigChange(ev)
+						}
 					}
 				}
 			case err := <-watcher.Errors:
@@ -79,7 +95,6 @@ func (c *Config) WatchConfig(suffix string) {
 	}()
 	dir := c.ConfigDir()
 	for _, v := range dir {
-		fmt.Println(v)
 		err = watcher.Add(v)
 		if err != nil {
 			fmt.Println(err)
