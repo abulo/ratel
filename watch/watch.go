@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/abulo/ratel/v2/config"
-	"github.com/abulo/ratel/v2/config/toml"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -32,16 +31,17 @@ func AppPath() string {
 }
 
 //ParseConfig 解析配置文件
-func ParseConfig() *config.Config {
-
-	AppConfig := config.New("watch")
-	AppConfig.AddDriver(toml.Driver)
-	configFile := AppPath() + "/" + configFile
-	configFile = strings.Replace(configFile, "\\", "/", -1)
-	if !FileExist(configFile) {
-		Fatalf("配置文件不存在[ %s ]\n", configFile)
+func ParseConfig() *config.Viper {
+	AppConfig := config.New()
+	AppConfig.SetConfigName("watch")
+	// config.SetConfigName("mysql")
+	AppConfig.SetConfigType("toml")
+	configFile := AppPath()
+	AppConfig.AddConfigPath(configFile)
+	err := AppConfig.ReadInConfig() // Find and read the config file
+	if err != nil {                 // Handle errors reading the config file
+		panic(fmt.Errorf("Fatal error config file: %w \n", err))
 	}
-	AppConfig.LoadFiles(configFile)
 	return AppConfig
 }
 
@@ -420,7 +420,7 @@ func Start(appname string) {
 
 ///main starts
 var (
-	cfg      *config.Config
+	cfg      *config.Viper
 	currpath string
 	exit     chan bool
 	runcmd   string

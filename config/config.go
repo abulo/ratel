@@ -1,517 +1,114 @@
 package config
 
 import (
-	"bytes"
-	"fmt"
-	"os"
-	"reflect"
-	"regexp"
 	"strings"
-	"sync"
-	"text/scanner"
 
-	"github.com/fsnotify/fsnotify"
-	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/cast"
 )
 
-// There are supported config format
-const (
-	Ini  = "ini"
-	Hcl  = "hcl"
-	Yml  = "yml"
-	JSON = "json"
-	Yaml = "yaml"
-	Toml = "toml"
+func Bool(key string, defVal ...bool) bool { return v.Bool(key, defVal...) }
 
-	// default delimiter
-	defaultDelimiter byte = '.'
-	// default struct tag name for binding data to struct
-	defaultStructTag = "mapstructure"
-)
-
-// internal vars
-type intArr []int
-type strArr []string
-type intMap map[string]int
-type strMap map[string]string
-
-// type fmtName string
-
-// This is a default config manager instance
-var dc = New("default")
-
-// Driver interface
-type Driver interface {
-	Name() string
-	GetDecoder() Decoder
-	GetEncoder() Encoder
-}
-
-// Decoder for decode yml,json,toml format content
-type Decoder func(blob []byte, v interface{}) (err error)
-
-// Encoder for decode yml,json,toml format content
-type Encoder func(v interface{}) (out []byte, err error)
-
-// Options config options
-type Options struct {
-	// parse env value. like: "${EnvName}" "${EnvName|default}"
-	ParseEnv bool
-	// config is readonly
-	Readonly bool
-	// enable config data cache
-	EnableCache bool
-	// parse key, allow find value by key path. eg: 'key.sub' will find `map[key]sub`
-	ParseKey bool
-	// tag name for binding data to struct
-	// Deprecated
-	// please set tag name by DecoderConfig
-	TagName string
-	// the delimiter char for split key path, if `FindByPath=true`. default is '.'
-	Delimiter byte
-	// default write format
-	DumpFormat string
-	// default input format
-	ReadFormat string
-	// DecoderConfig setting for binding data to struct
-	DecoderConfig *mapstructure.DecoderConfig
-}
-
-// Config structure definition
-type Config struct {
-	err error
-	// config instance name
-	name string
-	lock sync.RWMutex
-
-	// config options
-	opts *Options
-	// all config data
-	data map[string]interface{}
-
-	// loaded config files records
-	loadedFiles  []string
-	loadedDriver []string
-
-	// decoders["toml"] = func(blob []byte, v interface{}) (err error){}
-	// decoders["yaml"] = func(blob []byte, v interface{}) (err error){}
-	// drivers map[string]Driver TODO Deprecated decoder and encoder, use driver instead
-	decoders map[string]Decoder
-	encoders map[string]Encoder
-
-	// cache got config data
-	intCache map[string]int
-	strCache map[string]string
-
-	iArrCache map[string]intArr
-	iMapCache map[string]intMap
-	sArrCache map[string]strArr
-	sMapCache map[string]strMap
-
-	onConfigChange func(fsnotify.Event)
-}
-
-// New config instance
-func New(name string) *Config {
-	return &Config{
-		name: name,
-		opts: newDefaultOption(),
-		data: make(map[string]interface{}),
-
-		// default add JSON driver
-		encoders: map[string]Encoder{JSON: JSONEncoder},
-		decoders: map[string]Decoder{JSON: JSONDecoder},
+func (v *Viper) Bool(key string, defVal ...bool) (value bool) {
+	lcaseKey := strings.ToLower(key)
+	if v.IsSet(lcaseKey) {
+		return GetBool(lcaseKey)
 	}
-}
-
-// NewEmpty config instance
-func NewEmpty(name string) *Config {
-	return &Config{
-		name: name,
-		opts: newDefaultOption(),
-		data: make(map[string]interface{}),
-
-		// don't add any drivers
-		encoders: map[string]Encoder{},
-		decoders: map[string]Decoder{},
-	}
-}
-
-// NewWith create config instance, and you can call some init func
-func NewWith(name string, fn func(c *Config)) *Config {
-	return New(name).With(fn)
-}
-
-// NewWithOptions config instance
-func NewWithOptions(name string, opts ...func(*Options)) *Config {
-	return New(name).WithOptions(opts...)
-}
-
-// Default get the default instance
-func Default() *Config {
-	return dc
-}
-
-func newDefaultOption() *Options {
-	return &Options{
-		ParseKey:  true,
-		TagName:   defaultStructTag,
-		Delimiter: defaultDelimiter,
-		// for export
-		DumpFormat: JSON,
-		ReadFormat: JSON,
-		// struct decoder config
-		DecoderConfig: newDefaultDecoderConfig(),
-	}
-}
-
-func newDefaultDecoderConfig() *mapstructure.DecoderConfig {
-	return &mapstructure.DecoderConfig{
-		// tag name for binding struct
-		TagName: defaultStructTag,
-		// will auto convert string to int/uint
-		WeaklyTypedInput: true,
-		// DecodeHook: ParseEnvVarStringHookFunc,
-	}
-}
-
-// ParseEnvVarStringHookFunc returns a DecodeHookFunc that parse ENV var
-func ParseEnvVarStringHookFunc() mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
-		if f.Kind() != reflect.String {
-			return data, nil
-		}
-
-		str := ParseEnvValue(data.(string))
-		return str, nil
-	}
-}
-
-/*************************************************************
- * config setting
- *************************************************************/
-
-// ParseEnv set parse env
-func ParseEnv(opts *Options) { opts.ParseEnv = true }
-
-// Readonly set readonly
-func Readonly(opts *Options) { opts.Readonly = true }
-
-// Delimiter set delimiter char
-func Delimiter(sep byte) func(*Options) {
-	return func(opts *Options) {
-		opts.Delimiter = sep
-	}
-}
-
-// EnableCache set readonly
-func EnableCache(opts *Options) { opts.EnableCache = true }
-
-// WithOptions with options
-func WithOptions(opts ...func(*Options)) { dc.WithOptions(opts...) }
-
-// WithOptions apply some options
-func (c *Config) WithOptions(opts ...func(*Options)) *Config {
-	if !c.IsEmpty() {
-		panic("config: Cannot set options after data has been loaded")
-	}
-
-	// apply options
-	for _, opt := range opts {
-		opt(c.opts)
-	}
-	return c
-}
-
-// GetOptions get options
-func GetOptions() *Options { return dc.Options() }
-
-// Options get
-func (c *Config) Options() *Options {
-	return c.opts
-}
-
-// With apply some options
-func (c *Config) With(fn func(c *Config)) *Config {
-	fn(c)
-	return c
-}
-
-// Readonly disable set data to config.
-// Usage:
-// 	config.LoadFiles(a, b, c)
-// 	config.Readonly()
-func (c *Config) Readonly() {
-	c.opts.Readonly = true
-}
-
-/*************************************************************
- * config drivers
- *************************************************************/
-
-// AddDriver set a decoder and encoder driver for a format.
-func AddDriver(driver Driver) { dc.AddDriver(driver) }
-
-// AddDriver set a decoder and encoder driver for a format.
-func (c *Config) AddDriver(driver Driver) {
-	format := driver.Name()
-	c.decoders[format] = driver.GetDecoder()
-	c.encoders[format] = driver.GetEncoder()
-}
-
-// HasDecoder has decoder
-func (c *Config) HasDecoder(format string) bool {
-	format = fixFormat(format)
-	_, ok := c.decoders[format]
-	return ok
-}
-
-// SetDecoder add/set a format decoder
-// Deprecated
-// please use driver instead
-func SetDecoder(format string, decoder Decoder) {
-	dc.SetDecoder(format, decoder)
-}
-
-// SetDecoder set decoder
-// Deprecated
-// please use driver instead
-func (c *Config) SetDecoder(format string, decoder Decoder) {
-	format = fixFormat(format)
-	c.decoders[format] = decoder
-}
-
-// SetDecoders set decoders
-// Deprecated
-// please use driver instead
-func (c *Config) SetDecoders(decoders map[string]Decoder) {
-	for format, decoder := range decoders {
-		c.SetDecoder(format, decoder)
-	}
-}
-
-// SetEncoder set a encoder for the format
-// Deprecated
-// please use driver instead
-func SetEncoder(format string, encoder Encoder) {
-	dc.SetEncoder(format, encoder)
-}
-
-// SetEncoder set a encoder for the format
-// Deprecated
-// please use driver instead
-func (c *Config) SetEncoder(format string, encoder Encoder) {
-	format = fixFormat(format)
-	c.encoders[format] = encoder
-}
-
-// SetEncoders set encoders
-// Deprecated
-// please use driver instead
-func (c *Config) SetEncoders(encoders map[string]Encoder) {
-	for format, encoder := range encoders {
-		c.SetEncoder(format, encoder)
-	}
-}
-
-// HasEncoder has encoder
-func (c *Config) HasEncoder(format string) bool {
-	format = fixFormat(format)
-	_, ok := c.encoders[format]
-	return ok
-}
-
-// DelDriver delete driver of the format
-func (c *Config) DelDriver(format string) {
-	format = fixFormat(format)
-
-	if _, ok := c.decoders[format]; ok {
-		delete(c.decoders, format)
-	}
-
-	if _, ok := c.encoders[format]; ok {
-		delete(c.encoders, format)
-	}
-}
-
-/*************************************************************
- * helper methods
- *************************************************************/
-
-// Name get config name
-func (c *Config) Name() string {
-	return c.name
-}
-
-// Error get last error
-func (c *Config) Error() error {
-	return c.err
-}
-
-// IsEmpty of the config
-func (c *Config) IsEmpty() bool {
-	return len(c.data) == 0
-}
-
-// LoadedFiles get loaded files name
-func (c *Config) LoadedFiles() []string {
-	return c.loadedFiles
-}
-
-// ClearAll data and caches
-func ClearAll() { dc.ClearAll() }
-
-// ClearAll data and caches
-func (c *Config) ClearAll() {
-	c.ClearData()
-	c.ClearCaches()
-
-	c.loadedFiles = []string{}
-	c.opts.Readonly = false
-}
-
-// ClearData clear data
-func (c *Config) ClearData() {
-	c.data = make(map[string]interface{})
-	c.loadedFiles = []string{}
-}
-
-// ClearCaches clear caches
-func (c *Config) ClearCaches() {
-	if c.opts.EnableCache {
-		c.intCache = nil
-		c.strCache = nil
-		c.sMapCache = nil
-		c.sArrCache = nil
-	}
-}
-
-/*************************************************************
- * helper methods/functions
- *************************************************************/
-
-// record error
-func (c *Config) addError(err error) {
-	c.err = err
-}
-
-// format and record error
-func (c *Config) addErrorf(format string, a ...interface{}) {
-	c.err = fmt.Errorf(format, a...)
-}
-
-// GetEnv get os ENV value by name
-// Deprecated
-//	please use Getenv() instead
-func GetEnv(name string, defVal ...string) (val string) {
-	return Getenv(name, defVal...)
-}
-
-// Getenv get os ENV value by name. like os.Getenv, but support default value
-// Notice:
-// - Key is not case sensitive when getting
-func Getenv(name string, defVal ...string) (val string) {
-	if val = os.Getenv(name); val != "" {
-		return
-	}
-
 	if len(defVal) > 0 {
-		val = defVal[0]
+		value = defVal[0]
 	}
-	return
+	return value
 }
 
-// format key
-func formatKey(key, sep string) string {
-	return strings.Trim(strings.TrimSpace(key), sep)
+func Int(key string, defVal ...int) int { return v.Int(key, defVal...) }
+
+func (v *Viper) Int(key string, defVal ...int) (value int) {
+	lcaseKey := strings.ToLower(key)
+	if v.IsSet(lcaseKey) {
+		return GetInt(lcaseKey)
+	}
+	if len(defVal) > 0 {
+		value = defVal[0]
+	}
+	return value
 }
 
-// fix inc/conf/yaml format
-func fixFormat(f string) string {
-	if f == Yml {
-		f = Yaml
-	}
+func Uint(key string, defVal ...uint) uint { return v.Uint(key, defVal...) }
 
-	if f == "inc" {
-		f = Ini
+func (v *Viper) Uint(key string, defVal ...uint) (value uint) {
+	lcaseKey := strings.ToLower(key)
+	if v.IsSet(lcaseKey) {
+		return GetUint(lcaseKey)
 	}
-
-	// eg nginx config file.
-	if f == "conf" {
-		f = Hcl
+	if len(defVal) > 0 {
+		value = defVal[0]
 	}
-
-	return f
+	return value
 }
 
-// `(?s:` enable match multi line
-var jsonMLComments = regexp.MustCompile(`(?s:/\*.*?\*/\s*)`)
+func Int64(key string, defVal ...int64) int64 { return v.Int64(key, defVal...) }
 
-// StripComments strip comments for a JSON string
-func StripComments(src string) string {
-	// multi line comments
-	if strings.Contains(src, "/*") {
-		src = jsonMLComments.ReplaceAllString(src, "")
+func (v *Viper) Int64(key string, defVal ...int64) (value int64) {
+	lcaseKey := strings.ToLower(key)
+	if v.IsSet(lcaseKey) {
+		return GetInt64(lcaseKey)
 	}
-
-	// single line comments
-	if !strings.Contains(src, "//") {
-		return strings.TrimSpace(src)
+	if len(defVal) > 0 {
+		value = defVal[0]
 	}
-
-	var s scanner.Scanner
-
-	s.Init(strings.NewReader(src))
-	s.Filename = "comments"
-	s.Mode ^= scanner.SkipComments // don't skip comments
-
-	buf := new(bytes.Buffer)
-	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
-		txt := s.TokenText()
-		if !strings.HasPrefix(txt, "//") && !strings.HasPrefix(txt, "/*") {
-			buf.WriteString(txt)
-			// } else {
-			// fmt.Printf("%s: %s\n", s.Position, txt)
-		}
-	}
-
-	return buf.String()
+	return value
 }
 
-var envRegex = regexp.MustCompile(`\${.+?}`)
+func Ints(key string) []int { return v.Ints(key) }
 
-// EnvValueGetter Env value provider.
-// TIPS: you can custom provide data.
-var EnvValueGetter = func(name string) string {
-	return os.Getenv(name)
+func (v *Viper) Ints(key string) []int {
+	return v.GetIntSlice(key)
 }
 
-// ParseEnvValue parse ENV var value from input string
-func ParseEnvValue(val string) (newVal string) {
-	if strings.Index(val, "${") == -1 {
-		return val
+func IntMap(key string) map[string]int { return v.IntMap(key) }
+
+func (v *Viper) IntMap(key string) map[string]int {
+	ret := GetStringMapString(key)
+	data := make(map[string]int)
+	for k, v := range ret {
+		data[k] = cast.ToInt(v)
 	}
+	return data
+}
 
-	var name, def string
+func Float(key string, defVal ...float64) float64 { return v.Float(key, defVal...) }
 
-	return envRegex.ReplaceAllStringFunc(val, func(eVar string) string {
-		// eVar like "${NotExist|defValue}", first remove "${" and "}", then split it
-		ss := strings.SplitN(eVar[2:len(eVar)-1], "|", 2)
+func (v *Viper) Float(key string, defVal ...float64) (value float64) {
+	lcaseKey := strings.ToLower(key)
+	if v.IsSet(lcaseKey) {
+		return GetFloat64(lcaseKey)
+	}
+	if len(defVal) > 0 {
+		value = defVal[0]
+	}
+	return value
+}
 
-		// with default value. ${NotExist|defValue}
-		if len(ss) == 2 {
-			name, def = strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
-		} else {
-			def = eVar // use raw value
-			name = strings.TrimSpace(ss[0])
-		}
+func String(key string, defVal ...string) string { return v.String(key, defVal...) }
 
-		// get value from ENV
-		// eVal := os.Getenv(name)
-		eVal := EnvValueGetter(name)
-		if eVal == "" {
-			eVal = def
-		}
-		return eVal
-	})
+func (v *Viper) String(key string, defVal ...string) (value string) {
+	lcaseKey := strings.ToLower(key)
+	if v.IsSet(lcaseKey) {
+		return GetString(lcaseKey)
+	}
+	if len(defVal) > 0 {
+		value = defVal[0]
+	}
+	return value
+}
+
+func Strings(key string) []string { return v.Strings(key) }
+
+func (v *Viper) Strings(key string) []string {
+	return v.GetStringSlice(key)
+}
+
+func StringMap(key string) map[string]string { return v.StringMap(key) }
+
+func (v *Viper) StringMap(key string) map[string]string {
+	return v.GetStringMapString(key)
 }
