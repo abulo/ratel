@@ -896,7 +896,6 @@ func (v *Viper) Get(key string) interface{} {
 		if defVal != nil {
 			valType = defVal
 		}
-		fmt.Println(valType)
 		switch valType.(type) {
 		case bool:
 			return cast.ToBool(val)
@@ -922,6 +921,24 @@ func (v *Viper) Get(key string) interface{} {
 			return cast.ToStringSlice(val)
 		case []int:
 			return cast.ToIntSlice(val)
+		case []interface{}:
+			return cast.ToSlice(val)
+		case map[string]int:
+			ret := cast.ToStringMapString(val)
+			data := make(map[string]int)
+			for k, v := range ret {
+				data[k] = cast.ToInt(v)
+			}
+			return data
+		case map[string]string:
+			return cast.ToStringMapString(val)
+		case map[interface{}]interface{}:
+			ret := cast.ToStringMapString(val)
+			data := make(map[interface{}]interface{})
+			for k, v := range ret {
+				data[interface{}(k)] = interface{}(v)
+			}
+			return data
 		}
 	}
 

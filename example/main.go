@@ -28,6 +28,12 @@ func main() {
 	}
 	Config.MergeConfig(bytes.NewBuffer(configBytes))
 
+	configBytes1, err := ioutil.ReadFile("/Users/abulo/WorkSpace/golang/src/ratel/example/development/redis.toml")
+	if err != nil {
+		panic(fmt.Errorf("Could not read config file: %s \n", err))
+	}
+	Config.MergeConfig(bytes.NewBuffer(configBytes1))
+
 	cfg := Config.Get("configDir")
 
 	fmt.Println(cfg)
@@ -35,5 +41,14 @@ func main() {
 	cfgmysql := Config.Get("mysql")
 
 	fmt.Println(cfgmysql)
+
+	cfgm := Config.Get("redis")
+
+	fmt.Println(cfgm)
+
+	proxycfgs := Config.Get("proxymysql")
+	proxyRes := proxycfgs.([]interface{})
+
+	fmt.Println(proxyRes)
 
 }
