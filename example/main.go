@@ -11,7 +11,6 @@ import (
 func main() {
 	Config := config.New()
 	Config.SetConfigName("config")
-	// config.SetConfigName("mysql")
 	Config.SetConfigType("toml")
 	Config.AddConfigPath("/Users/abulo/WorkSpace/golang/src/ratel/example/env")
 	// config.AddConfigPath("/Users/abulo/WorkSpace/golang/src/ratel/example/development")
@@ -21,6 +20,10 @@ func main() {
 	if err != nil { // Handle errors reading the config file
 		panic(fmt.Errorf("Fatal error config file: %w \n", err))
 	}
+
+	cfg := Config.Get("configDir")
+
+	fmt.Println(cfg)
 
 	configBytes, err := ioutil.ReadFile("/Users/abulo/WorkSpace/golang/src/ratel/example/development/mysql.toml")
 	if err != nil {
@@ -33,10 +36,6 @@ func main() {
 		panic(fmt.Errorf("Could not read config file: %s \n", err))
 	}
 	Config.MergeConfig(bytes.NewBuffer(configBytes1))
-
-	cfg := Config.Get("configDir")
-
-	fmt.Println(cfg)
 
 	cfgmysql := Config.Get("mysql")
 
