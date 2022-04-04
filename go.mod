@@ -35,7 +35,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.4
 	github.com/prometheus/client_golang v1.12.1
-	github.com/segmentio/kafka-go v0.4.30
+	github.com/segmentio/kafka-go v0.4.31
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
 	github.com/tdewolff/parse/v2 v2.5.27
@@ -49,14 +49,14 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.2
 	go.mongodb.org/mongo-driver v1.8.4
 	go.uber.org/multierr v1.8.0
-	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064
+	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29
 	golang.org/x/image v0.0.0-20220321031419-a8550c1d254a
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+	golang.org/x/net v0.0.0-20220403103023-749bd193bc2b
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/text v0.3.7
-	google.golang.org/genproto v0.0.0-20220322021311-435b647f9ef2
+	google.golang.org/genproto v0.0.0-20220401170504-314d38edb7de
 	google.golang.org/grpc v1.45.0
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
