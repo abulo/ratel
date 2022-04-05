@@ -4038,6 +4038,24 @@ func AryInterfaceToArgString(d []interface{}) []string {
 	return data
 }
 
+func InterfaceToAryMapStringInterface(in interface{}) []map[string]interface{} {
+	data := make([]map[string]interface{}, 0)
+	newData := in.([]interface{})
+	for _, v := range newData {
+		data = append(data, ToStringMap(v))
+	}
+	return data
+}
+
+func InterfaceToAryMapStringString(in interface{}) []map[string]string {
+	data := make([]map[string]string, 0)
+	newData := in.([]interface{})
+	for _, v := range newData {
+		data = append(data, ToStringMapString(v))
+	}
+	return data
+}
+
 //查询是否被整除
 func Divide(m, n interface{}) bool {
 	r := math.Mod(ToFloat64(m), ToFloat64(n))
