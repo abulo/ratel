@@ -3,7 +3,7 @@ module github.com/abulo/ratel/v2
 go 1.18
 
 require (
-	github.com/BurntSushi/toml v1.0.0
+	github.com/BurntSushi/toml v1.1.0
 	github.com/ClickHouse/clickhouse-go/v2 v2.0.12
 	github.com/alibaba/sentinel-golang v1.0.4
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
@@ -19,13 +19,13 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/h2non/bimg v1.1.7
+	github.com/h2non/bimg v1.1.9
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/hcl/v2 v2.11.1
 	github.com/imdario/mergo v0.3.12
 	github.com/jlaffaye/ftp v0.0.0-20220310202011-d2c44e311e78
 	github.com/json-iterator/go v1.1.12
-	github.com/lib/pq v1.10.4
+	github.com/lib/pq v1.10.5
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/mozillazg/go-pinyin v0.19.0
@@ -38,23 +38,23 @@ require (
 	github.com/segmentio/kafka-go v0.4.31
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
-	github.com/tdewolff/parse/v2 v2.5.27
+	github.com/tdewolff/parse/v2 v2.5.29
 	github.com/tsuna/gohbase v0.0.0-20220316190246-5d94cc15d57f
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/ugorji/go/codec v1.2.7
-	github.com/valyala/fasthttp v1.34.0
+	github.com/valyala/fasthttp v1.35.0
 	github.com/yosuke-furukawa/json5 v0.1.1
-	go.etcd.io/etcd/api/v3 v3.5.2
-	go.etcd.io/etcd/client/v3 v3.5.2
-	go.mongodb.org/mongo-driver v1.8.4
+	go.etcd.io/etcd/api/v3 v3.5.3
+	go.etcd.io/etcd/client/v3 v3.5.3
+	go.mongodb.org/mongo-driver v1.9.0
 	go.uber.org/multierr v1.8.0
-	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29
-	golang.org/x/image v0.0.0-20220321031419-a8550c1d254a
-	golang.org/x/net v0.0.0-20220403103023-749bd193bc2b
+	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
+	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9
+	golang.org/x/net v0.0.0-20220412020605-290c469a71a5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/text v0.3.7
-	google.golang.org/genproto v0.0.0-20220401170504-314d38edb7de
+	google.golang.org/genproto v0.0.0-20220414192740-2d67ff6cf2b4
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -111,7 +111,7 @@ require (
 	github.com/xdg/stringprep v1.0.0 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.5.2 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.5.3 // indirect
 	go.opentelemetry.io/otel v1.5.0 // indirect
 	go.opentelemetry.io/otel/trace v1.5.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
