@@ -1,8 +1,10 @@
+// Package json use the https://github.com/json-iterator/go for parse json
 package json
 
 import (
 	"github.com/abulo/ratel/v2/config"
-	jsoniter "github.com/json-iterator/go"
+	"github.com/gookit/goutil/jsonutil"
+	"github.com/json-iterator/go"
 )
 
 var parser = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -10,7 +12,7 @@ var parser = jsoniter.ConfigCompatibleWithStandardLibrary
 // Decoder for json
 var Decoder config.Decoder = func(data []byte, v interface{}) (err error) {
 	if config.JSONAllowComments {
-		str := config.StripComments(string(data))
+		str := jsonutil.StripComments(string(data))
 		return parser.Unmarshal([]byte(str), v)
 	}
 

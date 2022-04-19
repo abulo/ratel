@@ -1,9 +1,15 @@
+/*
+Package hcl is driver use HCL format content as config source
+
+about HCL, please see https://github.com/hashicorp/hcl
+*/
 package hcl
 
 import (
+	"errors"
+
 	"github.com/abulo/ratel/v2/config"
 	"github.com/hashicorp/hcl"
-	"github.com/pkg/errors"
 )
 
 // Decoder the hcl content decoder

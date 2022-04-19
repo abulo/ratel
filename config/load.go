@@ -1,9 +1,10 @@
 package config
 
 import (
+	"errors"
 	"flag"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	"github.com/imdario/mergo"
-	"github.com/pkg/errors"
 )
 
 func LoadDir(dir, suffix string) error { return dc.LoadDir(dir, suffix) }
@@ -68,6 +68,7 @@ func (c *Config) LoadExists(sourceFiles ...string) (err error) {
 func LoadRemote(format, url string) error { return dc.LoadRemote(format, url) }
 
 // LoadRemote load config data from remote URL.
+//
 // Usage:
 // 	c.LoadRemote(config.JSON, "http://abc.com/api-config.json")
 func (c *Config) LoadRemote(format, url string) (err error) {
@@ -86,7 +87,7 @@ func (c *Config) LoadRemote(format, url string) (err error) {
 	}
 
 	// read response content
-	bts, err := io.ReadAll(resp.Body)
+	bts, err := ioutil.ReadAll(resp.Body)
 	if err == nil {
 		// parse file content
 		if err = c.parseSourceCode(format, bts); err != nil {
@@ -106,13 +107,14 @@ func (c *Config) LoadOSEnv(keys []string, keyToLower bool) {
 		// NOTICE:
 		// if is windows os, os.Getenv() Key is not case sensitive
 		val := os.Getenv(key)
-
 		if keyToLower {
 			key = strings.ToLower(key)
 		}
 
 		_ = c.Set(key, val)
 	}
+
+	c.fireHook(OnLoadData)
 }
 
 // support bound types for CLI flags vars
@@ -171,29 +173,16 @@ func (c *Config) LoadFlags(keys []string) (err error) {
 		// ignore error
 		_ = c.Set(name, f.Value.String())
 	})
+
+	c.fireHook(OnLoadData)
 	return
-}
-
-func parseVarNameAndType(key string) (string, string) {
-	typ := "string"
-	key = strings.Trim(key, "-")
-
-	// can set var type: int, uint, bool
-	if strings.IndexByte(key, ':') > 0 {
-		list := strings.SplitN(key, ":", 2)
-		key, typ = list[0], list[1]
-
-		if _, ok := validTypes[typ]; !ok {
-			typ = "string"
-		}
-	}
-	return key, typ
 }
 
 // LoadData load one or multi data
 func LoadData(dataSource ...interface{}) error { return dc.LoadData(dataSource...) }
 
 // LoadData load data from map OR struct
+//
 // The dataSources can be:
 //  - map[string]interface{}
 func (c *Config) LoadData(dataSources ...interface{}) (err error) {
@@ -207,6 +196,8 @@ func (c *Config) LoadData(dataSources ...interface{}) (err error) {
 			return
 		}
 	}
+
+	c.fireHook(OnLoadData)
 	return
 }
 
@@ -216,6 +207,7 @@ func LoadSources(format string, src []byte, more ...[]byte) error {
 }
 
 // LoadSources load data from byte content.
+//
 // Usage:
 // 	config.LoadSources(config.Yml, []byte(`
 // 	name: blog
@@ -303,7 +295,7 @@ func (c *Config) loadFile(file string, loadExist bool, format string) (err error
 	defer fd.Close()
 
 	// read file content
-	bts, err := io.ReadAll(fd)
+	bts, err := ioutil.ReadAll(fd)
 	if err == nil {
 		if format == "" {
 			// get format for file ext
@@ -338,7 +330,6 @@ func (c *Config) parseSourceCode(format string, blob []byte) (err error) {
 	if err = decode(blob, &data); err != nil {
 		return
 	}
-
 	// init config data
 	if len(c.data) == 0 {
 		c.data = data
@@ -348,6 +339,9 @@ func (c *Config) parseSourceCode(format string, blob []byte) (err error) {
 		err = mergo.Merge(&c.data, data, mergo.WithOverride, mergo.WithTypeCheck)
 	}
 
+	if err != nil {
+		c.fireHook(OnLoadData)
+	}
 	data = nil
 	return
 }

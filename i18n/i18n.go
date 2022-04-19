@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/abulo/ratel/v2/config/parser/ini"
+	"github.com/gookit/ini/v2"
 	"github.com/pkg/errors"
 )
 

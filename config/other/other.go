@@ -1,3 +1,6 @@
+/*
+Package other is an example of a custom driver
+*/
 package other
 
 import (

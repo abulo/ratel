@@ -1,17 +1,28 @@
+/*
+Package hclv2 is driver use HCL format content as config source
+
+about HCL, please see https://github.com/hashicorp/hcl
+docs for HCL v2 https://pkg.go.dev/github.com/hashicorp/hcl/v2
+*/
 package hclv2
 
 import (
+	"errors"
+
 	"github.com/abulo/ratel/v2/config"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/pkg/errors"
 )
 
 // Decoder the hcl content decoder
 var Decoder config.Decoder = func(blob []byte, v interface{}) (err error) {
 	// return hclsimple.Decode("hcl2/config.hcl", blob, nil, v)
-	file, diags := hclsyntax.ParseConfig(blob, "hcl2/config.hcl", hcl.Pos{Line: 0, Column: 0})
+	file, diags := hclsyntax.ParseConfig(
+		blob,
+		"hcl2/config.hcl",
+		hcl.Pos{Line: 0, Column: 0},
+	)
 	// if diags.HasErrors() {
 	if len(diags) != 0 {
 		return diags
@@ -34,7 +45,7 @@ type hclDriver struct {
 	name string
 }
 
-// Name
+// Name get
 func (d *hclDriver) Name() string {
 	return d.name
 }

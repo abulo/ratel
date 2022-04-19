@@ -1,3 +1,9 @@
+/*
+Package yaml is a driver use YAML format content as config source
+
+Usage please see example:
+
+*/
 package yamlv3
 
 // see https://pkg.go.dev/gopkg.in/yaml.v3
