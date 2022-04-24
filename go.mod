@@ -8,28 +8,28 @@ require (
 	github.com/alibaba/sentinel-golang v1.0.4
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
-	github.com/fsnotify/fsnotify v1.5.1
+	github.com/fsnotify/fsnotify v1.5.3
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-playground/validator/v10 v10.10.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/goccy/go-json v0.9.6
+	github.com/goccy/go-json v0.9.7
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
-	github.com/gookit/goutil v0.5.0
+	github.com/gookit/goutil v0.5.1
 	github.com/gookit/ini/v2 v2.1.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.9
 	github.com/hashicorp/hcl v1.0.0
-	github.com/hashicorp/hcl/v2 v2.11.1
+	github.com/hashicorp/hcl/v2 v2.12.0
 	github.com/imdario/mergo v0.3.12
 	github.com/jlaffaye/ftp v0.0.0-20220310202011-d2c44e311e78
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.5
 	github.com/mattn/go-isatty v0.0.14
-	github.com/mitchellh/mapstructure v1.4.3
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mozillazg/go-pinyin v0.19.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/olivere/elastic/v7 v7.0.32
@@ -53,11 +53,11 @@ require (
 	go.uber.org/multierr v1.8.0
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9
-	golang.org/x/net v0.0.0-20220412020605-290c469a71a5
+	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/text v0.3.7
-	google.golang.org/genproto v0.0.0-20220414192740-2d67ff6cf2b4
-	google.golang.org/grpc v1.45.0
+	google.golang.org/genproto v0.0.0-20220422154200-b37d22cd5731
+	google.golang.org/grpc v1.46.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
