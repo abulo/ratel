@@ -8,8 +8,6 @@ import (
 	"image/jpeg"
 	"io"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/abulo/ratel/v2/img/fontx"
 	"github.com/abulo/ratel/v2/util"
@@ -30,8 +28,20 @@ type Image struct {
 
 // OpenLocalFile gets an Image using a local file.
 func OpenLocalFile(filename string, opts ...imaging.DecodeOption) (*Image, error) {
-	ext := filepath.Ext(filename)
-	extension := strings.ToLower(strings.TrimPrefix(ext, "."))
+
+	var (
+		extension  string
+		fileBuffer []byte
+		err        error
+	)
+
+	if fileBuffer, err = os.ReadFile(filename); err != nil {
+		return nil, err
+	}
+
+	// ext := filepath.Ext(filename)
+	// extension := strings.ToLower(strings.TrimPrefix(ext, "."))
+	extension = bimg.NewImage(fileBuffer).Type()
 	extAry := []string{"jpg", "png", "webp", "jpeg"}
 	if !util.InArray(extension, extAry) {
 		return nil, errors.New("No Support file")
