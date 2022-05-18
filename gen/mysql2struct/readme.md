@@ -1,31 +1,31 @@
-使用方法
-
-
 ```golang
+import (
+	"time"
 
-dbInfo := &mysql2struct.DBInfo{
-    DBType:   dbType,
-    Host:     host,
-    UserName: username,
-    Password: password,
-    Charset:  charset,
-}
-dbModel := mysql2struct.NewDBModel(dbInfo)
-err := dbModel.Connect()
-if err != nil {
-    log.Fatalf("dbModel.Connect err: %v", err)
-}
-columns, err := dbModel.GetColumns(dbName, tableName)
-if err != nil {
-    log.Fatalf("dbModel.GetColumns err:%v", err)
-}
+	"github.com/abulo/ratel/v2/gen/mysql2struct"
+	"github.com/abulo/ratel/v2/store/mysql"
+	"github.com/abulo/ratel/v2/util"
+)
 
-template := mysql2struct.NewStructTemplate()
-templateColumns := template.AssemblyColumns(columns)
-err = template.Generate(tableName, templateColumns)
-if err != nil {
-    log.Fatalf("template.Generate err: %v", err)
-}
+var MySQL *mysql.ProxyPool = mysql.NewProxyPool()
 
+func main() {
+	opt := &mysql.Config{}
+	opt.Username = "root"
+	opt.Password = "mysql"
+	opt.Host = "127.0.0.1"
+	opt.Port = "3306"
+	opt.Charset = "utf8mb4"
+	opt.Database = "xmt"
+	opt.DriverName = "mysql"
+	opt.MaxLifetime = time.Duration(1) * time.Minute
+	opt.MaxIdleTime = time.Duration(1) * time.Minute
+	opt.MaxIdleConns = util.ToInt(64)
+	opt.MaxOpenConns = util.ToInt(64)
+
+	conn := mysql.New(opt)
+
+	mysql2struct.MysqlToStruct(conn, "xmt", "sss", "dddd")
+}
 
 ```
