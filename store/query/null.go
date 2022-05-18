@@ -405,3 +405,189 @@ func (ns NullDate) Result() interface{} {
 	}
 	return "NULL"
 }
+
+//NullTime 空字符串
+type NullTime struct {
+	sql.NullString
+}
+
+func NewTime(s interface{}) NullTime {
+	return NullTime{sql.NullString{String: util.Date("H:i:s", util.ToTime(s)), Valid: true}}
+}
+
+func NewNullTime() NullTime {
+	return NullTime{sql.NullString{String: "", Valid: false}}
+}
+
+func (nt *NullTime) Scan(value interface{}) error {
+	if reflect.TypeOf(value) == nil {
+		*nt = NewNullTime()
+		return nil
+	} else {
+		var s sql.NullString
+		if err := s.Scan(value); err != nil {
+			return err
+		} else {
+			*nt, err = NewTime(s.String), nil
+			return err
+		}
+	}
+}
+
+func (ns NullTime) MarshalJSON() ([]byte, error) {
+	if !ns.Valid {
+		return nullJSON, nil
+	}
+	return json.Marshal(ns.String)
+}
+
+func (ns *NullTime) UnmarshalJSON(b []byte) error {
+	var err error = nil
+	if bytes.Equal(nullJSON, b) {
+		ns.String = ""
+		ns.Valid = false
+	} else {
+		err = json.Unmarshal(b, &ns.String)
+		ns.Valid = (err == nil)
+	}
+	return err
+}
+
+func (ns NullTime) IsEmpty() bool {
+	return !ns.Valid || ns.String == ""
+}
+
+func (ns NullTime) IsValid() bool {
+	return ns.Valid
+}
+
+func (ns NullTime) Result() interface{} {
+	if ns.Valid {
+		return ns.String
+	}
+	return "NULL"
+}
+
+//NullYear 空字符串
+type NullYear struct {
+	sql.NullString
+}
+
+func NewYear(s interface{}) NullYear {
+	return NullYear{sql.NullString{String: util.Date("Y", util.ToTime(s)), Valid: true}}
+}
+
+func NewNullYear() NullYear {
+	return NullYear{sql.NullString{String: "", Valid: false}}
+}
+
+func (nt *NullYear) Scan(value interface{}) error {
+	if reflect.TypeOf(value) == nil {
+		*nt = NewNullYear()
+		return nil
+	} else {
+		var s sql.NullString
+		if err := s.Scan(value); err != nil {
+			return err
+		} else {
+			*nt, err = NewYear(s.String), nil
+			return err
+		}
+	}
+}
+
+func (ns NullYear) MarshalJSON() ([]byte, error) {
+	if !ns.Valid {
+		return nullJSON, nil
+	}
+	return json.Marshal(ns.String)
+}
+
+func (ns *NullYear) UnmarshalJSON(b []byte) error {
+	var err error = nil
+	if bytes.Equal(nullJSON, b) {
+		ns.String = ""
+		ns.Valid = false
+	} else {
+		err = json.Unmarshal(b, &ns.String)
+		ns.Valid = (err == nil)
+	}
+	return err
+}
+
+func (ns NullYear) IsEmpty() bool {
+	return !ns.Valid || ns.String == ""
+}
+
+func (ns NullYear) IsValid() bool {
+	return ns.Valid
+}
+
+func (ns NullYear) Result() interface{} {
+	if ns.Valid {
+		return ns.String
+	}
+	return "NULL"
+}
+
+//NullYear 空字符串
+type NullTimeStamp struct {
+	sql.NullString
+}
+
+func NewTimeStamp(s interface{}) NullTimeStamp {
+	return NullTimeStamp{sql.NullString{String: util.ToString(util.ToTime(s).In(util.GetTimeZone()).Unix()), Valid: true}}
+}
+
+func NewNullTimeStamp() NullTimeStamp {
+	return NullTimeStamp{sql.NullString{String: "", Valid: false}}
+}
+
+func (nt *NullTimeStamp) Scan(value interface{}) error {
+	if reflect.TypeOf(value) == nil {
+		*nt = NewNullTimeStamp()
+		return nil
+	} else {
+		var s sql.NullString
+		if err := s.Scan(value); err != nil {
+			return err
+		} else {
+			*nt, err = NewTimeStamp(s.String), nil
+			return err
+		}
+	}
+}
+
+func (ns NullTimeStamp) MarshalJSON() ([]byte, error) {
+	if !ns.Valid {
+		return nullJSON, nil
+	}
+	return json.Marshal(ns.String)
+}
+
+func (ns *NullTimeStamp) UnmarshalJSON(b []byte) error {
+	var err error = nil
+	if bytes.Equal(nullJSON, b) {
+		ns.String = ""
+		ns.Valid = false
+	} else {
+		err = json.Unmarshal(b, &ns.String)
+		ns.Valid = (err == nil)
+	}
+	return err
+}
+
+func (ns NullTimeStamp) IsEmpty() bool {
+	return !ns.Valid || ns.String == ""
+}
+
+func (ns NullTimeStamp) IsValid() bool {
+	return ns.Valid
+}
+
+func (ns NullTimeStamp) Result() interface{} {
+	if ns.Valid {
+		return ns.String
+	}
+	return "NULL"
+}

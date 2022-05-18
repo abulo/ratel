@@ -65,7 +65,7 @@ func MysqlToStruct(db *query.QueryDb, DbName, outputDir, outputPackage string) {
 		builder.WriteString("}\n")
 		fileStr := "package " + outputPackage + "\nimport ("
 		if packageSql {
-			fileStr += "\"database/sql\"\n"
+			fileStr += "\"github.com/abulo/ratel/v2/store/query\"\n"
 		}
 		if packageTime {
 			fileStr += "\"time\"\n"
