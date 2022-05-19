@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -20,6 +21,75 @@ import (
 	"github.com/abulo/ratel/v2/worker"
 	"golang.org/x/sync/errgroup"
 )
+
+var (
+	appName         string
+	appID           string
+	hostName        string
+	buildAppVersion string
+	buildUser       string
+	buildHost       string
+	buildStatus     string
+	buildTime       string
+)
+
+// Name gets application name.
+func Name() string {
+	return appName
+}
+
+//SetName set app anme
+func SetName(s string) {
+	appName = s
+}
+
+//AppID get appID
+func AppID() string {
+	if appID == "" {
+		return "1234567890" //default appid when APP_ID Env var not set
+	}
+	return appID
+}
+
+//SetAppID set appID
+func SetAppID(s string) {
+	appID = s
+}
+
+//AppVersion get buildAppVersion
+func AppVersion() string {
+	return buildAppVersion
+}
+
+// SetAppVersion set appVersion
+func SetAppVersion(s string) {
+	buildAppVersion = s
+}
+
+//BuildTime get buildTime
+func BuildTime() string {
+	return buildTime
+}
+
+//BuildUser get buildUser
+func BuildUser() string {
+	return buildUser
+}
+
+//BuildHost get buildHost
+func BuildHost() string {
+	return buildHost
+}
+
+//SetBuildTime set buildTime
+func SetBuildTime(param string) {
+	buildTime = strings.Replace(param, "--", " ", 1)
+}
+
+// HostName get host name
+func HostName() string {
+	return hostName
+}
 
 const (
 	//StageAfterStop after app stop

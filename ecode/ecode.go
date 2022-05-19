@@ -9,10 +9,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// EcodeNum 低于10000均为系统错误码，业务错误码请使用10000以上
+const EcodeNum int32 = 9999
+
 var (
 	_codes sync.Map
 	// OK ...
 	OK = add(int(codes.OK), "OK")
+
+	ErrKindRequestErr = "request err"
 )
 
 type spbStatus struct {

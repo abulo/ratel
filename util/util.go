@@ -172,6 +172,14 @@ func Time() int64 {
 	return time.Now().In(cstZone).Unix()
 }
 
+func Duration(str string) time.Duration {
+	dur, err := time.ParseDuration(str)
+	if err != nil {
+		panic(err)
+	}
+	return dur
+}
+
 // Now time.Now()
 func Now() time.Time {
 	cstZone := GetTimeZone()
@@ -863,6 +871,10 @@ func JSONDecode(data []byte, val interface{}) error {
 // JSONEncode json_encode()
 func JSONEncode(val interface{}) ([]byte, error) {
 	return json.Marshal(val)
+}
+func JsonString(obj interface{}) string {
+	aa, _ := json.Marshal(obj)
+	return string(aa)
 }
 
 // Addslashes addslashes()
