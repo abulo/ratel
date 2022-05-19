@@ -122,5 +122,3 @@ require (
 	golang.org/x/sys v0.0.0-20220429233432-b5fbb4746d32 // indirect
 	modernc.org/b v1.0.0 // indirect
 )
-
-replace github.com/go-sql-driver/mysql => github.com/abulo/mysql v1.7.2
