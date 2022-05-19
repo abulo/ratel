@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -23,14 +22,9 @@ import (
 )
 
 var (
-	appName         string
-	appID           string
-	hostName        string
-	buildAppVersion string
-	buildUser       string
-	buildHost       string
-	buildStatus     string
-	buildTime       string
+	appName  string
+	appID    string
+	hostName string
 )
 
 // Name gets application name.
@@ -56,39 +50,14 @@ func SetAppID(s string) {
 	appID = s
 }
 
-//AppVersion get buildAppVersion
-func AppVersion() string {
-	return buildAppVersion
-}
-
-// SetAppVersion set appVersion
-func SetAppVersion(s string) {
-	buildAppVersion = s
-}
-
-//BuildTime get buildTime
-func BuildTime() string {
-	return buildTime
-}
-
-//BuildUser get buildUser
-func BuildUser() string {
-	return buildUser
-}
-
-//BuildHost get buildHost
-func BuildHost() string {
-	return buildHost
-}
-
-//SetBuildTime set buildTime
-func SetBuildTime(param string) {
-	buildTime = strings.Replace(param, "--", " ", 1)
-}
-
 // HostName get host name
 func HostName() string {
 	return hostName
+}
+
+//SetHostName set app anme
+func SetHostName(s string) {
+	hostName = s
 }
 
 const (
