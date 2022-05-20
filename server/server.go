@@ -16,6 +16,7 @@ type ServiceInfo struct {
 	Name    string `json:"name"`
 	Scheme  string `json:"scheme"`
 	Address string `json:"address"`
+	Group   string `json:"group"` // Group 流量组: 流量在Group之间进行负载均衡
 }
 
 // Label ...
