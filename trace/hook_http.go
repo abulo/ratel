@@ -29,7 +29,7 @@ func HTTPTraceServerInterceptor() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		span, ctx := StartSpanFromContext(
 			c.Request.Context(),
-			spanStartName(c),
+			SpanHttpStartName(c),
 			TagComponent("http"),
 			TagSpanKind("server"),
 			HeaderExtractor(c.Request.Header),

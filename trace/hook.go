@@ -8,6 +8,14 @@ func ginExtractAID(ctx *gin.Context) string {
 	return ctx.Request.Header.Get("AID")
 }
 
-func spanStartName(ctx *gin.Context) string {
-	return ctx.Request.Method + " " + ctx.FullPath()
+func SpanHttpStartName(ctx *gin.Context) string {
+	return "http " + ctx.Request.Method + " " + ctx.FullPath()
+}
+
+func SpanRpcClientStartName(method string) string {
+	return "grpcClient " + method
+}
+
+func SpanRpcServerStartName(method string) string {
+	return "grpcServer " + method
 }

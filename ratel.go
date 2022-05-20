@@ -96,9 +96,9 @@ func New(fns ...func() error) (*Ratel, error) {
 //Startup ..
 func (app *Ratel) Startup(fns ...func() error) error {
 	app.initialize()
-	if err := app.startup(); err != nil {
-		return err
-	}
+	// if err := app.startup(); err != nil {
+	// 	return err
+	// }
 	return goroutine.SerialUntilError(fns...)()
 }
 
@@ -178,13 +178,14 @@ func (app *Ratel) Worker(w worker.Worker) *Ratel {
 }
 
 //Tracer ...
-func (app *Ratel) Tracer(name, host string) *Ratel {
+func Tracer(name, host string) error {
 	cfg := trace.InitConfig(host)
 	cfg.ServiceName = name
 	if err := trace.New(cfg).Setup(); err != nil {
 		logger.Logger.Panic(err)
+		return err
 	}
-	return app
+	return nil
 }
 
 // Run run application

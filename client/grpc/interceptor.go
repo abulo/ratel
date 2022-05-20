@@ -12,6 +12,7 @@ import (
 	"github.com/abulo/ratel/v2/trace"
 	"github.com/abulo/ratel/v2/util"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -74,12 +75,21 @@ func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 			md = md.Copy()
 		}
 
+		remoteIP := "unknown"
+		if remote, ok := peer.FromContext(ctx); ok && remote.Addr != nil {
+			remoteIP = remote.Addr.String()
+		}
+
 		span, ctx := trace.StartSpanFromContext(
 			ctx,
-			method,
+			trace.SpanRpcClientStartName(method),
 			trace.TagSpanKind("client"),
 			trace.TagComponent("grpc"),
+			trace.CustomTag("peer.ipv4", remoteIP),
 		)
+
+		span.LogFields(log.Object("req", req))
+		span.LogFields(log.Object("reply", reply))
 		defer span.Finish()
 
 		err := invoker(trace.MetadataInjector(ctx, md), method, req, reply, cc, opts...)

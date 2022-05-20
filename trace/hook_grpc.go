@@ -8,6 +8,7 @@ import (
 	"github.com/abulo/ratel/v2/ecode"
 	"github.com/abulo/ratel/v2/metric"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -45,13 +46,15 @@ func GRPCStreamServerInterceptor(srv interface{}, ss grpc.ServerStream, info *gr
 func RPCTraceUnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	span, ctx := StartSpanFromContext(
 		ctx,
-		info.FullMethod,
+		SpanRpcServerStartName(info.FullMethod),
 		FromIncomingContext(ctx),
-		TagComponent("gRPC"),
-		TagSpanKind("server.unary"),
+		TagSpanKind("server"),
+		TagComponent("grpc"),
 	)
 
 	defer span.Finish()
+
+	span.LogFields(log.Object("req", req))
 
 	resp, err := handler(ctx, req)
 
@@ -76,10 +79,10 @@ type contextedServerStream struct {
 func RPCTraceStreamServerInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	span, ctx := StartSpanFromContext(
 		ss.Context(),
-		info.FullMethod,
+		SpanRpcServerStartName(info.FullMethod),
 		FromIncomingContext(ss.Context()),
-		TagComponent("gRPC"),
-		TagSpanKind("server.stream"),
+		TagComponent("grpc"),
+		TagSpanKind("server"),
 		CustomTag("isServerStream", info.IsServerStream),
 	)
 	defer span.Finish()
