@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/abulo/ratel/v2/util"
+	"github.com/abulo/ratel/v3/util"
 )
 
 const ginSupportMinGoVer = 14

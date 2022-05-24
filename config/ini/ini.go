@@ -6,7 +6,7 @@ about ini parse, please see https://github.com/gookit/ini/parser
 package ini
 
 import (
-	"github.com/abulo/ratel/v2/config"
+	"github.com/abulo/ratel/v3/config"
 	"github.com/gookit/ini/v2/parser"
 )
 
@@ -19,24 +19,4 @@ var Encoder config.Encoder = func(ptr interface{}) (out []byte, err error) {
 }
 
 // Driver for ini
-var Driver = &iniDriver{config.Ini}
-
-// iniDriver for ini format content
-type iniDriver struct {
-	name string
-}
-
-// Name get name
-func (d *iniDriver) Name() string {
-	return d.name
-}
-
-// GetDecoder for ini
-func (d *iniDriver) GetDecoder() config.Decoder {
-	return Decoder
-}
-
-// GetEncoder for ini
-func (d *iniDriver) GetEncoder() config.Encoder {
-	return Encoder
-}
+var Driver = config.NewDriver(config.Ini, Decoder, Encoder)

@@ -2,6 +2,7 @@
 /.idea
 /.vscode
 /vendor
+/store
 /go.sum
 /test
 /example

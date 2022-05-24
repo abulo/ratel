@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/abulo/ratel/v2/util"
+	"github.com/abulo/ratel/v3/util"
 )
 
 var nullJSON = []byte("null")

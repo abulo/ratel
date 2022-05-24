@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/abulo/ratel/v2/gin/binding"
+	"github.com/abulo/ratel/v3/gin/binding"
 )
 
 // EnvGinMode indicates environment name for gin mode.

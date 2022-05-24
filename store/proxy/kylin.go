@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"github.com/abulo/ratel/v2/store/kylin"
+	"github.com/abulo/ratel/v3/store/kylin"
 )
 
 type ProxyKylin struct {

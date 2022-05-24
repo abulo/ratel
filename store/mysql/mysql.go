@@ -3,8 +3,8 @@ package mysql
 import (
 	"time"
 
-	"github.com/abulo/ratel/v2/logger"
-	"github.com/abulo/ratel/v2/store/query"
+	"github.com/abulo/ratel/v3/logger"
+	"github.com/abulo/ratel/v3/store/query"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -38,7 +38,7 @@ func New(config *Config) *query.QueryDb {
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
-	return &query.QueryDb{DB: db, DriverName: config.DriverName, Trace: config.Trace,Prepare: true}
+	return &query.QueryDb{DB: db, DriverName: config.DriverName, Trace: config.Trace, Prepare: true}
 }
 
 //URI 构造数据库连接

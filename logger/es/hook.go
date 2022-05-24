@@ -6,10 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/abulo/ratel/v2/logger/entry"
-	"github.com/abulo/ratel/v2/queue"
-	"github.com/abulo/ratel/v2/store/elasticsearch"
-	"github.com/abulo/ratel/v2/util"
+	"github.com/abulo/ratel/v3/logger/entry"
+	"github.com/abulo/ratel/v3/logger/queue"
+	"github.com/abulo/ratel/v3/store/elasticsearch"
+	"github.com/abulo/ratel/v3/util"
 	"github.com/sirupsen/logrus"
 )
 

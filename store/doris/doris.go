@@ -3,8 +3,8 @@ package doris
 import (
 	"time"
 
-	"github.com/abulo/ratel/v2/logger"
-	"github.com/abulo/ratel/v2/store/query"
+	"github.com/abulo/ratel/v3/logger"
+	"github.com/abulo/ratel/v3/store/query"
 	_ "github.com/go-sql-driver/mysql"
 )
 

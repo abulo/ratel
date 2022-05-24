@@ -1,6 +1,6 @@
 package proxy
 
-import "github.com/abulo/ratel/v2/store/redis"
+import "github.com/abulo/ratel/v3/store/redis"
 
 type ProxyRedis struct {
 	*redis.Client

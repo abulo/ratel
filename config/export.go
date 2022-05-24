@@ -2,9 +2,10 @@ package config
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
+
+	"github.com/pkg/errors"
 
 	"github.com/mitchellh/mapstructure"
 )

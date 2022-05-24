@@ -5,7 +5,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/abulo/ratel/v2/logger"
+	"github.com/abulo/ratel/v3/logger"
 	"github.com/tsuna/gohbase"
 	"github.com/tsuna/gohbase/hrpc"
 	"github.com/tsuna/gohbase/pb"

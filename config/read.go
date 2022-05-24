@@ -1,9 +1,10 @@
 package config
 
 import (
-	"errors"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/gookit/goutil/envutil"
 	"github.com/gookit/goutil/mathutil"
@@ -535,15 +536,14 @@ func (c *Config) StringMap(key string) (mp map[string]string) {
 		mp = make(map[string]string)
 
 		for k, v := range typeData {
-			switch v.(type) {
+			switch tv := v.(type) {
 			case string:
 				if c.opts.ParseEnv {
-					mp[k] = envutil.ParseEnvValue(v.(string))
+					mp[k] = envutil.ParseEnvValue(tv)
 				} else {
-					mp[k] = v.(string)
+					mp[k] = tv
 				}
 			default:
-				// mp[k] = fmt.Sprintf("%v", v)
 				mp[k], _ = strutil.AnyToString(v, false)
 			}
 		}

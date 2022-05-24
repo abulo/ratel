@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"github.com/abulo/ratel/v2/store/kafka"
+	"github.com/abulo/ratel/v3/store/kafka"
 )
 
 type ProxyKafka struct {

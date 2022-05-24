@@ -17,8 +17,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/abulo/ratel/v2/gin/binding"
-	"github.com/abulo/ratel/v2/gin/render"
+	"github.com/abulo/ratel/v3/gin/binding"
+	"github.com/abulo/ratel/v3/gin/render"
 	"github.com/gin-contrib/sse"
 	"github.com/pkg/errors"
 )

@@ -11,7 +11,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/abulo/ratel/v2/gin/internal/bytesconv"
+	"github.com/abulo/ratel/v3/gin/internal/bytesconv"
 )
 
 var (

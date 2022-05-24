@@ -10,8 +10,8 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/abulo/ratel/v2/gin/internal/bytesconv"
-	"github.com/abulo/ratel/v2/gin/internal/json"
+	"github.com/abulo/ratel/v3/gin/internal/bytesconv"
+	"github.com/abulo/ratel/v3/gin/internal/json"
 )
 
 // JSON contains the given interface object.
