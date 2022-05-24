@@ -20,31 +20,33 @@ import (
 
 //MongoDB 连接
 type MongoDB struct {
-	Client *mongo.Client
-	Name   string
-	trace  bool
+	Client        *mongo.Client
+	Name          string
+	disableMetric bool // 关闭指标采集
+	disableTrace  bool // 关闭链路追踪
 }
 
 //collection *mongo.Client
 type collection struct {
-	Database *mongo.Database
-	Table    *mongo.Collection
-	filter   bson.D
-	limit    int64
-	skip     int64
-	sort     bson.D
-	fields   bson.M
-	trace    bool
+	Database      *mongo.Database
+	Table         *mongo.Collection
+	filter        bson.D
+	limit         int64
+	skip          int64
+	sort          bson.D
+	fields        bson.M
+	disableMetric bool // 关闭指标采集
+	disableTrace  bool // 关闭链路追踪
 }
 
 //Config 配置
 type Config struct {
-	URI string
-	// AppName string
-	// ConnectTimeout  time.Duration
+	URI             string
 	MaxConnIdleTime time.Duration
 	MaxPoolSize     uint64
 	MinPoolSize     uint64
+	DisableMetric   bool // 关闭指标采集
+	DisableTrace    bool // 关闭链路追踪
 }
 
 type index struct {
@@ -52,16 +54,10 @@ type index struct {
 	Name string
 }
 
-func (mongodb *MongoDB) SetTrace(t bool) {
-	mongodb.trace = t
-}
-
 //New 数据库连接
 func New(config *Config) *MongoDB {
 	//数据库连接
 	mongoOptions := options.Client()
-	// mongoOptions.SetAppName(config.AppName)
-	// mongoOptions.SetConnectTimeout(config.ConnectTimeout)
 	mongoOptions.SetMaxConnIdleTime(config.MaxConnIdleTime)
 	mongoOptions.SetMaxPoolSize(config.MaxPoolSize)
 	mongoOptions.SetMinPoolSize(config.MinPoolSize)
@@ -87,7 +83,7 @@ func New(config *Config) *MongoDB {
 		logger.Logger.Panic("MongoDB连接失败->", err)
 		return nil
 	}
-	return &MongoDB{Client: client, Name: name}
+	return &MongoDB{Client: client, Name: name, disableMetric: config.DisableMetric, disableTrace: config.DisableTrace}
 }
 
 func (collection *collection) reset() {
@@ -97,18 +93,20 @@ func (collection *collection) reset() {
 	collection.sort = nil
 	collection.fields = nil
 	collection.Table = nil
-	collection.trace = false
+	collection.disableMetric = false
+	collection.disableTrace = false
 }
 
 // Collection 得到一个mongo操作对象
 func (client *MongoDB) Collection(table string) *collection {
 	database := client.Client.Database(client.Name)
 	return &collection{
-		Database: database,
-		Table:    database.Collection(table),
-		filter:   make(bson.D, 0),
-		sort:     make(bson.D, 0),
-		trace:    client.trace,
+		Database:      database,
+		Table:         database.Collection(table),
+		filter:        make(bson.D, 0),
+		sort:          make(bson.D, 0),
+		disableMetric: client.disableMetric,
+		disableTrace:  client.disableTrace,
 	}
 }
 

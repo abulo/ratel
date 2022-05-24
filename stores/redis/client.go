@@ -13,13 +13,14 @@ import (
 
 //Config 配置
 type Config struct {
-	Type      bool     //是否集群
-	Hosts     []string //IP
-	Password  string   //密码
-	Database  int      //数据库
-	PoolSize  int      //连接池大小
-	KeyPrefix string
-	Trace     bool
+	Type          bool     //是否集群
+	Hosts         []string //IP
+	Password      string   //密码
+	Database      int      //数据库
+	PoolSize      int      //连接池大小
+	KeyPrefix     string
+	DisableMetric bool // 关闭指标采集
+	DisableTrace  bool // 关闭链路追踪
 }
 
 //New 新连接
@@ -46,10 +47,12 @@ func New(config *Config) *Client {
 	if config.Password != "" {
 		opts.Password = config.Password
 	}
-	if config.Trace {
-		opts.Trace = config.Trace
+	if !config.DisableMetric {
+		opts.DisableMetric = config.DisableMetric
 	}
-
+	if !config.DisableTrace {
+		opts.DisableTrace = config.DisableTrace
+	}
 	client := NewClient(opts)
 	ctx := context.TODO()
 	if err := client.Ping(ctx).Err(); err != nil {
@@ -78,7 +81,7 @@ func NewClient(opts Options) *Client {
 	case ClientCluster:
 
 		tc := redis.NewClusterClient(opts.GetClusterConfig())
-		if opts.Trace {
+		if !opts.DisableTrace {
 			ctx := context.TODO()
 			tc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
 				shard.AddHook(OpenTelemetryHook{})
@@ -91,7 +94,7 @@ func NewClient(opts Options) *Client {
 		fallthrough
 	default:
 		tc := redis.NewClient(opts.GetNormalConfig())
-		if opts.Trace {
+		if !opts.DisableTrace {
 			tc.AddHook(OpenTelemetryHook{})
 		}
 		r.client = tc

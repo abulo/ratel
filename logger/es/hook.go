@@ -8,7 +8,7 @@ import (
 
 	"github.com/abulo/ratel/v3/logger/entry"
 	"github.com/abulo/ratel/v3/logger/queue"
-	"github.com/abulo/ratel/v3/store/elasticsearch"
+	"github.com/abulo/ratel/v3/stores/elasticsearch"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/sirupsen/logrus"
 )

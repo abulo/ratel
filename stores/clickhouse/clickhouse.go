@@ -5,7 +5,7 @@ import (
 
 	_ "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/abulo/ratel/v3/logger"
-	"github.com/abulo/ratel/v3/store/query"
+	"github.com/abulo/ratel/v3/stores/query"
 	"github.com/abulo/ratel/v3/util"
 )
 
@@ -24,8 +24,9 @@ type Config struct {
 	MaxLifetime      time.Duration //连接池里面的连接最大存活时长
 	MaxIdleTime      time.Duration //连接池里面的连接最大空闲时长
 	DriverName       string
-	Debug            bool
-	Trace            bool
+	DisableDebug     bool // 关闭 debug模式
+	DisableMetric    bool // 关闭指标采集
+	DisableTrace     bool // 关闭链路追踪
 }
 
 //URI 构造数据库连接
@@ -61,7 +62,7 @@ func (config *Config) URI() string {
 	} else {
 		param = append(param, "compress=false")
 	}
-	if config.Debug {
+	if !config.DisableDebug {
 		param = append(param, "debug=true")
 	} else {
 		param = append(param, "debug=false")
@@ -83,5 +84,5 @@ func New(config *Config) *query.QueryDb {
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
-	return &query.QueryDb{DB: db, DriverName: config.DriverName, Trace: config.Trace, Prepare: false}
+	return &query.QueryDb{DB: db, DriverName: config.DriverName, DisableMetric: config.DisableMetric, DisableTrace: config.DisableTrace, Prepare: false}
 }

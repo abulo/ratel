@@ -73,7 +73,8 @@ type Options struct {
 	// Only for normal client
 	TLSConfig *tls.Config
 
-	Trace bool
+	DisableMetric bool // 关闭指标采集
+	DisableTrace  bool // 关闭链路追踪
 }
 
 // GetClusterConfig translates current configuration into a *redis.ClusterOptions

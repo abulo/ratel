@@ -1,10 +1,11 @@
 package goroutine
 
 import (
-	"errors"
 	"fmt"
 	"sync/atomic"
 	"testing"
+
+	"github.com/pkg/errors"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/multierr"

@@ -20,8 +20,8 @@ type Connection interface {
 	Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 	NewQuery(ctx context.Context) *QueryBuilder
-	GetLastSql() Sql
-	LastSql(query string, args ...interface{})
+	GetlastSql() Sql
+	lastSql(query string, args ...interface{})
 }
 
 // Sql sql语句
@@ -33,24 +33,22 @@ type Sql struct {
 
 // QueryDb mysql 配置
 type QueryDb struct {
-	DB         *sql.DB
-	lastsql    Sql
-	DriverName string
-	Trace      bool
-	Prepare    bool
+	DB            *sql.DB
+	lastSql       Sql
+	DriverName    string
+	DisableMetric bool // 关闭指标采集
+	DisableTrace  bool // 关闭链路追踪
+	Prepare       bool
 }
 
 //QueryTx 事务
 type QueryTx struct {
-	TX         *sql.Tx
-	lastsql    Sql
-	DriverName string
-	Trace      bool
-	Prepare    bool
-}
-
-func (querydb *QueryDb) SetTrace(t bool) {
-	querydb.Trace = t
+	TX            *sql.Tx
+	lastSql       Sql
+	DriverName    string
+	DisableMetric bool // 关闭指标采集
+	DisableTrace  bool // 关闭链路追踪
+	Prepare       bool
 }
 
 //NewQuery 生成一个新的查询构造器
@@ -75,11 +73,11 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 	if querydb.DB == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
-	querydb.lastsql.Sql = query
-	querydb.lastsql.Args = args
+	querydb.lastSql.Sql = query
+	querydb.lastSql.Args = args
 	start := time.Now()
 	defer func() {
-		querydb.lastsql.CostTime = time.Since(start)
+		querydb.lastSql.CostTime = time.Since(start)
 	}()
 
 	if ctx == nil || ctx.Err() != nil {
@@ -125,11 +123,11 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 	if querydb.DB == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
-	querydb.lastsql.Sql = query
-	querydb.lastsql.Args = args
+	querydb.lastSql.Sql = query
+	querydb.lastSql.Args = args
 	start := time.Now()
 	defer func() {
-		querydb.lastsql.CostTime = time.Since(start)
+		querydb.lastSql.CostTime = time.Since(start)
 	}()
 
 	if ctx == nil || ctx.Err() != nil {
@@ -169,9 +167,9 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 	return res, err
 }
 
-//GetLastSql 获取sql语句
-func (querydb *QueryDb) GetLastSql() Sql {
-	return querydb.lastsql
+//GetlastSql 获取sql语句
+func (querydb *QueryDb) GetlastSql() Sql {
+	return querydb.lastSql
 }
 
 // Commit 事务提交
@@ -197,11 +195,11 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 	if querytx.TX == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
-	querytx.lastsql.Sql = query
-	querytx.lastsql.Args = args
+	querytx.lastSql.Sql = query
+	querytx.lastSql.Args = args
 	start := time.Now()
 	defer func() {
-		querytx.lastsql.CostTime = time.Since(start)
+		querytx.lastSql.CostTime = time.Since(start)
 
 	}()
 
@@ -246,11 +244,11 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 	if querytx.TX == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
-	querytx.lastsql.Sql = query
-	querytx.lastsql.Args = args
+	querytx.lastSql.Sql = query
+	querytx.lastSql.Args = args
 	start := time.Now()
 	defer func() {
-		querytx.lastsql.CostTime = time.Since(start)
+		querytx.lastSql.CostTime = time.Since(start)
 	}()
 
 	if ctx == nil || ctx.Err() != nil {
@@ -285,19 +283,19 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 	return res, err
 }
 
-//GetLastSql 获取sql语句
-func (querytx *QueryTx) GetLastSql() Sql {
-	return querytx.lastsql
+//GetlastSql 获取sql语句
+func (querytx *QueryTx) GetlastSql() Sql {
+	return querytx.lastSql
 }
 
-func (querytx *QueryTx) LastSql(query string, args ...interface{}) {
-	querytx.lastsql.Sql = query
-	querytx.lastsql.Args = args
+func (querytx *QueryTx) lastSql(query string, args ...interface{}) {
+	querytx.lastSql.Sql = query
+	querytx.lastSql.Args = args
 }
 
-func (querydb *QueryDb) LastSql(query string, args ...interface{}) {
-	querydb.lastsql.Sql = query
-	querydb.lastsql.Args = args
+func (querydb *QueryDb) lastSql(query string, args ...interface{}) {
+	querydb.lastSql.Sql = query
+	querydb.lastSql.Args = args
 }
 
 // ToString sql语句转出string

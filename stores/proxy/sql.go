@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"github.com/abulo/ratel/v3/store/query"
+	"github.com/abulo/ratel/v3/stores/query"
 	"github.com/abulo/ratel/v3/util"
 )
 

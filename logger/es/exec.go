@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/abulo/ratel/v3/logger/entry"
-	"github.com/abulo/ratel/v3/store/elasticsearch"
+	"github.com/abulo/ratel/v3/stores/elasticsearch"
 	"github.com/google/uuid"
 )
 

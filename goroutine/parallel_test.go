@@ -1,9 +1,10 @@
 package goroutine
 
 import (
-	"errors"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 var (

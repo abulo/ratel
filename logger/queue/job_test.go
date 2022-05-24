@@ -1,11 +1,12 @@
 package queue
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"sync"
 	"testing"
+
+	"github.com/pkg/errors"
 )
 
 func TestJob(t *testing.T) {
