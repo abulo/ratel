@@ -26,7 +26,7 @@ type Config struct {
 }
 
 //New 新连接
-func New(config *Config) *query.QueryDb {
+func NewClient(config *Config) *query.QueryDb {
 	opt := &query.Opt{
 		MaxOpenConns: config.MaxOpenConns,
 		MaxIdleConns: config.MaxIdleConns,
@@ -37,7 +37,7 @@ func New(config *Config) *query.QueryDb {
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
-	return &query.QueryDb{DB: db, DriverName: config.DriverName, DisableMetric: config.DisableMetric, DisableTrace: config.DisableTrace, Prepare: true}
+	return &query.QueryDb{DB: db, DriverName: config.DriverName, DisableMetric: config.DisableMetric, DisableTrace: config.DisableTrace, Prepare: true, DBName: config.Database, Addr: config.Host + ":" + config.Port}
 }
 
 //URI 构造数据库连接

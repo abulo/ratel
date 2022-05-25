@@ -26,20 +26,18 @@ type Config struct {
 }
 
 //New 新连接
-func New(config *Config) *query.QueryDb {
-
+func NewClient(config *Config) *query.QueryDb {
 	opt := &query.Opt{
 		MaxOpenConns: config.MaxOpenConns,
 		MaxIdleConns: config.MaxIdleConns,
 		MaxLifetime:  config.MaxLifetime,
 		MaxIdleTime:  config.MaxIdleTime,
 	}
-
 	db, err := query.NewSqlConn(config.DriverName, config.URI(), opt)
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
-	return &query.QueryDb{DB: db, DriverName: config.DriverName, DisableMetric: config.DisableMetric, DisableTrace: config.DisableTrace, Prepare: true}
+	return &query.QueryDb{DB: db, DriverName: config.DriverName, DisableMetric: config.DisableMetric, DisableTrace: config.DisableTrace, Prepare: true, DBName: config.Database, Addr: config.Host + ":" + config.Port}
 }
 
 //URI 构造数据库连接
@@ -51,20 +49,3 @@ func (config *Config) URI() string {
 		config.Database + "?charset=" +
 		config.Charset + "&loc=" + time.Local.String() + "&parseTime=true"
 }
-
-// //connect 数据库连接
-// func connect(config *Config) *sql.DB {
-// 	//数据库连接
-// 	db, err := sql.Open(config.DriverName, config.URI())
-// 	if err != nil {
-// 		logger.Logger.Fatal(err.Error())
-// 	}
-// 	if err = db.Ping(); err != nil {
-// 		logger.Logger.Fatal(err.Error())
-// 	}
-// 	db.SetMaxIdleConns(config.MaxIdleConns)
-// 	db.SetMaxOpenConns(config.MaxOpenConns)
-// 	db.SetConnMaxLifetime(config.ConnMaxLifetime)
-// 	db.SetConnMaxIdleTime(config.ConnMaxIdleTime)
-// 	return db
-// }

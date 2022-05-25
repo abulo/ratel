@@ -1,7 +1,10 @@
 package metric
 
 import (
+	"time"
+
 	"github.com/abulo/ratel/v3/constant"
+	"github.com/abulo/ratel/v3/env"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -121,20 +124,17 @@ var (
 	}.Build()
 )
 
-// func init() {
-// 	conf.OnLoaded(func(c *conf.Configuration) {
-// 		BuildInfoGauge.WithLabelValues(
-// 			pkg.Name(),
-// 			pkg.AppID(),
-// 			pkg.AppMode(),
-// 			pkg.AppRegion(),
-// 			pkg.AppZone(),
-// 			pkg.AppVersion(),
-// 			pkg.GoVersion(),
-// 		).Set(float64(time.Now().UnixNano() / 1e6))
-// 	})
-
-// 	governor.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
-// 		promhttp.Handler().ServeHTTP(w, r)
-// 	})
-// }
+func init() {
+	BuildInfoGauge.WithLabelValues(
+		env.Name(),
+		env.AppID(),
+		env.AppMode(),
+		env.AppRegion(),
+		env.AppZone(),
+		env.AppVersion(),
+		env.GoVersion(),
+	).Set(float64(time.Now().UnixNano() / 1e6))
+	// monitor.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+	// 	promhttp.Handler().ServeHTTP(w, r)
+	// })
+}

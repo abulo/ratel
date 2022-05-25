@@ -8,8 +8,8 @@ const (
 	ServiceUnknown ServiceKind = iota
 	//ServiceProvider service provider
 	ServiceProvider
-	//ServiceGovernor service governor
-	ServiceGovernor
+	//ServiceMonitor service monitor
+	ServiceMonitor
 	//ServiceConsumer service consumer
 	ServiceConsumer
 )
@@ -19,7 +19,7 @@ var serviceKinds = make(map[ServiceKind]string)
 func init() {
 	serviceKinds[ServiceUnknown] = "unknown"
 	serviceKinds[ServiceProvider] = "providers"
-	serviceKinds[ServiceGovernor] = "governors"
+	serviceKinds[ServiceMonitor] = "monitor"
 	serviceKinds[ServiceConsumer] = "consumers"
 }
 
