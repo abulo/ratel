@@ -1,9 +1,10 @@
 package balancer
 
 import (
-	"errors"
 	"fmt"
 	"sync"
+
+	"github.com/pkg/errors"
 
 	"github.com/abulo/ratel/v3/constant"
 	"github.com/abulo/ratel/v3/registry"

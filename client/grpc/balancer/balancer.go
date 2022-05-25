@@ -1,8 +1,9 @@
 package balancer
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/balancer"
