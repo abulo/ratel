@@ -7,6 +7,7 @@ import (
 
 	"github.com/abulo/ratel/v3/constant"
 	"github.com/abulo/ratel/v3/gin"
+	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/server"
 )
 
@@ -21,7 +22,7 @@ type Server struct {
 func newServer(config *Config) *Server {
 	listener, err := net.Listen("tcp", config.Address())
 	if err != nil {
-		config.logger.Panic("new gin server err:", err)
+		logger.Logger.Panic("new gin server err:", err)
 	}
 	config.Port = listener.Addr().(*net.TCPAddr).Port
 	gin.SetMode(config.Mode)
@@ -47,7 +48,7 @@ func (s *Server) Serve() error {
 	}
 	err := s.Server.Serve(s.listener)
 	if err == http.ErrServerClosed {
-		s.config.logger.Info("close gin:", s.config.Address())
+		logger.Logger.Info("close gin:", s.config.Address())
 		return nil
 	}
 

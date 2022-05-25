@@ -2,8 +2,6 @@ package monitor
 
 import (
 	"fmt"
-
-	"github.com/sirupsen/logrus"
 )
 
 //ModName ..
@@ -16,7 +14,6 @@ type Config struct {
 	Deployment     string
 	Mode           string
 	ServiceAddress string // ServiceAddress service address in registry info, default to 'Host:Port'
-	logger         *logrus.Logger
 }
 
 func New() *Config {
@@ -50,12 +47,6 @@ func (config *Config) WithMode(mode string) *Config {
 // WithServiceAddress ...
 func (config *Config) WithServiceAddress(serviceAddress string) *Config {
 	config.ServiceAddress = serviceAddress
-	return config
-}
-
-// WithLogger ...
-func (config *Config) WithLogger(logger *logrus.Logger) *Config {
-	config.logger = logger
 	return config
 }
 

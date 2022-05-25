@@ -3,7 +3,7 @@ package gin
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/abulo/ratel/v3/gin"
 )
 
 //ModName ..
@@ -19,11 +19,13 @@ type Config struct {
 	DisableTrace              bool
 	ServiceAddress            string // ServiceAddress service address in registry info, default to 'Host:Port'
 	SlowQueryThresholdInMilli int64
-	logger                    *logrus.Logger
 }
 
 func New() *Config {
-	return &Config{}
+	return &Config{
+		Mode:                      gin.ReleaseMode,
+		SlowQueryThresholdInMilli: 500, // 500ms
+	}
 }
 
 // WithHost ...
@@ -74,17 +76,11 @@ func (config *Config) WithSlowQueryThresholdInMilli(milli int64) *Config {
 	return config
 }
 
-// WithLogger ...
-func (config *Config) WithLogger(logger *logrus.Logger) *Config {
-	config.logger = logger
-	return config
-}
-
 // Build create server instance, then initialize it with necessary interceptor
 func (config *Config) Build() *Server {
 	server := newServer(config)
 	//慢日志查询
-	server.Use(recoverMiddleware(config.logger, config.SlowQueryThresholdInMilli))
+	server.Use(recoverMiddleware(config.SlowQueryThresholdInMilli))
 	if !config.DisableMetric {
 		server.Use(metricServerInterceptor())
 	}

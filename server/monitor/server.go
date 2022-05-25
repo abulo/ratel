@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/abulo/ratel/v3/constant"
+	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/server"
 )
 
@@ -19,7 +20,7 @@ type Server struct {
 func newServer(config *Config) *Server {
 	var listener, err = net.Listen("tcp4", config.Address())
 	if err != nil {
-		config.logger.Panic("start error:", err)
+		logger.Logger.Panic("start error:", err)
 	}
 
 	return &Server{
