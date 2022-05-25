@@ -8,47 +8,49 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
+	"github.com/abulo/ratel/v3/metric"
+	"github.com/abulo/ratel/v3/trace"
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
 )
 
-type OpenTelemetryHook struct{}
+type OpenTraceHook struct {
+	redis.Hook
+}
+type OpenMetricHook struct {
+	redis.Hook
+}
 
-var _ redis.Hook = OpenTelemetryHook{}
-
-func (OpenTelemetryHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
+func (OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
 	b := make([]byte, 32)
 	b = appendCmd(b, cmd)
 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+	span, ctx := trace.StartSpanFromContext(
+		ctx,
+		"redis",
+		trace.TagComponent("redis"),
+		trace.TagSpanKind("client"),
+	)
+	span.LogFields(log.String("cmd", String(b)))
+	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
-		parentCtx := parentSpan.Context()
-		span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
-		ext.SpanKindRPCClient.Set(span)
-		ext.PeerService.Set(span, "redis")
-		span.LogFields(log.String("cmd", String(b)))
-		ctx = opentracing.ContextWithSpan(ctx, span)
-	}
 	return ctx, nil
 }
-
-func (OpenTelemetryHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
+func (OpenTraceHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	span := opentracing.SpanFromContext(ctx)
+	span := trace.SpanFromContext(ctx)
 	if span != nil {
 		defer span.Finish()
 	}
 	return nil
 }
-
-func (OpenTelemetryHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
+func (OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
@@ -81,33 +83,100 @@ func (OpenTelemetryHook) BeforeProcessPipeline(ctx context.Context, cmds []redis
 			unqNames = append(unqNames, name)
 		}
 	}
-
-	if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
-		parentCtx := parentSpan.Context()
-		span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
-		ext.SpanKindRPCClient.Set(span)
-		ext.PeerService.Set(span, "redis")
-		// span.SetTag("redis.cmds", String(b))
-		span.LogFields(log.String("cmds", String(b)))
-		ctx = opentracing.ContextWithSpan(ctx, span)
-	}
+	span, ctx := trace.StartSpanFromContext(
+		ctx,
+		"redis",
+		trace.TagComponent("redis"),
+		trace.TagSpanKind("client"),
+	)
+	span.LogFields(log.String("cmds", String(b)))
+	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	return ctx, nil
 }
-
-func String(b []byte) string {
-	return *(*string)(unsafe.Pointer(&b))
-}
-
-func (OpenTelemetryHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
+func (OpenTraceHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	span := opentracing.SpanFromContext(ctx)
+	span := trace.SpanFromContext(ctx)
 	if span != nil {
 		defer span.Finish()
 	}
 	return nil
+}
+
+func (OpenMetricHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
+	b := make([]byte, 32)
+	b = appendCmd(b, cmd)
+
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	start := time.Now()
+	ctx = context.WithValue(ctx, "start", start)
+	return ctx, nil
+}
+func (OpenMetricHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	start := ctx.Value("start")
+	cost := time.Since(start.(time.Time))
+	metric.LibHandleCounter.Inc("redis", "OK")
+	metric.LibHandleHistogram.WithLabelValues("redis").Observe(cost.Seconds())
+	return nil
+}
+func (OpenMetricHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+
+	const numCmdLimit = 100
+	const numNameLimit = 10
+
+	seen := make(map[string]struct{}, len(cmds))
+	unqNames := make([]string, 0, len(cmds))
+
+	b := make([]byte, 0, 32*len(cmds))
+
+	for i, cmd := range cmds {
+		if i > numCmdLimit {
+			break
+		}
+
+		if i > 0 {
+			b = append(b, '\n')
+		}
+		b = appendCmd(b, cmd)
+
+		if len(unqNames) >= numNameLimit {
+			continue
+		}
+
+		name := cmd.FullName()
+		if _, ok := seen[name]; !ok {
+			seen[name] = struct{}{}
+			unqNames = append(unqNames, name)
+		}
+	}
+	start := time.Now()
+	ctx = context.WithValue(ctx, "start", start)
+
+	return ctx, nil
+}
+func (OpenMetricHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	start := ctx.Value("start")
+	cost := time.Since(start.(time.Time))
+	metric.LibHandleCounter.Inc("redis", "OK")
+	metric.LibHandleHistogram.WithLabelValues("redis").Observe(cost.Seconds())
+	return nil
+}
+
+func String(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
 }
 
 func appendCmd(b []byte, cmd redis.Cmder) []byte {

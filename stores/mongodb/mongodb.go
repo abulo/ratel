@@ -197,7 +197,6 @@ func (collection *collection) ListIndexes(ctx context.Context, opts *options.Lis
 		span.LogFields(log.Object("options", opts))
 		defer span.Finish()
 		ctx = opentracing.ContextWithSpan(ctx, span)
-
 	}
 	indexView := collection.Table.Indexes()
 	cursor, err := indexView.List(ctx, opts)

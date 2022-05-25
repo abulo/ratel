@@ -75,16 +75,20 @@ type Client struct {
 // NewClient 新客户端
 func NewClient(opts Options) *Client {
 	r := &Client{opts: opts}
-
 	switch opts.Type {
 	// 群集客户端
 	case ClientCluster:
-
 		tc := redis.NewClusterClient(opts.GetClusterConfig())
+		ctx := context.TODO()
 		if !opts.DisableTrace {
-			ctx := context.TODO()
 			tc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
-				shard.AddHook(OpenTelemetryHook{})
+				shard.AddHook(OpenTraceHook{})
+				return nil
+			})
+		}
+		if !opts.DisableMetric {
+			tc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
+				shard.AddHook(OpenMetricHook{})
 				return nil
 			})
 		}
@@ -95,7 +99,10 @@ func NewClient(opts Options) *Client {
 	default:
 		tc := redis.NewClient(opts.GetNormalConfig())
 		if !opts.DisableTrace {
-			tc.AddHook(OpenTelemetryHook{})
+			tc.AddHook(OpenTraceHook{})
+		}
+		if !opts.DisableMetric {
+			tc.AddHook(OpenMetricHook{})
 		}
 		r.client = tc
 	}
