@@ -51,10 +51,9 @@ type QueryBuilder struct {
 	unLimit    int64
 	unOffset   int64
 	unOrders   []string
-
-	args      []interface{}
-	whereArgs []interface{}
-	data      []map[string]interface{}
+	args       []interface{}
+	whereArgs  []interface{}
+	data       []map[string]interface{}
 }
 type join struct {
 	table    string
@@ -594,7 +593,7 @@ func (query *QueryBuilder) MultiInsertSQL(datas ...interface{}) string {
 			return ""
 		}
 		query.connection.LastSql(sql, query.args...)
-		return query.connection.GetLastSql().ToString()
+		return query.connection.SqlRaw()
 	}
 	return ""
 }
@@ -663,7 +662,7 @@ func (query *QueryBuilder) ReplaceSQL(datas ...interface{}) string {
 			return ""
 		}
 		query.connection.LastSql(sql, query.args...)
-		return query.connection.GetLastSql().ToString()
+		return query.connection.SqlRaw()
 	}
 	return ""
 }
@@ -724,7 +723,7 @@ func (query *QueryBuilder) InsertUpdateSQL(insert interface{}, update interface{
 	grammar := Grammar{builder: query}
 	sql := grammar.InsertUpdate()
 	query.connection.LastSql(sql, query.args...)
-	return query.connection.GetLastSql().ToString()
+	return query.connection.SqlRaw()
 }
 
 //Insert 插入数据
@@ -761,7 +760,7 @@ func (query *QueryBuilder) InsertSQL(data interface{}) string {
 	grammar := Grammar{builder: query}
 	sql := grammar.Insert()
 	query.connection.LastSql(sql, query.args...)
-	return query.connection.GetLastSql().ToString()
+	return query.connection.SqlRaw()
 }
 
 //Update 更新
@@ -801,7 +800,7 @@ func (query *QueryBuilder) UpdateSQL(data interface{}) string {
 	sql := grammar.Update()
 	args := append(query.whereArgs, query.args...)
 	query.connection.LastSql(sql, args...)
-	return query.connection.GetLastSql().ToString()
+	return query.connection.SqlRaw()
 }
 
 //Delete .
@@ -820,7 +819,7 @@ func (query *QueryBuilder) DeleteSQL() string {
 	grammar := Grammar{builder: query}
 	sql := grammar.Delete()
 	query.connection.LastSql(sql, query.args...)
-	return query.connection.GetLastSql().ToString()
+	return query.connection.SqlRaw()
 }
 
 //Count ...
@@ -849,7 +848,7 @@ func (query *QueryBuilder) Exec(sql string, args ...interface{}) (int64, error) 
 //ExecSQL 原始SQl语句执行
 func (query *QueryBuilder) ExecSQL(sql string, args ...interface{}) string {
 	query.connection.LastSql(sql, args...)
-	return query.connection.GetLastSql().ToString()
+	return query.connection.SqlRaw()
 }
 
 // QueryRows ...
@@ -864,13 +863,13 @@ func (query *QueryBuilder) QueryRows(sql string, args ...interface{}) *Rows {
 //QueryRowsSQL ...
 func (query *QueryBuilder) QueryRowsSQL(sql string, args ...interface{}) string {
 	query.connection.LastSql(sql, args...)
-	return query.connection.GetLastSql().ToString()
+	return query.connection.SqlRaw()
 }
 
 //QueryRowSQL ...
 func (query *QueryBuilder) QueryRowSQL(sql string, args ...interface{}) string {
 	query.connection.LastSql(sql, args...)
-	return query.connection.GetLastSql().ToString()
+	return query.connection.SqlRaw()
 }
 
 // QueryRow ...
@@ -897,7 +896,7 @@ func (query *QueryBuilder) RowSQL() string {
 	sql := grammar.Select()
 
 	query.connection.LastSql(sql, query.args...)
-	return query.connection.GetLastSql().ToString()
+	return query.connection.SqlRaw()
 }
 
 // RowsSQL ...
@@ -906,7 +905,7 @@ func (query *QueryBuilder) RowsSQL() string {
 	sql := grammar.Select()
 
 	query.connection.LastSql(sql, query.args...)
-	return query.connection.GetLastSql().ToString()
+	return query.connection.SqlRaw()
 }
 
 //Rows 获取多条记录
