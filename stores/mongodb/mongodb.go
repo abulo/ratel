@@ -168,11 +168,11 @@ func (collection *collection) CreateIndex(ctx context.Context, key bson.D, op *o
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 	return
 }
@@ -215,11 +215,11 @@ func (collection *collection) ListIndexes(ctx context.Context, opts *options.Lis
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 
 	return results, nil
@@ -257,11 +257,11 @@ func (collection *collection) DropIndex(ctx context.Context, name string, opts *
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 	return nil
 }
@@ -294,11 +294,11 @@ func (collection *collection) InsertOne(ctx context.Context, document interface{
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 
 	return result, err
@@ -332,11 +332,11 @@ func (collection *collection) InsertMany(ctx context.Context, documents interfac
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 
 	return result, err
@@ -376,11 +376,11 @@ func (collection *collection) Aggregate(ctx context.Context, pipeline interface{
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 
 	return
@@ -414,11 +414,11 @@ func (collection *collection) UpdateOrInsert(ctx context.Context, documents []in
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 	return result, err
 }
@@ -489,11 +489,11 @@ func (collection *collection) UpdateOneRaw(ctx context.Context, document interfa
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 	return result, err
 }
@@ -527,11 +527,11 @@ func (collection *collection) UpdateMany(ctx context.Context, document interface
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 	return result, err
 }
@@ -575,11 +575,11 @@ func (collection *collection) FindOne(ctx context.Context, document interface{})
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 
 	return nil
@@ -646,11 +646,11 @@ func (collection *collection) FindMany(ctx context.Context, documents interface{
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 	return
 }
@@ -695,11 +695,11 @@ func (collection *collection) Delete(ctx context.Context) (count int64, err erro
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 	return
 }
@@ -729,11 +729,11 @@ func (collection *collection) Drop(ctx context.Context) error {
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 	return err
 }
@@ -768,11 +768,11 @@ func (collection *collection) Count(ctx context.Context) (result int64, err erro
 	if !collection.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {
-			metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("mongodb", "OK")
+			metric.LibHandleCounter.Inc("mongodb", collection.Database.Name(), collection.Table.Name(), "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("mongodb").Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("mongodb", collection.Database.Name(), collection.Table.Name()).Observe(cost.Seconds())
 	}
 
 	return

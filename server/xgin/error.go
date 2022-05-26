@@ -1,4 +1,4 @@
-package gin
+package xgin
 
 import (
 	"google.golang.org/grpc/codes"

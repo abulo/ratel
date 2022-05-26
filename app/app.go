@@ -135,7 +135,6 @@ func (app *Application) startServers() error {
 		<-app.stopped
 		cancel()
 	}()
-	// start multi servers
 	for _, s := range app.servers {
 		s := s
 		eg.Go(func() (err error) {

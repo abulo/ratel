@@ -1,4 +1,4 @@
-package gin
+package xgin
 
 import (
 	"bytes"
@@ -15,7 +15,6 @@ import (
 	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/metric"
 	"github.com/abulo/ratel/v3/trace"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -59,7 +58,7 @@ func traceServerInterceptor() gin.HandlerFunc {
 func recoverMiddleware(slowQueryThresholdInMilli int64) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var beg = time.Now()
-		var fields logrus.Fields
+		fields := make(map[string]interface{})
 		var brokenPipe bool
 		defer func() {
 			fields["cost"] = time.Since(beg).Seconds()
@@ -89,7 +88,6 @@ func recoverMiddleware(slowQueryThresholdInMilli int64) gin.HandlerFunc {
 				c.AbortWithStatus(http.StatusInternalServerError)
 				return
 			}
-			// fields = append(fields,
 			fields["method"] = c.Request.Method
 			fields["code"] = c.Writer.Status()
 			fields["size"] = c.Writer.Size()

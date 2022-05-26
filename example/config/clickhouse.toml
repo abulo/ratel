@@ -1,0 +1,27 @@
+[clickhouse]
+    [clickhouse.common]
+        Username = "zeus"
+        Password = "zeus"
+        Addr = ["172.18.1.10:9000"]
+        Database = "xmt"
+        DialTimeout = "3s"
+        OpenStrategy = "random"
+        Compress = true
+        MaxExecutionTime = "60"
+        # MaxOpenConns 连接池最多同时打开的连接数
+        MaxOpenConns = 64
+        # MaxIdleConns 连接池里最大空闲连接数。必须要比maxOpenConns小
+        MaxIdleConns = 64
+        # MaxLifetime 连接池里面的连接最大存活时长(分钟)
+        MaxLifetime = 5
+        # MaxIdleTime 连接池里面的连接最大空闲时长(分钟)
+        MaxIdleTime = 5
+        # 关闭 debug 模式
+        DisableDebug = false
+        # 关闭指标采集
+        DisableMetric = false
+        # 关闭链路追踪
+	    DisableTrace = false
+[[proxyclickhouse]]
+Name = "clickhouse"
+Node = "clickhouse.common"

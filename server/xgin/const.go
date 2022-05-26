@@ -1,4 +1,4 @@
-package gin
+package xgin
 
 //code
 const (

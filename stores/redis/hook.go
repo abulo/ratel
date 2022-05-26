@@ -11,6 +11,7 @@ import (
 	// "github.com/abulo/ratel/v3/metric"
 	"github.com/abulo/ratel/v3/metric"
 	"github.com/abulo/ratel/v3/trace"
+	"github.com/abulo/ratel/v3/util"
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
@@ -20,6 +21,8 @@ type OpenTraceHook struct {
 	redis.Hook
 	DisableMetric bool // 关闭指标采集
 	DisableTrace  bool // 关闭链路追踪
+	DB            int
+	Addr          string
 }
 
 func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
@@ -60,8 +63,12 @@ func (op OpenTraceHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error
 	if !op.DisableMetric {
 		start := ctx.Value("start")
 		cost := time.Since(start.(time.Time))
-		metric.LibHandleCounter.Inc("redis", "OK")
-		metric.LibHandleHistogram.WithLabelValues("redis").Observe(cost.Seconds())
+		if cmd.Err() != nil {
+			metric.LibHandleCounter.WithLabelValues("redis", util.ToString(op.DB), op.Addr, "ERR").Inc()
+		} else {
+			metric.LibHandleCounter.Inc("redis", util.ToString(op.DB), op.Addr, "OK")
+		}
+		metric.LibHandleHistogram.WithLabelValues("redis", util.ToString(op.DB), op.Addr).Observe(cost.Seconds())
 	}
 
 	return nil
@@ -130,8 +137,12 @@ func (op OpenTraceHook) AfterProcessPipeline(ctx context.Context, cmds []redis.C
 	if !op.DisableMetric {
 		start := ctx.Value("start")
 		cost := time.Since(start.(time.Time))
-		metric.LibHandleCounter.Inc("redis", "OK")
-		metric.LibHandleHistogram.WithLabelValues("redis").Observe(cost.Seconds())
+		// if cmds != nil {
+		// metric.LibHandleCounter.WithLabelValues("redis", util.ToString(op.DB), op.Addr, "ERR").Inc()
+		// } else {
+		metric.LibHandleCounter.Inc("redis", util.ToString(op.DB), op.Addr, "OK")
+		// }
+		metric.LibHandleHistogram.WithLabelValues("redis", util.ToString(op.DB), op.Addr).Observe(cost.Seconds())
 	}
 	return nil
 }

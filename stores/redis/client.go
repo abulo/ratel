@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/abulo/ratel/v3/logger"
+	"github.com/abulo/ratel/v3/util"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 )
@@ -85,6 +86,8 @@ func NewClient(opts Options) *Client {
 				shard.AddHook(OpenTraceHook{
 					DisableMetric: opts.DisableMetric,
 					DisableTrace:  opts.DisableTrace,
+					DB:            opts.Database,
+					Addr:          util.Implode(";", opts.Hosts),
 				})
 				return nil
 			})
@@ -100,6 +103,8 @@ func NewClient(opts Options) *Client {
 			tc.AddHook(OpenTraceHook{
 				DisableMetric: opts.DisableMetric,
 				DisableTrace:  opts.DisableTrace,
+				DB:            opts.Database,
+				Addr:          util.Implode(";", opts.Hosts),
 			})
 		}
 		r.client = tc

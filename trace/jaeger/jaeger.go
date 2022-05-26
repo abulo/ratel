@@ -41,7 +41,7 @@ func (jConfig *JConfig) Build() *Config {
 	if addr := os.Getenv("JAEGER_AGENT_ADDR"); addr != "" {
 		agentAddr = addr
 	}
-	if util.Empty(jConfig.LocalAgentHostPort) {
+	if !util.Empty(jConfig.LocalAgentHostPort) {
 		agentAddr = jConfig.LocalAgentHostPort
 	}
 	return &Config{
@@ -54,8 +54,9 @@ func (jConfig *JConfig) Build() *Config {
 			LogSpans:            jConfig.LogSpans,
 			BufferFlushInterval: 1 * time.Second,
 			LocalAgentHostPort:  agentAddr,
+			QueueSize:           1000,
 		},
-		EnableRPCMetrics: true,
+		EnableRPCMetrics: jConfig.EnableRPCMetrics,
 		Headers: &jaeger.HeadersConfig{
 			TraceBaggageHeaderPrefix: "ctx-",
 			TraceContextHeaderName:   headerName,
@@ -63,7 +64,7 @@ func (jConfig *JConfig) Build() *Config {
 		tags: []opentracing.Tag{
 			{Key: "hostname", Value: env.HostName()},
 		},
-		PanicOnError: jConfig.EnableRPCMetrics,
+		PanicOnError: jConfig.PanicOnError,
 	}
 }
 

@@ -1,4 +1,4 @@
-package gin
+package xgin
 
 import (
 	"fmt"
@@ -17,6 +17,7 @@ type Config struct {
 	Mode                      string
 	DisableMetric             bool
 	DisableTrace              bool
+	DisableSlowQuery          bool
 	ServiceAddress            string // ServiceAddress service address in registry info, default to 'Host:Port'
 	SlowQueryThresholdInMilli int64
 }
@@ -52,6 +53,12 @@ func (config *Config) With(mode string) *Config {
 	return config
 }
 
+// WithDisableSlowQuery ...
+func (config *Config) WithDisableSlowQuery(disableSlowQuery bool) *Config {
+	config.DisableSlowQuery = disableSlowQuery
+	return config
+}
+
 // WithDisableTrace ...
 func (config *Config) WithDisableMetric(disableMetric bool) *Config {
 	config.DisableMetric = disableMetric
@@ -79,8 +86,11 @@ func (config *Config) WithSlowQueryThresholdInMilli(milli int64) *Config {
 // Build create server instance, then initialize it with necessary interceptor
 func (config *Config) Build() *Server {
 	server := newServer(config)
-	//慢日志查询
-	server.Use(recoverMiddleware(config.SlowQueryThresholdInMilli))
+	server.Use(gin.Recovery())
+	if !config.DisableSlowQuery {
+		//慢日志查询
+		server.Use(recoverMiddleware(config.SlowQueryThresholdInMilli))
+	}
 	if !config.DisableMetric {
 		server.Use(metricServerInterceptor())
 	}
