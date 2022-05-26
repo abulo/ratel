@@ -1,16 +1,19 @@
 package main
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/abulo/ratel/v3/app"
+	"github.com/abulo/ratel/v3/client/grpc/balancer"
+	"github.com/abulo/ratel/v3/example/grpc/love"
 	"github.com/abulo/ratel/v3/example/initial"
-	"github.com/abulo/ratel/v3/gin"
 	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/logger/mongo"
-	"github.com/abulo/ratel/v3/pprof"
-	"github.com/abulo/ratel/v3/server/xgin"
+	"github.com/abulo/ratel/v3/registry/etcdv3"
+	"github.com/abulo/ratel/v3/server/xgrpc"
 	"github.com/sirupsen/logrus"
 )
 
@@ -36,36 +39,50 @@ type Engine struct {
 func NewEngine() *Engine {
 	eng := &Engine{}
 
+	// eng.SetRegistry()
+
+	etcd := etcdv3.New()
+	etcd.Endpoints = []string{"172.18.1.13:2379"}
+	etcd.Secure = false
+	etcd.Prefix = "golang-test"
+	etcd.ConnectTimeout = 2 * time.Second
+
+	eng.SetRegistry(
+		etcd.MustBuild(),
+	)
+
 	if err := eng.Startup(
-		eng.HttpServer,
+		eng.GrpcServer,
 	); err != nil {
 		logger.Logger.Panic("startup", "err", err)
 	}
 	return eng
 }
 
-func (eng *Engine) HttpServer() error {
-	client := xgin.New()
-	client.Host = "0.0.0.0"
-	client.Port = 17777
+func (eng *Engine) GrpcServer() error {
+	client := xgrpc.New()
+	client.Name = balancer.NameSmoothWeightRoundRobin
+	client.Host = "127.0.0.1"
+	client.Port = 18888
 	client.Deployment = "golang"
-	client.DisableMetric = false
-	client.DisableTrace = false
-	client.DisableSlowQuery = true
-	client.ServiceAddress = "0.0.0.0:17777"
-	client.SlowQueryThresholdInMilli = 10000
-	client.Mode = gin.DebugMode
-	server := client.Build()
-	server.SetTrustedProxies([]string{"0.0.0.0/0"})
-	Route(server.Engine)
-	if gin.IsDebugging() {
-		gin.App.Table.Render()
-	}
+	server := client.MustBuild()
+	love.RegisterLoveServer(server.Server, &Greeter{
+		server: server,
+	})
 	return eng.Serve(server)
 }
-func Route(r *gin.Engine) {
-	pprof.Register(r)
+
+type Greeter struct {
+	server *xgrpc.Server
+	love.UnimplementedLoveServer
 }
+
+func (g *Greeter) Confession(context context.Context, request *love.Request) (*love.Response, error) {
+	return &love.Response{
+		Result: request.Name,
+	}, nil
+}
+
 func main() {
 	mongodbClient := initial.Core.Store.LoadMongoDB("mongodb")
 	loggerHook := mongo.DefaultWithURL(mongodbClient)
