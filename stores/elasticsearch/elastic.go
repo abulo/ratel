@@ -11,6 +11,7 @@ import (
 	"github.com/abulo/ratel/v3/metric"
 	"github.com/abulo/ratel/v3/trace"
 	"github.com/olivere/elastic/v7"
+	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
 )
@@ -40,8 +41,8 @@ func NewClient(config *Config) *Client {
 	if config.Username != "" && config.Password != "" {
 		options = append(options, elastic.SetBasicAuth(config.Username, config.Password))
 	}
-	if !config.DisableTrace {
-		options = append(options, elastic.SetHttpClient(ESTraceServerInterceptor(config.DisableMetric)))
+	if !config.DisableTrace || !config.DisableTrace {
+		options = append(options, elastic.SetHttpClient(ESTraceServerInterceptor(config.DisableMetric, config.DisableTrace)))
 	}
 	options = append(options, elastic.SetSniff(false))
 	client, err := elastic.NewClient(options...)
@@ -54,10 +55,11 @@ func NewClient(config *Config) *Client {
 	return newClient
 }
 
-func ESTraceServerInterceptor(DisableMetric bool) *http.Client {
+func ESTraceServerInterceptor(DisableMetric, DisableTrace bool) *http.Client {
 	newESTracedTransport := &ESTracedTransport{}
 	newESTracedTransport.Transport = &http.Transport{}
 	newESTracedTransport.DisableMetric = DisableMetric
+	newESTracedTransport.DisableTrace = DisableTrace
 	return &http.Client{
 		Transport: newESTracedTransport,
 	}
@@ -66,44 +68,48 @@ func ESTraceServerInterceptor(DisableMetric bool) *http.Client {
 type ESTracedTransport struct {
 	*http.Transport
 	DisableMetric bool
+	DisableTrace  bool
 }
 
 func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err error) {
-
 	start := time.Now()
-	span, ctx := trace.StartSpanFromContext(
-		r.Context(),
-		"elastic",
-		trace.CustomTag("peer.service", "elastic"),
-		trace.TagSpanKind("client"),
-		trace.HeaderExtractor(r.Header),
-		trace.CustomTag("http.url", r.URL.Path),
-		trace.CustomTag("http.method", r.Method),
-	)
-	r = r.WithContext(ctx)
-	defer func() {
-		if err != nil {
-			span.SetTag("elastic.error", err.Error())
-			span.SetTag(string(ext.Error), true)
-		}
-		span.Finish()
-	}()
+	var span opentracing.Span
+	if !t.DisableTrace {
+		span, ctx := trace.StartSpanFromContext(
+			r.Context(),
+			"elastic",
+			trace.CustomTag("peer.service", "elastic"),
+			trace.TagSpanKind("client"),
+			trace.HeaderExtractor(r.Header),
+			trace.CustomTag("http.url", r.URL.Path),
+			trace.CustomTag("http.method", r.Method),
+		)
 
-	span.SetTag(string(ext.DBType), "elastic")
-	span.SetTag(string(ext.DBInstance), r.URL.Host)
-	span.SetTag("elastic.method", r.Method)
-	span.SetTag("elastic.url", r.URL.Path)
-	span.SetTag("elastic.params", r.URL.Query().Encode())
+		defer func() {
+			if err != nil {
+				span.SetTag("elastic.error", err.Error())
+				span.SetTag(string(ext.Error), true)
+			}
+			span.Finish()
+		}()
+		span.SetTag(string(ext.DBType), "elastic")
+		span.SetTag(string(ext.DBInstance), r.URL.Host)
+		span.SetTag("elastic.method", r.Method)
+		span.SetTag("elastic.url", r.URL.Path)
+		span.SetTag("elastic.params", r.URL.Query().Encode())
+		r = r.WithContext(ctx)
+	}
 
 	contentLength, _ := strconv.Atoi(r.Header.Get("Content-Length"))
-
 	if r.Body != nil && contentLength < MaxContentLength {
 		buf, err := io.ReadAll(r.Body)
 		if err != nil {
 			return nil, err
 		}
-		span.SetTag(string(ext.DBStatement), string(buf))
-		span.LogFields(log.String("params", string(buf)))
+		if !t.DisableTrace {
+			span.SetTag(string(ext.DBStatement), string(buf))
+			span.LogFields(log.String("params", string(buf)))
+		}
 		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 	}
 
@@ -111,7 +117,10 @@ func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err
 	if err != nil {
 		return nil, err
 	}
-	span.SetTag("elastic.status_code", resp.StatusCode)
+	if !t.DisableTrace {
+		span.SetTag("elastic.status_code", resp.StatusCode)
+	}
+
 	if !t.DisableMetric {
 		cost := time.Since(start)
 		if err != nil {

@@ -76,7 +76,7 @@ func SetAppInstance(instance string) {
 	appInstance = instance
 }
 
-const ratelVersion = "3.0.0"
+const ratelVersion = "3.0.1"
 
 var (
 	startTime string
@@ -122,7 +122,7 @@ func Name() string {
 	return appName
 }
 
-//SetName set app anme
+//SetName set app name
 func SetName(s string) {
 	appName = s
 }
@@ -190,7 +190,7 @@ func GoVersion() string {
 	return goVersion
 }
 
-// PrintVersion print formated version info
+// PrintVersion print format version info
 func PrintVersion() {
 	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "name", appName)
 	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "appID", appID)

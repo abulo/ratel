@@ -80,29 +80,27 @@ func NewClient(opts Options) *Client {
 	case ClientCluster:
 		tc := redis.NewClusterClient(opts.GetClusterConfig())
 		ctx := context.TODO()
-		if !opts.DisableTrace {
+		if !opts.DisableTrace || !opts.DisableMetric {
 			tc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
-				shard.AddHook(OpenTraceHook{})
+				shard.AddHook(OpenTraceHook{
+					DisableMetric: opts.DisableMetric,
+					DisableTrace:  opts.DisableTrace,
+				})
 				return nil
 			})
 		}
-		if !opts.DisableMetric {
-			tc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
-				shard.AddHook(OpenMetricHook{})
-				return nil
-			})
-		}
+
 		r.clusterClient = tc
 	// 标准客户端也是默认值
 	case ClientNormal:
 		fallthrough
 	default:
 		tc := redis.NewClient(opts.GetNormalConfig())
-		if !opts.DisableTrace {
-			tc.AddHook(OpenTraceHook{})
-		}
-		if !opts.DisableMetric {
-			tc.AddHook(OpenMetricHook{})
+		if !opts.DisableTrace || !opts.DisableMetric {
+			tc.AddHook(OpenTraceHook{
+				DisableMetric: opts.DisableMetric,
+				DisableTrace:  opts.DisableTrace,
+			})
 		}
 		r.client = tc
 	}
