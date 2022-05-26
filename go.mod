@@ -5,7 +5,6 @@ go 1.18
 require (
 	github.com/BurntSushi/toml v1.1.0
 	github.com/ClickHouse/clickhouse-go/v2 v2.0.14
-	github.com/abulo/ratel/v2 v2.8.0
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
 	github.com/fsnotify/fsnotify v1.5.4
@@ -61,6 +60,7 @@ require (
 )
 
 require (
+	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect

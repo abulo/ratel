@@ -2,9 +2,9 @@
 import (
 	"time"
 
-	"github.com/abulo/ratel/v2/gen/mysql2struct"
-	"github.com/abulo/ratel/v2/store/mysql"
-	"github.com/abulo/ratel/v2/util"
+	"github.com/abulo/ratel/v3/gen/mysql2struct"
+	"github.com/abulo/ratel/v3/store/mysql"
+	"github.com/abulo/ratel/v3/util"
 )
 
 var MySQL *mysql.ProxyPool = mysql.NewProxyPool()

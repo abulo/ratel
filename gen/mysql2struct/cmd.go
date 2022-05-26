@@ -9,7 +9,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/abulo/ratel/v2/store/query"
+	"github.com/abulo/ratel/v3/stores/query"
 )
 
 //  db		sql链接
@@ -65,7 +65,7 @@ func MysqlToStruct(db *query.QueryDb, DbName, outputDir, outputPackage string) {
 		builder.WriteString("}\n")
 		fileStr := "package " + outputPackage + "\nimport ("
 		if packageSql {
-			fileStr += "\"github.com/abulo/ratel/v3/store/query\"\n"
+			fileStr += "\"github.com/abulo/ratel/v3/stores/query\"\n"
 		}
 		if packageTime {
 			fileStr += "\"time\"\n"
