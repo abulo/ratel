@@ -6,6 +6,7 @@ import (
 	"github.com/abulo/ratel/v3/ecode"
 	"github.com/abulo/ratel/v3/goroutine"
 	"github.com/abulo/ratel/v3/logger"
+	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
@@ -57,14 +58,18 @@ func (client *Client) WatchPrefix(ctx context.Context, prefix string) (*Watch, e
 					w.revision = n.Header.GetRevision()
 				}
 				if err := n.Err(); err != nil {
-					logger.Logger.Error(ecode.MsgWatchRequestErr, ecode.ErrKindRegisterErr, err, prefix)
+					logger.Logger.WithFields(logrus.Fields{
+						"err":      err,
+						"register": ecode.ErrKindRegisterErr,
+						"prefix":   prefix,
+					}).Error(ecode.MsgWatchRequestErr)
 					continue
 				}
 				for _, ev := range n.Events {
 					select {
 					case w.eventChan <- ev:
 					default:
-						logger.Logger.Error("watch etcd with prefix", "err", "block event chan, drop event message")
+						logger.Logger.Error("watch etcd with prefix err block event chan, drop event message")
 					}
 				}
 			}

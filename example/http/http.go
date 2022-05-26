@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -49,7 +48,9 @@ func NewEngine() *Engine {
 		eng.HttpServer,
 		eng.GrpcClient,
 	); err != nil {
-		logger.Logger.Panic("startup", "err", err)
+		logger.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Panic("startup")
 	}
 	return eng
 }
@@ -103,14 +104,15 @@ func index(ctx *gin.Context) {
 	defer cancel()
 	name := util.ToString(util.Timestamp())
 	r, err := client.Confession(newCtx, &love.Request{Name: name})
-	if err != nil {
-		log.Fatalf("could not greet: %v", err)
-	}
-	log.Printf("Greeting: %s", r.GetResult())
+	// if err != nil {
+	// log.Fatalf("could not greet: %v", err)
+	// }
+	// log.Printf("Greeting: %s", r.GetResult())
 
 	ctx.JSON(http.StatusOK, gin.H{"code": 1, "msg": "无效数据", "data": gin.H{
 		"data": name,
 		"req":  r,
+		"err":  err,
 	}})
 }
 func main() {

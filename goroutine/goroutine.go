@@ -6,6 +6,7 @@ import (
 
 	"github.com/abulo/ratel/v3/logger"
 	"github.com/codegangsta/inject"
+	"github.com/sirupsen/logrus"
 )
 
 // Serial 串行
@@ -58,13 +59,17 @@ func GoDirect(fn interface{}, args ...interface{}) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				logger.Logger.Error("recover", err)
+				logger.Logger.WithFields(logrus.Fields{
+					"err": err,
+				}).Error("recover")
 			}
 		}()
 		// 忽略返回值, goroutine执行的返回值通常都会忽略掉
 		_, err := inj.Invoke(fn)
 		if err != nil {
-			logger.Logger.Error("inject", err)
+			logger.Logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Error("inject")
 			return
 		}
 	}()
@@ -80,7 +85,9 @@ func DelayGo(delay time.Duration, fn func()) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				logger.Logger.Error("inject", err)
+				logger.Logger.WithFields(logrus.Fields{
+					"err": err,
+				}).Error("inject")
 			}
 		}()
 		time.Sleep(delay)

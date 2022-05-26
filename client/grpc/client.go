@@ -6,6 +6,7 @@ import (
 
 	"github.com/abulo/ratel/v3/ecode"
 	"github.com/abulo/ratel/v3/logger"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -19,7 +20,6 @@ func newGRPCClient(config *Config) *grpc.ClientConn {
 			ctx, cancel = context.WithTimeout(ctx, config.DialTimeout)
 			defer cancel()
 		}
-
 		dialOptions = append(dialOptions, grpc.WithBlock())
 	}
 	if config.KeepAlive != nil {
@@ -30,9 +30,14 @@ func newGRPCClient(config *Config) *grpc.ClientConn {
 	cc, err := grpc.DialContext(ctx, config.Address, dialOptions...)
 	if err != nil {
 		if config.OnDialError == "panic" {
-			logger.Logger.Panic("dial grpc server", ecode.ErrKindRequestErr, err)
+			logger.Logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Panic("dial grpc server,", ecode.ErrKindRequestErr)
+
 		} else {
-			logger.Logger.Error("dial grpc server", ecode.ErrKindRequestErr, err)
+			logger.Logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Error("dial grpc server,", ecode.ErrKindRequestErr)
 		}
 	}
 	logger.Logger.Info("start grpc client")

@@ -18,6 +18,7 @@ import (
 	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/registry"
 	"github.com/abulo/ratel/v3/server"
+	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
@@ -68,14 +69,19 @@ func (reg *etcdv3Registry) ListServices(ctx context.Context, name string, scheme
 	target := fmt.Sprintf("/%s/%s/providers/%s://", reg.Prefix, name, scheme)
 	getResp, getErr := reg.client.Get(ctx, target, clientv3.WithPrefix())
 	if getErr != nil {
-		logger.Logger.Error(ecode.MsgWatchRequestErr, ecode.ErrKindRequestErr, getErr, target)
+		logger.Logger.WithFields(logrus.Fields{
+			"err":    getErr,
+			"target": target,
+		}).Error(ecode.MsgWatchRequestErr, ecode.ErrKindRequestErr)
 		return nil, getErr
 	}
 
 	for _, kv := range getResp.Kvs {
 		var service server.ServiceInfo
 		if err := json.Unmarshal(kv.Value, &service); err != nil {
-			logger.Logger.Warnf("invalid service", err)
+			logger.Logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Warnf("invalid service")
 			continue
 		}
 		services = append(services, &service)
@@ -159,9 +165,16 @@ func (reg *etcdv3Registry) Close() error {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			err := reg.unregister(ctx, k.(string))
 			if err != nil {
-				logger.Logger.Error("unregister service", ecode.ErrKindRequestErr, err, err, k, v)
+				logger.Logger.WithFields(logrus.Fields{
+					"err": err,
+					"key": k,
+					"val": v,
+				}).Error("unregister service")
 			} else {
-				logger.Logger.Info("unregister service", k, v)
+				logger.Logger.WithFields(logrus.Fields{
+					"key": k,
+					"val": v,
+				}).Info("unregister service")
 			}
 			cancel()
 		}(k)
@@ -194,10 +207,17 @@ func (reg *etcdv3Registry) registerMetric(ctx context.Context, info *server.Serv
 	}
 	_, err := reg.client.Put(ctx, key, val, opOptions...)
 	if err != nil {
-		logger.Logger.Error("register service", ecode.ErrKindRegisterErr, err, key, info)
+		logger.Logger.WithFields(logrus.Fields{
+			"key":  key,
+			"info": info,
+			"err":  err,
+		}).Error("register service")
 		return err
 	}
-	logger.Logger.Info("register service", key, val)
+	logger.Logger.WithFields(logrus.Fields{
+		"key": key,
+		"val": val,
+	}).Info("register service")
 	reg.kvs.Store(key, val)
 	return nil
 
@@ -221,10 +241,17 @@ func (reg *etcdv3Registry) registerBiz(ctx context.Context, info *server.Service
 	}
 	_, err := reg.client.Put(ctx, key, val, opOptions...)
 	if err != nil {
-		logger.Logger.Error("register service", ecode.ErrKindRegisterErr, err, key, info)
+		logger.Logger.WithFields(logrus.Fields{
+			"key":  key,
+			"info": info,
+			"err":  err,
+		}).Error("register service")
 		return err
 	}
-	logger.Logger.Info("register service", key, val)
+	logger.Logger.WithFields(logrus.Fields{
+		"key": key,
+		"val": val,
+	}).Info("register service")
 	reg.kvs.Store(key, val)
 	return nil
 }
@@ -282,7 +309,10 @@ func deleteAddrList(al *registry.Endpoints, prefix, scheme string, kvs ...*mvccp
 			}
 			uri, err := url.Parse(addr)
 			if err != nil {
-				logger.Logger.Error("parse uri", ecode.ErrKindUriErr, err, string(kv.Key))
+				logger.Logger.WithFields(logrus.Fields{
+					"key": string(kv.Key),
+					"err": err,
+				}).Error("parse uri")
 				continue
 			}
 			delete(al.Nodes, uri.String())
@@ -296,7 +326,10 @@ func deleteAddrList(al *registry.Endpoints, prefix, scheme string, kvs ...*mvccp
 			}
 			uri, err := url.Parse(addr)
 			if err != nil {
-				logger.Logger.Error("parse uri", ecode.ErrKindUriErr, err, string(kv.Key))
+				logger.Logger.WithFields(logrus.Fields{
+					"key": string(kv.Key),
+					"err": err,
+				}).Error("parse uri")
 				continue
 			}
 			delete(al.RouteConfigs, uri.String())
@@ -319,12 +352,19 @@ func updateAddrList(al *registry.Endpoints, prefix, scheme string, kvs ...*mvccp
 			addr = strings.TrimPrefix(addr, "providers/")
 			uri, err := url.Parse(addr)
 			if err != nil {
-				logger.Logger.Error("parse uri", ecode.ErrKindUriErr, err, string(kv.Key))
+				logger.Logger.WithFields(logrus.Fields{
+					"key": string(kv.Key),
+					"err": err,
+				}).Error("parse uri")
+
 				continue
 			}
 			var serviceInfo server.ServiceInfo
 			if err := json.Unmarshal(kv.Value, &serviceInfo); err != nil {
-				logger.Logger.Error("parse uri", ecode.ErrKindUriErr, err, string(kv.Key))
+				logger.Logger.WithFields(logrus.Fields{
+					"key": string(kv.Key),
+					"err": err,
+				}).Error("parse uri")
 				continue
 			}
 			if serviceInfo.Enable {
@@ -338,14 +378,20 @@ func updateAddrList(al *registry.Endpoints, prefix, scheme string, kvs ...*mvccp
 
 			uri, err := url.Parse(addr)
 			if err != nil {
-				logger.Logger.Error("parse uri", ecode.ErrKindUriErr, err, string(kv.Key))
+				logger.Logger.WithFields(logrus.Fields{
+					"key": string(kv.Key),
+					"err": err,
+				}).Error("parse uri")
 				continue
 			}
 
 			if strings.HasPrefix(uri.Path, "/routes/") { // 路由配置
 				var routeConfig registry.RouteConfig
 				if err := json.Unmarshal(kv.Value, &routeConfig); err != nil {
-					logger.Logger.Error("parse uri", ecode.ErrKindUriErr, err, string(kv.Key))
+					logger.Logger.WithFields(logrus.Fields{
+						"key": string(kv.Key),
+						"err": err,
+					}).Error("parse uri")
 					continue
 				}
 				routeConfig.ID = strings.TrimPrefix(uri.Path, "/routes/")
@@ -357,7 +403,10 @@ func updateAddrList(al *registry.Endpoints, prefix, scheme string, kvs ...*mvccp
 			if strings.HasPrefix(uri.Path, "/providers/") {
 				var providerConfig registry.ProviderConfig
 				if err := json.Unmarshal(kv.Value, &providerConfig); err != nil {
-					logger.Logger.Error("parse uri", ecode.ErrKindUriErr, err, string(kv.Key))
+					logger.Logger.WithFields(logrus.Fields{
+						"key": string(kv.Key),
+						"err": err,
+					}).Error("parse uri")
 					continue
 				}
 				providerConfig.ID = strings.TrimPrefix(uri.Path, "/providers/")
@@ -369,7 +418,10 @@ func updateAddrList(al *registry.Endpoints, prefix, scheme string, kvs ...*mvccp
 			if strings.HasPrefix(uri.Path, "/consumers/") {
 				var consumerConfig registry.ConsumerConfig
 				if err := json.Unmarshal(kv.Value, &consumerConfig); err != nil {
-					logger.Logger.Error("parse uri", ecode.ErrKindUriErr, err, string(kv.Key))
+					logger.Logger.WithFields(logrus.Fields{
+						"key": string(kv.Key),
+						"err": err,
+					}).Error("parse uri")
 					continue
 				}
 				consumerConfig.ID = strings.TrimPrefix(uri.Path, "/consumers/")

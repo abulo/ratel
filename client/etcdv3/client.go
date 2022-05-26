@@ -11,6 +11,7 @@ import (
 
 	"github.com/abulo/ratel/v3/logger"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
@@ -59,7 +60,9 @@ func newClient(config *Config) (*Client, error) {
 	if config.CaCert != "" {
 		certBytes, err := ioutil.ReadFile(config.CaCert)
 		if err != nil {
-			logger.Logger.Panic("parse CaCert failed", err)
+			logger.Logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Panic("parse CaCert failed")
 		}
 
 		caCertPool := x509.NewCertPool()
@@ -74,7 +77,9 @@ func newClient(config *Config) (*Client, error) {
 	if config.CertFile != "" && config.KeyFile != "" {
 		tlsCert, err := tls.LoadX509KeyPair(config.CertFile, config.KeyFile)
 		if err != nil {
-			logger.Logger.Panic("load CertFile or KeyFile failed", err)
+			logger.Logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Panic("load CertFile or KeyFile failed")
 		}
 		tlsConfig.Certificates = []tls.Certificate{tlsCert}
 		tlsEnabled = true

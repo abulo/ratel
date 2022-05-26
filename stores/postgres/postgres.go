@@ -49,20 +49,3 @@ func (config *Config) URI() string {
 		config.Database + "?charset=" +
 		config.Charset + "&loc=" + time.Local.String() + "&parseTime=true"
 }
-
-//connect 数据库连接
-// func connect(config *Config) *sql.DB {
-// 	//数据库连接
-// 	db, err := sql.Open(config.DriverName, config.URI())
-// 	if err != nil {
-// 		logger.Logger.Fatal(err.Error())
-// 	}
-// 	if err = db.Ping(); err != nil {
-// 		logger.Logger.Fatal(err.Error())
-// 	}
-// 	db.SetMaxIdleConns(config.MaxIdleConns)
-// 	db.SetMaxOpenConns(config.MaxOpenConns)
-// 	db.SetConnMaxLifetime(config.ConnMaxLifetime)
-// 	db.SetConnMaxIdleTime(config.ConnMaxIdleTime)
-// 	return db
-// }

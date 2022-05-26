@@ -5,6 +5,7 @@ import (
 
 	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/server"
+	"github.com/sirupsen/logrus"
 )
 
 // Nop registry, used for local development/debugging
@@ -22,13 +23,23 @@ func (n Local) WatchServices(ctx context.Context, s string, s2 string) (chan End
 
 // RegisterService ...
 func (n Local) RegisterService(ctx context.Context, si *server.ServiceInfo) error {
-	logger.Logger.Info("register service locally", "registry", si.Name, si.Label())
+
+	logger.Logger.WithFields(logrus.Fields{
+		"action": "registry",
+		"name":   si.Name,
+		"label":  si.Label(),
+	}).Info("register service locally")
+
 	return nil
 }
 
 // UnregisterService ...
 func (n Local) UnregisterService(ctx context.Context, si *server.ServiceInfo) error {
-	logger.Logger.Info("unregister service locally", "registry", si.Name, si.Label())
+	logger.Logger.WithFields(logrus.Fields{
+		"action": "registry",
+		"name":   si.Name,
+		"label":  si.Label(),
+	}).Info("unregister service locally")
 	return nil
 }
 

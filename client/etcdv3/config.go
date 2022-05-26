@@ -5,6 +5,7 @@ import (
 
 	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/util"
+	"github.com/sirupsen/logrus"
 )
 
 // Config ...
@@ -39,7 +40,9 @@ func (config *Config) Build() (*Client, error) {
 func (config *Config) MustBuild() *Client {
 	client, err := config.Build()
 	if err != nil {
-		logger.Logger.Panicf("build etcd client failed: %v", err)
+		logger.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Panic("build etcd client failed")
 	}
 	return client
 }

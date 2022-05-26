@@ -6,6 +6,7 @@ import (
 	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 func try(fn func() error, cleaner func()) (ret error) {
@@ -14,7 +15,9 @@ func try(fn func() error, cleaner func()) (ret error) {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Logger.Error("recover", err)
+			logger.Logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Error("recover")
 			if _, ok := err.(error); ok {
 				ret = err.(error)
 			} else {
@@ -32,7 +35,9 @@ func try2(fn func(), cleaner func()) (ret error) {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Logger.Error("recover", err)
+			logger.Logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Error("recover")
 			if _, ok := err.(error); ok {
 				ret = err.(error)
 			} else {

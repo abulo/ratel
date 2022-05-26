@@ -54,7 +54,9 @@ func NewEngine() *Engine {
 	if err := eng.Startup(
 		eng.GrpcServer,
 	); err != nil {
-		logger.Logger.Panic("startup", "err", err)
+		logger.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Panic("startup")
 	}
 	return eng
 }

@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -18,6 +17,7 @@ import (
 	"github.com/abulo/ratel/v3/registry"
 	"github.com/abulo/ratel/v3/server"
 	"github.com/abulo/ratel/v3/worker"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -109,7 +109,10 @@ func (app *Application) Run(servers ...server.Server) error {
 	app.cycle.Run(app.startWorkers)
 	//blocking and wait quit
 	if err := <-app.cycle.Wait(); err != nil {
-		logger.Logger.Error("ratel shutdown with error", ecode.ModApp, err)
+		logger.Logger.WithFields(logrus.Fields{
+			"app": ecode.ModApp,
+			"err": err,
+		}).Error("ratel shutdown with error")
 		return err
 	}
 	logger.Logger.Info("shutdown ratel, bye!", ecode.ModApp)
@@ -142,12 +145,22 @@ func (app *Application) startServers() error {
 				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 				defer cancel()
 				_ = registry.DefaultRegisterer.UnregisterService(ctx, s.Info())
-				logger.Logger.Info("exit server", ecode.ModApp, "exit", s.Info().Name, err, s.Info().Label())
+				logger.Logger.WithFields(logrus.Fields{
+					"app":    ecode.ModApp,
+					"action": "exit",
+					"name":   s.Info().Name,
+					"label":  s.Info().Label(),
+				}).Info("exit server")
 			}()
 
 			time.AfterFunc(time.Second, func() {
 				_ = registry.DefaultRegisterer.RegisterService(ctx, s.Info())
-				logger.Logger.Info("start server", ecode.ModApp, "init", s.Info().Name, s.Info().Label(), "scheme", s.Info().Scheme)
+				logger.Logger.WithFields(logrus.Fields{
+					"app":    ecode.ModApp,
+					"action": "init",
+					"name":   s.Info().Name,
+					"label":  s.Info().Label(),
+				}).Info("start server")
 			})
 			err = s.Serve()
 			return
@@ -157,7 +170,9 @@ func (app *Application) startServers() error {
 }
 
 func (app *Application) waitSignals() {
-	logger.Logger.Info("init listen signal, pid:", syscall.Getpid())
+	logger.Logger.WithFields(logrus.Fields{
+		"pid": syscall.Getpid(),
+	}).Info("init listen signal")
 	signals := []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGTSTP, syscall.SIGUSR1, syscall.SIGQUIT, os.Interrupt}
 	app.sig = make(chan os.Signal)
 	signal.Notify(app.sig, signals...)
@@ -167,11 +182,18 @@ func (app *Application) waitSignals() {
 func (app *Application) exitHandler() {
 	debug.FreeOSMemory()
 	sig := <-app.sig
-	logger.Logger.Info(fmt.Sprintf("Received SIG. [PID:%d, SIG:%v]", syscall.Getpid(), sig))
+	logger.Logger.WithFields(logrus.Fields{
+		"pid": syscall.Getpid(),
+		"SIG": sig,
+	}).Info("Received SIG")
+
 	switch sig {
 	case syscall.SIGHUP:
 		if err := app.Run(); err != nil {
-			logger.Logger.Error(fmt.Sprintf("Received SIG. [PID:%d, SIG:%v]", syscall.Getpid(), sig))
+			logger.Logger.WithFields(logrus.Fields{
+				"pid": syscall.Getpid(),
+				"SIG": sig,
+			}).Info("Received SIG")
 		}
 		app.GracefulStop(context.Background())
 	case syscall.SIGINT, syscall.SIGTERM, syscall.SIGTSTP, syscall.SIGUSR1, syscall.SIGQUIT, os.Interrupt:

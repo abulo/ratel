@@ -39,7 +39,7 @@ var (
 // Add ...
 func Add(code int, message string) *spbStatus {
 	if code > maxCustomizeCode {
-		logger.Logger.Panic("customize code must less than 9999", code)
+		logger.Logger.Panic("customize code must less than 9999,", code)
 	}
 
 	return add(aid*10000+code, message)

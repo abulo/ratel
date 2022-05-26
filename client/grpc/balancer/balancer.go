@@ -1,8 +1,6 @@
 package balancer
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 
 	"google.golang.org/grpc/attributes"
@@ -82,15 +80,13 @@ func (b *baseBalancer) ResolverError(err error) {
 
 // UpdateClientConnState ...
 func (b *baseBalancer) UpdateClientConnState(s balancer.ClientConnState) error {
-	// TODO: handle s.ResolverState.Err (log if not nil) once implemented.
-	// TODO: handle s.ResolverState.ServiceConfig?
 	if grpclog.V(2) {
 		grpclog.Infoln("base.baseBalancer: got new ClientConn state: ", s)
 	}
 	// addrsSet is the set converted from addrs, it's used for quick lookup of an address.
 	addrsSet := make(map[resolver.Address]struct{})
-	fmt.Printf("s.ResolverState.Addresses = %+v\n", s.ResolverState.Addresses)
-	fmt.Printf("s.ResolverState.Attributes = %+v\n", s.ResolverState.Attributes)
+	// fmt.Printf("s.ResolverState.Addresses = %+v\n", s.ResolverState.Addresses)
+	// fmt.Printf("s.ResolverState.Attributes = %+v\n", s.ResolverState.Attributes)
 	for _, a := range s.ResolverState.Addresses {
 		addrsSet[a] = struct{}{}
 		if _, ok := b.subConns[a]; !ok {

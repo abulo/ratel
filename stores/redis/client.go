@@ -201,7 +201,6 @@ func (r *Client) MGetByPipeline(ctx context.Context, keys ...string) ([]string, 
 		}
 		wg.Wait()
 		logger.Logger.Debug("exec cost: ", time.Since(start))
-
 		if len(errors) > 0 {
 			return nil, <-errors
 		}

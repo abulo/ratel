@@ -15,6 +15,7 @@ import (
 	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/metric"
 	"github.com/abulo/ratel/v3/trace"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -58,7 +59,7 @@ func traceServerInterceptor() gin.HandlerFunc {
 func recoverMiddleware(slowQueryThresholdInMilli int64) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var beg = time.Now()
-		fields := make(map[string]interface{})
+		fields := make(logrus.Fields)
 		var brokenPipe bool
 		defer func() {
 			fields["cost"] = time.Since(beg).Seconds()
@@ -78,10 +79,9 @@ func recoverMiddleware(slowQueryThresholdInMilli int64) gin.HandlerFunc {
 				var err = rec.(error)
 				fields["stack"] = stack(3)
 				fields["err"] = err.Error()
-				logger.Logger.Error("access", fields)
-				// If the connection is dead, we can't write a status to it.
+				logger.Logger.WithFields(fields).Error("access")
 				if brokenPipe {
-					c.Error(err) // nolint: errcheck
+					c.Error(err)
 					c.Abort()
 					return
 				}
@@ -95,7 +95,7 @@ func recoverMiddleware(slowQueryThresholdInMilli int64) gin.HandlerFunc {
 			fields["path"] = c.Request.URL.Path
 			fields["ip"] = c.ClientIP()
 			fields["err"] = c.Errors.ByType(gin.ErrorTypePrivate).String()
-			logger.Logger.Info("access", fields)
+			logger.Logger.WithFields(fields).Info("access")
 		}()
 		c.Next()
 	}

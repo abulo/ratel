@@ -14,6 +14,7 @@ import (
 	"github.com/abulo/ratel/v3/util"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -70,7 +71,6 @@ func timeoutUnaryClientInterceptor(timeout time.Duration, slowThreshold time.Dur
 			ctx, cancel = context.WithTimeout(ctx, timeout)
 			defer cancel()
 		}
-
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		du := time.Since(now)
 		remoteIP := "unknown"
@@ -78,13 +78,13 @@ func timeoutUnaryClientInterceptor(timeout time.Duration, slowThreshold time.Dur
 			remoteIP = remote.Addr.String()
 		}
 		if slowThreshold > time.Duration(0) && du > slowThreshold {
-			logger.Logger.Error("slow",
-				errSlowCommand,
-				method,
-				cc.Target(),
-				du,
-				remoteIP,
-			)
+			logger.Logger.WithFields(logrus.Fields{
+				"err":      errSlowCommand,
+				"method":   method,
+				"target":   cc.Target(),
+				"ip":       remoteIP,
+				"duration": du,
+			}).Error("slow")
 		}
 		return err
 	}
@@ -133,47 +133,42 @@ func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) gr
 			// 只记录系统级别错误
 			if spbStatus.Code < ecode.EcodeNum {
 				// 只记录系统级别错误
-				logger.Logger.Error(
-					"access",
-					"unary",
-					spbStatus.Code,
-					spbStatus.Message,
-					name,
-					method,
-					time.Since(beg),
-					"req", json.RawMessage(util.JsonString(req)),
-					"reply", json.RawMessage(util.JsonString(reply)),
-				)
+				logger.Logger.WithFields(logrus.Fields{
+					"code":   spbStatus.Code,
+					"msg":    spbStatus.Message,
+					"name":   name,
+					"method": method,
+					"time":   time.Since(beg),
+					"req":    json.RawMessage(util.JsonString(req)),
+					"reply":  json.RawMessage(util.JsonString(reply)),
+				}).Error("access_unary")
+
 			} else {
 				// 业务报错只做warning
-				logger.Logger.Warn(
-					"access",
-					spbStatus.Code,
-					spbStatus.Message,
-					name,
-					method,
-					time.Since(beg),
-					"req", json.RawMessage(util.JsonString(req)),
-					"reply", json.RawMessage(util.JsonString(reply)),
-				)
+				logger.Logger.WithFields(logrus.Fields{
+					"code":   spbStatus.Code,
+					"msg":    spbStatus.Message,
+					"name":   name,
+					"method": method,
+					"time":   time.Since(beg),
+					"req":    json.RawMessage(util.JsonString(req)),
+					"reply":  json.RawMessage(util.JsonString(reply)),
+				}).Warn("access")
 			}
 			return err
 		} else {
 			if accessInterceptorLevel == "info" {
-				logger.Logger.Info(
-					"access",
-					"unary",
-					spbStatus.Code,
-					spbStatus.Message,
-					name,
-					method,
-					time.Since(beg),
-					"req", json.RawMessage(util.JsonString(req)),
-					"reply", json.RawMessage(util.JsonString(reply)),
-				)
+				logger.Logger.WithFields(logrus.Fields{
+					"code":   spbStatus.Code,
+					"msg":    spbStatus.Message,
+					"name":   name,
+					"method": method,
+					"time":   time.Since(beg),
+					"req":    json.RawMessage(util.JsonString(req)),
+					"reply":  json.RawMessage(util.JsonString(reply)),
+				}).Info("access_unary")
 			}
 		}
-
 		return nil
 	}
 }
