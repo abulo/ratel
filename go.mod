@@ -39,8 +39,8 @@ require (
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.8.1
 	github.com/smallnest/weighted v0.0.0-20201102054551-85ac5c79528c
-	github.com/stretchr/testify v1.7.1
-	github.com/tdewolff/parse/v2 v2.5.33
+	github.com/stretchr/testify v1.7.2
+	github.com/tdewolff/parse/v2 v2.6.0
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/ugorji/go/codec v1.2.7
 	github.com/yosuke-furukawa/json5 v0.1.1
@@ -50,7 +50,7 @@ require (
 	go.uber.org/multierr v1.8.0
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	golang.org/x/image v0.0.0-20220601225756-64ec528b34cd
-	golang.org/x/net v0.0.0-20220531201128-c960675eff93
+	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	golang.org/x/text v0.3.7
 	google.golang.org/genproto v0.0.0-20220602131408-e326c6e8e9c8

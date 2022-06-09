@@ -44,7 +44,7 @@ func NewEngine() *Engine {
 	etcd := etcdv3.New()
 	etcd.Endpoints = []string{"172.18.1.13:2379"}
 	etcd.Secure = false
-	etcd.Prefix = "golang-test"
+	etcd.Prefix = "abulo"
 	etcd.ConnectTimeout = 2 * time.Second
 
 	eng.SetRegistry(
@@ -64,7 +64,7 @@ func NewEngine() *Engine {
 func (eng *Engine) GrpcServer() error {
 	client := xgrpc.New()
 	client.Name = balancer.NameSmoothWeightRoundRobin
-	client.Host = "127.0.0.1"
+	client.Host = "172.18.1.5"
 	client.Port = 18888
 	client.Deployment = "golang"
 	server := client.MustBuild()

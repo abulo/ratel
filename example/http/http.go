@@ -59,7 +59,7 @@ func (eng *Engine) GrpcClient() error {
 	etcd := etcdv3.New()
 	etcd.Endpoints = []string{"172.18.1.13:2379"}
 	etcd.Secure = false
-	etcd.Prefix = "golang-test"
+	etcd.Prefix = "abulo"
 	etcd.ConnectTimeout = 2 * time.Second
 	resolver.Register("etcd", etcd.MustBuild())
 	return nil
@@ -67,13 +67,13 @@ func (eng *Engine) GrpcClient() error {
 
 func (eng *Engine) HttpServer() error {
 	client := xgin.New()
-	client.Host = "127.0.0.1"
+	client.Host = "172.18.1.5"
 	client.Port = 17777
 	client.Deployment = "golang"
 	client.DisableMetric = false
 	client.DisableTrace = false
 	client.DisableSlowQuery = true
-	client.ServiceAddress = "127.0.0.1:17777"
+	client.ServiceAddress = "172.18.1.5:17777"
 	client.SlowQueryThresholdInMilli = 10000
 	client.Mode = gin.DebugMode
 	server := client.Build()
