@@ -6,6 +6,7 @@ package gin
 
 import (
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"mime/multipart"
@@ -737,7 +738,7 @@ func (c *Context) ShouldBindBodyWith(obj any, bb binding.BindingBody) (err error
 		}
 	}
 	if body == nil {
-		body, err = io.ReadAll(c.Request.Body)
+		body, err = ioutil.ReadAll(c.Request.Body)
 		if err != nil {
 			return err
 		}
@@ -747,7 +748,7 @@ func (c *Context) ShouldBindBodyWith(obj any, bb binding.BindingBody) (err error
 }
 
 // ClientIP implements one best effort algorithm to return the real client IP.
-// It called c.RemoteIP() under the hood, to check if the remote IP is a trusted proxy or not.
+// It calls c.RemoteIP() under the hood, to check if the remote IP is a trusted proxy or not.
 // If it is it will then try to parse the headers defined in Engine.RemoteIPHeaders (defaulting to [X-Forwarded-For, X-Real-Ip]).
 // If the headers are not syntactically valid OR the remote IP does not correspond to a trusted proxy,
 // the remote IP (coming from Request.RemoteAddr) is returned.
@@ -856,7 +857,7 @@ func (c *Context) GetHeader(key string) string {
 
 // GetRawData returns stream data.
 func (c *Context) GetRawData() ([]byte, error) {
-	return io.ReadAll(c.Request.Body)
+	return ioutil.ReadAll(c.Request.Body)
 }
 
 // SetSameSite with cookie
@@ -1157,7 +1158,7 @@ func (c *Context) SetAccepted(formats ...string) {
 
 // Deadline returns that there is no deadline (ok==false) when c.Request has no Context.
 func (c *Context) Deadline() (deadline time.Time, ok bool) {
-	if c.Request == nil || c.Request.Context() == nil {
+	if !c.engine.ContextWithFallback || c.Request == nil || c.Request.Context() == nil {
 		return
 	}
 	return c.Request.Context().Deadline()
@@ -1165,7 +1166,7 @@ func (c *Context) Deadline() (deadline time.Time, ok bool) {
 
 // Done returns nil (chan which will wait forever) when c.Request has no Context.
 func (c *Context) Done() <-chan struct{} {
-	if c.Request == nil || c.Request.Context() == nil {
+	if !c.engine.ContextWithFallback || c.Request == nil || c.Request.Context() == nil {
 		return nil
 	}
 	return c.Request.Context().Done()
@@ -1173,7 +1174,7 @@ func (c *Context) Done() <-chan struct{} {
 
 // Err returns nil when c.Request has no Context.
 func (c *Context) Err() error {
-	if c.Request == nil || c.Request.Context() == nil {
+	if !c.engine.ContextWithFallback || c.Request == nil || c.Request.Context() == nil {
 		return nil
 	}
 	return c.Request.Context().Err()
@@ -1194,7 +1195,7 @@ func (c *Context) Value(key any) any {
 			return val
 		}
 	}
-	if c.Request == nil || c.Request.Context() == nil {
+	if !c.engine.ContextWithFallback || c.Request == nil || c.Request.Context() == nil {
 		return nil
 	}
 	return c.Request.Context().Value(key)
