@@ -57,6 +57,8 @@ func (initial *Initial) InitPath(path string) *Initial {
 	return initial
 }
 
+
+
 // InitConfig set app config toml files
 func (initial *Initial) InitConfig(dirs ...string) *Initial {
 	Config := config.NewWithOptions("go-ratel", config.Readonly, config.EnableCache)

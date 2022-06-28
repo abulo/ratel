@@ -116,6 +116,8 @@ func index(ctx *gin.Context) {
 	}})
 }
 func main() {
+
+	os.Exit(0)
 	mongodbClient := initial.Core.Store.LoadMongoDB("mongodb")
 	loggerHook := mongo.DefaultWithURL(mongodbClient)
 	defer loggerHook.Flush()

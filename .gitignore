@@ -1,6 +1,7 @@
 .DS_Store
 /.idea
 /.vscode
+/.history
 /vendor
 /store
 /go.sum
