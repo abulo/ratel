@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/BurntSushi/toml v1.1.0
-	github.com/ClickHouse/clickhouse-go/v2 v2.1.0
+	github.com/ClickHouse/clickhouse-go/v2 v2.2.0
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
 	github.com/fsnotify/fsnotify v1.5.4
@@ -53,7 +53,7 @@ require (
 	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	golang.org/x/text v0.3.7
-	google.golang.org/genproto v0.0.0-20220624142145-8cd45d7dbd1f
+	google.golang.org/genproto v0.0.0-20220627200112-0a929928cb33
 	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.4.0

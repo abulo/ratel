@@ -262,7 +262,7 @@ func (c *Config) getString(key string) (value string, ok bool) {
 		}
 	default:
 		// value = fmt.Sprintf("%v", val)
-		value,_ = strutil.AnyToString(val, false)
+		value, _ = strutil.AnyToString(val, false)
 	}
 
 	// add cache

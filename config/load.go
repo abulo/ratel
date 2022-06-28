@@ -331,6 +331,7 @@ func (c *Config) parseSourceCode(format string, blob []byte) (err error) {
 	if err = decode(blob, &data); err != nil {
 		return
 	}
+
 	// init config data
 	if len(c.data) == 0 {
 		c.data = data
