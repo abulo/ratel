@@ -12,7 +12,7 @@ require (
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/goccy/go-json v0.9.7
+	github.com/goccy/go-json v0.9.8
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
@@ -24,7 +24,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/hcl/v2 v2.13.0
 	github.com/imdario/mergo v0.3.13
-	github.com/jlaffaye/ftp v0.0.0-20220612151834-60a941566ce4
+	github.com/jlaffaye/ftp v0.0.0-20220630165035-11536801d1ff
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.6
 	github.com/mattn/go-isatty v0.0.14
@@ -39,7 +39,7 @@ require (
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.8.1
 	github.com/smallnest/weighted v0.0.0-20201102054551-85ac5c79528c
-	github.com/stretchr/testify v1.7.5
+	github.com/stretchr/testify v1.8.0
 	github.com/tdewolff/parse/v2 v2.6.0
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/ugorji/go/codec v1.2.7
@@ -50,10 +50,10 @@ require (
 	go.uber.org/multierr v1.8.0
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 	golang.org/x/image v0.0.0-20220617043117-41969df76e82
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e
+	golang.org/x/net v0.0.0-20220630215102-69896b714898
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	golang.org/x/text v0.3.7
-	google.golang.org/genproto v0.0.0-20220627200112-0a929928cb33
+	google.golang.org/genproto v0.0.0-20220630174209-ad1d48641aa7
 	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -96,6 +96,7 @@ require (
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.0.2 // indirect

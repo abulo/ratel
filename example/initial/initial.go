@@ -57,7 +57,13 @@ func (initial *Initial) InitPath(path string) *Initial {
 	return initial
 }
 
-
+func (initial *Initial) GetEnvironment(dir, key string) string {
+	envConfig := config.NewWithOptions("go-ratel-evn", config.Readonly, config.EnableCache)
+	driver := toml.Driver
+	envConfig.AddDriver(driver)
+	envConfig.LoadDir(dir, driver.Name())
+	return envConfig.String(key)
+}
 
 // InitConfig set app config toml files
 func (initial *Initial) InitConfig(dirs ...string) *Initial {
