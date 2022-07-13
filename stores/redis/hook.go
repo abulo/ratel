@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 	"unicode/utf8"
@@ -14,6 +15,7 @@ import (
 	"github.com/abulo/ratel/v3/util"
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
 )
 
@@ -33,14 +35,18 @@ func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (con
 		ctx = context.TODO()
 	}
 	if !op.DisableTrace {
-		span, ctx := trace.StartSpanFromContext(
-			ctx,
-			"redis",
-			trace.TagComponent("redis"),
-			trace.TagSpanKind("client"),
-		)
-		span.LogFields(log.String("cmd", String(b)))
-		ctx = opentracing.ContextWithSpan(ctx, span)
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerHostname.Set(span, hostName)
+			span.LogFields(log.String("cmd", String(b)))
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
 	}
 	if !op.DisableMetric {
 		start := time.Now()
@@ -107,14 +113,18 @@ func (op OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.
 		}
 	}
 	if !op.DisableTrace {
-		span, ctx := trace.StartSpanFromContext(
-			ctx,
-			"redis",
-			trace.TagComponent("redis"),
-			trace.TagSpanKind("client"),
-		)
-		span.LogFields(log.String("cmds", String(b)))
-		ctx = opentracing.ContextWithSpan(ctx, span)
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerHostname.Set(span, hostName)
+			span.LogFields(log.String("cmds", String(b)))
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
 	}
 
 	if !op.DisableMetric {

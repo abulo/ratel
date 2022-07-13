@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -78,30 +79,30 @@ func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err
 	start := time.Now()
 	var span opentracing.Span
 	if !t.DisableTrace {
-		span, ctx := trace.StartSpanFromContext(
-			r.Context(),
-			"elastic",
-			trace.CustomTag("peer.service", "elastic"),
-			trace.TagSpanKind("client"),
-			trace.HeaderExtractor(r.Header),
-			trace.CustomTag("http.url", r.URL.Path),
-			trace.CustomTag("http.method", r.Method),
-		)
-
-		defer func() {
+		if parentSpan := trace.SpanFromContext(r.Context()); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span = opentracing.StartSpan("elastic", opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			hostName, err := os.Hostname()
 			if err != nil {
-				span.SetTag("elastic.error", err.Error())
-				span.SetTag(string(ext.Error), true)
+				hostName = "unknown"
 			}
-			span.Finish()
-		}()
-		span.SetTag(string(ext.DBType), "elastic")
-		span.SetTag(string(ext.DBInstance), r.URL.Host)
-		span.SetTag("elastic.method", r.Method)
-		span.SetTag("elastic.url", r.URL.Path)
-		span.SetTag("elastic.params", r.URL.Query().Encode())
-		// span.SetTag("elastic.status_code", resp.StatusCode)
-		r = r.WithContext(ctx)
+			ext.PeerHostname.Set(span, hostName)
+			defer func() {
+				if err != nil {
+					span.SetTag("elastic.error", err.Error())
+					span.SetTag(string(ext.Error), true)
+				}
+				span.Finish()
+			}()
+			ctx := opentracing.ContextWithSpan(r.Context(), span)
+			span.SetTag(string(ext.DBType), "elastic")
+			span.SetTag(string(ext.DBInstance), r.URL.Host)
+			span.SetTag("elastic.method", r.Method)
+			span.SetTag("elastic.url", r.URL.Path)
+			span.SetTag("elastic.params", r.URL.Query().Encode())
+			r = r.WithContext(ctx)
+		}
 	}
 	contentLength, _ := strconv.Atoi(r.Header.Get("Content-Length"))
 	if r.Body != nil && contentLength < MaxContentLength {

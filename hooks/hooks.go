@@ -53,5 +53,5 @@ func Do(stage Stage) {
 			fn()
 		}
 	}
-	fmt.Printf("[jupiter] %+v\n", fmt.Sprintf("hook stage (%s)... done", stage))
+	fmt.Printf("[ratel] %+v\n", fmt.Sprintf("hook stage (%s)... done", stage))
 }

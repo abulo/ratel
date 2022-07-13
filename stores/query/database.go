@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -12,6 +13,8 @@ import (
 	"github.com/abulo/ratel/v3/metric"
 	"github.com/abulo/ratel/v3/trace"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 )
 
@@ -86,22 +89,24 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+
 	if !querydb.DisableTrace {
-		span, ctx := trace.StartSpanFromContext(
-			ctx,
-			querydb.DriverName,
-			trace.TagComponent(querydb.DriverName),
-			trace.TagSpanKind("client"),
-		)
-		span.SetTag("sql.inner", querydb.DBName)
-		span.SetTag("sql.addr", querydb.Addr)
-		span.SetTag("span.kind", "client")
-		span.SetTag("peer.service", "mysql")
-		span.SetTag("db.instance", querydb.DriverName)
-		span.SetTag("peer.address", querydb.Addr)
-		span.SetTag("peer.statement", querydb.SqlRaw())
-		defer span.Finish()
-		ctx = opentracing.ContextWithSpan(ctx, span)
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan(querydb.DriverName, opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerAddress.Set(span, querydb.Addr)
+			ext.PeerHostname.Set(span, hostName)
+			ext.DBInstance.Set(span, querydb.DBName)
+			ext.DBStatement.Set(span, querydb.DriverName)
+			span.LogFields(log.String("sql", querydb.SqlRaw()))
+			defer span.Finish()
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
 	}
 
 	var res sql.Result
@@ -151,21 +156,22 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 		ctx = context.TODO()
 	}
 	if !querydb.DisableTrace {
-		span, ctx := trace.StartSpanFromContext(
-			ctx,
-			querydb.DriverName,
-			trace.TagComponent(querydb.DriverName),
-			trace.TagSpanKind("client"),
-		)
-		span.SetTag("sql.inner", querydb.DBName)
-		span.SetTag("sql.addr", querydb.Addr)
-		span.SetTag("span.kind", "client")
-		span.SetTag("peer.service", "mysql")
-		span.SetTag("db.instance", querydb.DriverName)
-		span.SetTag("peer.address", querydb.Addr)
-		span.SetTag("peer.statement", querydb.SqlRaw())
-		defer span.Finish()
-		ctx = opentracing.ContextWithSpan(ctx, span)
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan(querydb.DriverName, opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerAddress.Set(span, querydb.Addr)
+			ext.PeerHostname.Set(span, hostName)
+			ext.DBInstance.Set(span, querydb.DBName)
+			ext.DBStatement.Set(span, querydb.DriverName)
+			span.LogFields(log.String("sql", querydb.SqlRaw()))
+			defer span.Finish()
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
 	}
 	var res *sql.Rows
 	var err error
@@ -234,21 +240,22 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 		ctx = context.TODO()
 	}
 	if !querytx.DisableTrace {
-		span, ctx := trace.StartSpanFromContext(
-			ctx,
-			querytx.DriverName,
-			trace.TagComponent(querytx.DriverName),
-			trace.TagSpanKind("client"),
-		)
-		span.SetTag("sql.inner", querytx.DBName)
-		span.SetTag("sql.addr", querytx.Addr)
-		span.SetTag("span.kind", "client")
-		span.SetTag("peer.service", "mysql")
-		span.SetTag("db.instance", querytx.DriverName)
-		span.SetTag("peer.address", querytx.Addr)
-		span.SetTag("peer.statement", querytx.SqlRaw())
-		defer span.Finish()
-		ctx = opentracing.ContextWithSpan(ctx, span)
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan(querytx.DriverName, opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerAddress.Set(span, querytx.Addr)
+			ext.PeerHostname.Set(span, hostName)
+			ext.DBInstance.Set(span, querytx.DBName)
+			ext.DBStatement.Set(span, querytx.DriverName)
+			span.LogFields(log.String("sql", querytx.SqlRaw()))
+			defer span.Finish()
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
 	}
 
 	var res sql.Result
@@ -296,21 +303,22 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 		ctx = context.TODO()
 	}
 	if !querytx.DisableTrace {
-		span, ctx := trace.StartSpanFromContext(
-			ctx,
-			querytx.DriverName,
-			trace.TagComponent(querytx.DriverName),
-			trace.TagSpanKind("client"),
-		)
-		span.SetTag("sql.inner", querytx.DBName)
-		span.SetTag("sql.addr", querytx.Addr)
-		span.SetTag("span.kind", "client")
-		span.SetTag("peer.service", "mysql")
-		span.SetTag("db.instance", querytx.DriverName)
-		span.SetTag("peer.address", querytx.Addr)
-		span.SetTag("peer.statement", querytx.SqlRaw())
-		defer span.Finish()
-		ctx = opentracing.ContextWithSpan(ctx, span)
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan(querytx.DriverName, opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerAddress.Set(span, querytx.Addr)
+			ext.PeerHostname.Set(span, hostName)
+			ext.DBInstance.Set(span, querytx.DBName)
+			ext.DBStatement.Set(span, querytx.DriverName)
+			span.LogFields(log.String("sql", querytx.SqlRaw()))
+			defer span.Finish()
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
 	}
 
 	var res *sql.Rows

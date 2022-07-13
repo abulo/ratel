@@ -16,7 +16,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
-	github.com/gookit/goutil v0.5.5
+	github.com/gookit/goutil v0.5.7
 	github.com/gookit/ini/v2 v2.1.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -50,10 +50,10 @@ require (
 	go.uber.org/multierr v1.8.0
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 	golang.org/x/image v0.0.0-20220617043117-41969df76e82
-	golang.org/x/net v0.0.0-20220706163947-c90051bbdb60
+	golang.org/x/net v0.0.0-20220708220712-1185a9018129
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	golang.org/x/text v0.3.7
-	google.golang.org/genproto v0.0.0-20220706132729-d86698d07c53
+	google.golang.org/genproto v0.0.0-20220712132514-bdd2acd4974d
 	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -96,7 +96,6 @@ require (
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.0.2 // indirect
