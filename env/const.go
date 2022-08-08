@@ -76,7 +76,7 @@ func SetAppInstance(instance string) {
 	appInstance = instance
 }
 
-const ratelVersion = "3.0.3"
+const ratelVersion = "3.1.3"
 
 var (
 	startTime string
@@ -122,12 +122,12 @@ func Name() string {
 	return appName
 }
 
-//SetName set app name
+// SetName set app name
 func SetName(s string) {
 	appName = s
 }
 
-//AppID get appID
+// AppID get appID
 func AppID() string {
 	if appID == "" {
 		return "1234567890" //default appid when APP_ID Env var not set
@@ -135,12 +135,12 @@ func AppID() string {
 	return appID
 }
 
-//SetAppID set appID
+// SetAppID set appID
 func SetAppID(s string) {
 	appID = s
 }
 
-//AppVersion get buildAppVersion
+// AppVersion get buildAppVersion
 func AppVersion() string {
 	return buildAppVersion
 }
@@ -150,27 +150,27 @@ func SetAppVersion(s string) {
 	buildAppVersion = s
 }
 
-//RatelVersion get ratelVersion
+// RatelVersion get ratelVersion
 func RatelVersion() string {
 	return ratelVersion
 }
 
-//BuildTime get buildTime
+// BuildTime get buildTime
 func BuildTime() string {
 	return buildTime
 }
 
-//BuildUser get buildUser
+// BuildUser get buildUser
 func BuildUser() string {
 	return buildUser
 }
 
-//BuildHost get buildHost
+// BuildHost get buildHost
 func BuildHost() string {
 	return buildHost
 }
 
-//SetBuildTime set buildTime
+// SetBuildTime set buildTime
 func SetBuildTime(param string) {
 	buildTime = strings.Replace(param, "--", " ", 1)
 }
@@ -180,12 +180,12 @@ func HostName() string {
 	return hostName
 }
 
-//StartTime get start time
+// StartTime get start time
 func StartTime() string {
 	return startTime
 }
 
-//GoVersion get go version
+// GoVersion get go version
 func GoVersion() string {
 	return goVersion
 }
