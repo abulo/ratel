@@ -17,6 +17,7 @@ import (
 	"github.com/abulo/ratel/v3/trace/jaeger"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/fsnotify/fsnotify"
+	"github.com/spf13/cast"
 )
 
 type Initial struct {
@@ -27,7 +28,7 @@ type Initial struct {
 	LaunchTime time.Time        //时间设置
 }
 
-//系统
+// 系统
 var Core *Initial
 
 // Default returns an Initial instance.
@@ -97,21 +98,21 @@ func (initial *Initial) InitMongoDB() *Initial {
 	for node, nodeConfig := range list {
 		opt := &mongodb.Config{}
 		res := nodeConfig.(map[string]interface{})
-		if URI := util.ToString(res["URI"]); URI != "" {
+		if URI := cast.ToString(res["URI"]); URI != "" {
 			opt.URI = URI
 		}
-		if MaxConnIdleTime := util.ToInt64(res["MaxConnIdleTime"]); MaxConnIdleTime > 0 {
-			opt.MaxConnIdleTime = util.ToDuration(MaxConnIdleTime) * time.Minute
+		if MaxConnIdleTime := cast.ToInt64(res["MaxConnIdleTime"]); MaxConnIdleTime > 0 {
+			opt.MaxConnIdleTime = cast.ToDuration(MaxConnIdleTime) * time.Minute
 		}
-		if MaxPoolSize := util.ToInt64(res["MaxPoolSize"]); MaxPoolSize > 0 {
-			opt.MaxPoolSize = util.ToUint64(MaxPoolSize)
+		if MaxPoolSize := cast.ToInt64(res["MaxPoolSize"]); MaxPoolSize > 0 {
+			opt.MaxPoolSize = cast.ToUint64(MaxPoolSize)
 		}
-		if MinPoolSize := util.ToInt64(res["MinPoolSize"]); MinPoolSize > 0 {
-			opt.MinPoolSize = util.ToUint64(MinPoolSize)
+		if MinPoolSize := cast.ToInt64(res["MinPoolSize"]); MinPoolSize > 0 {
+			opt.MinPoolSize = cast.ToUint64(MinPoolSize)
 		}
 
-		opt.DisableMetric = util.ToBool(res["DisableMetric"])
-		opt.DisableTrace = util.ToBool(res["DisableTrace"])
+		opt.DisableMetric = cast.ToBool(res["DisableMetric"])
+		opt.DisableTrace = cast.ToBool(res["DisableTrace"])
 		conn := mongodb.NewClient(opt)
 		links["mongodb."+node] = conn
 	}
@@ -119,12 +120,12 @@ func (initial *Initial) InitMongoDB() *Initial {
 	proxyRes := proxyConfigs.([]map[string]interface{})
 	for _, val := range proxyRes {
 		proxyPool := proxy.NewProxyMongoDB()
-		if node := util.ToStringSlice(val["Node"]); len(node) > 0 {
+		if node := cast.ToStringSlice(val["Node"]); len(node) > 0 {
 			for _, v := range node {
 				proxyPool.Store(links[v])
 			}
 		}
-		if Name := util.ToString(val["Name"]); Name != "" {
+		if Name := cast.ToString(val["Name"]); Name != "" {
 			initial.Store.StoreMongoDB(Name, proxyPool)
 		}
 	}
@@ -149,22 +150,22 @@ func (initial *Initial) InitMysql() *Initial {
 	for node, nodeConfig := range list {
 		opt := &mysql.Config{}
 		res := nodeConfig.(map[string]interface{})
-		if Username := util.ToString(res["Username"]); Username != "" {
+		if Username := cast.ToString(res["Username"]); Username != "" {
 			opt.Username = Username
 		}
-		if Password := util.ToString(res["Password"]); Password != "" {
+		if Password := cast.ToString(res["Password"]); Password != "" {
 			opt.Password = Password
 		}
-		if Host := util.ToString(res["Host"]); Host != "" {
+		if Host := cast.ToString(res["Host"]); Host != "" {
 			opt.Host = Host
 		}
-		if Port := util.ToString(res["Port"]); Port != "" {
+		if Port := cast.ToString(res["Port"]); Port != "" {
 			opt.Port = Port
 		}
-		if Charset := util.ToString(res["Charset"]); Charset != "" {
+		if Charset := cast.ToString(res["Charset"]); Charset != "" {
 			opt.Charset = Charset
 		}
-		if Database := util.ToString(res["Database"]); Database != "" {
+		if Database := cast.ToString(res["Database"]); Database != "" {
 			opt.Database = Database
 		}
 
@@ -177,22 +178,22 @@ func (initial *Initial) InitMysql() *Initial {
 		// # MaxIdleTime 连接池里面的连接最大空闲时长(分钟)
 		// MaxIdleTime = 5
 
-		if MaxLifetime := util.ToInt(res["MaxLifetime"]); MaxLifetime > 0 {
+		if MaxLifetime := cast.ToInt(res["MaxLifetime"]); MaxLifetime > 0 {
 			opt.MaxLifetime = time.Duration(MaxLifetime) * time.Minute
 		}
-		if MaxIdleTime := util.ToInt(res["MaxIdleTime"]); MaxIdleTime > 0 {
+		if MaxIdleTime := cast.ToInt(res["MaxIdleTime"]); MaxIdleTime > 0 {
 			opt.MaxIdleTime = time.Duration(MaxIdleTime) * time.Minute
 		}
-		if MaxIdleConns := util.ToInt(res["MaxIdleConns"]); MaxIdleConns > 0 {
-			opt.MaxIdleConns = util.ToInt(MaxIdleConns)
+		if MaxIdleConns := cast.ToInt(res["MaxIdleConns"]); MaxIdleConns > 0 {
+			opt.MaxIdleConns = cast.ToInt(MaxIdleConns)
 		}
-		if MaxOpenConns := util.ToInt(res["MaxOpenConns"]); MaxOpenConns > 0 {
-			opt.MaxOpenConns = util.ToInt(MaxOpenConns)
+		if MaxOpenConns := cast.ToInt(res["MaxOpenConns"]); MaxOpenConns > 0 {
+			opt.MaxOpenConns = cast.ToInt(MaxOpenConns)
 		}
 
 		opt.DriverName = "mysql"
-		opt.DisableMetric = util.ToBool(res["DisableMetric"])
-		opt.DisableTrace = util.ToBool(res["DisableTrace"])
+		opt.DisableMetric = cast.ToBool(res["DisableMetric"])
+		opt.DisableTrace = cast.ToBool(res["DisableTrace"])
 		conn := mysql.NewClient(opt)
 		links["mysql."+node] = conn
 	}
@@ -201,17 +202,17 @@ func (initial *Initial) InitMysql() *Initial {
 	proxyRes := proxyConfigs.([]map[string]interface{})
 	for _, val := range proxyRes {
 		proxyPool := proxy.NewProxySQL()
-		if Master := util.ToStringSlice(val["Master"]); len(Master) > 0 {
+		if Master := cast.ToStringSlice(val["Master"]); len(Master) > 0 {
 			for _, v := range Master {
 				proxyPool.SetWrite(links[v])
 			}
 		}
-		if Slave := util.ToStringSlice(val["Slave"]); len(Slave) > 0 {
+		if Slave := cast.ToStringSlice(val["Slave"]); len(Slave) > 0 {
 			for _, v := range Slave {
 				proxyPool.SetRead(links[v])
 			}
 		}
-		if Name := util.ToString(val["Name"]); Name != "" {
+		if Name := cast.ToString(val["Name"]); Name != "" {
 			initial.Store.StoreSQL(Name, proxyPool)
 		}
 	}
@@ -227,34 +228,34 @@ func (initial *Initial) InitClickHouse() *Initial {
 	for node, nodeConfig := range list {
 		opt := &clickhouse.Config{}
 		res := nodeConfig.(map[string]interface{})
-		if Username := util.ToString(res["Username"]); Username != "" {
+		if Username := cast.ToString(res["Username"]); Username != "" {
 			opt.Username = Username
 		}
-		if Password := util.ToString(res["Password"]); Password != "" {
+		if Password := cast.ToString(res["Password"]); Password != "" {
 			opt.Password = Password
 		}
-		if Addr := util.ToStringSlice(res["Addr"]); len(Addr) > 0 {
+		if Addr := cast.ToStringSlice(res["Addr"]); len(Addr) > 0 {
 			opt.Addr = Addr
 		}
-		if Database := util.ToString(res["Database"]); Database != "" {
+		if Database := cast.ToString(res["Database"]); Database != "" {
 			opt.Database = Database
 		}
-		if DialTimeout := util.ToString(res["DialTimeout"]); DialTimeout != "" {
+		if DialTimeout := cast.ToString(res["DialTimeout"]); DialTimeout != "" {
 			opt.DialTimeout = DialTimeout
 		}
-		if OpenStrategy := util.ToString(res["OpenStrategy"]); OpenStrategy != "" {
+		if OpenStrategy := cast.ToString(res["OpenStrategy"]); OpenStrategy != "" {
 			opt.OpenStrategy = OpenStrategy
 		}
-		if Compress := util.ToBool(res["Compress"]); Compress {
+		if Compress := cast.ToBool(res["Compress"]); Compress {
 			opt.Compress = true
 		} else {
 			opt.Compress = false
 		}
-		if MaxExecutionTime := util.ToString(res["MaxExecutionTime"]); MaxExecutionTime != "" {
+		if MaxExecutionTime := cast.ToString(res["MaxExecutionTime"]); MaxExecutionTime != "" {
 			opt.MaxExecutionTime = MaxExecutionTime
 		}
 
-		opt.DisableDebug = util.ToBool(res["DisableDebug"])
+		opt.DisableDebug = cast.ToBool(res["DisableDebug"])
 		// # MaxOpenConns 连接池最多同时打开的连接数
 		// MaxOpenConns = 128
 		// # MaxIdleConns 连接池里最大空闲连接数。必须要比maxOpenConns小
@@ -264,22 +265,22 @@ func (initial *Initial) InitClickHouse() *Initial {
 		// # MaxIdleTime 连接池里面的连接最大空闲时长(分钟)
 		// MaxIdleTime = 5
 
-		if MaxLifetime := util.ToInt(res["MaxLifetime"]); MaxLifetime > 0 {
+		if MaxLifetime := cast.ToInt(res["MaxLifetime"]); MaxLifetime > 0 {
 			opt.MaxLifetime = time.Duration(MaxLifetime) * time.Minute
 		}
-		if MaxIdleTime := util.ToInt(res["MaxIdleTime"]); MaxIdleTime > 0 {
+		if MaxIdleTime := cast.ToInt(res["MaxIdleTime"]); MaxIdleTime > 0 {
 			opt.MaxIdleTime = time.Duration(MaxIdleTime) * time.Minute
 		}
-		if MaxIdleConns := util.ToInt(res["MaxIdleConns"]); MaxIdleConns > 0 {
-			opt.MaxIdleConns = util.ToInt(MaxIdleConns)
+		if MaxIdleConns := cast.ToInt(res["MaxIdleConns"]); MaxIdleConns > 0 {
+			opt.MaxIdleConns = cast.ToInt(MaxIdleConns)
 		}
-		if MaxOpenConns := util.ToInt(res["MaxOpenConns"]); MaxOpenConns > 0 {
-			opt.MaxOpenConns = util.ToInt(MaxOpenConns)
+		if MaxOpenConns := cast.ToInt(res["MaxOpenConns"]); MaxOpenConns > 0 {
+			opt.MaxOpenConns = cast.ToInt(MaxOpenConns)
 		}
 		opt.DriverName = "clickhouse"
-		opt.DisableDebug = util.ToBool(res["DisableDebug"])
-		opt.DisableMetric = util.ToBool(res["DisableMetric"])
-		opt.DisableTrace = util.ToBool(res["DisableTrace"])
+		opt.DisableDebug = cast.ToBool(res["DisableDebug"])
+		opt.DisableMetric = cast.ToBool(res["DisableMetric"])
+		opt.DisableTrace = cast.ToBool(res["DisableTrace"])
 		conn := clickhouse.NewClient(opt)
 		links["clickhouse."+node] = conn
 	}
@@ -288,10 +289,10 @@ func (initial *Initial) InitClickHouse() *Initial {
 	proxyRes := proxyConfigs.([]map[string]interface{})
 	for _, val := range proxyRes {
 		proxyPool := proxy.NewProxySQL()
-		if node := util.ToString(val["Node"]); node != "" {
+		if node := cast.ToString(val["Node"]); node != "" {
 			proxyPool.SetWrite(links[node])
 		}
-		if Name := util.ToString(val["Name"]); Name != "" {
+		if Name := cast.ToString(val["Name"]); Name != "" {
 			initial.Store.StoreSQL(Name, proxyPool)
 		}
 	}
@@ -306,11 +307,11 @@ func (initial *Initial) InitElasticSearch() *Initial {
 	for node, nodeConfig := range list {
 		opts := &elasticsearch.Config{}
 		res := nodeConfig.(map[string]interface{})
-		opts.URL = util.ToStringSlice(res["URL"])
-		opts.Username = util.ToString(res["Username"])
-		opts.Password = util.ToString(res["Password"])
-		opts.DisableMetric = util.ToBool(res["DisableMetric"])
-		opts.DisableTrace = util.ToBool(res["DisableTrace"])
+		opts.URL = cast.ToStringSlice(res["URL"])
+		opts.Username = cast.ToString(res["Username"])
+		opts.Password = cast.ToString(res["Password"])
+		opts.DisableMetric = cast.ToBool(res["DisableMetric"])
+		opts.DisableTrace = cast.ToBool(res["DisableTrace"])
 		conn := elasticsearch.NewClient(opts)
 		links["elasticsearch."+node] = conn
 	}
@@ -318,12 +319,12 @@ func (initial *Initial) InitElasticSearch() *Initial {
 	proxyRes := proxyConfigs.([]map[string]interface{})
 	for _, val := range proxyRes {
 		proxyPool := proxy.NewProxyElasticSearch()
-		if node := util.ToStringSlice(val["Node"]); len(node) > 0 {
+		if node := cast.ToStringSlice(val["Node"]); len(node) > 0 {
 			for _, v := range node {
 				proxyPool.Store(links[v])
 			}
 		}
-		if Name := util.ToString(val["Name"]); Name != "" {
+		if Name := cast.ToString(val["Name"]); Name != "" {
 			initial.Store.StoreElasticSearch(Name, proxyPool)
 		}
 	}
@@ -338,24 +339,24 @@ func (initial *Initial) InitRedis() *Initial {
 	for node, nodeConfig := range list {
 		opt := &redis.Config{}
 		res := nodeConfig.(map[string]interface{})
-		if KeyPrefix := util.ToString(res["KeyPrefix"]); KeyPrefix != "" {
+		if KeyPrefix := cast.ToString(res["KeyPrefix"]); KeyPrefix != "" {
 			opt.KeyPrefix = KeyPrefix
 		}
-		if Password := util.ToString(res["Password"]); Password != "" {
+		if Password := cast.ToString(res["Password"]); Password != "" {
 			opt.Password = Password
 		}
-		if Database := util.ToInt(res["Database"]); Database > 0 {
-			opt.Database = util.ToInt(Database)
+		if Database := cast.ToInt(res["Database"]); Database > 0 {
+			opt.Database = cast.ToInt(Database)
 		}
-		if PoolSize := util.ToInt(res["PoolSize"]); PoolSize > 0 {
-			opt.PoolSize = util.ToInt(PoolSize)
+		if PoolSize := cast.ToInt(res["PoolSize"]); PoolSize > 0 {
+			opt.PoolSize = cast.ToInt(PoolSize)
 		}
-		opt.Type = util.ToBool(res["Type"])
-		if Hosts := util.ToStringSlice(res["Hosts"]); len(Hosts) > 0 {
+		opt.Type = cast.ToBool(res["Type"])
+		if Hosts := cast.ToStringSlice(res["Hosts"]); len(Hosts) > 0 {
 			opt.Hosts = Hosts
 		}
-		opt.DisableMetric = util.ToBool(res["DisableMetric"])
-		opt.DisableTrace = util.ToBool(res["DisableTrace"])
+		opt.DisableMetric = cast.ToBool(res["DisableMetric"])
+		opt.DisableTrace = cast.ToBool(res["DisableTrace"])
 		conn := redis.New(opt)
 		links["redis."+node] = conn
 	}
@@ -363,12 +364,12 @@ func (initial *Initial) InitRedis() *Initial {
 	proxyRes := proxyConfigs.([]map[string]interface{})
 	for _, val := range proxyRes {
 		proxyPool := proxy.NewProxyRedis()
-		if node := util.ToStringSlice(val["Node"]); len(node) > 0 {
+		if node := cast.ToStringSlice(val["Node"]); len(node) > 0 {
 			for _, v := range node {
 				proxyPool.Store(links[v])
 			}
 		}
-		if Name := util.ToString(val["Name"]); Name != "" {
+		if Name := cast.ToString(val["Name"]); Name != "" {
 			initial.Store.StoreRedis(Name, proxyPool)
 		}
 	}
@@ -379,11 +380,11 @@ func (initial *Initial) InitTrace() {
 	opt := jaeger.NewJaeger()
 	conf := initial.Config.Get("trace")
 	res := conf.(map[string]interface{})
-	opt.EnableRPCMetrics = util.ToBool(res["EnableRPCMetrics"])
-	opt.LocalAgentHostPort = util.ToString(res["LocalAgentHostPort"])
-	opt.LogSpans = util.ToBool(res["LogSpans"])
-	opt.Param = util.ToFloat64(res["Param"])
-	opt.PanicOnError = util.ToBool(res["PanicOnError"])
+	opt.EnableRPCMetrics = cast.ToBool(res["EnableRPCMetrics"])
+	opt.LocalAgentHostPort = cast.ToString(res["LocalAgentHostPort"])
+	opt.LogSpans = cast.ToBool(res["LogSpans"])
+	opt.Param = cast.ToFloat64(res["Param"])
+	opt.PanicOnError = cast.ToBool(res["PanicOnError"])
 	client := opt.Build().Build()
 	trace.SetGlobalTracer(client)
 }

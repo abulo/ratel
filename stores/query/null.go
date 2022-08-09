@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/abulo/ratel/v3/util"
+	"github.com/spf13/cast"
 )
 
 var nullJSON = []byte("null")
@@ -16,7 +17,7 @@ type Nullable interface {
 	IsValid() bool
 }
 
-//NullString 空字符串
+// NullString 空字符串
 type NullString struct {
 	sql.NullString
 }
@@ -70,13 +71,13 @@ func (n NullString) Convert() string {
 	return ""
 }
 
-//NullDate 空字符串
+// NullDate 空字符串
 type NullDateTime struct {
 	sql.NullString
 }
 
 func NewDateTime(s interface{}) NullDateTime {
-	return NullDateTime{sql.NullString{String: util.Date("Y-m-d H:i:s", util.ToTime(s)), Valid: true}}
+	return NullDateTime{sql.NullString{String: util.Date("Y-m-d H:i:s", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
 }
 
 func NewNullDateTime() NullDateTime {
@@ -178,7 +179,7 @@ func (ns NullInt64) Result() interface{} {
 
 func (n NullInt64) Convert() string {
 	if n.Valid {
-		return util.ToString(n.Int64)
+		return cast.ToString(n.Int64)
 	}
 	return ""
 }
@@ -229,7 +230,7 @@ func (ns NullInt32) Result() interface{} {
 
 func (n NullInt32) Convert() string {
 	if n.Valid {
-		return util.ToString(n.Int32)
+		return cast.ToString(n.Int32)
 	}
 	return ""
 }
@@ -280,7 +281,7 @@ func (ns NullFloat64) Result() interface{} {
 
 func (n NullFloat64) Convert() string {
 	if n.Valid {
-		return util.ToString(n.Float64)
+		return cast.ToString(n.Float64)
 	}
 	return ""
 }
@@ -336,21 +337,21 @@ func (ns NullBool) Result() interface{} {
 func (n NullBool) Convert() string {
 	if n.Valid {
 		if n.Bool {
-			return util.ToString("true")
+			return cast.ToString("true")
 		} else {
-			return util.ToString("false")
+			return cast.ToString("false")
 		}
 	}
 	return "false"
 }
 
-//NullDate 空字符串
+// NullDate 空字符串
 type NullDate struct {
 	sql.NullString
 }
 
 func NewDate(s interface{}) NullDate {
-	return NullDate{sql.NullString{String: util.Date("Y-m-d", util.ToTime(s)), Valid: true}}
+	return NullDate{sql.NullString{String: util.Date("Y-m-d", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
 }
 
 func NewNullDate() NullDate {
@@ -406,13 +407,13 @@ func (ns NullDate) Result() interface{} {
 	return "NULL"
 }
 
-//NullTime 空字符串
+// NullTime 空字符串
 type NullTime struct {
 	sql.NullString
 }
 
 func NewTime(s interface{}) NullTime {
-	return NullTime{sql.NullString{String: util.Date("H:i:s", util.ToTime(s)), Valid: true}}
+	return NullTime{sql.NullString{String: util.Date("H:i:s", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
 }
 
 func NewNullTime() NullTime {
@@ -468,13 +469,13 @@ func (ns NullTime) Result() interface{} {
 	return "NULL"
 }
 
-//NullYear 空字符串
+// NullYear 空字符串
 type NullYear struct {
 	sql.NullString
 }
 
 func NewYear(s interface{}) NullYear {
-	return NullYear{sql.NullString{String: util.Date("Y", util.ToTime(s)), Valid: true}}
+	return NullYear{sql.NullString{String: util.Date("Y", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
 }
 
 func NewNullYear() NullYear {
@@ -530,13 +531,13 @@ func (ns NullYear) Result() interface{} {
 	return "NULL"
 }
 
-//NullYear 空字符串
+// NullYear 空字符串
 type NullTimeStamp struct {
 	sql.NullString
 }
 
 func NewTimeStamp(s interface{}) NullTimeStamp {
-	return NullTimeStamp{sql.NullString{String: util.ToString(util.ToTime(s).In(util.GetTimeZone()).Unix()), Valid: true}}
+	return NullTimeStamp{sql.NullString{String: cast.ToString(cast.ToTimeInDefaultLocation(s, util.TimeZone()).Unix()), Valid: true}}
 }
 
 func NewNullTimeStamp() NullTimeStamp {

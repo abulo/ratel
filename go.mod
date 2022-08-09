@@ -39,6 +39,7 @@ require (
 	github.com/prometheus/client_golang v1.13.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/smallnest/weighted v0.0.0-20201102054551-85ac5c79528c
+	github.com/spf13/cast v1.5.0
 	github.com/stretchr/testify v1.8.0
 	github.com/tdewolff/parse/v2 v2.6.2
 	github.com/uber/jaeger-client-go v2.30.0+incompatible

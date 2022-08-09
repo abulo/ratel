@@ -34,12 +34,12 @@ func debugUnaryClientInterceptor(addr string) grpc.UnaryClientInterceptor {
 			prefix = prefix + "(" + remote.Addr.String() + ")"
 		}
 
-		fmt.Printf("%-50s[%s] => %s\n", prefix, time.Now().Format("04:05.000"), "Send: "+method+" | "+util.JsonString(req))
+		fmt.Printf("%-50s[%s] => %s\n", prefix, time.Now().Format("04:05.000"), "Send: "+method+" | "+util.JSONString(req))
 		err := invoker(ctx, method, req, reply, cc, append(opts, grpc.Peer(&p))...)
 		if err != nil {
 			fmt.Printf("%-50s[%s] => %s\n", prefix, time.Now().Format("04:05.000"), "Erro: "+err.Error())
 		} else {
-			fmt.Printf("%-50s[%s] => %s\n", prefix, time.Now().Format("04:05.000"), "Recv: "+util.JsonString(reply))
+			fmt.Printf("%-50s[%s] => %s\n", prefix, time.Now().Format("04:05.000"), "Recv: "+util.JSONString(reply))
 		}
 		return err
 	}
@@ -139,8 +139,8 @@ func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) gr
 					"name":   name,
 					"method": method,
 					"time":   time.Since(beg),
-					"req":    json.RawMessage(util.JsonString(req)),
-					"reply":  json.RawMessage(util.JsonString(reply)),
+					"req":    json.RawMessage(util.JSONString(req)),
+					"reply":  json.RawMessage(util.JSONString(reply)),
 				}).Error("access_unary")
 
 			} else {
@@ -151,8 +151,8 @@ func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) gr
 					"name":   name,
 					"method": method,
 					"time":   time.Since(beg),
-					"req":    json.RawMessage(util.JsonString(req)),
-					"reply":  json.RawMessage(util.JsonString(reply)),
+					"req":    json.RawMessage(util.JSONString(req)),
+					"reply":  json.RawMessage(util.JSONString(reply)),
 				}).Warn("access")
 			}
 			return err
@@ -164,8 +164,8 @@ func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) gr
 					"name":   name,
 					"method": method,
 					"time":   time.Since(beg),
-					"req":    json.RawMessage(util.JsonString(req)),
-					"reply":  json.RawMessage(util.JsonString(reply)),
+					"req":    json.RawMessage(util.JSONString(req)),
+					"reply":  json.RawMessage(util.JSONString(reply)),
 				}).Info("access_unary")
 			}
 		}

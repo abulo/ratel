@@ -1,75 +1,158 @@
 package util
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
-
-	"github.com/pkg/errors"
+	"os"
+	"strings"
 )
 
-// GetLocalIP ...
-func GetLocalIP() (string, error) {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return "", err
-	}
-	for _, addr := range addrs {
-		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String(), nil
+//////////// Network Functions ////////////
+
+// Gethostname gethostname()
+func GetHostName() (string, error) {
+	return os.Hostname()
+}
+
+// Gethostbyname gethostbyname()
+// Get the IPv4 address corresponding to a given Internet host name
+func GetHostByName(hostname string) (string, error) {
+	ips, err := net.LookupIP(hostname)
+	if ips != nil {
+		for _, v := range ips {
+			if v.To4() != nil {
+				return v.String(), nil
 			}
 		}
+		return "", nil
 	}
-	return "", errors.New("unable to determine locla ip")
+	return "", err
 }
 
-// GetLocalIP ...
-func GetLocalMainIP() (string, int, error) {
-	// UDP Connect, no handshake
-	conn, err := net.Dial("udp", "8.8.8.8:8")
-	if err != nil {
-		return "", 0, err
+// Gethostbynamel gethostbynamel()
+// Get a list of IPv4 addresses corresponding to a given Internet host name
+func GetHostByNameL(hostname string) ([]string, error) {
+	ips, err := net.LookupIP(hostname)
+	if ips != nil {
+		var ipstrs []string
+		for _, v := range ips {
+			if v.To4() != nil {
+				ipstrs = append(ipstrs, v.String())
+			}
+		}
+		return ipstrs, nil
 	}
-	defer conn.Close()
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-
-	return localAddr.IP.String(), localAddr.Port, nil
+	return nil, err
 }
 
-// GetMacAddrs ...
-func GetMacAddrs() (macAddrs []string) {
-	netInterfaces, err := net.Interfaces()
-	if err != nil {
-		fmt.Printf("fail to get net interfaces: %v", err)
-		return macAddrs
+// Gethostbyaddr gethostbyaddr()
+// Get the Internet host name corresponding to a given IP address
+func GetHostByAddr(ipAddress string) (string, error) {
+	names, err := net.LookupAddr(ipAddress)
+	if names != nil {
+		return strings.TrimRight(names[0], "."), nil
+	}
+	return "", err
+}
+
+// IP2long ip2long()
+// IPv4
+func IP2long(ipAddress string) uint32 {
+	ip := net.ParseIP(ipAddress)
+	if ip == nil {
+		return 0
+	}
+	return binary.BigEndian.Uint32(ip.To4())
+}
+
+// Long2ip long2ip()
+// IPv4
+func Long2ip(properAddress uint32) string {
+	ipByte := make([]byte, 4)
+	binary.BigEndian.PutUint32(ipByte, properAddress)
+	ip := net.IP(ipByte)
+	return ip.String()
+}
+
+// ExtractIP returns a real ip
+func ExtractIP(addr string) (string, error) {
+	// if addr specified then its returned
+	if len(addr) > 0 && (addr != "0.0.0.0" && addr != "[::]" && addr != "::") {
+		return addr, nil
 	}
 
-	for _, netInterface := range netInterfaces {
-		macAddr := netInterface.HardwareAddr.String()
-		if len(macAddr) == 0 {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return "", fmt.Errorf("Failed to get interfaces! Err: %v", err)
+	}
+
+	var addrs []net.Addr
+	var loAddrs []net.Addr
+	for _, iface := range ifaces {
+		ifaceAddrs, err := iface.Addrs()
+		if err != nil {
+			// ignore error, interface can dissapear from system
+			continue
+		}
+		if iface.Flags&net.FlagLoopback != 0 {
+			loAddrs = append(loAddrs, ifaceAddrs...)
+			continue
+		}
+		addrs = append(addrs, ifaceAddrs...)
+	}
+	addrs = append(addrs, loAddrs...)
+
+	var ipAddr []byte
+	var publicIP []byte
+
+	for _, rawAddr := range addrs {
+		var ip net.IP
+		switch addr := rawAddr.(type) {
+		case *net.IPAddr:
+			ip = addr.IP
+		case *net.IPNet:
+			ip = addr.IP
+		default:
 			continue
 		}
 
-		macAddrs = append(macAddrs, macAddr)
+		if !isPrivateIP(ip.String()) {
+			publicIP = ip
+			continue
+		}
+
+		ipAddr = ip
+		break
 	}
-	return macAddrs
+
+	// return private ip
+	if ipAddr != nil {
+		return net.IP(ipAddr).String(), nil
+	}
+
+	// return public or virtual ip
+	if publicIP != nil {
+		return net.IP(publicIP).String(), nil
+	}
+
+	return "", fmt.Errorf("No IP address found, and explicit IP not provided")
 }
 
-// GetIPs ...
-func GetIPs() (ips []string) {
-	interfaceAddr, err := net.InterfaceAddrs()
-	if err != nil {
-		fmt.Printf("fail to get net interface addrs: %v", err)
-		return ips
-	}
+func isPrivateIP(ipAddr string) bool {
+	var privateBlocks []*net.IPNet
 
-	for _, address := range interfaceAddr {
-		ipNet, isValidIPNet := address.(*net.IPNet)
-		if isValidIPNet && !ipNet.IP.IsLoopback() {
-			if ipNet.IP.To4() != nil {
-				ips = append(ips, ipNet.IP.String())
-			}
+	for _, b := range []string{"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10", "fd00::/8"} {
+		if _, block, err := net.ParseCIDR(b); err == nil {
+			privateBlocks = append(privateBlocks, block)
 		}
 	}
-	return ips
+
+	ip := net.ParseIP(ipAddr)
+	for _, priv := range privateBlocks {
+		if priv.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }

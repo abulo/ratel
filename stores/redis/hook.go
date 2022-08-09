@@ -12,11 +12,11 @@ import (
 	// "github.com/abulo/ratel/v3/metric"
 	"github.com/abulo/ratel/v3/metric"
 	"github.com/abulo/ratel/v3/trace"
-	"github.com/abulo/ratel/v3/util"
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
+	"github.com/spf13/cast"
 )
 
 type OpenTraceHook struct {
@@ -70,11 +70,11 @@ func (op OpenTraceHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error
 		start := ctx.Value("start")
 		cost := time.Since(start.(time.Time))
 		if cmd.Err() != nil {
-			metric.LibHandleCounter.WithLabelValues("redis", util.ToString(op.DB), op.Addr, "ERR").Inc()
+			metric.LibHandleCounter.WithLabelValues("redis", cast.ToString(op.DB), op.Addr, "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("redis", util.ToString(op.DB), op.Addr, "OK")
+			metric.LibHandleCounter.Inc("redis", cast.ToString(op.DB), op.Addr, "OK")
 		}
-		metric.LibHandleHistogram.WithLabelValues("redis", util.ToString(op.DB), op.Addr).Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("redis", cast.ToString(op.DB), op.Addr).Observe(cost.Seconds())
 	}
 
 	return nil
@@ -150,9 +150,9 @@ func (op OpenTraceHook) AfterProcessPipeline(ctx context.Context, cmds []redis.C
 		// if cmds != nil {
 		// metric.LibHandleCounter.WithLabelValues("redis", util.ToString(op.DB), op.Addr, "ERR").Inc()
 		// } else {
-		metric.LibHandleCounter.Inc("redis", util.ToString(op.DB), op.Addr, "OK")
+		metric.LibHandleCounter.Inc("redis", cast.ToString(op.DB), op.Addr, "OK")
 		// }
-		metric.LibHandleHistogram.WithLabelValues("redis", util.ToString(op.DB), op.Addr).Observe(cost.Seconds())
+		metric.LibHandleHistogram.WithLabelValues("redis", cast.ToString(op.DB), op.Addr).Observe(cost.Seconds())
 	}
 	return nil
 }
