@@ -23,6 +23,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// Application ...
 type Application struct {
 	cycle    *cycle.Cycle
 	smu      *sync.RWMutex
@@ -44,12 +45,14 @@ func New(fns ...func() error) (*Application, error) {
 	return app, nil
 }
 
+// DefaultApp ...
 func DefaultApp() *Application {
 	app := &Application{}
 	app.initialize()
 	return app
 }
 
+// Startup ...
 func (app *Application) Startup(fns ...func() error) error {
 	app.initialize()
 	return goroutine.SerialUntilError(fns...)()

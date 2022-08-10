@@ -26,10 +26,12 @@ var EnableDecoderDisallowUnknownFields = false
 
 type jsonBinding struct{}
 
+// Name ...
 func (jsonBinding) Name() string {
 	return "json"
 }
 
+// Bind ...
 func (jsonBinding) Bind(req *http.Request, obj any) error {
 	if req == nil || req.Body == nil {
 		return errors.New("invalid request")
@@ -37,6 +39,7 @@ func (jsonBinding) Bind(req *http.Request, obj any) error {
 	return decodeJSON(req.Body, obj)
 }
 
+// BindBody ...
 func (jsonBinding) BindBody(body []byte, obj any) error {
 	return decodeJSON(bytes.NewReader(body), obj)
 }

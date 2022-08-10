@@ -14,14 +14,17 @@ import (
 
 type yamlBinding struct{}
 
+// Name ...
 func (yamlBinding) Name() string {
 	return "yaml"
 }
 
+// Bind ...
 func (yamlBinding) Bind(req *http.Request, obj any) error {
 	return decodeYAML(req.Body, obj)
 }
 
+// BindBody ...
 func (yamlBinding) BindBody(body []byte, obj any) error {
 	return decodeYAML(bytes.NewReader(body), obj)
 }

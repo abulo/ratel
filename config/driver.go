@@ -58,6 +58,7 @@ func (d *StdDriver) GetEncoder() Encoder {
 	return d.encoder
 }
 
+// JSONAllowComments ...
 var (
 	// JSONAllowComments support write comments on json file.
 	JSONAllowComments = true

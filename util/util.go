@@ -21,28 +21,34 @@ import (
 	"github.com/google/uuid"
 )
 
+// MarshalHTML ...
 func MarshalHTML(v interface{}) template.HTML {
 	a, _ := json.Marshal(v)
 	return template.HTML(a)
 }
 
+// MarshalJS ...
 func MarshalJS(v interface{}) template.JS {
 	a, _ := json.Marshal(v)
 	return template.JS(a)
 }
 
+// JS ...
 func JS(v string) template.JS {
 	return template.JS(v)
 }
 
+// Static ...
 func Static(p, v string) string {
 	return "/" + p + "/" + v
 }
 
+// DomainStatic ...
 func DomainStatic(p, v string) string {
 	return p + "/" + v
 }
 
+// UnescapeString ...
 func UnescapeString(v interface{}) string {
 	a, _ := json.Marshal(v)
 	return html.EscapeString(string(a))
@@ -117,10 +123,13 @@ func FunctionName(i interface{}) string {
 
 type intSlice []int
 
+// Len ...
 func (s intSlice) Len() int { return len(s) }
 
+// Swap ...
 func (s intSlice) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
+// Less ...
 func (s intSlice) Less(i, j int) bool { return s[i] < s[j] }
 
 func equal(a, b []int) bool {
@@ -135,6 +144,7 @@ func equal(a, b []int) bool {
 	return true
 }
 
+// GetMissingElement ...
 func GetMissingElement(arr []int) int {
 	if arr == nil || len(arr) <= 0 {
 		return 1
@@ -156,6 +166,7 @@ func GetMissingElement(arr []int) int {
 	return 1
 }
 
+// NewReplacer ...
 func NewReplacer(endpoint string, values ...interface{}) string {
 	if len(endpoint) < 1 {
 		return endpoint
@@ -185,6 +196,7 @@ func NewReplacer(endpoint string, values ...interface{}) string {
 	return endpoint
 }
 
+// ByteReplace ...
 func ByteReplace(s, old, new []byte, n int) []byte {
 	if n == 0 {
 		return s

@@ -2,6 +2,7 @@ package query
 
 import "time"
 
+// Opt ...
 type Opt struct {
 	MaxLifetime  time.Duration //连接池里面的连接最大存活时长
 	MaxIdleTime  time.Duration //连接池里面的连接最大空闲时长

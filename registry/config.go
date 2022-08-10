@@ -8,21 +8,26 @@ import (
 
 var registryBuilder = make(map[string]Builder)
 
+// Config ...
 type Config map[string]ConfigLab
 
+// ConfigLab ...
 type ConfigLab struct {
 	Kind          string `json:"kind" description:"底层注册器类型, eg: etcdv3, consul"`
 	ConfigKey     string `json:"configKey" description:"底册注册器的配置键"`
 	DeplaySeconds int    `json:"deplaySeconds" description:"延迟注册"`
 }
 
-// default register
+// DefaultRegisterer default register
 var DefaultRegisterer Registry = &Local{}
 
+// Builder ...
 type Builder func(string) Registry
 
+// BuildFunc ...
 type BuildFunc func(string) (Registry, error)
 
+// RegisterBuilder ...
 func RegisterBuilder(kind string, build Builder) {
 	if _, ok := registryBuilder[kind]; ok {
 		log.Panicf("duplicate register registry builder: %s", kind)
@@ -30,16 +35,19 @@ func RegisterBuilder(kind string, build Builder) {
 	registryBuilder[kind] = build
 }
 
+// New ...
 func New() Config {
 	var config Config
 	return config
 }
 
+// Lab ...
 func (config Config) Lab(name string, lab ConfigLab) Config {
 	config["ddd"] = lab
 	return config
 }
 
+// InitDefaultRegister ...
 func (config Config) InitDefaultRegister() {
 	for name, item := range config {
 		var itemKind = item.Kind

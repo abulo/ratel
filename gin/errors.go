@@ -15,6 +15,7 @@ import (
 // ErrorType is an unsigned 64-bit error code as defined in the gin spec.
 type ErrorType uint64
 
+// ErrorTypeBind ...
 const (
 	// ErrorTypeBind is used when Context.Bind() fails.
 	ErrorTypeBind ErrorType = 1 << 63
@@ -140,6 +141,7 @@ func (a errorMsgs) Errors() []string {
 	return errorStrings
 }
 
+// JSON ...
 func (a errorMsgs) JSON() any {
 	switch length := len(a); length {
 	case 0:
@@ -160,6 +162,7 @@ func (a errorMsgs) MarshalJSON() ([]byte, error) {
 	return json.Marshal(a.JSON())
 }
 
+// String ...
 func (a errorMsgs) String() string {
 	if len(a) == 0 {
 		return ""

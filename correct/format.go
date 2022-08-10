@@ -49,6 +49,7 @@ func spaceDashWithHans(in string) (out string) {
 	return out
 }
 
+// Option ...
 type Option interface {
 	Format(text string) string
 }

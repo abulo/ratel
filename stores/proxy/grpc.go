@@ -4,6 +4,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// ProxyGrpc ...
 type ProxyGrpc struct {
 	*grpc.ClientConn
 }
@@ -18,12 +19,12 @@ func (proxy *ProxyGrpc) Store(client *grpc.ClientConn) {
 	proxy.ClientConn = client
 }
 
-// Store 设置组
+// StoreGrpc Store 设置组
 func (proxypool *ProxyPool) StoreGrpc(group string, proxy *ProxyGrpc) {
 	proxypool.m.Store(group, proxy)
 }
 
-// Load 获取分组
+// LoadGrpc Load 获取分组
 func (proxypool *ProxyPool) LoadGrpc(group string) *grpc.ClientConn {
 	if f, ok := proxypool.m.Load(group); ok {
 		return f.(*ProxyGrpc).ClientConn

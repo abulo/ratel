@@ -9,12 +9,14 @@ import (
 	"golang.org/x/image/font"
 )
 
+// FontConfig ...
 type FontConfig struct {
 	Font     *truetype.Font
 	FontSize float64
 	Color    color.Color
 }
 
+// TrueTypeFont ...
 type TrueTypeFont struct {
 	Font *truetype.Font
 }
@@ -30,6 +32,7 @@ func LoadFont(fontFile string) (*TrueTypeFont, error) {
 	return &TrueTypeFont{f}, err
 }
 
+// NewFreeTypeContext ...
 func NewFreeTypeContext() *freetype.Context {
 	return freetype.NewContext()
 }

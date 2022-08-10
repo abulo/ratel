@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// Metrics ...
 type Metrics interface {
 	prometheus.Registerer
 	prometheus.Gatherer
@@ -15,6 +16,7 @@ type Metrics interface {
 	BulkRegister(...prometheus.Collector) error
 }
 
+// TypeHTTP ...
 var (
 	// TypeHTTP ...
 	TypeHTTP = "http"
@@ -40,6 +42,7 @@ var (
 	CodeCacheHit = "hit"
 )
 
+// ServerHandleCounter ...
 var (
 	// ServerHandleCounter ...
 	ServerHandleCounter = CounterVecOpts{

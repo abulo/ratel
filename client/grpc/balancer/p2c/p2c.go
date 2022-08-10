@@ -24,6 +24,7 @@ func init() {
 
 type p2cPickerBuilder struct{}
 
+// Build ...
 func (*p2cPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
 	grpclog.Infof("p2cPickerBuilder: newPicker called with readySCs: %v", info.ReadySCs)
 	if len(info.ReadySCs) == 0 {

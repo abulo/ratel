@@ -48,6 +48,7 @@ func newETCDRegistry(config *Config) (*etcdv3Registry, error) {
 	return reg, nil
 }
 
+// Kind ...
 func (reg *etcdv3Registry) Kind() string { return "etcdv3" }
 
 // RegisterService register service to registry

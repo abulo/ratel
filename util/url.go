@@ -57,12 +57,12 @@ func URLDecode(str string) (string, error) {
 	return url.QueryUnescape(str)
 }
 
-// Rawurlencode rawurlencode()
+// RawURLEncode Rawurlencode rawurlencode()
 func RawURLEncode(str string) string {
 	return strings.Replace(url.QueryEscape(str), "+", "%20", -1)
 }
 
-// Rawurldecode rawurldecode()
+// RawURLDecode Rawurldecode rawurldecode()
 func RawURLDecode(str string) (string, error) {
 	return url.QueryUnescape(strings.Replace(str, "%20", "+", -1))
 }

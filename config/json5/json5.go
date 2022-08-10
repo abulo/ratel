@@ -12,6 +12,7 @@ const NAME = "json5"
 // JSONMarshalIndent if not empty, will use json.MarshalIndent for encode data.
 var JSONMarshalIndent string
 
+// Decoder ...
 var (
 	// Decoder for json
 	Decoder config.Decoder = json5.Unmarshal

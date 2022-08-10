@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Nop registry, used for local development/debugging
+// Local Nop registry, used for local development/debugging
 type Local struct{}
 
 // ListServices ...
@@ -46,5 +46,5 @@ func (n Local) UnregisterService(ctx context.Context, si *server.ServiceInfo) er
 // Close ...
 func (n Local) Close() error { return nil }
 
-// Close ...
+// Kind Close ...
 func (n Local) Kind() string { return "local" }

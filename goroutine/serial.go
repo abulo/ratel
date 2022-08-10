@@ -15,7 +15,7 @@ func SerialWithError(fns ...func() error) func() error {
 	}
 }
 
-// 创建一个迭代器
+// SerialUntilError 创建一个迭代器
 func SerialUntilError(fns ...func() error) func() error {
 	return func() error {
 		for _, fn := range fns {
@@ -28,9 +28,10 @@ func SerialUntilError(fns ...func() error) func() error {
 	}
 }
 
-// 策略注入
+// WhenError 策略注入
 type WhenError int
 
+// ReturnWhenError ...
 var (
 
 	// ReturnWhenError ...

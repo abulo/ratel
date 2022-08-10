@@ -15,6 +15,7 @@ import (
 // EnvGinMode indicates environment name for gin mode.
 const EnvGinMode = "GIN_MODE"
 
+// DebugMode ...
 const (
 	// DebugMode indicates gin mode is debug.
 	DebugMode = "debug"

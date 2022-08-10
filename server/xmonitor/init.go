@@ -7,12 +7,14 @@ import (
 	"runtime/debug"
 )
 
+// DefaultServeMux ...
 var (
 	// DefaultServeMux ...
 	DefaultServeMux = http.NewServeMux()
 	routes          = []string{}
 )
 
+// InitHandle ...
 func (s *Server) InitHandle() {
 	// 获取全部治理路由
 	s.HandleFunc("/routes", func(resp http.ResponseWriter, req *http.Request) {

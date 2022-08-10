@@ -2,6 +2,7 @@ package terminal
 
 import "fmt"
 
+// RedColor ...
 const (
 	RedColor = iota + 31
 	GreenColor

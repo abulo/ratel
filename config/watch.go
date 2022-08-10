@@ -14,15 +14,20 @@ func newWatcher() (*watcher, error) {
 	return fsnotify.NewWatcher()
 }
 
+// WatchConfig ...
 func WatchConfig(suffix string) {
 	dc.WatchConfig(suffix)
 }
 
+// OnConfigChange ...
 func OnConfigChange(run func(in fsnotify.Event)) { dc.OnConfigChange(run) }
+
+// OnConfigChange ...
 func (v *Config) OnConfigChange(run func(in fsnotify.Event)) {
 	v.onConfigChange = run
 }
 
+// ConfigDir ...
 func (c *Config) ConfigDir() []string {
 	dir := make([]string, 0)
 	for _, v := range c.loadedFiles {
@@ -34,7 +39,7 @@ func (c *Config) ConfigDir() []string {
 	return dir
 }
 
-// loadDir
+// WatchConfig loadDir
 func (c *Config) WatchConfig(suffix string) {
 	go func() {
 		watcher, err := newWatcher()

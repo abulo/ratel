@@ -14,6 +14,7 @@ import (
 
 type tomlBinding struct{}
 
+// Name ...
 func (tomlBinding) Name() string {
 	return "toml"
 }
@@ -26,10 +27,12 @@ func decodeToml(r io.Reader, obj any) error {
 	return decoder.Decode(obj)
 }
 
+// Bind ...
 func (tomlBinding) Bind(req *http.Request, obj any) error {
 	return decodeToml(req.Body, obj)
 }
 
+// BindBody ...
 func (tomlBinding) BindBody(body []byte, obj any) error {
 	return decodeToml(bytes.NewReader(body), obj)
 }

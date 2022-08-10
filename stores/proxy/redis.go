@@ -2,6 +2,7 @@ package proxy
 
 import "github.com/abulo/ratel/v3/stores/redis"
 
+// ProxyRedis ...
 type ProxyRedis struct {
 	*redis.Client
 }
@@ -16,12 +17,12 @@ func (proxy *ProxyRedis) Store(client *redis.Client) {
 	proxy.Client = client
 }
 
-// StoreCache 设置组
+// StoreRedis StoreCache 设置组
 func (proxypool *ProxyPool) StoreRedis(group string, proxy *ProxyRedis) {
 	proxypool.m.Store(group, proxy)
 }
 
-// LoadCache 获取分组
+// LoadRedis LoadCache 获取分组
 func (proxypool *ProxyPool) LoadRedis(group string) *redis.Client {
 	if f, ok := proxypool.m.Load(group); ok {
 		return f.(*ProxyRedis).Client

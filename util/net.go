@@ -10,12 +10,12 @@ import (
 
 //////////// Network Functions ////////////
 
-// Gethostname gethostname()
+// GetHostName Gethostname gethostname()
 func GetHostName() (string, error) {
 	return os.Hostname()
 }
 
-// Gethostbyname gethostbyname()
+// GetHostByName Gethostbyname gethostbyname()
 // Get the IPv4 address corresponding to a given Internet host name
 func GetHostByName(hostname string) (string, error) {
 	ips, err := net.LookupIP(hostname)
@@ -30,7 +30,7 @@ func GetHostByName(hostname string) (string, error) {
 	return "", err
 }
 
-// Gethostbynamel gethostbynamel()
+// GetHostByNameL Gethostbynamel gethostbynamel()
 // Get a list of IPv4 addresses corresponding to a given Internet host name
 func GetHostByNameL(hostname string) ([]string, error) {
 	ips, err := net.LookupIP(hostname)
@@ -46,7 +46,7 @@ func GetHostByNameL(hostname string) ([]string, error) {
 	return nil, err
 }
 
-// Gethostbyaddr gethostbyaddr()
+// GetHostByAddr Gethostbyaddr gethostbyaddr()
 // Get the Internet host name corresponding to a given IP address
 func GetHostByAddr(ipAddress string) (string, error) {
 	names, err := net.LookupAddr(ipAddress)

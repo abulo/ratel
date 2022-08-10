@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Entry ...
 type Entry struct {
 	Host      string                 `json:"host"`
 	Timestamp time.Time              `json:"timestamp"`

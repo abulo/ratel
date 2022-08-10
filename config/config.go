@@ -45,7 +45,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-// There are supported config format
+// Ini There are supported config format
 const (
 	Ini  = "ini"
 	Hcl  = "hcl"

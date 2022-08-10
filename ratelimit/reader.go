@@ -17,6 +17,7 @@ func Reader(r io.Reader, bucket *Bucket) io.Reader {
 	}
 }
 
+// Read ...
 func (r *reader) Read(buf []byte) (int, error) {
 	n, err := r.r.Read(buf)
 	if n <= 0 {
@@ -41,6 +42,7 @@ func Writer(w io.Writer, bucket *Bucket) io.Writer {
 	}
 }
 
+// Write ...
 func (w *writer) Write(buf []byte) (int, error) {
 	w.bucket.Wait(int64(len(buf)))
 	return w.w.Write(buf)

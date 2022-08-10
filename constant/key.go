@@ -1,5 +1,6 @@
 package constant
 
+// KeyRouteConfig ...
 const (
 	// KeyRouteConfig ...
 	KeyRouteConfig = "__route_config_"

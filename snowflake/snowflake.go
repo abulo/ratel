@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// StartTimeEnvName ...
 const (
 	//StartTimeEnvName is the env key for ID generating start time
 	StartTimeEnvName = "SNOWFLAKEID_START_TIME"

@@ -39,6 +39,7 @@ func (r *Row) ToMap() (result map[string]string, err error) {
 	return nil, sql.ErrNoRows
 }
 
+// ToInterface ...
 func (r *Row) ToInterface() (result map[string]interface{}, err error) {
 	items, err := r.rs.ToInterface()
 	if err != nil {

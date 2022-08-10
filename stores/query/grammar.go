@@ -152,12 +152,16 @@ func (g Grammar) Select() string {
 
 	return sql
 }
+
+// Insert ...
 func (g Grammar) Insert() string {
 	sql := "INSERT INTO "
 	sql += g.compileTable(false)
 	sql += " " + g.compileInsertValue()
 	return sql
 }
+
+// Replace ...
 func (g Grammar) Replace() string {
 	sql := "REPLACE INTO "
 	sql += g.compileTable(false)
@@ -193,6 +197,8 @@ func (g Grammar) compileInsertValue() string {
 	}
 	return sql
 }
+
+// Delete ...
 func (g Grammar) Delete() string {
 	sql := "DELETE "
 	sql += g.compileTable(true)
@@ -218,6 +224,8 @@ func (g Grammar) compileUpdateValue() string {
 	sql = strings.Trim(sql, ",")
 	return sql
 }
+
+// Update ...
 func (g Grammar) Update() string {
 	sql := "UPDATE "
 	sql += g.compileTable(false)
@@ -231,6 +239,8 @@ func (g Grammar) Update() string {
 	}
 	return sql
 }
+
+// InsertUpdate ...
 func (g Grammar) InsertUpdate() string {
 	old := g.builder.data
 	//insert
@@ -243,6 +253,8 @@ func (g Grammar) InsertUpdate() string {
 	sql += g.compileUpdateValue()
 	return sql
 }
+
+// ToSql ...
 func (g Grammar) ToSql() string {
 	g.method = strings.ToUpper(g.method)
 	switch g.method {

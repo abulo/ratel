@@ -7,6 +7,7 @@ import (
 	"github.com/gookit/ini/v2/dotenv"
 )
 
+// UpperEnvKey ...
 var (
 	// UpperEnvKey change key to upper on set ENV
 	UpperEnvKey = true

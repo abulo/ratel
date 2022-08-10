@@ -8,10 +8,12 @@ import (
 
 type headerBinding struct{}
 
+// Name ...
 func (headerBinding) Name() string {
 	return "header"
 }
 
+// Bind ...
 func (headerBinding) Bind(req *http.Request, obj any) error {
 
 	if err := mapHeader(obj, req.Header); err != nil {
@@ -29,6 +31,7 @@ type headerSource map[string][]string
 
 var _ setter = headerSource(nil)
 
+// TrySet ...
 func (hs headerSource) TrySet(value reflect.Value, field reflect.StructField, tagValue string, opt setOptions) (bool, error) {
 	return setByForm(value, field, hs, textproto.CanonicalMIMEHeaderKey(tagValue), opt)
 }

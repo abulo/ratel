@@ -1145,6 +1145,7 @@ func (r *Client) Set(ctx context.Context, key string, value interface{}, expirat
 	return res
 }
 
+// SetEX ...
 func (r *Client) SetEX(ctx context.Context, key string, value interface{}, expiration time.Duration) (res *redis.StatusCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()

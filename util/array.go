@@ -279,7 +279,7 @@ func InMultiArray(haystack interface{}, needle ...interface{}) bool {
 	return false
 }
 
-// 判断二维数组里面是不是只有一条数据
+// MultiArray 判断二维数组里面是不是只有一条数据
 func MultiArray(haystack interface{}) bool {
 	val := reflect.ValueOf(haystack)
 	switch val.Kind() {
@@ -293,6 +293,7 @@ func MultiArray(haystack interface{}) bool {
 	return false
 }
 
+// InterfaceToString ...
 func InterfaceToString(data []interface{}) (s []string) {
 	for _, v := range data {
 		s = append(s, fmt.Sprintf("%v", v))
@@ -300,7 +301,7 @@ func InterfaceToString(data []interface{}) (s []string) {
 	return s
 }
 
-// 分割字符串 p 字符串, split 分隔符 , space 是否需要保留文字中的空格
+// SplitString 分割字符串 p 字符串, split 分隔符 , space 是否需要保留文字中的空格
 func SplitString(p, split string, space bool) string {
 	var res string
 	for _, c := range p {
@@ -336,6 +337,7 @@ func SplitString(p, split string, space bool) string {
 	return Implode(split, data)
 }
 
+// ArrayPluck ...
 func ArrayPluck(data []map[string]string, value string) []string {
 	res := make([]string, 0)
 	for _, v := range data {
@@ -362,6 +364,7 @@ func ArrayRemoveRepeatedElement(arr []string) (newArr []string) {
 	return
 }
 
+// ArrayKeyPluck ...
 func ArrayKeyPluck(data []map[string]string, value, key string) map[string]string {
 	res := make(map[string]string, 0)
 	for _, v := range data {
@@ -370,6 +373,7 @@ func ArrayKeyPluck(data []map[string]string, value, key string) map[string]strin
 	return res
 }
 
+// ArrayMultiPluck ...
 func ArrayMultiPluck(data []map[string]string, key string) map[string]map[string]string {
 	res := make(map[string]map[string]string)
 	for _, v := range data {
@@ -385,6 +389,7 @@ func jsonStringToObject(s string, v interface{}) error {
 	return json.Unmarshal(data, v)
 }
 
+// AryMapStringToAryMapInterface ...
 func AryMapStringToAryMapInterface(d []map[string]string) []map[string]interface{} {
 	data := make([]map[string]interface{}, 0)
 	for _, v := range d {
@@ -393,6 +398,7 @@ func AryMapStringToAryMapInterface(d []map[string]string) []map[string]interface
 	return data
 }
 
+// MapStringToMapInterface ...
 func MapStringToMapInterface(d map[string]string) map[string]interface{} {
 	data := make(map[string]interface{}, 0)
 
@@ -402,6 +408,7 @@ func MapStringToMapInterface(d map[string]string) map[string]interface{} {
 	return data
 }
 
+// AryMapInterfaceToAryMapString ...
 func AryMapInterfaceToAryMapString(d []map[string]interface{}) []map[string]string {
 	data := make([]map[string]string, 0)
 	for _, v := range d {
@@ -410,6 +417,7 @@ func AryMapInterfaceToAryMapString(d []map[string]interface{}) []map[string]stri
 	return data
 }
 
+// MapInterfaceToMapString ...
 func MapInterfaceToMapString(d map[string]interface{}) map[string]string {
 	data := make(map[string]string, 0)
 
@@ -419,6 +427,7 @@ func MapInterfaceToMapString(d map[string]interface{}) map[string]string {
 	return data
 }
 
+// ArgStringToAryInterface ...
 func ArgStringToAryInterface(d []string) []interface{} {
 	data := make([]interface{}, 0)
 	for _, v := range d {
@@ -427,6 +436,7 @@ func ArgStringToAryInterface(d []string) []interface{} {
 	return data
 }
 
+// AryInterfaceToArgString ...
 func AryInterfaceToArgString(d []interface{}) []string {
 	data := make([]string, 0)
 	for _, v := range d {
@@ -435,6 +445,7 @@ func AryInterfaceToArgString(d []interface{}) []string {
 	return data
 }
 
+// InterfaceToAryMapStringInterface ...
 func InterfaceToAryMapStringInterface(in interface{}) []map[string]interface{} {
 	data := make([]map[string]interface{}, 0)
 	newData := in.([]interface{})
@@ -444,6 +455,7 @@ func InterfaceToAryMapStringInterface(in interface{}) []map[string]interface{} {
 	return data
 }
 
+// InterfaceToAryMapStringString ...
 func InterfaceToAryMapStringString(in interface{}) []map[string]string {
 	data := make([]map[string]string, 0)
 	newData := in.([]interface{})

@@ -9,13 +9,14 @@ import (
 	"github.com/abulo/ratel/v3/stores/redis"
 )
 
+// Session ...
 type Session struct {
 	Driver *redis.Client
 	Name   string
 	TTL    int64 // seconds
 }
 
-// https://laravel.com/docs/5.8/session
+// Put https://laravel.com/docs/5.8/session
 // Pushing To Array Session Values
 // session.Put('user.teams', 'developers');  => {user: {teams: "developer"}}
 func (this *Session) Put(ctx context.Context, key string, value interface{}) error {
@@ -55,7 +56,7 @@ func (this *Session) Put(ctx context.Context, key string, value interface{}) err
 	return nil
 }
 
-// s.Get
+// Get s.Get
 func (this *Session) Get(ctx context.Context, key string) interface{} {
 	var h = this.Driver
 	var m map[string]interface{}
@@ -76,6 +77,7 @@ func (this *Session) Get(ctx context.Context, key string) interface{} {
 	return getSliceMap(m, keys)
 }
 
+// Remove ...
 func (this *Session) Remove(ctx context.Context, key string) {
 	var h = this.Driver
 	var m map[string]interface{}

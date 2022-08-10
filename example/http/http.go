@@ -43,10 +43,12 @@ func init() {
 	global.InitTrace()
 }
 
+// Engine ...
 type Engine struct {
 	app.Application
 }
 
+// NewEngine ...
 func NewEngine() *Engine {
 	eng := &Engine{}
 
@@ -61,6 +63,7 @@ func NewEngine() *Engine {
 	return eng
 }
 
+// GrpcClient ...
 func (eng *Engine) GrpcClient() error {
 	etcd := etcdv3.New()
 	etcd.Endpoints = []string{"172.18.1.13:2379"}
@@ -71,6 +74,7 @@ func (eng *Engine) GrpcClient() error {
 	return nil
 }
 
+// HttpServer ...
 func (eng *Engine) HttpServer() error {
 	client := xgin.New()
 	client.Host = "172.18.1.5"
@@ -97,6 +101,8 @@ func (eng *Engine) HttpServer() error {
 	}
 	return eng.Serve(server)
 }
+
+// Route ...
 func Route(ctx *gin.Engine) {
 
 	ctx.GET("/index", "index", index)

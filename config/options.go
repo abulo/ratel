@@ -2,7 +2,7 @@ package config
 
 import "github.com/mitchellh/mapstructure"
 
-// there are some event names for config data changed.
+// OnSetValue there are some event names for config data changed.
 const (
 	OnSetValue  = "set.value"
 	OnSetData   = "set.data"

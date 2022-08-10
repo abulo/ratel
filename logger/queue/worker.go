@@ -22,7 +22,7 @@ type worker struct {
 	quit    chan struct{}
 }
 
-// 开始这个worker
+// Start 开始这个worker
 func (w *worker) Start() {
 	w.pool <- w.jobChan
 	go w.dispatcher()
@@ -44,7 +44,7 @@ func (w *worker) dispatcher() {
 	}
 }
 
-// 停止 这个worker
+// Stop 停止 这个worker
 func (w *worker) Stop() {
 	close(w.quit)
 }

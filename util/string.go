@@ -40,7 +40,7 @@ func StrTrim(str string) string {
 	return strings.TrimSpace(str)
 }
 
-// Strpos strpos()
+// StrPos Strpos strpos()
 func StrPos(haystack, needle string, offset int) int {
 	length := len(haystack)
 	if length == 0 || offset > length || -offset > length {
@@ -57,7 +57,7 @@ func StrPos(haystack, needle string, offset int) int {
 	return pos + offset
 }
 
-// Stripos stripos()
+// StrIPos Stripos stripos()
 func StrIPos(haystack, needle string, offset int) int {
 	length := len(haystack)
 	if length == 0 || offset > length || -offset > length {
@@ -75,7 +75,7 @@ func StrIPos(haystack, needle string, offset int) int {
 	return pos + offset
 }
 
-// Strrpos strrpos()
+// StrRPos Strrpos strrpos()
 func StrRPos(haystack, needle string, offset int) int {
 	pos, length := 0, len(haystack)
 	if length == 0 || offset > length || -offset > length {
@@ -94,7 +94,7 @@ func StrRPos(haystack, needle string, offset int) int {
 	return pos
 }
 
-// Strripos strripos()
+// StrRIPos Strripos strripos()
 func StrRIPos(haystack, needle string, offset int) int {
 	pos, length := 0, len(haystack)
 	if length == 0 || offset > length || -offset > length {
@@ -118,17 +118,17 @@ func StrReplace(search, replace, subject string, count int) string {
 	return strings.Replace(subject, search, replace, count)
 }
 
-// Strtoupper strtoupper()
+// StrToUpper Strtoupper strtoupper()
 func StrToUpper(str string) string {
 	return strings.ToUpper(str)
 }
 
-// Strtolower strtolower()
+// StrToLower Strtolower strtolower()
 func StrToLower(str string) string {
 	return strings.ToLower(str)
 }
 
-// Ucfirst ucfirst()
+// UCfirst Ucfirst ucfirst()
 func UCfirst(str string) string {
 	for _, v := range str {
 		u := string(unicode.ToUpper(v))
@@ -137,7 +137,7 @@ func UCfirst(str string) string {
 	return ""
 }
 
-// Lcfirst lcfirst()
+// LCFirst Lcfirst lcfirst()
 func LCFirst(str string) string {
 	for _, v := range str {
 		u := string(unicode.ToLower(v))
@@ -146,13 +146,13 @@ func LCFirst(str string) string {
 	return ""
 }
 
-// Ucwords ucwords()
+// UCWords Ucwords ucwords()
 func UCWords(str string) string {
 	caser := cases.Title(language.English)
 	return caser.String(str)
 }
 
-// Substr substr()
+// SubStr Substr substr()
 func SubStr(str string, start uint, length int) string {
 	if start < 0 || length < -1 {
 		return str
@@ -170,7 +170,7 @@ func SubStr(str string, start uint, length int) string {
 	return str[start:end]
 }
 
-// Strrev strrev()
+// StrRev Strrev strrev()
 func StrRev(str string) string {
 	runes := []rune(str)
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
@@ -402,7 +402,7 @@ func StrWordCount(str string) []string {
 	return strings.Fields(str)
 }
 
-// Wordwrap wordwrap()
+// WordWrap Wordwrap wordwrap()
 func WordWrap(str string, width uint, br string, cut bool) string {
 	strlen := len(str)
 	brlen := len(br)
@@ -452,12 +452,12 @@ func WordWrap(str string, width uint, br string, cut bool) string {
 	return string(ns)
 }
 
-// Strlen strlen()
+// StrLen Strlen strlen()
 func StrLen(str string) int {
 	return len(str)
 }
 
-// MbStrlen mb_strlen()
+// MbStrLen MbStrlen mb_strlen()
 func MbStrLen(str string) int {
 	return utf8.RuneCountInString(str)
 }
@@ -467,7 +467,7 @@ func StrRepeat(input string, multiplier int) string {
 	return strings.Repeat(input, multiplier)
 }
 
-// Strstr strstr()
+// StrStr Strstr strstr()
 func StrStr(haystack string, needle string) string {
 	if needle == "" {
 		return ""
@@ -479,7 +479,7 @@ func StrStr(haystack string, needle string) string {
 	return haystack[idx+len([]byte(needle))-1:]
 }
 
-// Strtr strtr()
+// StrTr Strtr strtr()
 //
 // If the parameter length is 1, type is: map[string]string
 // Strtr("baab", map[string]string{"ab": "01"}) will return "ba01"
@@ -564,7 +564,7 @@ func Trim(str string, characterMask ...string) string {
 	return strings.Trim(str, characterMask[0])
 }
 
-// Ltrim ltrim()
+// LTrim Ltrim ltrim()
 func LTrim(str string, characterMask ...string) string {
 	if len(characterMask) == 0 {
 		return strings.TrimLeftFunc(str, unicode.IsSpace)
@@ -572,7 +572,7 @@ func LTrim(str string, characterMask ...string) string {
 	return strings.TrimLeft(str, characterMask[0])
 }
 
-// Rtrim rtrim()
+// RTrim Rtrim rtrim()
 func RTrim(str string, characterMask ...string) string {
 	if len(characterMask) == 0 {
 		return strings.TrimRightFunc(str, unicode.IsSpace)
@@ -639,12 +639,13 @@ func JSONEncode(val interface{}) ([]byte, error) {
 	return json.Marshal(val)
 }
 
+// JSONString ...
 func JSONString(obj interface{}) string {
 	aa, _ := json.Marshal(obj)
 	return string(aa)
 }
 
-// Addslashes addslashes()
+// AddSlashes Addslashes addslashes()
 func AddSlashes(str string) string {
 	var buf bytes.Buffer
 	for _, char := range str {
@@ -657,7 +658,7 @@ func AddSlashes(str string) string {
 	return buf.String()
 }
 
-// Stripslashes stripslashes()
+// StripSlashes Stripslashes stripslashes()
 func StripSlashes(str string) string {
 	var buf bytes.Buffer
 	l, skip := len(str), false
@@ -675,7 +676,7 @@ func StripSlashes(str string) string {
 	return buf.String()
 }
 
-// Quotemeta quotemeta()
+// QuoteMeta Quotemeta quotemeta()
 func QuoteMeta(str string) string {
 	var buf bytes.Buffer
 	for _, char := range str {
@@ -688,7 +689,7 @@ func QuoteMeta(str string) string {
 	return buf.String()
 }
 
-// Htmlentities htmlentities()
+// HtmlEntities Htmlentities htmlentities()
 func HtmlEntities(str string) string {
 	return html.EscapeString(str)
 }

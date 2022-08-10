@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cast"
 )
 
+// Initial ...
 type Initial struct {
 	Path       string           // 应用程序执行路径
 	Config     *config.Config   // 配置文件
@@ -28,7 +29,7 @@ type Initial struct {
 	LaunchTime time.Time        //时间设置
 }
 
-// 系统
+// Core 系统
 var Core *Initial
 
 // Default returns an Initial instance.
@@ -37,6 +38,7 @@ func Default() *Initial {
 	return engine
 }
 
+// New ...
 func New() *Initial {
 	Core = &Initial{
 		Store: proxy.NewProxyPool(),
@@ -58,6 +60,7 @@ func (initial *Initial) InitPath(path string) *Initial {
 	return initial
 }
 
+// GetEnvironment ...
 func (initial *Initial) GetEnvironment(dir, key string) string {
 	envConfig := config.NewWithOptions("go-ratel-evn", config.Readonly, config.EnableCache)
 	driver := toml.Driver
@@ -376,6 +379,7 @@ func (initial *Initial) InitRedis() *Initial {
 	return initial
 }
 
+// InitTrace ...
 func (initial *Initial) InitTrace() {
 	opt := jaeger.NewJaeger()
 	conf := initial.Config.Get("trace")

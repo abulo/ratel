@@ -21,6 +21,7 @@ var (
 	appPodName  string
 )
 
+// InitEnv ...
 func InitEnv() {
 	appID = os.Getenv(constant.EnvAppID)
 	appMode = os.Getenv(constant.EnvAppMode)
@@ -35,42 +36,52 @@ func InitEnv() {
 	appPodName = os.Getenv(constant.EnvPOD_NAME)
 }
 
+// AppMode ...
 func AppMode() string {
 	return appMode
 }
 
+// SetAppMode ...
 func SetAppMode(mode string) {
 	appMode = mode
 }
 
+// AppRegion ...
 func AppRegion() string {
 	return appRegion
 }
 
+// SetAppRegion ...
 func SetAppRegion(region string) {
 	appRegion = region
 }
 
+// AppZone ...
 func AppZone() string {
 	return appZone
 }
 
+// SetAppZone ...
 func SetAppZone(zone string) {
 	appZone = zone
 }
 
+// AppHost ...
 func AppHost() string {
 	return appHost
 }
 
+// SetAppHost ...
 func SetAppHost(host string) {
 	appHost = host
 }
 
+// AppInstance ...
 func AppInstance() string {
 	return appInstance
 }
 
+// SetAppInstance ...
 func SetAppInstance(instance string) {
 	appInstance = instance
 }
@@ -136,12 +147,12 @@ func SetAppID(s string) {
 	appID = s
 }
 
-// AppVersion get buildAppVersion
+// BuildVersion AppVersion get buildAppVersion
 func BuildVersion() string {
 	return buildVersion
 }
 
-// SetAppVersion set buildVersion
+// SetBuildVersion SetAppVersion set buildVersion
 func SetBuildVersion(s string) {
 	buildVersion = s
 }

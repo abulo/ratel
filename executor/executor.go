@@ -11,7 +11,7 @@ import (
 // 全局执行器存储
 var _instances = sync.Map{}
 
-// 执行器接口
+// Executor 执行器接口
 type Executor interface {
 	GetAddress() string   // 执行性标识
 	RegXJob(jobs ...XJob) // 注册执行器任务
@@ -26,7 +26,7 @@ type XJob interface {
 	GetJobName() string
 }
 
-// 触发任务请求参数
+// RunReq 触发任务请求参数
 type RunReq struct {
 	JobID                 int64  `json:"jobId"`                 // 任务ID
 	ExecutorHandler       string `json:"executorHandler"`       // 任务标识
@@ -42,7 +42,7 @@ type RunReq struct {
 	BroadcastTotal        int64  `json:"broadcastTotal"`        // 分片参数：总分片
 }
 
-// 注册执行器到ratel
+// Register 注册执行器到ratel
 func Register(address string, e Executor) {
 	if _, ok := _instances.Load(address); ok {
 		panic("duplicate executor address " + address)

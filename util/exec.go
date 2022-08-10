@@ -130,7 +130,7 @@ func System(command string, returnVar *int) string {
 	return ""
 }
 
-// Passthru passthru()
+// PassThru Passthru passthru()
 // returnVar, 0: succ; 1: fail
 func PassThru(command string, returnVar *int) {
 	q := rune(0)

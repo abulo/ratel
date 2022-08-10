@@ -18,10 +18,12 @@ import (
 	"golang.org/x/image/font"
 )
 
+// DefaultDPI ...
 const (
 	DefaultDPI = 72
 )
 
+// Image ...
 type Image struct {
 	src image.Image
 }
@@ -77,6 +79,7 @@ func (img *Image) GetSource() image.Image {
 	return img.src
 }
 
+// SetSource ...
 func (img *Image) SetSource(src image.Image) *Image {
 	img.src = src
 	return img
@@ -87,7 +90,7 @@ func (img *Image) Width() int {
 	return img.src.Bounds().Size().X
 }
 
-// Width 获取文件的高度
+// Height Width 获取文件的高度
 func (img *Image) Height() int {
 	// img.src.Decode
 	return img.src.Bounds().Size().Y
@@ -350,6 +353,7 @@ func (img *Image) Overlay(top *Image, pos image.Point, opacity float64) *Image {
 	return img
 }
 
+// AddWaterMark ...
 func (img *Image) AddWaterMark(watermark *Image, anchor imaging.Anchor, marginX int, marginY int, opacity float64) *Image {
 	pot := CalculatePt(img.src.Bounds().Size(), watermark.GetSource().Bounds().Size(), anchor, marginX, marginY)
 	// render watermark.
@@ -357,7 +361,7 @@ func (img *Image) AddWaterMark(watermark *Image, anchor imaging.Anchor, marginX 
 	return img
 }
 
-// JPEGQuality compressions jpeg without change the image size.
+// Compress JPEGQuality compressions jpeg without change the image size.
 //
 // Quality ranges from 1 to 100 inclusive, higher is better.
 //
@@ -489,7 +493,7 @@ func CalculatePt(targetSize image.Point,
 	}
 }
 
-// CalculatePt calculates point according to the given point.
+// CalculatePt2 CalculatePt calculates point according to the given point.
 func CalculatePt2(targetSize image.Point,
 	watermark image.Point,
 	anchor imaging.Anchor,

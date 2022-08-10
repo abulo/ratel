@@ -9,6 +9,7 @@ import (
 
 var parser = jsoniter.ConfigCompatibleWithStandardLibrary
 
+// Decoder ...
 var (
 	// Decoder for json
 	Decoder config.Decoder = func(data []byte, v interface{}) (err error) {

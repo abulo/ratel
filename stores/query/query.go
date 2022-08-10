@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// BETWEEN ...
 const (
 	BETWEEN    = "BETWEEN"
 	NOTBETWEEN = "NOT BETWEEN"
@@ -245,6 +246,7 @@ func (query *QueryBuilder) Join(tablename string, on string) *QueryBuilder {
 	return query
 }
 
+// InnerJoin ...
 func (query *QueryBuilder) InnerJoin(tablename string, on string) *QueryBuilder {
 	query.joins = append(query.joins, join{table: tablename, on: on, operator: INNERJOIN})
 	return query
@@ -491,6 +493,7 @@ func (b *QueryBuilder) getInsertMap(data interface{}) (columns []string, values 
 	return
 }
 
+// IsZero ...
 func (query *QueryBuilder) IsZero(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Bool:

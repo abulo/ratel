@@ -1,5 +1,6 @@
 package mysql2struct
 
+// Column ...
 type Column struct {
 	ColumnName    string `db:"COLUMN_NAME"`
 	IsNullable    string `db:"IS_NULLABLE"`

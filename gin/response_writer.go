@@ -57,6 +57,7 @@ func (w *responseWriter) reset(writer http.ResponseWriter) {
 	w.status = defaultStatus
 }
 
+// WriteHeader ...
 func (w *responseWriter) WriteHeader(code int) {
 	if code > 0 && w.status != code {
 		if w.Written() {
@@ -66,6 +67,7 @@ func (w *responseWriter) WriteHeader(code int) {
 	}
 }
 
+// WriteHeaderNow ...
 func (w *responseWriter) WriteHeaderNow() {
 	if !w.Written() {
 		w.size = 0
@@ -73,6 +75,7 @@ func (w *responseWriter) WriteHeaderNow() {
 	}
 }
 
+// Write ...
 func (w *responseWriter) Write(data []byte) (n int, err error) {
 	w.WriteHeaderNow()
 	n, err = w.ResponseWriter.Write(data)
@@ -80,6 +83,7 @@ func (w *responseWriter) Write(data []byte) (n int, err error) {
 	return
 }
 
+// WriteString ...
 func (w *responseWriter) WriteString(s string) (n int, err error) {
 	w.WriteHeaderNow()
 	n, err = io.WriteString(w.ResponseWriter, s)
@@ -87,14 +91,17 @@ func (w *responseWriter) WriteString(s string) (n int, err error) {
 	return
 }
 
+// Status ...
 func (w *responseWriter) Status() int {
 	return w.status
 }
 
+// Size ...
 func (w *responseWriter) Size() int {
 	return w.size
 }
 
+// Written ...
 func (w *responseWriter) Written() bool {
 	return w.size != noWritten
 }
@@ -118,6 +125,7 @@ func (w *responseWriter) Flush() {
 	w.ResponseWriter.(http.Flusher).Flush()
 }
 
+// Pusher ...
 func (w *responseWriter) Pusher() (pusher http.Pusher) {
 	if pusher, ok := w.ResponseWriter.(http.Pusher); ok {
 		return pusher

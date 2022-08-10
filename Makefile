@@ -2,6 +2,7 @@ PROJECT_NAME := "ratel"
 PKG := "github.com/abulo/ratel/v3"
 PKG_LIST := $(shell go list ${PKG}/... | grep -v 'history')
 GO_FILES := $(shell find . -name '*.go' | grep -v 'vendor' | grep -v 'history'| grep -v _test.go)
+DIRS := $(shell ls -d */ | grep -v 'vendor/')
 .DEFAULT_GOAL := default
 .PHONY: all test lint fmt fmtcheck cmt errcheck license
 
@@ -21,9 +22,11 @@ lint:  ## lint check
 	@revive -formatter stylish ./...
 
 ########################################################
-cmt: ## auto comment exported Function
-	@hash gocmt 2>&- || go install github.com/Gnouc/gocmt@latest
-	@gocmt -d ./... -i
+cmt: ## auto comment exported Function   gocmt -d ${PWD} -i
+	@hash gocmt 2>&- || go install github.com/cuonglm/gocmt@latest
+	@set -e; for dir in ${DIRS}; do \
+	gocmt -d $${dir} -i;\
+	done
 
 ########################################################
 errcheck: ## check error
@@ -48,7 +51,7 @@ dep: ## Get the dependencies
 
 ########################################################
 version: ## Print git revision info
-	@echo $(expr substr $(git rev-parse HEAD) 1 8)
+	@git rev-parse HEAD
 
 help: ## Display this help screen
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

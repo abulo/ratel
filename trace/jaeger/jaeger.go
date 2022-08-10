@@ -14,6 +14,7 @@ import (
 	jaegerConfig "github.com/uber/jaeger-client-go/config"
 )
 
+// JConfig ...
 type JConfig struct {
 
 	// 	[jaeger]
@@ -31,10 +32,12 @@ type JConfig struct {
 	PanicOnError       bool
 }
 
+// NewJaeger ...
 func NewJaeger() *JConfig {
 	return &JConfig{}
 }
 
+// Build ...
 func (jConfig *JConfig) Build() *Config {
 	agentAddr := "127.0.0.1:6831"
 	headerName := "x-trace-id"

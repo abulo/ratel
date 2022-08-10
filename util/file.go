@@ -17,7 +17,7 @@ func Stat(filename string) (os.FileInfo, error) {
 	return os.Stat(filename)
 }
 
-// Pathinfo pathinfo()
+// PathInfo Pathinfo pathinfo()
 // -1: all; 1: dirname; 2: basename; 4: extension; 8: filename
 // Usage:
 // Pathinfo("/home/go/path/src/php2go/php2go.go", 1|2|4|8)
@@ -175,18 +175,18 @@ func Mkdir(filename string, mode os.FileMode) error {
 	return os.Mkdir(filename, mode)
 }
 
-// Getcwd getcwd()
+// GetCwd Getcwd getcwd()
 func GetCwd() (string, error) {
 	dir, err := os.Getwd()
 	return dir, err
 }
 
-// Realpath realpath()
+// RealPath Realpath realpath()
 func RealPath(path string) (string, error) {
 	return filepath.Abs(path)
 }
 
-// Basename basename()
+// BaseName Basename basename()
 func BaseName(path string) string {
 	return filepath.Base(path)
 }
@@ -206,7 +206,7 @@ func Fclose(handle *os.File) error {
 	return handle.Close()
 }
 
-// Filemtime filemtime()
+// FileMTime Filemtime filemtime()
 func FileMTime(filename string) (int64, error) {
 	fd, err := os.Open(filename)
 	if err != nil {
@@ -220,7 +220,7 @@ func FileMTime(filename string) (int64, error) {
 	return fileinfo.ModTime().Unix(), nil
 }
 
-// Fgetcsv fgetcsv()
+// FGetCsv Fgetcsv fgetcsv()
 func FGetCsv(handle *os.File, length int, delimiter rune) ([][]string, error) {
 	reader := csv.NewReader(handle)
 	reader.Comma = delimiter

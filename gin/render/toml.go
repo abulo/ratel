@@ -15,6 +15,7 @@ type TOML struct {
 	Data any
 }
 
+// TOMLContentType ...
 var TOMLContentType = []string{"application/toml; charset=utf-8"}
 
 // Render (TOML) marshals the given interface object and writes data with custom ContentType.

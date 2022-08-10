@@ -17,6 +17,7 @@ type Config struct {
 	ServiceTTL time.Duration
 }
 
+// New ...
 func New() *Config {
 	return &Config{
 		Config:      etcdv3.New(),
@@ -31,6 +32,7 @@ func (config Config) Build() (registry.Registry, error) {
 	return newETCDRegistry(&config)
 }
 
+// MustBuild ...
 func (config Config) MustBuild() registry.Registry {
 	reg, err := config.Build()
 	if err != nil {

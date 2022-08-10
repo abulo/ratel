@@ -10,6 +10,7 @@ import (
 
 const driverName = "other"
 
+// Encoder ...
 var (
 	// Encoder is the encoder for this driver
 	Encoder = ini.Encoder

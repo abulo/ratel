@@ -1,5 +1,6 @@
 package mysql2struct
 
+// DataTypeMap ...
 var DataTypeMap = map[string][]string{
 	//整型
 	"TINYINT":   {"int64", "query.NullInt64"},

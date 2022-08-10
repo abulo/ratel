@@ -12,6 +12,8 @@ import (
 	"github.com/abulo/ratel/v3/stores/query"
 )
 
+// MysqlToStruct ...
+//
 //	 db		sql链接
 //	 DbName  数据库名称
 //		outputDir: "输出目录",
@@ -98,7 +100,7 @@ func queryTables(db *query.QueryDb, DbName string) ([]Table, error) {
 	return tables, err
 }
 
-// 下划线转驼峰
+// CamelStr 下划线转驼峰
 func CamelStr(name string) string {
 	name = strings.Replace(name, "_", " ", -1)
 	name = strings.Title(name)

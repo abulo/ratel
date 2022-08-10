@@ -21,6 +21,7 @@ type leastLoaded struct {
 	rand  *rand.Rand
 }
 
+// New ...
 func New() basep2c.P2c {
 	return &leastLoaded{
 		items: make([]*leastLoadedNode, 0),
@@ -28,10 +29,12 @@ func New() basep2c.P2c {
 	}
 }
 
+// Add ...
 func (p *leastLoaded) Add(item interface{}) {
 	p.items = append(p.items, &leastLoadedNode{item: item})
 }
 
+// Next ...
 func (p *leastLoaded) Next() (interface{}, func(balancer.DoneInfo)) {
 	var sc, backsc *leastLoadedNode
 

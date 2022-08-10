@@ -17,14 +17,17 @@ import (
 
 type msgpackBinding struct{}
 
+// Name ...
 func (msgpackBinding) Name() string {
 	return "msgpack"
 }
 
+// Bind ...
 func (msgpackBinding) Bind(req *http.Request, obj any) error {
 	return decodeMsgPack(req.Body, obj)
 }
 
+// BindBody ...
 func (msgpackBinding) BindBody(body []byte, obj any) error {
 	return decodeMsgPack(bytes.NewReader(body), obj)
 }

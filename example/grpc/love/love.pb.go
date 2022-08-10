@@ -20,7 +20,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// 请求
+// Request 请求
 type Request struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -29,6 +29,7 @@ type Request struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
+// Reset ...
 func (x *Request) Reset() {
 	*x = Request{}
 	if protoimpl.UnsafeEnabled {
@@ -38,12 +39,15 @@ func (x *Request) Reset() {
 	}
 }
 
+// String ...
 func (x *Request) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
+// ProtoMessage ...
 func (*Request) ProtoMessage() {}
 
+// ProtoReflect ...
 func (x *Request) ProtoReflect() protoreflect.Message {
 	mi := &file_love_love_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
@@ -56,11 +60,12 @@ func (x *Request) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Request.ProtoReflect.Descriptor instead.
+// Descriptor Deprecated: Use Request.ProtoReflect.Descriptor instead.
 func (*Request) Descriptor() ([]byte, []int) {
 	return file_love_love_proto_rawDescGZIP(), []int{0}
 }
 
+// GetName ...
 func (x *Request) GetName() string {
 	if x != nil {
 		return x.Name
@@ -68,7 +73,7 @@ func (x *Request) GetName() string {
 	return ""
 }
 
-// 响应
+// Response 响应
 type Response struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -77,6 +82,7 @@ type Response struct {
 	Result string `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
 }
 
+// Reset ...
 func (x *Response) Reset() {
 	*x = Response{}
 	if protoimpl.UnsafeEnabled {
@@ -86,12 +92,15 @@ func (x *Response) Reset() {
 	}
 }
 
+// String ...
 func (x *Response) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
+// ProtoMessage ...
 func (*Response) ProtoMessage() {}
 
+// ProtoReflect ...
 func (x *Response) ProtoReflect() protoreflect.Message {
 	mi := &file_love_love_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
@@ -104,11 +113,12 @@ func (x *Response) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Response.ProtoReflect.Descriptor instead.
+// Descriptor Deprecated: Use Response.ProtoReflect.Descriptor instead.
 func (*Response) Descriptor() ([]byte, []int) {
 	return file_love_love_proto_rawDescGZIP(), []int{1}
 }
 
+// GetResult ...
 func (x *Response) GetResult() string {
 	if x != nil {
 		return x.Result
@@ -116,6 +126,7 @@ func (x *Response) GetResult() string {
 	return ""
 }
 
+// File_love_love_proto ...
 var File_love_love_proto protoreflect.FileDescriptor
 
 var file_love_love_proto_rawDesc = []byte{

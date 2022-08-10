@@ -8,6 +8,7 @@ import (
 	"github.com/abulo/ratel/v3/env"
 )
 
+// Option ...
 type Option func(c *ServiceInfo)
 
 // ConfigInfo ServiceConfigurator represents service configurator
@@ -81,6 +82,7 @@ type WeightGroup struct {
 	Weight int
 }
 
+// ApplyOptions ...
 func ApplyOptions(options ...Option) ServiceInfo {
 	info := defaultServiceInfo()
 	for _, option := range options {
@@ -89,24 +91,28 @@ func ApplyOptions(options ...Option) ServiceInfo {
 	return info
 }
 
+// WithMetaData ...
 func WithMetaData(key, value string) Option {
 	return func(c *ServiceInfo) {
 		c.Metadata[key] = value
 	}
 }
 
+// WithScheme ...
 func WithScheme(scheme string) Option {
 	return func(c *ServiceInfo) {
 		c.Scheme = scheme
 	}
 }
 
+// WithAddress ...
 func WithAddress(address string) Option {
 	return func(c *ServiceInfo) {
 		c.Address = address
 	}
 }
 
+// WithKind ...
 func WithKind(kind constant.ServiceKind) Option {
 	return func(c *ServiceInfo) {
 		c.Kind = kind

@@ -32,6 +32,7 @@ func getCachedSqlConn(driverName, server string, opt *Opt) (*pingedDB, error) {
 	return val.(*pingedDB), nil
 }
 
+// NewSqlConn ...
 func NewSqlConn(driverName, server string, opt *Opt) (*sql.DB, error) {
 	pdb, err := getCachedSqlConn(driverName, server, opt)
 	if err != nil {

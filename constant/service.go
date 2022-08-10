@@ -3,6 +3,7 @@ package constant
 // ServiceKind service kind
 type ServiceKind uint8
 
+// ServiceUnknown ...
 const (
 	//ServiceUnknown service non-name
 	ServiceUnknown ServiceKind = iota
@@ -23,6 +24,7 @@ func init() {
 	serviceKinds[ServiceConsumer] = "consumers"
 }
 
+// String ...
 func (sk ServiceKind) String() string {
 	if s, ok := serviceKinds[sk]; ok {
 		return s

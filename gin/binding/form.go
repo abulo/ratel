@@ -16,10 +16,12 @@ type formBinding struct{}
 type formPostBinding struct{}
 type formMultipartBinding struct{}
 
+// Name ...
 func (formBinding) Name() string {
 	return "form"
 }
 
+// Bind ...
 func (formBinding) Bind(req *http.Request, obj any) error {
 	if err := req.ParseForm(); err != nil {
 		return err
@@ -33,10 +35,12 @@ func (formBinding) Bind(req *http.Request, obj any) error {
 	return validate(obj)
 }
 
+// Name ...
 func (formPostBinding) Name() string {
 	return "form-urlencoded"
 }
 
+// Bind ...
 func (formPostBinding) Bind(req *http.Request, obj any) error {
 	if err := req.ParseForm(); err != nil {
 		return err
@@ -47,10 +51,12 @@ func (formPostBinding) Bind(req *http.Request, obj any) error {
 	return validate(obj)
 }
 
+// Name ...
 func (formMultipartBinding) Name() string {
 	return "multipart/form-data"
 }
 
+// Bind ...
 func (formMultipartBinding) Bind(req *http.Request, obj any) error {
 	if err := req.ParseMultipartForm(defaultMemory); err != nil {
 		return err

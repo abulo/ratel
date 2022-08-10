@@ -18,6 +18,7 @@ type defaultValidator struct {
 	validate *validator.Validate
 }
 
+// SliceValidationError ...
 type SliceValidationError []error
 
 // Error concatenates all error elements in SliceValidationError into a single string separated by \n.

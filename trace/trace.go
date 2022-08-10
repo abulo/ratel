@@ -8,6 +8,7 @@ import (
 	"github.com/opentracing/opentracing-go/log"
 )
 
+// String ...
 var (
 	// String ...
 	String = log.String
@@ -19,7 +20,7 @@ func SetGlobalTracer(tracer opentracing.Tracer) {
 	opentracing.SetGlobalTracer(tracer)
 }
 
-// Start ...
+// StartSpanFromContext Start ...
 func StartSpanFromContext(ctx context.Context, op string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context) {
 	return opentracing.StartSpanFromContext(ctx, op, opts...)
 }

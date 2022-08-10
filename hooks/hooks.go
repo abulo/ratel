@@ -10,8 +10,10 @@ var (
 	mu          = sync.RWMutex{}
 )
 
+// Stage ...
 type Stage int
 
+// String ...
 func (s Stage) String() string {
 	switch s {
 	case Stage_BeforeLoadConfig:
@@ -27,6 +29,7 @@ func (s Stage) String() string {
 	return "Unkown"
 }
 
+// Stage_BeforeLoadConfig ...
 const (
 	Stage_BeforeLoadConfig Stage = iota + 1
 	Stage_AfterLoadConfig

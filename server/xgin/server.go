@@ -81,6 +81,7 @@ func (s *Server) Info() *server.ServiceInfo {
 	return &info
 }
 
+// Healthz ...
 func (s *Server) Healthz() bool {
 	if s.listener == nil {
 		return false

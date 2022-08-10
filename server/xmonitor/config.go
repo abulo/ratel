@@ -16,6 +16,7 @@ type Config struct {
 	ServiceAddress string // ServiceAddress service address in registry info, default to 'Host:Port'
 }
 
+// New ...
 func New() *Config {
 	return &Config{}
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/abulo/ratel/v3/util"
 )
 
-// Proxy 代理
+// ProxySQL Proxy 代理
 type ProxySQL struct {
 	write []*query.QueryDb
 	read  []*query.QueryDb

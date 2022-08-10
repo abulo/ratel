@@ -38,6 +38,7 @@ type Config struct {
 	unaryInterceptors  []grpc.UnaryServerInterceptor
 }
 
+// New ...
 func New() *Config {
 	return &Config{
 		Network:                   "tcp4",
@@ -80,6 +81,7 @@ func (config *Config) WithUnaryInterceptor(intes ...grpc.UnaryServerInterceptor)
 	return config
 }
 
+// MustBuild ...
 func (config *Config) MustBuild() *Server {
 	server, err := config.Build()
 	if err != nil {

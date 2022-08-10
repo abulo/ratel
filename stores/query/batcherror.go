@@ -2,6 +2,7 @@ package query
 
 import "bytes"
 
+// BatchError ...
 type (
 	// A BatchError is an error that can hold multiple errors.
 	BatchError struct {

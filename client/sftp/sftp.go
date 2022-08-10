@@ -34,6 +34,7 @@ type IOReaderProgress struct {
 	TransferredBytes *int64 // Total of bytes transferred
 }
 
+// Read ...
 func (iorp *IOReaderProgress) Read(p []byte) (int, error) {
 	n, err := iorp.Reader.Read(p)
 	*iorp.TransferredBytes += int64(n)

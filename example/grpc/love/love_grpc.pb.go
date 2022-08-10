@@ -30,10 +30,12 @@ type loveClient struct {
 	cc grpc.ClientConnInterface
 }
 
+// NewLoveClient ...
 func NewLoveClient(cc grpc.ClientConnInterface) LoveClient {
 	return &loveClient{cc}
 }
 
+// Confession ...
 func (c *loveClient) Confession(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
 	err := c.cc.Invoke(ctx, "/love.Love/Confession", in, out, opts...)
@@ -56,6 +58,7 @@ type LoveServer interface {
 type UnimplementedLoveServer struct {
 }
 
+// Confession ...
 func (UnimplementedLoveServer) Confession(context.Context, *Request) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Confession not implemented")
 }
@@ -68,6 +71,7 @@ type UnsafeLoveServer interface {
 	mustEmbedUnimplementedLoveServer()
 }
 
+// RegisterLoveServer ...
 func RegisterLoveServer(s grpc.ServiceRegistrar, srv LoveServer) {
 	s.RegisterService(&Love_ServiceDesc, srv)
 }

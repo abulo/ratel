@@ -347,18 +347,23 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 	return res, err
 }
 
+// SqlRaw ...
 func (querytx *QueryTx) SqlRaw() string {
 	return querytx.Sql.ToString()
 }
 
+// SqlRaw ...
 func (querydb *QueryDb) SqlRaw() string {
 	return querydb.Sql.ToString()
 }
 
+// LastSql ...
 func (querytx *QueryTx) LastSql(query string, args ...interface{}) {
 	querytx.Sql.Sql = query
 	querytx.Sql.Args = args
 }
+
+// LastSql ...
 func (querydb *QueryDb) LastSql(query string, args ...interface{}) {
 	querydb.Sql.Sql = query
 	querydb.Sql.Args = args

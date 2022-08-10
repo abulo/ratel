@@ -57,7 +57,7 @@ type index struct {
 	Name string
 }
 
-// New 数据库连接
+// NewClient New 数据库连接
 func NewClient(config *Config) *MongoDB {
 	//数据库连接
 	mongoOptions := options.Client()
@@ -113,37 +113,37 @@ func (client *MongoDB) Collection(table string) *collection {
 	}
 }
 
-// 条件查询, bson.M{"field": "value"}
+// Where 条件查询, bson.M{"field": "value"}
 func (collection *collection) Where(m bson.D) *collection {
 	collection.filter = m
 	return collection
 }
 
-// 限制条数
+// Limit 限制条数
 func (collection *collection) Limit(n int64) *collection {
 	collection.limit = n
 	return collection
 }
 
-// 跳过条数
+// Skip 跳过条数
 func (collection *collection) Skip(n int64) *collection {
 	collection.skip = n
 	return collection
 }
 
-// 排序 bson.M{"created_at":-1}
+// Sort 排序 bson.M{"created_at":-1}
 func (collection *collection) Sort(sorts bson.D) *collection {
 	collection.sort = sorts
 	return collection
 }
 
-// 指定查询字段
+// Fields 指定查询字段
 func (collection *collection) Fields(fields bson.M) *collection {
 	collection.fields = fields
 	return collection
 }
 
-// CreateOneIndex 创建单个普通索引
+// CreateIndex CreateOneIndex 创建单个普通索引
 func (collection *collection) CreateIndex(ctx context.Context, key bson.D, op *options.IndexOptions) (res string, err error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
@@ -280,7 +280,7 @@ func (collection *collection) DropIndex(ctx context.Context, name string, opts *
 	return nil
 }
 
-// 写入单条数据
+// InsertOne 写入单条数据
 func (collection *collection) InsertOne(ctx context.Context, document interface{}) (*mongo.InsertOneResult, error) {
 	start := time.Now()
 	var data interface{}
@@ -322,7 +322,7 @@ func (collection *collection) InsertOne(ctx context.Context, document interface{
 	return result, err
 }
 
-// 写入多条数据
+// InsertMany 写入多条数据
 func (collection *collection) InsertMany(ctx context.Context, documents interface{}) (*mongo.InsertManyResult, error) {
 	start := time.Now()
 	var data []interface{}
@@ -364,6 +364,7 @@ func (collection *collection) InsertMany(ctx context.Context, documents interfac
 	return result, err
 }
 
+// Aggregate ...
 func (collection *collection) Aggregate(ctx context.Context, pipeline interface{}, result interface{}) (err error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
@@ -412,7 +413,7 @@ func (collection *collection) Aggregate(ctx context.Context, pipeline interface{
 	return
 }
 
-// 存在更新,不存在写入, documents 里边的文档需要有 _id 的存在
+// UpdateOrInsert 存在更新,不存在写入, documents 里边的文档需要有 _id 的存在
 func (collection *collection) UpdateOrInsert(ctx context.Context, documents []interface{}) (*mongo.UpdateResult, error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
@@ -453,6 +454,7 @@ func (collection *collection) UpdateOrInsert(ctx context.Context, documents []in
 	return result, err
 }
 
+// UpdateOne ...
 func (collection *collection) UpdateOne(ctx context.Context, document interface{}) (*mongo.UpdateResult, error) {
 	start := time.Now()
 	var update bson.M
@@ -495,7 +497,7 @@ func (collection *collection) UpdateOne(ctx context.Context, document interface{
 	return result, err
 }
 
-// 原生update
+// UpdateOneRaw 原生update
 func (collection *collection) UpdateOneRaw(ctx context.Context, document interface{}, opt ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
@@ -535,6 +537,7 @@ func (collection *collection) UpdateOneRaw(ctx context.Context, document interfa
 	return result, err
 }
 
+// UpdateMany ...
 func (collection *collection) UpdateMany(ctx context.Context, document interface{}) (*mongo.UpdateResult, error) {
 	start := time.Now()
 	var update bson.M
@@ -576,7 +579,7 @@ func (collection *collection) UpdateMany(ctx context.Context, document interface
 	return result, err
 }
 
-// 查询一条数据
+// FindOne 查询一条数据
 func (collection *collection) FindOne(ctx context.Context, document interface{}) error {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
@@ -629,7 +632,7 @@ func (collection *collection) FindOne(ctx context.Context, document interface{})
 	return nil
 }
 
-// 查询多条数据
+// FindMany 查询多条数据
 func (collection *collection) FindMany(ctx context.Context, documents interface{}) (err error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
@@ -703,7 +706,7 @@ func (collection *collection) FindMany(ctx context.Context, documents interface{
 	return
 }
 
-// 删除数据,并返回删除成功的数量
+// Delete 删除数据,并返回删除成功的数量
 func (collection *collection) Delete(ctx context.Context) (count int64, err error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
@@ -756,6 +759,7 @@ func (collection *collection) Delete(ctx context.Context) (count int64, err erro
 	return
 }
 
+// Drop ...
 func (collection *collection) Drop(ctx context.Context) error {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
@@ -794,6 +798,7 @@ func (collection *collection) Drop(ctx context.Context) error {
 	return err
 }
 
+// Count ...
 func (collection *collection) Count(ctx context.Context) (result int64, err error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
@@ -837,6 +842,8 @@ func (collection *collection) Count(ctx context.Context) (result int64, err erro
 
 	return
 }
+
+// BeforeCreate ...
 func BeforeCreate(document interface{}) interface{} {
 	val := reflect.ValueOf(document)
 	typ := reflect.TypeOf(document)
@@ -877,6 +884,7 @@ func BeforeCreate(document interface{}) interface{} {
 	}
 }
 
+// BeforeUpdate ...
 func BeforeUpdate(document interface{}) interface{} {
 	val := reflect.ValueOf(document)
 	typ := reflect.TypeOf(document)

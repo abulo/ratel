@@ -14,10 +14,12 @@ import (
 
 type protobufBinding struct{}
 
+// Name ...
 func (protobufBinding) Name() string {
 	return "protobuf"
 }
 
+// Bind ...
 func (b protobufBinding) Bind(req *http.Request, obj any) error {
 	buf, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -26,6 +28,7 @@ func (b protobufBinding) Bind(req *http.Request, obj any) error {
 	return b.BindBody(buf, obj)
 }
 
+// BindBody ...
 func (protobufBinding) BindBody(body []byte, obj any) error {
 	msg, ok := obj.(proto.Message)
 	if !ok {

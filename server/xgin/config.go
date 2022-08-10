@@ -22,6 +22,7 @@ type Config struct {
 	SlowQueryThresholdInMilli int64
 }
 
+// New ...
 func New() *Config {
 	return &Config{
 		Mode:                      gin.ReleaseMode,
@@ -59,7 +60,7 @@ func (config *Config) WithDisableSlowQuery(disableSlowQuery bool) *Config {
 	return config
 }
 
-// WithDisableTrace ...
+// WithDisableMetric WithDisableTrace ...
 func (config *Config) WithDisableMetric(disableMetric bool) *Config {
 	config.DisableMetric = disableMetric
 	return config
@@ -77,7 +78,7 @@ func (config *Config) WithServiceAddress(serviceAddress string) *Config {
 	return config
 }
 
-// WithPort ...
+// WithSlowQueryThresholdInMilli WithPort ...
 func (config *Config) WithSlowQueryThresholdInMilli(milli int64) *Config {
 	config.SlowQueryThresholdInMilli = milli
 	return config

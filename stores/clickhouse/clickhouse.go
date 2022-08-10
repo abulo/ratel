@@ -71,7 +71,7 @@ func (config *Config) URI() string {
 	return link + "?" + util.Implode("&", param)
 }
 
-// New 新连接
+// NewClient New 新连接
 func NewClient(config *Config) *query.QueryDb {
 	opt := &query.Opt{
 		MaxOpenConns: config.MaxOpenConns,

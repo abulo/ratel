@@ -31,6 +31,7 @@ type Config struct {
 	AccessInterceptorLevel    string
 }
 
+// New ...
 func New() *Config {
 	return &Config{
 		dialOptions: []grpc.DialOption{

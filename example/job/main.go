@@ -15,10 +15,12 @@ func main() {
 	}
 }
 
+// Engine ...
 type Engine struct {
 	app.Application
 }
 
+// NewEngine ...
 func NewEngine() *Engine {
 	eng := &Engine{}
 	if err := eng.Startup(
@@ -33,20 +35,24 @@ func (e *Engine) initJob() error {
 	return e.Job(NewJobRunner())
 }
 
+// JobRunner ...
 type JobRunner struct {
 	JobName string
 }
 
+// NewJobRunner ...
 func NewJobRunner() *JobRunner {
 	return &JobRunner{
 		JobName: "jobrunner",
 	}
 }
 
+// Run ...
 func (j *JobRunner) Run() {
 	fmt.Println("i am job runner")
 }
 
+// GetJobName ...
 func (j *JobRunner) GetJobName() string {
 	return j.JobName
 }

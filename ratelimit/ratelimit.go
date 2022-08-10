@@ -299,7 +299,7 @@ func (realClock) Now() time.Time {
 	return time.Now()
 }
 
-// Now implements Clock.Sleep by calling time.Sleep.
+// Sleep Now implements Clock.Sleep by calling time.Sleep.
 func (realClock) Sleep(d time.Duration) {
 	time.Sleep(d)
 }

@@ -51,10 +51,12 @@ func FileExist(filename string) bool {
 	return err == nil || os.IsExist(err)
 }
 
+// Level ...
 type (
 	Level int
 )
 
+// LevelFatal ...
 const (
 	LevelFatal = iota
 	LevelError
@@ -65,48 +67,59 @@ const (
 
 var _log *logger = New()
 
+// Fatal ...
 func Fatal(s string) {
 	_log.Output(LevelFatal, s)
 	os.Exit(1)
 }
 
+// Fatalf ...
 func Fatalf(format string, v ...interface{}) {
 	_log.Output(LevelFatal, fmt.Sprintf(format, v...))
 	os.Exit(1)
 }
 
+// Error ...
 func Error(s string) {
 	_log.Output(LevelError, s)
 }
 
+// Errorf ...
 func Errorf(format string, v ...interface{}) {
 	_log.Output(LevelError, fmt.Sprintf(format, v...))
 }
 
+// Warn ...
 func Warn(s string) {
 	_log.Output(LevelWarning, s)
 }
 
+// Warnf ...
 func Warnf(format string, v ...interface{}) {
 	_log.Output(LevelWarning, fmt.Sprintf(format, v...))
 }
 
+// Info ...
 func Info(s string) {
 	_log.Output(LevelInfo, s)
 }
 
+// Infof ...
 func Infof(format string, v ...interface{}) {
 	_log.Output(LevelInfo, fmt.Sprintf(format, v...))
 }
 
+// Debug ...
 func Debug(s string) {
 	_log.Output(LevelDebug, s)
 }
 
+// Debugf ...
 func Debugf(format string, v ...interface{}) {
 	_log.Output(LevelDebug, fmt.Sprintf(format, v...))
 }
 
+// SetLogLevel ...
 func SetLogLevel(level Level) {
 	_log.SetLogLevel(level)
 }
@@ -127,6 +140,7 @@ func New() *logger {
 	return &logger{_log: log.New(os.Stderr, "", log.Lshortfile|log.LstdFlags), logLevel: LevelDebug}
 }
 
+// Output ...
 func (l *logger) Output(level Level, s string) error {
 	if l.logLevel < level {
 		return nil
@@ -148,48 +162,59 @@ func (l *logger) Output(level Level, s string) error {
 	return l._log.Output(3, s)
 }
 
+// Fatal ...
 func (l *logger) Fatal(s string) {
 	l.Output(LevelFatal, s)
 	os.Exit(1)
 }
 
+// Fatalf ...
 func (l *logger) Fatalf(format string, v ...interface{}) {
 	l.Output(LevelFatal, fmt.Sprintf(format, v...))
 	os.Exit(1)
 }
 
+// Error ...
 func (l *logger) Error(s string) {
 	l.Output(LevelError, s)
 }
 
+// Errorf ...
 func (l *logger) Errorf(format string, v ...interface{}) {
 	l.Output(LevelError, fmt.Sprintf(format, v...))
 }
 
+// Warn ...
 func (l *logger) Warn(s string) {
 	l.Output(LevelWarning, s)
 }
 
+// Warnf ...
 func (l *logger) Warnf(format string, v ...interface{}) {
 	l.Output(LevelWarning, fmt.Sprintf(format, v...))
 }
 
+// Info ...
 func (l *logger) Info(s string) {
 	l.Output(LevelInfo, s)
 }
 
+// Infof ...
 func (l *logger) Infof(format string, v ...interface{}) {
 	l.Output(LevelInfo, fmt.Sprintf(format, v...))
 }
 
+// Debug ...
 func (l *logger) Debug(s string) {
 	l.Output(LevelDebug, s)
 }
 
+// Debugf ...
 func (l *logger) Debugf(format string, v ...interface{}) {
 	l.Output(LevelDebug, fmt.Sprintf(format, v...))
 }
 
+// SetLogLevel ...
 func (l *logger) SetLogLevel(level Level) {
 	l.logLevel = level
 }

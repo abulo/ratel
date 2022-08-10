@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// IndexString ...
 func IndexString() string {
 	body := `{
 		"settings": {
@@ -45,6 +46,7 @@ func IndexString() string {
 	return body
 }
 
+// CreateIndex ...
 func CreateIndex(client *elasticsearch.Client) error {
 	ctx := context.Background()
 	//check es index

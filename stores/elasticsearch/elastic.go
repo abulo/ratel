@@ -18,8 +18,10 @@ import (
 	"github.com/opentracing/opentracing-go/log"
 )
 
+// MaxContentLength ...
 const MaxContentLength = 1 << 16
 
+// Config ...
 type Config struct {
 	URL           []string
 	Username      string //账号 root
@@ -34,6 +36,7 @@ type Client struct {
 	*Config
 }
 
+// NewClient ...
 func NewClient(config *Config) *Client {
 	var options []elastic.ClientOptionFunc
 	if len(config.URL) < 1 {
@@ -57,6 +60,7 @@ func NewClient(config *Config) *Client {
 	return newClient
 }
 
+// ESTraceServerInterceptor ...
 func ESTraceServerInterceptor(DisableMetric, DisableTrace bool, Addr string) *http.Client {
 	newESTracedTransport := &ESTracedTransport{}
 	newESTracedTransport.Transport = &http.Transport{}
@@ -68,6 +72,7 @@ func ESTraceServerInterceptor(DisableMetric, DisableTrace bool, Addr string) *ht
 	}
 }
 
+// ESTracedTransport ...
 type ESTracedTransport struct {
 	*http.Transport
 	DisableMetric bool
@@ -75,6 +80,7 @@ type ESTracedTransport struct {
 	Addr          string
 }
 
+// RoundTrip ...
 func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err error) {
 	start := time.Now()
 	var span opentracing.Span

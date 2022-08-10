@@ -7,6 +7,7 @@ import (
 	"github.com/abulo/ratel/v3/gin"
 )
 
+// DefaultPrefix ...
 const (
 	// DefaultPrefix url prefix of pprof
 	DefaultPrefix = "/debug/pprof"

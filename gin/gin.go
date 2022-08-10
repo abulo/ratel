@@ -67,7 +67,7 @@ type RouteInfo struct {
 // RoutesInfo defines a RouteInfo slice.
 type RoutesInfo []RouteInfo
 
-// Trusted platforms
+// PlatformGoogleAppEngine Trusted platforms
 const (
 	// PlatformGoogleAppEngine when running on Google App Engine. Trust X-Appengine-Remote-Addr
 	// for determining the client's IP
@@ -170,6 +170,7 @@ type Engine struct {
 	Table            *tablewriter.Table
 }
 
+// App ...
 var (
 	App *Engine
 	_   IRouter = &Engine{}
@@ -232,6 +233,7 @@ func Default() *Engine {
 	return engine
 }
 
+// Handler ...
 func (engine *Engine) Handler() http.Handler {
 	if !engine.UseH2C {
 		return engine
@@ -259,6 +261,7 @@ func (engine *Engine) SecureJsonPrefix(prefix string) *Engine {
 	return engine
 }
 
+// GetDelims ...
 func (engine *Engine) GetDelims() render.Delims {
 	return engine.delims
 }

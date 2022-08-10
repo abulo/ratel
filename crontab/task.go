@@ -17,6 +17,7 @@ type bounds struct {
 	names    map[string]uint
 }
 
+// TaskManager ...
 type TaskManager struct {
 	adminTaskList map[string]Tasker
 	taskLock      sync.RWMutex
@@ -26,6 +27,7 @@ type TaskManager struct {
 	wait          sync.WaitGroup
 }
 
+// NewTaskManager ...
 func NewTaskManager() *TaskManager {
 	return &TaskManager{
 		adminTaskList: make(map[string]Tasker),
@@ -434,11 +436,13 @@ func dayMatches(s *Schedule, t time.Time) bool {
 	return domMatch || dowMatch
 }
 
+// WorkerStart ...
 func (t *TaskManager) WorkerStart() error {
 	t.StartTask()
 	return nil
 }
 
+// WorkerStop ...
 func (t *TaskManager) WorkerStop() error {
 	t.StopTask()
 	return nil
@@ -584,6 +588,7 @@ func (m *TaskManager) AddTask(taskname string, t Tasker) {
 	}
 }
 
+// Len ...
 func (m *TaskManager) Len() int {
 	return len(m.adminTaskList)
 }
@@ -648,7 +653,10 @@ func (ms *MapSorter) Sort() {
 	sort.Sort(ms)
 }
 
+// Len ...
 func (ms *MapSorter) Len() int { return len(ms.Keys) }
+
+// Less ...
 func (ms *MapSorter) Less(i, j int) bool {
 	if ms.Vals[i].GetNext(context.Background()).IsZero() {
 		return false
@@ -659,6 +667,7 @@ func (ms *MapSorter) Less(i, j int) bool {
 	return ms.Vals[i].GetNext(context.Background()).Before(ms.Vals[j].GetNext(context.Background()))
 }
 
+// Swap ...
 func (ms *MapSorter) Swap(i, j int) {
 	ms.Vals[i], ms.Vals[j] = ms.Vals[j], ms.Vals[i]
 	ms.Keys[i], ms.Keys[j] = ms.Keys[j], ms.Keys[i]

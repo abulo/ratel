@@ -9,6 +9,7 @@ package json
 
 import "encoding/json"
 
+// Marshal ...
 var (
 	// Marshal is exported by gin/json package.
 	Marshal = json.Marshal

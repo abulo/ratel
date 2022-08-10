@@ -32,10 +32,12 @@ func init() {
 	global.InitTrace()
 }
 
+// Engine ...
 type Engine struct {
 	app.Application
 }
 
+// NewEngine ...
 func NewEngine() *Engine {
 	eng := &Engine{}
 
@@ -61,6 +63,7 @@ func NewEngine() *Engine {
 	return eng
 }
 
+// GrpcServer ...
 func (eng *Engine) GrpcServer() error {
 	client := xgrpc.New()
 	client.Name = balancer.NameSmoothWeightRoundRobin
@@ -74,11 +77,13 @@ func (eng *Engine) GrpcServer() error {
 	return eng.Serve(server)
 }
 
+// Greeter ...
 type Greeter struct {
 	server *xgrpc.Server
 	love.UnimplementedLoveServer
 }
 
+// Confession ...
 func (g *Greeter) Confession(context context.Context, request *love.Request) (*love.Response, error) {
 	return &love.Response{
 		Result: request.Name,

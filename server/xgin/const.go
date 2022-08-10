@@ -9,6 +9,7 @@ const (
 	// codeMSSecondItemNotError = 1004
 	// codeMSResErr             = 1005
 )
+// StatusContinue ...
 const (
 	// StatusContinue ...
 	StatusContinue = 100
@@ -169,7 +170,7 @@ var statusText = map[int]string{
 	StatusNetworkAuthenticationRequired: "Network Authentication Required",
 }
 
-// Headers
+// HeaderAcceptEncoding Headers
 const (
 	// HeaderAcceptEncoding ...
 	HeaderAcceptEncoding = "Accept-Encoding"
@@ -179,7 +180,7 @@ const (
 	HeaderHRPCErr = "HRPC-Errord"
 )
 
-// MIME types
+// MIMEApplicationJSON MIME types
 const (
 	// MIMEApplicationJSON ...
 	MIMEApplicationJSON = "application/json"

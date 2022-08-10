@@ -23,7 +23,7 @@ type Config struct {
 	TTL              int           // 单位：s
 }
 
-// 新建连接
+// New 新建连接
 func New() *Config {
 	return &Config{
 		BasicAuth:      false,
@@ -37,6 +37,7 @@ func (config *Config) Build() (*Client, error) {
 	return newClient(config)
 }
 
+// MustBuild ...
 func (config *Config) MustBuild() *Client {
 	client, err := config.Build()
 	if err != nil {

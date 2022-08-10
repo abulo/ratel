@@ -1,5 +1,6 @@
 package constant
 
+// DefaultNamespace ...
 var (
 	// ConfigPrefix 配置前缀
 	// ConfigPrefix = "ratel"

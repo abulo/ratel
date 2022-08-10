@@ -103,7 +103,7 @@ func GetHourDiffer(startTime, endTime interface{}) int64 {
 	}
 }
 
-// GetTimeZone 获取时区
+// TimeZone GetTimeZone 获取时区
 func TimeZone() *time.Location {
 	if timeZone == nil {
 		timeZone, _ = time.LoadLocation("Local")
@@ -127,6 +127,7 @@ func Time() int64 {
 	return time.Now().In(cstZone).Unix()
 }
 
+// Duration ...
 func Duration(str string) time.Duration {
 	dur, err := time.ParseDuration(str)
 	if err != nil {
@@ -180,7 +181,7 @@ func Date(format string, ts ...time.Time) string {
 	return res
 }
 
-// Checkdate checkdate()
+// CheckDate Checkdate checkdate()
 // Validate a Gregorian date
 func CheckDate(month, day, year int) bool {
 	if month < 1 || month > 12 || day < 1 || day > 31 || year < 1 || year > 32767 {
@@ -210,15 +211,17 @@ func Sleep(t int64) {
 	time.Sleep(time.Duration(t) * time.Second)
 }
 
-// Usleep usleep()
+// USleep Usleep usleep()
 func USleep(t int64) {
 	time.Sleep(time.Duration(t) * time.Microsecond)
 }
 
+// UnixTimeFormatDate ...
 func UnixTimeFormatDate(str interface{}) string {
 	return Date("Y-m-d H:i:s", cast.ToTimeInDefaultLocation(cast.ToInt64(str), TimeZone()))
 }
 
+// FormatDateTime ...
 func FormatDateTime(str interface{}) string {
 	if Empty(str) {
 		return ""
@@ -226,6 +229,7 @@ func FormatDateTime(str interface{}) string {
 	return Date("Y-m-d H:i:s", cast.ToTimeInDefaultLocation(str, TimeZone()))
 }
 
+// FormatDate ...
 func FormatDate(str interface{}) string {
 	return Date("Y-m-d", cast.ToTimeInDefaultLocation(str, TimeZone()))
 }
@@ -293,6 +297,7 @@ func StartDate(wyear, week int) (year int, month time.Month, day int) {
 		DateToJulian(wyear, 1, 1) + startOffset(wyear, week))
 }
 
+// FromYearWeek ...
 func FromYearWeek(year, month, day int) (wyear, week int) {
 	return fromYearWeek(year, time.Month(month), day)
 }
@@ -333,7 +338,7 @@ func NextMonthDate(d string) (string, string) {
 	return Date("Y-m-d", firstDate), Date("Y-m-d", lastDate)
 }
 
-// NextMonthDate 获取当前日期的上个月的第一天和最后一天
+// PrevMonthDate NextMonthDate 获取当前日期的上个月的第一天和最后一天
 func PrevMonthDate(d string) (string, string) {
 	now := cast.ToTimeInDefaultLocation(d, TimeZone())
 	var prevMonth int
@@ -407,7 +412,7 @@ func Day(s string, e string) ([]string, []int64) {
 	return res, resInt64
 }
 
-// Day 获取起止日期中的小时 YmdH
+// Hour Day 获取起止日期中的小时 YmdH
 func Hour(s string, e string) ([]string, []int64) {
 	start := cast.ToTimeInDefaultLocation(s, TimeZone())
 	end := cast.ToTimeInDefaultLocation(e, TimeZone())
@@ -425,6 +430,7 @@ func Hour(s string, e string) ([]string, []int64) {
 	return res, resInt64
 }
 
+// ToWeekDay ...
 func ToWeekDay(t interface{}) string {
 	weekday := [7]string{"周日", "周一", "周二", "周三", "周四", "周五", "周六"}
 	now := cast.ToTimeInDefaultLocation(t, TimeZone())

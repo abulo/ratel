@@ -19,6 +19,7 @@ import (
 	"github.com/spf13/cast"
 )
 
+// OpenTraceHook ...
 type OpenTraceHook struct {
 	redis.Hook
 	DisableMetric bool // 关闭指标采集
@@ -27,6 +28,7 @@ type OpenTraceHook struct {
 	Addr          string
 }
 
+// BeforeProcess ...
 func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
 	b := make([]byte, 32)
 	b = appendCmd(b, cmd)
@@ -55,6 +57,8 @@ func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (con
 
 	return ctx, nil
 }
+
+// AfterProcess ...
 func (op OpenTraceHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -79,6 +83,8 @@ func (op OpenTraceHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error
 
 	return nil
 }
+
+// BeforeProcessPipeline ...
 func (op OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -134,6 +140,8 @@ func (op OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.
 
 	return ctx, nil
 }
+
+// AfterProcessPipeline ...
 func (op OpenTraceHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -157,6 +165,7 @@ func (op OpenTraceHook) AfterProcessPipeline(ctx context.Context, cmds []redis.C
 	return nil
 }
 
+// String ...
 func String(b []byte) string {
 	return *(*string)(unsafe.Pointer(&b))
 }
@@ -184,6 +193,7 @@ func appendCmd(b []byte, cmd redis.Cmder) []byte {
 	return b
 }
 
+// AppendArg ...
 func AppendArg(b []byte, v interface{}) []byte {
 	switch v := v.(type) {
 	case nil:

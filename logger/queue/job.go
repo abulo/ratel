@@ -25,6 +25,7 @@ func NewJob(v interface{}, fn func(interface{})) Jober {
 	}
 }
 
+// Job ...
 func (j *job) Job() {
 	j.callback(j.v)
 }
@@ -45,6 +46,7 @@ func NewSyncJob(v interface{}, fn func(interface{}) (interface{}, error)) SyncJo
 	}
 }
 
+// Job ...
 func (j *syncJob) Job() {
 	result, err := j.callback(j.v)
 	if err != nil {
@@ -58,10 +60,12 @@ func (j *syncJob) Job() {
 	close(j.result)
 }
 
+// Wait ...
 func (j *syncJob) Wait() <-chan interface{} {
 	return j.result
 }
 
+// Error ...
 func (j *syncJob) Error() error {
 	return j.err
 }

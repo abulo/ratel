@@ -34,6 +34,7 @@ func NewExecWithURL(client *mongodb.MongoDB) ExecCloser {
 	}
 }
 
+// Exec ...
 func (e *defaultExec) Exec(entry *entry.Entry) error {
 	item := make(bson.M)
 	item["host"] = entry.Host

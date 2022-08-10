@@ -9,7 +9,7 @@ package binding
 
 import "net/http"
 
-// Content-Type MIME of the most common data formats.
+// MIMEJSON Content-Type MIME of the most common data formats.
 const (
 	MIMEJSON              = "application/json"
 	MIMEHTML              = "text/html"
@@ -67,7 +67,7 @@ type StructValidator interface {
 // under the hood.
 var Validator StructValidator = &defaultValidator{}
 
-// These implement the Binding interface and can be used to bind the data
+// JSON These implement the Binding interface and can be used to bind the data
 // present in the request to struct instances.
 var (
 	JSON          = jsonBinding{}

@@ -20,13 +20,15 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// FOO ...
 type FOO int32
 
+// FOO_X ...
 const (
 	FOO_X FOO = 17
 )
 
-// Enum value maps for FOO.
+// FOO_name Enum value maps for FOO.
 var (
 	FOO_name = map[int32]string{
 		17: "X",
@@ -36,29 +38,34 @@ var (
 	}
 )
 
+// Enum ...
 func (x FOO) Enum() *FOO {
 	p := new(FOO)
 	*p = x
 	return p
 }
 
+// String ...
 func (x FOO) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
+// Descriptor ...
 func (FOO) Descriptor() protoreflect.EnumDescriptor {
 	return file_test_proto_enumTypes[0].Descriptor()
 }
 
+// Type ...
 func (FOO) Type() protoreflect.EnumType {
 	return &file_test_proto_enumTypes[0]
 }
 
+// Number ...
 func (x FOO) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Do not use.
+// UnmarshalJSON Deprecated: Do not use.
 func (x *FOO) UnmarshalJSON(b []byte) error {
 	num, err := protoimpl.X.UnmarshalJSONEnum(x.Descriptor(), b)
 	if err != nil {
@@ -68,11 +75,12 @@ func (x *FOO) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Deprecated: Use FOO.Descriptor instead.
+// EnumDescriptor Deprecated: Use FOO.Descriptor instead.
 func (FOO) EnumDescriptor() ([]byte, []int) {
 	return file_test_proto_rawDescGZIP(), []int{0}
 }
 
+// Test ...
 type Test struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -84,11 +92,12 @@ type Test struct {
 	Optionalgroup *Test_OptionalGroup `protobuf:"group,4,opt,name=OptionalGroup,json=optionalgroup" json:"optionalgroup,omitempty"`
 }
 
-// Default values for Test fields.
+// Default_Test_Type Default values for Test fields.
 const (
 	Default_Test_Type = int32(77)
 )
 
+// Reset ...
 func (x *Test) Reset() {
 	*x = Test{}
 	if protoimpl.UnsafeEnabled {
@@ -98,12 +107,15 @@ func (x *Test) Reset() {
 	}
 }
 
+// String ...
 func (x *Test) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
+// ProtoMessage ...
 func (*Test) ProtoMessage() {}
 
+// ProtoReflect ...
 func (x *Test) ProtoReflect() protoreflect.Message {
 	mi := &file_test_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
@@ -116,11 +128,12 @@ func (x *Test) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Test.ProtoReflect.Descriptor instead.
+// Descriptor Deprecated: Use Test.ProtoReflect.Descriptor instead.
 func (*Test) Descriptor() ([]byte, []int) {
 	return file_test_proto_rawDescGZIP(), []int{0}
 }
 
+// GetLabel ...
 func (x *Test) GetLabel() string {
 	if x != nil && x.Label != nil {
 		return *x.Label
@@ -128,6 +141,7 @@ func (x *Test) GetLabel() string {
 	return ""
 }
 
+// GetType ...
 func (x *Test) GetType() int32 {
 	if x != nil && x.Type != nil {
 		return *x.Type
@@ -135,6 +149,7 @@ func (x *Test) GetType() int32 {
 	return Default_Test_Type
 }
 
+// GetReps ...
 func (x *Test) GetReps() []int64 {
 	if x != nil {
 		return x.Reps
@@ -142,6 +157,7 @@ func (x *Test) GetReps() []int64 {
 	return nil
 }
 
+// GetOptionalgroup ...
 func (x *Test) GetOptionalgroup() *Test_OptionalGroup {
 	if x != nil {
 		return x.Optionalgroup
@@ -149,6 +165,7 @@ func (x *Test) GetOptionalgroup() *Test_OptionalGroup {
 	return nil
 }
 
+// Test_OptionalGroup ...
 type Test_OptionalGroup struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -157,6 +174,7 @@ type Test_OptionalGroup struct {
 	RequiredField *string `protobuf:"bytes,5,req,name=RequiredField" json:"RequiredField,omitempty"`
 }
 
+// Reset ...
 func (x *Test_OptionalGroup) Reset() {
 	*x = Test_OptionalGroup{}
 	if protoimpl.UnsafeEnabled {
@@ -166,12 +184,15 @@ func (x *Test_OptionalGroup) Reset() {
 	}
 }
 
+// String ...
 func (x *Test_OptionalGroup) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
+// ProtoMessage ...
 func (*Test_OptionalGroup) ProtoMessage() {}
 
+// ProtoReflect ...
 func (x *Test_OptionalGroup) ProtoReflect() protoreflect.Message {
 	mi := &file_test_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
@@ -184,11 +205,12 @@ func (x *Test_OptionalGroup) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Test_OptionalGroup.ProtoReflect.Descriptor instead.
+// Descriptor Deprecated: Use Test_OptionalGroup.ProtoReflect.Descriptor instead.
 func (*Test_OptionalGroup) Descriptor() ([]byte, []int) {
 	return file_test_proto_rawDescGZIP(), []int{0, 0}
 }
 
+// GetRequiredField ...
 func (x *Test_OptionalGroup) GetRequiredField() string {
 	if x != nil && x.RequiredField != nil {
 		return *x.RequiredField
@@ -196,6 +218,7 @@ func (x *Test_OptionalGroup) GetRequiredField() string {
 	return ""
 }
 
+// File_test_proto ...
 var File_test_proto protoreflect.FileDescriptor
 
 var file_test_proto_rawDesc = []byte{

@@ -8,6 +8,7 @@ import (
 	"github.com/abulo/ratel/v3/util"
 )
 
+// Pager ...
 type Pager struct {
 	totalItems     int64 //总记录数
 	currentPage    int64 //当前页码

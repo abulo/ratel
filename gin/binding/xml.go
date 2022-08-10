@@ -13,14 +13,17 @@ import (
 
 type xmlBinding struct{}
 
+// Name ...
 func (xmlBinding) Name() string {
 	return "xml"
 }
 
+// Bind ...
 func (xmlBinding) Bind(req *http.Request, obj any) error {
 	return decodeXML(req.Body, obj)
 }
 
+// BindBody ...
 func (xmlBinding) BindBody(body []byte, obj any) error {
 	return decodeXML(bytes.NewReader(body), obj)
 }

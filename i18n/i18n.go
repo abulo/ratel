@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// FileMode ...
 const (
 	// I18n.LoadMode language file load mode
 

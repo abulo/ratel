@@ -2,6 +2,7 @@ package query
 
 import "sync"
 
+// SharedCalls ...
 type (
 	// SharedCalls is an alias of SingleFlight.
 	// Deprecated: use SingleFlight.
@@ -43,6 +44,7 @@ func NewSharedCalls() SingleFlight {
 	return NewSingleFlight()
 }
 
+// Do ...
 func (g *flightGroup) Do(key string, fn func() (interface{}, error)) (interface{}, error) {
 	c, done := g.createCall(key)
 	if done {
@@ -53,6 +55,7 @@ func (g *flightGroup) Do(key string, fn func() (interface{}, error)) (interface{
 	return c.val, c.err
 }
 
+// DoEx ...
 func (g *flightGroup) DoEx(key string, fn func() (interface{}, error)) (val interface{}, fresh bool, err error) {
 	c, done := g.createCall(key)
 	if done {

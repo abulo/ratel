@@ -120,6 +120,7 @@ func (o Options) GetNormalConfig() *redis.Options {
 // ClientType type to define a redis client connector
 type ClientType string
 
+// ClientNormal ...
 const (
 	// ClientNormal for standard instance client
 	ClientNormal ClientType = "normal"
@@ -127,9 +128,10 @@ const (
 	ClientCluster ClientType = "cluster"
 )
 
-// Client Reader and Writer
+// RWType Client Reader and Writer
 type RWType string
 
+// OnlyRead ...
 const (
 	// OnlyRead serves as a search suffix for configuration parameters
 	OnlyRead RWType = "READER"

@@ -78,12 +78,12 @@ func Min(nums ...float64) float64 {
 	return min
 }
 
-// Decbin decbin()
+// DecBin Decbin decbin()
 func DecBin(number int64) string {
 	return strconv.FormatInt(number, 2)
 }
 
-// Bindec bindec()
+// BinDec Bindec bindec()
 func BinDec(str string) (string, error) {
 	i, err := strconv.ParseInt(str, 2, 0)
 	if err != nil {
@@ -154,7 +154,7 @@ func IsNan(val float64) bool {
 	return math.IsNaN(val)
 }
 
-// 查询是否被整除
+// Divide 查询是否被整除
 func Divide(m, n interface{}) bool {
 	r := math.Mod(cast.ToFloat64(m), cast.ToFloat64(n))
 	if r == 0 {
@@ -163,6 +163,7 @@ func Divide(m, n interface{}) bool {
 	return false
 }
 
+// Add ...
 func Add(m, n interface{}) int {
 	return cast.ToInt(m) + cast.ToInt(n)
 }

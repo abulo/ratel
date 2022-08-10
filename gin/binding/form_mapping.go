@@ -34,6 +34,7 @@ func mapForm(ptr any, form map[string][]string) error {
 	return mapFormByTag(ptr, form, "form")
 }
 
+// MapFormWithTag ...
 func MapFormWithTag(ptr any, form map[string][]string, tag string) error {
 	return mapFormByTag(ptr, form, tag)
 }

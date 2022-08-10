@@ -1,6 +1,6 @@
 package ecode
 
-// 统一 Err Kind
+// ErrKindUnmarshalConfigErr 统一 Err Kind
 const (
 	// ErrKindUnmarshalConfigErr ...
 	ErrKindUnmarshalConfigErr = "unmarshal config err"
@@ -18,7 +18,7 @@ const (
 	ErrKindAny = "any"
 )
 
-// 统一 Msg信息，模块内信息唯一
+// MsgRegisterParseConfigErr1 统一 Msg信息，模块内信息唯一
 const (
 	// MsgRegisterParseConfigErr1 ...
 	MsgRegisterParseConfigErr1 = "register parse config err1"
@@ -87,7 +87,7 @@ const (
 	MsgClientMysqlPingPanic = "mysql ping panic"
 )
 
-// 统一模块信息
+// ModConfig 统一模块信息
 const (
 	// ModConfig ...
 	ModConfig = "config"

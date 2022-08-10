@@ -41,6 +41,7 @@ var ErrNotFound = HTTPError{
 	Message: "not found",
 }
 
+// ErrGRPCResponseValid ...
 var (
 	// ErrGRPCResponseValid ...
 	ErrGRPCResponseValid = status.Errorf(codes.Internal, "response valid")

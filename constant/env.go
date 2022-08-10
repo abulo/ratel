@@ -1,5 +1,6 @@
 package constant
 
+// EnvKeySentinelLogDir ...
 const (
 	// EnvKeySentinelLogDir ...
 	EnvKeySentinelLogDir = "SENTINEL_LOG_DIR"
@@ -7,6 +8,7 @@ const (
 	EnvKeySentinelAppName = "SENTINEL_APP_NAME"
 )
 
+// EnvAppName ...
 const (
 	// EnvAppName ...
 	EnvAppName     = "APP_NAME"
@@ -21,6 +23,7 @@ const (
 	EnvPOD_NAME    = "POD_NAME"     //k8s环境
 )
 
+// DefaultDeployment ...
 const (
 	// DefaultDeployment ...
 	DefaultDeployment = ""
@@ -30,6 +33,7 @@ const (
 	DefaultZone = ""
 )
 
+// KeyBalanceGroup ...
 const (
 	// KeyBalanceGroup ...
 	KeyBalanceGroup = "__group"
