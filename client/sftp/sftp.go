@@ -40,7 +40,7 @@ func (iorp *IOReaderProgress) Read(p []byte) (int, error) {
 	return n, err
 }
 
-//New 新建连接
+// New 新建连接
 func (config *Config) New() (*Client, error) {
 	clientConfig := &ssh.ClientConfig{
 		User: config.User,
@@ -263,7 +263,7 @@ func (client *Client) Quit() (errors []error) {
 	return client.Close()
 }
 
-//Chmod ..
+// Chmod ..
 func (client *Client) Chmod(path string, mode os.FileMode) error {
 	return client.SFTPClient.Chmod(path, mode)
 }

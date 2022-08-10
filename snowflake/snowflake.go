@@ -19,7 +19,7 @@ const (
 	defaultStartTimeNano int64 = 1527811200000000000
 )
 
-//Config maintains the settings for id generating
+// Config maintains the settings for id generating
 type Config struct {
 	timeBits      uint
 	seqBits       uint
@@ -31,12 +31,12 @@ type Config struct {
 	lastID        int64
 }
 
-//ConstructConfig creates an instance of FastIDConfig with the given settings
+// ConstructConfig creates an instance of FastIDConfig with the given settings
 func ConstructConfig(timeBits, seqBits, machineBits uint) *Config {
 	return ConstructConfigWithMachineID(timeBits, seqBits, machineBits, getMachineID())
 }
 
-//ConstructConfigWithMachineID creates an config with machine id, in case you don't want to use the lower 16 bits of the IP address.
+// ConstructConfigWithMachineID creates an config with machine id, in case you don't want to use the lower 16 bits of the IP address.
 func ConstructConfigWithMachineID(timeBits, seqBits, machineBits uint, machineID int64) *Config {
 	machineIDMask := ^(int64(-1) << machineBits)
 	return &Config{
@@ -52,15 +52,17 @@ func ConstructConfigWithMachineID(timeBits, seqBits, machineBits uint, machineID
 }
 
 // BenchmarkConfig is a high performance setting for benchmark
-//  40 bits timestamp
-//  15 bits seq
-//  8  bits machine id
+//
+//	40 bits timestamp
+//	15 bits seq
+//	8  bits machine id
 var BenchmarkConfig = ConstructConfig(40, 15, 8)
 
 // CommonConfig is the recommended setting for most applications
-//  40 bits timestamp
-//  7  bits seq
-//  16 bits machine id
+//
+//	40 bits timestamp
+//	7  bits seq
+//	16 bits machine id
 var CommonConfig = ConstructConfig(40, 7, 16)
 
 var startEpochNano = getStartEpochFromEnv()
@@ -70,7 +72,7 @@ func (c *Config) getCurrentTimestamp() int64 {
 	return (time.Now().UnixNano() - startEpochNano) >> 20 & c.timeMask
 }
 
-//GenInt64ID generates unique int64 IDs with the setting in the methond owner
+// GenInt64ID generates unique int64 IDs with the setting in the methond owner
 func (c *Config) GenInt64ID() int64 {
 	for {
 		localLastID := atomic.LoadInt64(&c.lastID)
@@ -94,12 +96,12 @@ func (c *Config) GenInt64ID() int64 {
 	}
 }
 
-//GetSeqFromID extracts seq number from an existing ID
+// GetSeqFromID extracts seq number from an existing ID
 func (c *Config) GetSeqFromID(id int64) int64 {
 	return (id >> c.machineBits) & c.seqMask
 }
 
-//GetTimeFromID extracts timestamp from an existing ID
+// GetTimeFromID extracts timestamp from an existing ID
 func (c *Config) GetTimeFromID(id int64) int64 {
 	return id >> (c.machineBits + c.seqBits)
 }

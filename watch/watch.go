@@ -20,7 +20,7 @@ import (
 
 var configFile string = "watch.toml"
 
-//AppPath 运行路径
+// AppPath 运行路径
 func AppPath() string {
 
 	dir, err := os.Getwd()
@@ -31,7 +31,7 @@ func AppPath() string {
 
 }
 
-//ParseConfig 解析配置文件
+// ParseConfig 解析配置文件
 func ParseConfig() *config.Config {
 
 	AppConfig := config.New("watch")
@@ -45,7 +45,7 @@ func ParseConfig() *config.Config {
 	return AppConfig
 }
 
-//FileExist 判断文件是否存在
+// FileExist 判断文件是否存在
 func FileExist(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil || os.IsExist(err)
@@ -117,12 +117,12 @@ type logger struct {
 	logLevel Level
 }
 
-//NewLogger 实例化，供自定义
+// NewLogger 实例化，供自定义
 func NewLogger() *logger {
 	return &logger{_log: log.New(os.Stderr, "", log.Lshortfile|log.LstdFlags), logLevel: LevelDebug}
 }
 
-//New 实例化，供外部直接调用 log.XXXX
+// New 实例化，供外部直接调用 log.XXXX
 func New() *logger {
 	return &logger{_log: log.New(os.Stderr, "", log.Lshortfile|log.LstdFlags), logLevel: LevelDebug}
 }
@@ -277,7 +277,7 @@ func getFileModTime(path string) int64 {
 	return fi.ModTime().Unix()
 }
 
-//NewWatcher new watcher
+// NewWatcher new watcher
 func NewWatcher(paths []string, files []string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -329,7 +329,7 @@ func NewWatcher(paths []string, files []string) {
 	}
 }
 
-//Autobuild auto build
+// Autobuild auto build
 func Autobuild(files []string) {
 	state.Lock()
 	defer state.Unlock()
@@ -378,7 +378,7 @@ func Autobuild(files []string) {
 
 }
 
-//Kill kill process
+// Kill kill process
 func Kill() {
 	defer func() {
 		if e := recover(); e != nil {
@@ -393,14 +393,14 @@ func Kill() {
 	}
 }
 
-//Restart restart app
+// Restart restart app
 func Restart(appname string) {
 	// Debugf("杀掉进程")
 	Kill()
 	go Start(appname)
 }
 
-//Start start app
+// Start start app
 func Start(appname string) {
 	Infof("开始运行 %s ...\n", appname)
 
@@ -418,7 +418,7 @@ func Start(appname string) {
 
 // end watch
 
-///main starts
+// /main starts
 var (
 	cfg      *config.Config
 	currpath string
@@ -444,7 +444,7 @@ func runApp() {
 	}
 }
 
-//Run 运行
+// Run 运行
 func Run(cmd, args string) {
 	runcmd = cmd
 	runArgs = args

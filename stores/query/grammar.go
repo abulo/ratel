@@ -6,7 +6,7 @@ import (
 	"unsafe"
 )
 
-//Grammar sql 语法
+// Grammar sql 语法
 type Grammar struct {
 	builder *QueryBuilder
 	method  string
@@ -129,7 +129,7 @@ func (g Grammar) compileUnion() string {
 	return sql
 }
 
-//Select 构造select
+// Select 构造select
 func (g Grammar) Select() string {
 	s1, s2 := "", ""
 	if len(g.builder.unions) > 0 {

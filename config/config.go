@@ -35,7 +35,6 @@ JSON format content example:
 	}
 
 Usage please see example(more example please see examples folder in the lib):
-
 */
 package config
 

@@ -23,7 +23,7 @@ type Config struct {
 	TTL              int           // 单位：s
 }
 
-//新建连接
+// 新建连接
 func New() *Config {
 	return &Config{
 		BasicAuth:      false,

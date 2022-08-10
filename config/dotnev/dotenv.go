@@ -42,7 +42,8 @@ func DontUpperEnvKey() {
 // Load parse .env file data to os ENV.
 //
 // Usage:
-// 	dotenv.Load("./", ".env")
+//
+//	dotenv.Load("./", ".env")
 func Load(dir string, filenames ...string) (err error) {
 	return dotenv.Load(dir, filenames...)
 }

@@ -71,19 +71,19 @@ type w struct {
 	do       string
 }
 
-//Table 设置操作的表名称
+// Table 设置操作的表名称
 func (query *QueryBuilder) Table(tablename ...string) *QueryBuilder {
 	query.table = tablename
 	return query
 }
 
-//Select 查询字段
+// Select 查询字段
 func (query *QueryBuilder) Select(columns ...string) *QueryBuilder {
 	query.columns = columns
 	return query
 }
 
-//Where 构造条件语句
+// Where 构造条件语句
 func (query *QueryBuilder) Where(column string, value ...interface{}) *QueryBuilder {
 	if len(value) == 0 { //一个参数直接where
 		query.toWhere(column, "", 0, AND)
@@ -100,7 +100,7 @@ func (query *QueryBuilder) Where(column string, value ...interface{}) *QueryBuil
 	return query
 }
 
-//OrWhere 构造OR条件
+// OrWhere 构造OR条件
 func (query *QueryBuilder) OrWhere(column string, value ...interface{}) *QueryBuilder {
 	if len(value) == 0 { //一个参数直接where
 		query.toWhere(column, "", 0, OR)
@@ -117,7 +117,7 @@ func (query *QueryBuilder) OrWhere(column string, value ...interface{}) *QueryBu
 	return query
 }
 
-//Equal 构造等于
+// Equal 构造等于
 func (query *QueryBuilder) Equal(column string, value interface{}) *QueryBuilder {
 	query.toWhere(column, EQUAL, 1, AND)
 	query.addArg(value)
@@ -131,28 +131,28 @@ func (query *QueryBuilder) OrEqual(column string, value interface{}) *QueryBuild
 	return query
 }
 
-//NotEqual 构造不等于
+// NotEqual 构造不等于
 func (query *QueryBuilder) NotEqual(column string, value interface{}) *QueryBuilder {
 	query.toWhere(column, NOTEQUAL, 1, AND)
 	query.addArg(value)
 	return query
 }
 
-//OrNotEqual 构造或者不等于
+// OrNotEqual 构造或者不等于
 func (query *QueryBuilder) OrNotEqual(column string, value interface{}) *QueryBuilder {
 	query.toWhere(column, NOTEQUAL, 1, OR)
 	query.addArg(value)
 	return query
 }
 
-//Between 构造Between
+// Between 构造Between
 func (query *QueryBuilder) Between(column string, value1 interface{}, value2 interface{}) *QueryBuilder {
 	query.toWhere(column, BETWEEN, 2, AND)
 	query.addArg(value1, value2)
 	return query
 }
 
-//OrBetween 构造 或者 Between
+// OrBetween 构造 或者 Between
 func (query *QueryBuilder) OrBetween(column string, value1 interface{}, value2 interface{}) *QueryBuilder {
 	query.toWhere(column, BETWEEN, 2, OR)
 	query.addArg(value1, value2)
@@ -187,59 +187,59 @@ func (query *QueryBuilder) OrIn(column string, value ...interface{}) *QueryBuild
 	return query
 }
 
-//NotIn .
+// NotIn .
 func (query *QueryBuilder) NotIn(column string, value ...interface{}) *QueryBuilder {
 	query.toWhere(column, NOTIN, int64(len(value)), AND)
 	query.addArg(value...)
 	return query
 }
 
-//OrNotIn .
+// OrNotIn .
 func (query *QueryBuilder) OrNotIn(column string, value ...interface{}) *QueryBuilder {
 	query.toWhere(column, NOTIN, int64(len(value)), OR)
 	query.addArg(value...)
 	return query
 }
 
-//IsNULL .
+// IsNULL .
 func (query *QueryBuilder) IsNULL(column string) *QueryBuilder {
 	query.toWhere(column, ISNULL, 0, AND)
 	return query
 }
 
-//OrIsNULL .
+// OrIsNULL .
 func (query *QueryBuilder) OrIsNULL(column string) *QueryBuilder {
 	query.toWhere(column, ISNULL, 0, OR)
 	return query
 }
 
-//IsNotNULL .
+// IsNotNULL .
 func (query *QueryBuilder) IsNotNULL(column string) *QueryBuilder {
 	query.toWhere(column, ISNOTNULL, 0, AND)
 	return query
 }
 
-//OrIsNotNULL .
+// OrIsNotNULL .
 func (query *QueryBuilder) OrIsNotNULL(column string) *QueryBuilder {
 	query.toWhere(column, ISNOTNULL, 0, OR)
 	return query
 }
 
-//Like .
+// Like .
 func (query *QueryBuilder) Like(column string, value interface{}) *QueryBuilder {
 	query.toWhere(column, LIKE, 1, AND)
 	query.addArg(value)
 	return query
 }
 
-//OrLike .
+// OrLike .
 func (query *QueryBuilder) OrLike(column string, value interface{}) *QueryBuilder {
 	query.toWhere(column, LIKE, 1, OR)
 	query.addArg(value)
 	return query
 }
 
-//Join .
+// Join .
 func (query *QueryBuilder) Join(tablename string, on string) *QueryBuilder {
 	query.joins = append(query.joins, join{table: tablename, on: on, operator: JOIN})
 	return query
@@ -250,19 +250,19 @@ func (query *QueryBuilder) InnerJoin(tablename string, on string) *QueryBuilder 
 	return query
 }
 
-//LeftJoin .
+// LeftJoin .
 func (query *QueryBuilder) LeftJoin(tablename string, on string) *QueryBuilder {
 	query.joins = append(query.joins, join{table: tablename, on: on, operator: LEFTJOIN})
 	return query
 }
 
-//RightJoin .
+// RightJoin .
 func (query *QueryBuilder) RightJoin(tablename string, on string) *QueryBuilder {
 	query.joins = append(query.joins, join{table: tablename, on: on, operator: RIGHTJOIN})
 	return query
 }
 
-//Union .
+// Union .
 func (query *QueryBuilder) Union(unions ...QueryBuilder) *QueryBuilder {
 	for i, len := 0, len(unions); i < len; i++ {
 		query.unions = append(query.unions, union{query: unions[i], operator: UNION})
@@ -271,19 +271,19 @@ func (query *QueryBuilder) Union(unions ...QueryBuilder) *QueryBuilder {
 	return query
 }
 
-//UnionOffset .
+// UnionOffset .
 func (query *QueryBuilder) UnionOffset(offset int64) *QueryBuilder {
 	query.unOffset = offset
 	return query
 }
 
-//UnionLimit .
+// UnionLimit .
 func (query *QueryBuilder) UnionLimit(limit int64) *QueryBuilder {
 	query.unLimit = limit
 	return query
 }
 
-//UnionOrderBy .
+// UnionOrderBy .
 func (query *QueryBuilder) UnionOrderBy(column string, direction string) *QueryBuilder {
 	if strings.ToUpper(direction) == DESC {
 		column += " " + DESC
@@ -294,7 +294,7 @@ func (query *QueryBuilder) UnionOrderBy(column string, direction string) *QueryB
 	return query
 }
 
-//UnionAll .
+// UnionAll .
 func (query *QueryBuilder) UnionAll(unions ...QueryBuilder) *QueryBuilder {
 	for i, len := 0, len(unions); i < len; i++ {
 		query.unions = append(query.unions, union{query: unions[i], operator: UNIONALL})
@@ -309,13 +309,13 @@ func (query *QueryBuilder) Distinct() *QueryBuilder {
 	return query
 }
 
-//GroupBy .
+// GroupBy .
 func (query *QueryBuilder) GroupBy(groups ...string) *QueryBuilder {
 	query.groups = groups
 	return query
 }
 
-//OrderBy .
+// OrderBy .
 func (query *QueryBuilder) OrderBy(column string, direction string) *QueryBuilder {
 	if strings.ToUpper(direction) == DESC {
 		column += " " + DESC
@@ -326,25 +326,25 @@ func (query *QueryBuilder) OrderBy(column string, direction string) *QueryBuilde
 	return query
 }
 
-//Offset .
+// Offset .
 func (query *QueryBuilder) Offset(offset int64) *QueryBuilder {
 	query.offset = offset
 	return query
 }
 
-//Skip .
+// Skip .
 func (query *QueryBuilder) Skip(offset int64) *QueryBuilder {
 	query.offset = offset
 	return query
 }
 
-//Limit .
+// Limit .
 func (query *QueryBuilder) Limit(limit int64) *QueryBuilder {
 	query.limit = limit
 	return query
 }
 
-//ToSql 输出SQL语句
+// ToSql 输出SQL语句
 func (query *QueryBuilder) ToSql(method string) string {
 	grammar := Grammar{builder: query, method: method}
 	return grammar.ToSql()
@@ -529,7 +529,7 @@ func (query *QueryBuilder) IsZero(v reflect.Value) bool {
 	}
 }
 
-//MultiInsert 批量插入
+// MultiInsert 批量插入
 func (query *QueryBuilder) MultiInsert(datas ...interface{}) (int64, error) {
 
 	stVal := reflect.ValueOf(datas)
@@ -566,7 +566,7 @@ func (query *QueryBuilder) MultiInsert(datas ...interface{}) (int64, error) {
 
 }
 
-//MultiInsertSQL 批量插入
+// MultiInsertSQL 批量插入
 func (query *QueryBuilder) MultiInsertSQL(datas ...interface{}) string {
 	stVal := reflect.ValueOf(datas)
 	if stVal.Kind() != reflect.Slice {
@@ -598,7 +598,7 @@ func (query *QueryBuilder) MultiInsertSQL(datas ...interface{}) string {
 	return ""
 }
 
-//Replace 替换
+// Replace 替换
 func (query *QueryBuilder) Replace(datas ...interface{}) (int64, error) {
 
 	stVal := reflect.ValueOf(datas)
@@ -634,7 +634,7 @@ func (query *QueryBuilder) Replace(datas ...interface{}) (int64, error) {
 	return 0, errors.New("insert data cannot be empty")
 }
 
-//ReplaceSQL 替换
+// ReplaceSQL 替换
 func (query *QueryBuilder) ReplaceSQL(datas ...interface{}) string {
 
 	stVal := reflect.ValueOf(datas)
@@ -667,7 +667,7 @@ func (query *QueryBuilder) ReplaceSQL(datas ...interface{}) string {
 	return ""
 }
 
-//InsertUpdate ...
+// InsertUpdate ...
 func (query *QueryBuilder) InsertUpdate(insert interface{}, update interface{}) (int64, error) {
 
 	columns, values, err := query.getInsertMap(insert)
@@ -698,7 +698,7 @@ func (query *QueryBuilder) InsertUpdate(insert interface{}, update interface{}) 
 	return result.RowsAffected()
 }
 
-//InsertUpdateSQL ...
+// InsertUpdateSQL ...
 func (query *QueryBuilder) InsertUpdateSQL(insert interface{}, update interface{}) string {
 
 	columns, values, err := query.getInsertMap(insert)
@@ -726,7 +726,7 @@ func (query *QueryBuilder) InsertUpdateSQL(insert interface{}, update interface{
 	return query.connection.SqlRaw()
 }
 
-//Insert 插入数据
+// Insert 插入数据
 func (query *QueryBuilder) Insert(data interface{}) (int64, error) {
 	columns, values, err := query.getInsertMap(data)
 	if err != nil {
@@ -746,7 +746,7 @@ func (query *QueryBuilder) Insert(data interface{}) (int64, error) {
 	return result.LastInsertId()
 }
 
-//InsertSQL 获取SQL语句
+// InsertSQL 获取SQL语句
 func (query *QueryBuilder) InsertSQL(data interface{}) string {
 	columns, values, err := query.getInsertMap(data)
 	if err != nil {
@@ -763,7 +763,7 @@ func (query *QueryBuilder) InsertSQL(data interface{}) string {
 	return query.connection.SqlRaw()
 }
 
-//Update 更新
+// Update 更新
 func (query *QueryBuilder) Update(data interface{}) (int64, error) {
 	columns, values, err := query.getInsertMap(data)
 	if err != nil {
@@ -785,7 +785,7 @@ func (query *QueryBuilder) Update(data interface{}) (int64, error) {
 	return result.RowsAffected()
 }
 
-//UpdateSQL 更新
+// UpdateSQL 更新
 func (query *QueryBuilder) UpdateSQL(data interface{}) string {
 	columns, values, err := query.getInsertMap(data)
 	if err != nil {
@@ -803,7 +803,7 @@ func (query *QueryBuilder) UpdateSQL(data interface{}) string {
 	return query.connection.SqlRaw()
 }
 
-//Delete .
+// Delete .
 func (query *QueryBuilder) Delete() (int64, error) {
 	grammar := Grammar{builder: query}
 	sql := grammar.Delete()
@@ -814,7 +814,7 @@ func (query *QueryBuilder) Delete() (int64, error) {
 	return result.RowsAffected()
 }
 
-//DeleteSQL .
+// DeleteSQL .
 func (query *QueryBuilder) DeleteSQL() string {
 	grammar := Grammar{builder: query}
 	sql := grammar.Delete()
@@ -822,7 +822,7 @@ func (query *QueryBuilder) DeleteSQL() string {
 	return query.connection.SqlRaw()
 }
 
-//Count ...
+// Count ...
 func (query *QueryBuilder) Count() (int64, error) {
 	query.Select("COUNT(1) AS _C")
 	d, err := query.Row().ToMap()
@@ -836,7 +836,7 @@ func (query *QueryBuilder) Count() (int64, error) {
 	return strconv.ParseInt(v, 10, 0)
 }
 
-//Exec 原始SQl语句执行
+// Exec 原始SQl语句执行
 func (query *QueryBuilder) Exec(sql string, args ...interface{}) (int64, error) {
 	result, err := query.connection.Exec(query.ctx, sql, args...)
 	if err != nil {
@@ -845,7 +845,7 @@ func (query *QueryBuilder) Exec(sql string, args ...interface{}) (int64, error) 
 	return result.RowsAffected()
 }
 
-//ExecSQL 原始SQl语句执行
+// ExecSQL 原始SQl语句执行
 func (query *QueryBuilder) ExecSQL(sql string, args ...interface{}) string {
 	query.connection.LastSql(sql, args...)
 	return query.connection.SqlRaw()
@@ -860,13 +860,13 @@ func (query *QueryBuilder) QueryRows(sql string, args ...interface{}) *Rows {
 	return &Rows{rs: rows, lastError: err}
 }
 
-//QueryRowsSQL ...
+// QueryRowsSQL ...
 func (query *QueryBuilder) QueryRowsSQL(sql string, args ...interface{}) string {
 	query.connection.LastSql(sql, args...)
 	return query.connection.SqlRaw()
 }
 
-//QueryRowSQL ...
+// QueryRowSQL ...
 func (query *QueryBuilder) QueryRowSQL(sql string, args ...interface{}) string {
 	query.connection.LastSql(sql, args...)
 	return query.connection.SqlRaw()
@@ -880,7 +880,7 @@ func (query *QueryBuilder) QueryRow(sql string, args ...interface{}) *Row {
 	return r
 }
 
-//Row 获取一条记录
+// Row 获取一条记录
 func (query *QueryBuilder) Row() *Row {
 	query.offset = 0
 	query.limit = 1
@@ -908,7 +908,7 @@ func (query *QueryBuilder) RowsSQL() string {
 	return query.connection.SqlRaw()
 }
 
-//Rows 获取多条记录
+// Rows 获取多条记录
 func (query *QueryBuilder) Rows() *Rows {
 	grammar := Grammar{builder: query}
 	sql := grammar.Select()

@@ -38,12 +38,12 @@ func NewPage(items, curPage, perNum int64, url string) *Pager {
 	return pager
 }
 
-//SetMaxPagesToShow 设置最大页面显示
+// SetMaxPagesToShow 设置最大页面显示
 func (pager *Pager) SetMaxPagesToShow(maxPagesToShow int64) {
 	pager.maxPagesToShow = maxPagesToShow
 }
 
-//HTML 转 html
+// HTML 转 html
 func (pager *Pager) HTML() string {
 	//总页数
 

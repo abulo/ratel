@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/abulo/ratel/v3/constant"
 	"github.com/abulo/ratel/v3/util"
@@ -76,7 +75,7 @@ func SetAppInstance(instance string) {
 	appInstance = instance
 }
 
-const ratelVersion = "3.1.3"
+const ratelVersion = "ratel3.1.5"
 
 var (
 	startTime string
@@ -88,14 +87,11 @@ var (
 
  */
 var (
-	appName         string
-	appID           string
-	hostName        string
-	buildAppVersion string
-	buildUser       string
-	buildHost       string
-	buildStatus     string
-	buildTime       string
+	appName      string
+	appID        string
+	hostName     string
+	buildVersion string
+	buildTime    string
 )
 
 func init() {
@@ -141,13 +137,13 @@ func SetAppID(s string) {
 }
 
 // AppVersion get buildAppVersion
-func AppVersion() string {
-	return buildAppVersion
+func BuildVersion() string {
+	return buildVersion
 }
 
-// SetAppVersion set appVersion
-func SetAppVersion(s string) {
-	buildAppVersion = s
+// SetAppVersion set buildVersion
+func SetBuildVersion(s string) {
+	buildVersion = s
 }
 
 // RatelVersion get ratelVersion
@@ -160,19 +156,9 @@ func BuildTime() string {
 	return buildTime
 }
 
-// BuildUser get buildUser
-func BuildUser() string {
-	return buildUser
-}
-
-// BuildHost get buildHost
-func BuildHost() string {
-	return buildHost
-}
-
 // SetBuildTime set buildTime
 func SetBuildTime(param string) {
-	buildTime = strings.Replace(param, "--", " ", 1)
+	buildTime = param
 }
 
 // HostName get host name
@@ -192,14 +178,13 @@ func GoVersion() string {
 
 // PrintVersion print format version info
 func PrintVersion() {
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "name", appName)
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "appID", appID)
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "region", AppRegion())
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "zone", AppZone())
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "appVersion", buildAppVersion)
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "ratelVersion", ratelVersion)
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "buildUser", buildUser)
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "buildHost", buildHost)
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "buildTime", BuildTime())
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "buildStatus", buildStatus)
+	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "GoVersion", GoVersion())
+	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "RatelVersion", ratelVersion)
+	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "Name", Name())
+	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "AppID", AppID())
+	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "Region", AppRegion())
+	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "Zone", AppZone())
+	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "BuildVersion", BuildVersion())
+	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "BuildTime", BuildTime())
+	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "StartTime", StartTime())
 }

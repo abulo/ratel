@@ -358,12 +358,13 @@ func Bool(key string, defVal ...bool) bool { return dc.Bool(key, defVal...) }
 // Bool looks up a value for a key in this section and attempts to parse that value as a boolean,
 // along with a boolean result similar to a map lookup.
 // of following(case insensitive):
-//  - true
-//  - yes
-//  - false
-//  - no
-//  - 1
-//  - 0
+//   - true
+//   - yes
+//   - false
+//   - no
+//   - 1
+//   - 0
+//
 // The `ok` boolean will be false in the event that the value could not be parsed as a bool
 func (c *Config) Bool(key string, defVal ...bool) (value bool) {
 	rawVal, ok := c.getString(key)

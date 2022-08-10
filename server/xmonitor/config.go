@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-//ModName ..
+// ModName ..
 const ModName = "server.monitor"
 
 // Config HTTP config

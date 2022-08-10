@@ -21,7 +21,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-//MongoDB 连接
+// MongoDB 连接
 type MongoDB struct {
 	Client        *mongo.Client
 	Name          string
@@ -29,7 +29,7 @@ type MongoDB struct {
 	DisableTrace  bool // 关闭链路追踪
 }
 
-//collection *mongo.Client
+// collection *mongo.Client
 type collection struct {
 	Database      *mongo.Database
 	Table         *mongo.Collection
@@ -42,7 +42,7 @@ type collection struct {
 	DisableTrace  bool // 关闭链路追踪
 }
 
-//Config 配置
+// Config 配置
 type Config struct {
 	URI             string
 	MaxConnIdleTime time.Duration
@@ -57,7 +57,7 @@ type index struct {
 	Name string
 }
 
-//New 数据库连接
+// New 数据库连接
 func NewClient(config *Config) *MongoDB {
 	//数据库连接
 	mongoOptions := options.Client()
@@ -143,7 +143,7 @@ func (collection *collection) Fields(fields bson.M) *collection {
 	return collection
 }
 
-//CreateOneIndex 创建单个普通索引
+// CreateOneIndex 创建单个普通索引
 func (collection *collection) CreateIndex(ctx context.Context, key bson.D, op *options.IndexOptions) (res string, err error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
@@ -183,7 +183,7 @@ func (collection *collection) CreateIndex(ctx context.Context, key bson.D, op *o
 	return
 }
 
-//ListIndexes 获取所有所有
+// ListIndexes 获取所有所有
 func (collection *collection) ListIndexes(ctx context.Context, opts *options.ListIndexesOptions) (interface{}, error) {
 	start := time.Now()
 	var results []string
@@ -235,7 +235,7 @@ func (collection *collection) ListIndexes(ctx context.Context, opts *options.Lis
 	return results, nil
 }
 
-//DropIndex 删除索引
+// DropIndex 删除索引
 func (collection *collection) DropIndex(ctx context.Context, name string, opts *options.DropIndexesOptions) error {
 	start := time.Now()
 	indexView := collection.Table.Indexes()
@@ -453,7 +453,6 @@ func (collection *collection) UpdateOrInsert(ctx context.Context, documents []in
 	return result, err
 }
 
-//
 func (collection *collection) UpdateOne(ctx context.Context, document interface{}) (*mongo.UpdateResult, error) {
 	start := time.Now()
 	var update bson.M
@@ -496,7 +495,7 @@ func (collection *collection) UpdateOne(ctx context.Context, document interface{
 	return result, err
 }
 
-//原生update
+// 原生update
 func (collection *collection) UpdateOneRaw(ctx context.Context, document interface{}, opt ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
@@ -536,7 +535,6 @@ func (collection *collection) UpdateOneRaw(ctx context.Context, document interfa
 	return result, err
 }
 
-//
 func (collection *collection) UpdateMany(ctx context.Context, document interface{}) (*mongo.UpdateResult, error) {
 	start := time.Now()
 	var update bson.M

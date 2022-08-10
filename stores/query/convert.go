@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//转换成string
+// 转换成string
 func toString(src interface{}) (dst string, err error) {
 	inf := reflect.Indirect(reflect.ValueOf(src)).Interface()
 	if inf == nil {
@@ -53,7 +53,7 @@ func toString(src interface{}) (dst string, err error) {
 	return
 }
 
-//提取tag信息
+// 提取tag信息
 func extractTagInfo(st reflect.Value) (tagList map[string]reflect.Value, err error) {
 
 	stVal := reflect.Indirect(st)

@@ -92,18 +92,18 @@ type Registry interface {
 	io.Closer
 }
 
-//GetServiceKey ..
+// GetServiceKey ..
 func GetServiceKey(prefix string, s *server.ServiceInfo) string {
 	return fmt.Sprintf("/%s/%s/%s/%s://%s", prefix, s.Name, s.Kind.String(), s.Scheme, s.Address)
 }
 
-//GetServiceValue ..
+// GetServiceValue ..
 func GetServiceValue(s *server.ServiceInfo) string {
 	val, _ := json.Marshal(s)
 	return string(val)
 }
 
-//GetService ..
+// GetService ..
 func GetService(s string) *server.ServiceInfo {
 	var si server.ServiceInfo
 	_ = json.Unmarshal([]byte(s), &si)

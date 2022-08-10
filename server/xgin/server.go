@@ -33,7 +33,7 @@ func newServer(config *Config) *Server {
 	}
 }
 
-//Upgrade protocol to WebSocket
+// Upgrade protocol to WebSocket
 func (s *Server) Upgrade(ws *WebSocket) gin.IRoutes {
 	return s.GET(ws.Pattern, ws.Name, func(c *gin.Context) {
 		ws.Upgrade(c.Writer, c.Request)

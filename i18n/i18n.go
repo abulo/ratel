@@ -149,7 +149,8 @@ func (l *I18n) T(lang, key string, args ...interface{}) string {
 
 // Tr translate from a lang by key
 // site.name => [site]
-//  			name = my blog
+//
+//	name = my blog
 func (l *I18n) Tr(lang, key string, args ...interface{}) string {
 	if !l.HasLang(lang) {
 		// find from fallback lang
@@ -348,7 +349,8 @@ func (l *I18n) Add(lang string, name string) {
 
 // NewLang create/add a new language
 // Usage:
-// 	i18n.NewLang("zh-CN", "简体中文")
+//
+//	i18n.NewLang("zh-CN", "简体中文")
 func (l *I18n) NewLang(lang string, name string) {
 	// lang exist
 	if _, ok := l.languages[lang]; ok {
@@ -361,7 +363,8 @@ func (l *I18n) NewLang(lang string, name string) {
 
 // LoadFile append data to a exist language
 // Usage:
-// 	i18n.LoadFile("zh-CN", "path/to/zh-CN.ini")
+//
+//	i18n.LoadFile("zh-CN", "path/to/zh-CN.ini")
 func (l *I18n) LoadFile(lang string, file string) (err error) {
 	// append data
 	if ld, ok := l.data[lang]; ok {
@@ -378,7 +381,8 @@ func (l *I18n) LoadFile(lang string, file string) (err error) {
 
 // LoadString load language data form a string
 // Usage:
-// 	i18n.Set("zh-CN", "name = blog")
+//
+//	i18n.Set("zh-CN", "name = blog")
 func (l *I18n) LoadString(lang string, data string) (err error) {
 	// append data
 	if ld, ok := l.data[lang]; ok {

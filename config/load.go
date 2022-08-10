@@ -71,7 +71,8 @@ func LoadRemote(format, url string) error { return dc.LoadRemote(format, url) }
 // LoadRemote load config data from remote URL.
 //
 // Usage:
-// 	c.LoadRemote(config.JSON, "http://abc.com/api-config.json")
+//
+//	c.LoadRemote(config.JSON, "http://abc.com/api-config.json")
 func (c *Config) LoadRemote(format, url string) (err error) {
 	// create http client
 	client := http.Client{Timeout: 300 * time.Second}
@@ -132,8 +133,9 @@ func LoadFlags(keys []string) error { return dc.LoadFlags(keys) }
 
 // LoadFlags parse command line arguments, based on provide keys.
 // Usage:
-// 	// debug flag is bool type
-// 	c.LoadFlags([]string{"env", "debug:bool"})
+//
+//	// debug flag is bool type
+//	c.LoadFlags([]string{"env", "debug:bool"})
 func (c *Config) LoadFlags(keys []string) (err error) {
 	hash := map[string]interface{}{}
 
@@ -185,7 +187,7 @@ func LoadData(dataSource ...interface{}) error { return dc.LoadData(dataSource..
 // LoadData load data from map OR struct
 //
 // The dataSources can be:
-//  - map[string]interface{}
+//   - map[string]interface{}
 func (c *Config) LoadData(dataSources ...interface{}) (err error) {
 	if c.opts.Delimiter == 0 {
 		c.opts.Delimiter = defaultDelimiter
@@ -210,10 +212,12 @@ func LoadSources(format string, src []byte, more ...[]byte) error {
 // LoadSources load data from byte content.
 //
 // Usage:
-// 	config.LoadSources(config.Yml, []byte(`
-// 	name: blog
-// 	arr:
-// 		key: val
+//
+//	config.LoadSources(config.Yml, []byte(`
+//	name: blog
+//	arr:
+//		key: val
+//
 // `))
 func (c *Config) LoadSources(format string, src []byte, more ...[]byte) (err error) {
 	err = c.parseSourceCode(format, src)

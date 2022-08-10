@@ -121,8 +121,9 @@ func (c *Config) With(fn func(c *Config)) *Config {
 // Readonly disable set data to config.
 //
 // Usage:
-// 	config.LoadFiles(a, b, c)
-// 	config.Readonly()
+//
+//	config.LoadFiles(a, b, c)
+//	config.Readonly()
 func (c *Config) Readonly() {
 	c.opts.Readonly = true
 }

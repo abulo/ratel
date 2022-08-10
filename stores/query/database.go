@@ -46,7 +46,7 @@ type QueryDb struct {
 	Addr          string
 }
 
-//QueryTx 事务
+// QueryTx 事务
 type QueryTx struct {
 	TX            *sql.Tx
 	Sql           Sql
@@ -58,7 +58,7 @@ type QueryTx struct {
 	Addr          string
 }
 
-//NewQuery 生成一个新的查询构造器
+// NewQuery 生成一个新的查询构造器
 func (querydb *QueryDb) NewQuery(ctx context.Context) *QueryBuilder {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -66,7 +66,7 @@ func (querydb *QueryDb) NewQuery(ctx context.Context) *QueryBuilder {
 	return &QueryBuilder{connection: querydb, ctx: ctx}
 }
 
-//Begin 开启一个事务
+// Begin 开启一个事务
 func (querydb *QueryDb) Begin() (*QueryTx, error) {
 	tx, err := querydb.DB.Begin()
 	if err != nil {
@@ -75,7 +75,7 @@ func (querydb *QueryDb) Begin() (*QueryTx, error) {
 	return &QueryTx{TX: tx, DriverName: querydb.DriverName, DisableTrace: querydb.DisableTrace, DisableMetric: querydb.DisableMetric, Prepare: querydb.Prepare, DBName: querydb.DBName, Addr: querydb.Addr}, nil
 }
 
-//Exec 复用执行语句
+// Exec 复用执行语句
 func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	if querydb.DB == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
@@ -140,7 +140,7 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 	return res, err
 }
 
-//Query 复用查询语句
+// Query 复用查询语句
 func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	if querydb.DB == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
@@ -223,7 +223,7 @@ func (querytx *QueryTx) NewQuery(ctx context.Context) *QueryBuilder {
 	return &QueryBuilder{connection: querytx, ctx: ctx}
 }
 
-//Exec 复用执行语句
+// Exec 复用执行语句
 func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	if querytx.TX == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
@@ -287,7 +287,7 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 
 }
 
-//Query 复用查询语句
+// Query 复用查询语句
 func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	if querytx.TX == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")

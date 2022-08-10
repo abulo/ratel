@@ -2,7 +2,6 @@
 Package yaml is a driver use YAML format content as config source
 
 Usage please see example:
-
 */
 package yamlv3
 

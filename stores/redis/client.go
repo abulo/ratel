@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-//Config 配置
+// Config 配置
 type Config struct {
 	Type          bool     //是否集群
 	Hosts         []string //IP
@@ -24,7 +24,7 @@ type Config struct {
 	DisableTrace  bool // 关闭链路追踪
 }
 
-//New 新连接
+// New 新连接
 func New(config *Config) *Client {
 	opts := Options{}
 	if config.Type {
@@ -126,7 +126,7 @@ func NewClient(opts Options) *Client {
 // 	return false
 // }
 
-//Prefix 返回前缀+键
+// Prefix 返回前缀+键
 func (r *Client) Prefix(key string) string {
 	return fmt.Sprintf(r.fmtString, key)
 }
@@ -239,7 +239,7 @@ func (r *Client) Pipeline() (res redis.Pipeliner) {
 	return res
 }
 
-//Pipelined 管道
+// Pipelined 管道
 func (r *Client) Pipelined(ctx context.Context, fn func(redis.Pipeliner) error) (res []redis.Cmder, err error) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -253,7 +253,7 @@ func (r *Client) Pipelined(ctx context.Context, fn func(redis.Pipeliner) error) 
 	return res, err
 }
 
-//TxPipeline 获取管道
+// TxPipeline 获取管道
 func (r *Client) TxPipeline() (res redis.Pipeliner) {
 	switch r.clientType {
 	case ClientCluster:
@@ -264,7 +264,7 @@ func (r *Client) TxPipeline() (res redis.Pipeliner) {
 	return res
 }
 
-//TxPipelined 管道
+// TxPipelined 管道
 func (r *Client) TxPipelined(ctx context.Context, fn func(redis.Pipeliner) error) (res []redis.Cmder, err error) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -278,7 +278,7 @@ func (r *Client) TxPipelined(ctx context.Context, fn func(redis.Pipeliner) error
 	return res, err
 }
 
-//Command 返回有关所有Redis命令的详细信息的Array回复
+// Command 返回有关所有Redis命令的详细信息的Array回复
 func (r *Client) Command(ctx context.Context) (res *redis.CommandsInfoCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -336,7 +336,7 @@ func (r *Client) Ping(ctx context.Context) (res *redis.StatusCmd) {
 	return res
 }
 
-//Quit 关闭连接
+// Quit 关闭连接
 func (r *Client) Quit(ctx context.Context) (res *redis.StatusCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -456,7 +456,7 @@ func (r *Client) Keys(ctx context.Context, pattern string) (res *redis.StringSli
 	return res
 }
 
-//Migrate 将 key 原子性地从当前实例传送到目标实例的指定数据库上，一旦传送成功， key 保证会出现在目标实例上，而当前实例上的 key 会被删除。
+// Migrate 将 key 原子性地从当前实例传送到目标实例的指定数据库上，一旦传送成功， key 保证会出现在目标实例上，而当前实例上的 key 会被删除。
 func (r *Client) Migrate(ctx context.Context, host, port, key string, db int, timeout time.Duration) (res *redis.StatusCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -485,7 +485,7 @@ func (r *Client) Move(ctx context.Context, key string, db int) (res *redis.BoolC
 	return res
 }
 
-//ObjectRefCount 返回给定 key 引用所储存的值的次数。此命令主要用于除错。
+// ObjectRefCount 返回给定 key 引用所储存的值的次数。此命令主要用于除错。
 func (r *Client) ObjectRefCount(ctx context.Context, key string) (res *redis.IntCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -499,7 +499,7 @@ func (r *Client) ObjectRefCount(ctx context.Context, key string) (res *redis.Int
 	return res
 }
 
-//ObjectEncoding 返回给定 key 锁储存的值所使用的内部表示(representation)。
+// ObjectEncoding 返回给定 key 锁储存的值所使用的内部表示(representation)。
 func (r *Client) ObjectEncoding(ctx context.Context, key string) (res *redis.StringCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -513,7 +513,7 @@ func (r *Client) ObjectEncoding(ctx context.Context, key string) (res *redis.Str
 	return res
 }
 
-//ObjectIdleTime 返回给定 key 自储存以来的空转时间(idle， 没有被读取也没有被写入)，以秒为单位。
+// ObjectIdleTime 返回给定 key 自储存以来的空转时间(idle， 没有被读取也没有被写入)，以秒为单位。
 func (r *Client) ObjectIdleTime(ctx context.Context, key string) (res *redis.DurationCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -679,7 +679,7 @@ func (r *Client) Sort(ctx context.Context, key string, sort *redis.Sort) (res *r
 	return res
 }
 
-//SortStore -> Sort
+// SortStore -> Sort
 func (r *Client) SortStore(ctx context.Context, key, store string, sort *redis.Sort) (res *redis.IntCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -693,7 +693,7 @@ func (r *Client) SortStore(ctx context.Context, key, store string, sort *redis.S
 	return res
 }
 
-//SortInterfaces -> Sort
+// SortInterfaces -> Sort
 func (r *Client) SortInterfaces(ctx context.Context, key string, sort *redis.Sort) (res *redis.SliceCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -1250,7 +1250,7 @@ func (r *Client) HDel(ctx context.Context, key string, fields ...string) (res *r
 	return res
 }
 
-//HExists 查看哈希表 key 中，给定域 field 是否存在。
+// HExists 查看哈希表 key 中，给定域 field 是否存在。
 func (r *Client) HExists(ctx context.Context, key, field string) (res *redis.BoolCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -1342,7 +1342,7 @@ func (r *Client) HKeys(ctx context.Context, key string) (res *redis.StringSliceC
 	return res
 }
 
-//HLen 返回哈希表 key 中域的数量。
+// HLen 返回哈希表 key 中域的数量。
 func (r *Client) HLen(ctx context.Context, key string) (res *redis.IntCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -2109,7 +2109,7 @@ func (r *Client) XRead(ctx context.Context, a *redis.XReadArgs) (res *redis.XStr
 	return res
 }
 
-//XReadStreams -> XRead
+// XReadStreams -> XRead
 func (r *Client) XReadStreams(ctx context.Context, streams ...string) (res *redis.XStreamSliceCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -2506,7 +2506,7 @@ func (r *Client) ZCount(ctx context.Context, key, min, max string) (res *redis.I
 	return res
 }
 
-//ZLexCount -> ZCount
+// ZLexCount -> ZCount
 func (r *Client) ZLexCount(ctx context.Context, key, min, max string) (res *redis.IntCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -2716,7 +2716,7 @@ func (r *Client) ZRemRangeByScore(ctx context.Context, key, min, max string) (re
 	return res
 }
 
-//ZRemRangeByLex -> ZRemRangeByScore
+// ZRemRangeByLex -> ZRemRangeByScore
 func (r *Client) ZRemRangeByLex(ctx context.Context, key, min, max string) (res *redis.IntCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -2747,7 +2747,7 @@ func (r *Client) ZRevRange(ctx context.Context, key string, start, stop int64) (
 	return res
 }
 
-//ZRevRangeWithScores -> ZRevRange
+// ZRevRangeWithScores -> ZRevRange
 func (r *Client) ZRevRangeWithScores(ctx context.Context, key string, start, stop int64) (res *redis.ZSliceCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -3146,7 +3146,7 @@ func (r *Client) LastSave(ctx context.Context) (res *redis.IntCmd) {
 	return res
 }
 
-//Save 异步保存数据到硬盘
+// Save 异步保存数据到硬盘
 func (r *Client) Save(ctx context.Context) (res *redis.StatusCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -3230,7 +3230,7 @@ func (r *Client) Time(ctx context.Context) (res *redis.TimeCmd) {
 	return res
 }
 
-//Eval 执行 Lua 脚本。
+// Eval 执行 Lua 脚本。
 func (r *Client) Eval(ctx context.Context, script string, keys []string, args ...interface{}) (res *redis.Cmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -3244,7 +3244,7 @@ func (r *Client) Eval(ctx context.Context, script string, keys []string, args ..
 	return res
 }
 
-//EvalSha 执行 Lua 脚本。
+// EvalSha 执行 Lua 脚本。
 func (r *Client) EvalSha(ctx context.Context, sha1 string, keys []string, args ...interface{}) (res *redis.Cmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -3329,7 +3329,7 @@ func (r *Client) DebugObject(ctx context.Context, key string) (res *redis.String
 	return res
 }
 
-//Publish 将信息发送到指定的频道。
+// Publish 将信息发送到指定的频道。
 func (r *Client) Publish(ctx context.Context, channel string, message interface{}) (res *redis.IntCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -3343,7 +3343,7 @@ func (r *Client) Publish(ctx context.Context, channel string, message interface{
 	return res
 }
 
-//PubSubChannels 订阅一个或多个符合给定模式的频道。
+// PubSubChannels 订阅一个或多个符合给定模式的频道。
 func (r *Client) PubSubChannels(ctx context.Context, pattern string) (res *redis.StringSliceCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -3385,7 +3385,7 @@ func (r *Client) PubSubNumPat(ctx context.Context) (res *redis.IntCmd) {
 	return res
 }
 
-//ClusterSlots 获取集群节点的映射数组
+// ClusterSlots 获取集群节点的映射数组
 func (r *Client) ClusterSlots(ctx context.Context) (res *redis.ClusterSlotsCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -3652,7 +3652,7 @@ func (r *Client) ClusterAddSlotsRange(ctx context.Context, min, max int) (res *r
 	return res
 }
 
-//GeoAdd 将指定的地理空间位置（纬度、经度、名称）添加到指定的key中
+// GeoAdd 将指定的地理空间位置（纬度、经度、名称）添加到指定的key中
 func (r *Client) GeoAdd(ctx context.Context, key string, geoLocation ...*redis.GeoLocation) (res *redis.IntCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -3722,7 +3722,7 @@ func (r *Client) GeoRadiusByMember(ctx context.Context, key, member string, quer
 	return res
 }
 
-//GeoRadiusByMemberStore 找出位于指定范围内的元素，中心点是由给定的位置元素决定
+// GeoRadiusByMemberStore 找出位于指定范围内的元素，中心点是由给定的位置元素决定
 func (r *Client) GeoRadiusByMemberStore(ctx context.Context, key, member string, query *redis.GeoRadiusQuery) (res *redis.IntCmd) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()

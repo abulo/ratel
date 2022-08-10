@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-//Config 数据库配置
+// Config 数据库配置
 type Config struct {
 	Username      string        //账号 root
 	Password      string        //密码
@@ -25,7 +25,7 @@ type Config struct {
 	DisableTrace  bool // 关闭链路追踪
 }
 
-//New 新连接
+// New 新连接
 func NewClient(config *Config) *query.QueryDb {
 	opt := &query.Opt{
 		MaxOpenConns: config.MaxOpenConns,
@@ -40,7 +40,7 @@ func NewClient(config *Config) *query.QueryDb {
 	return &query.QueryDb{DB: db, DriverName: config.DriverName, DisableMetric: config.DisableMetric, DisableTrace: config.DisableTrace, Prepare: true, DBName: config.Database, Addr: config.Host + ":" + config.Port}
 }
 
-//URI 构造数据库连接
+// URI 构造数据库连接
 func (config *Config) URI() string {
 	return config.Username + ":" +
 		config.Password + "@tcp(" +

@@ -131,7 +131,7 @@ func init() {
 		env.AppMode(),
 		env.AppRegion(),
 		env.AppZone(),
-		env.AppVersion(),
+		env.BuildVersion(),
 		env.GoVersion(),
 	).Set(float64(time.Now().UnixNano() / 1e6))
 	// monitor.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {

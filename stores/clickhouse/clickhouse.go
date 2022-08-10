@@ -9,7 +9,7 @@ import (
 	"github.com/abulo/ratel/v3/util"
 )
 
-//Config 数据库配置
+// Config 数据库配置
 type Config struct {
 	Username         string   //账号 root
 	Password         string   //密码
@@ -29,7 +29,7 @@ type Config struct {
 	DisableTrace     bool // 关闭链路追踪
 }
 
-//URI 构造数据库连接
+// URI 构造数据库连接
 func (config *Config) URI() string {
 	//clickhouse://username:password@host1:9000,host2:9000/database?dial_timeout=200ms&max_execution_time=60
 
@@ -71,7 +71,7 @@ func (config *Config) URI() string {
 	return link + "?" + util.Implode("&", param)
 }
 
-//New 新连接
+// New 新连接
 func NewClient(config *Config) *query.QueryDb {
 	opt := &query.Opt{
 		MaxOpenConns: config.MaxOpenConns,

@@ -247,7 +247,7 @@ func (app *Application) exitHandler() {
 				"SIG": sig,
 			}).Info("Received SIG")
 		}
-		app.GracefulStop(context.Background())
+		_ = app.GracefulStop(context.Background())
 	case syscall.SIGINT, syscall.SIGTERM, syscall.SIGTSTP, syscall.SIGUSR1, syscall.SIGQUIT, os.Interrupt:
 		logger.Logger.Info("close server")
 		os.Exit(128 + int(sig.(syscall.Signal)))

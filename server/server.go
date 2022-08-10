@@ -131,7 +131,7 @@ func defaultServiceInfo() ServiceInfo {
 	si.Metadata["appHost"] = env.AppHost()
 	si.Metadata["startTime"] = env.StartTime()
 	si.Metadata["buildTime"] = env.BuildTime()
-	si.Metadata["appVersion"] = env.AppVersion()
+	si.Metadata["buildVersion"] = env.BuildVersion()
 	si.Metadata["ratelVersion"] = env.RatelVersion()
 	return si
 }

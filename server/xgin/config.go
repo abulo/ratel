@@ -6,7 +6,7 @@ import (
 	"github.com/abulo/ratel/v3/gin"
 )
 
-//ModName ..
+// ModName ..
 const ModName = "server.gin"
 
 // Config HTTP config

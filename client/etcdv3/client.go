@@ -201,7 +201,7 @@ func (client *Client) GetValues(ctx context.Context, keys ...string) (map[string
 	return vars, nil
 }
 
-//GetLeaseSession 创建租约会话
+// GetLeaseSession 创建租约会话
 func (client *Client) GetLeaseSession(ctx context.Context, opts ...concurrency.SessionOption) (leaseSession *concurrency.Session, err error) {
 	return concurrency.NewSession(client.Client, opts...)
 }

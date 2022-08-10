@@ -300,12 +300,12 @@ func (engine *Engine) SetHTMLTemplate(templ *template.Template) {
 	engine.HTMLRender = render.HTMLProduction{Template: templ.Funcs(engine.FuncMap)}
 }
 
-//SetFuncMap sets the FuncMap used for template.FuncMap.
+// SetFuncMap sets the FuncMap used for template.FuncMap.
 func (engine *Engine) SetFuncMap(funcMap template.FuncMap) {
 	engine.FuncMap = funcMap
 }
 
-//InitFuncMap 系统初始化模板自定义函数
+// InitFuncMap 系统初始化模板自定义函数
 func (engine *Engine) InitFuncMap() {
 	engine.FuncMap["dateformat"] = DateFormat
 	engine.FuncMap["date"] = Date
@@ -770,7 +770,7 @@ func redirectRequest(c *Context) {
 	c.writermem.WriteHeaderNow()
 }
 
-//GetRoutes get routes
+// GetRoutes get routes
 func (engine *Engine) GetRoutes() map[string]string {
 	return engine.routes
 }

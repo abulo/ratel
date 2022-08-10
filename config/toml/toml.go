@@ -2,7 +2,6 @@
 Package toml is driver use TOML format content as config source
 
 Usage please see example:
-
 */
 package toml
 

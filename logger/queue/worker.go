@@ -28,7 +28,7 @@ func (w *worker) Start() {
 	go w.dispatcher()
 }
 
-//分发执行
+// 分发执行
 func (w *worker) dispatcher() {
 	for {
 		select {

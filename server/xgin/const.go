@@ -1,6 +1,6 @@
 package xgin
 
-//code
+// code
 const (
 	codeMS = 1000
 	// codeMSInvalidParam       = 1001
