@@ -171,7 +171,7 @@ func (g Grammar) Replace() string {
 func (g Grammar) compileInsertValue() string {
 	sql := " ("
 	for k, v := range g.builder.data {
-		for kv, _ := range v {
+		for kv := range v {
 			if k == 0 { //取第一列
 				g.builder.columns = append(g.builder.columns, kv)
 			}
@@ -187,12 +187,12 @@ func (g Grammar) compileInsertValue() string {
 		}
 	}
 	sql += strings.Join(g.builder.columns, ",")
-	collen := len(g.builder.columns)
-	sql += ") VALUES (?" + strings.Repeat(",?", collen-1) + ")"
+	colLen := len(g.builder.columns)
+	sql += ") VALUES (?" + strings.Repeat(",?", colLen-1) + ")"
 	len := len(g.builder.data)
 	if len > 1 {
 		for i := 1; i < len; i++ {
-			sql += " ,(?" + strings.Repeat(",?", collen-1) + ")"
+			sql += " ,(?" + strings.Repeat(",?", colLen-1) + ")"
 		}
 	}
 	return sql
