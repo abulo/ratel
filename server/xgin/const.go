@@ -9,6 +9,7 @@ const (
 	// codeMSSecondItemNotError = 1004
 	// codeMSResErr             = 1005
 )
+
 // StatusContinue ...
 const (
 	// StatusContinue ...

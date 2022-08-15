@@ -31,7 +31,7 @@ cmt: ## auto comment exported Function   gocmt -d ${PWD} -i
 ########################################################
 errcheck: ## check error
 	@hash errcheck 2>&- || go install github.com/kisielk/errcheck@latest
-	@errcheck ./...
+	@errcheck -ignoretests ./...
 
 ########################################################
 test: ## Run unittests
