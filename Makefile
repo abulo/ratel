@@ -9,6 +9,10 @@ DIRS := $(shell ls -d */ | grep -v 'vendor/')
 all: fmt errcheck lint build
 
 ########################################################
+vet: ## vet the files
+	@go vet ./...
+
+########################################################
 fmt: ## Format the files
 	@gofmt -l -w $(GO_FILES)
 

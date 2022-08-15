@@ -2,9 +2,9 @@ name: Go
 
 on:
   push:
-    branches: [ main,release-*,v2 ]
+    branches: [ main,release-*,v2,v3 ]
   pull_request:
-    branches: [ main,release-*,v2 ]
+    branches: [ main,release-*,v2,v3 ]
 
 jobs:
   build:
@@ -15,7 +15,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: 1.18
+        go-version: 1.19
       id: go
 
     - name: Check out code into the Go module directory
