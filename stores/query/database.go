@@ -24,13 +24,13 @@ type Connection interface {
 	Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 	NewQuery(ctx context.Context) *QueryBuilder
-	SqlRaw() string
-	LastSql(query string, args ...interface{})
+	SQLRaw() string
+	LastSQL(query string, args ...interface{})
 }
 
 // Sql sql语句
-type Sql struct {
-	Sql      string
+type SQL struct {
+	SQL      string
 	Args     []interface{}
 	CostTime time.Duration
 }
@@ -38,7 +38,7 @@ type Sql struct {
 // QueryDb mysql 配置
 type QueryDb struct {
 	DB            *sql.DB
-	Sql           Sql
+	SQL           SQL
 	DriverName    string
 	DisableMetric bool // 关闭指标采集
 	DisableTrace  bool // 关闭链路追踪
@@ -50,7 +50,7 @@ type QueryDb struct {
 // QueryTx 事务
 type QueryTx struct {
 	TX            *sql.Tx
-	Sql           Sql
+	SQL           SQL
 	DriverName    string
 	DisableMetric bool // 关闭指标采集
 	DisableTrace  bool // 关闭链路追踪
@@ -81,11 +81,11 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 	if querydb.DB == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
-	querydb.Sql.Sql = query
-	querydb.Sql.Args = args
+	querydb.SQL.SQL = query
+	querydb.SQL.Args = args
 	start := time.Now()
 	defer func() {
-		querydb.Sql.CostTime = time.Since(start)
+		querydb.SQL.CostTime = time.Since(start)
 	}()
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -104,7 +104,7 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 			ext.PeerHostname.Set(span, hostName)
 			ext.DBInstance.Set(span, querydb.DBName)
 			ext.DBStatement.Set(span, querydb.DriverName)
-			span.LogFields(log.String("sql", querydb.SqlRaw()))
+			span.LogFields(log.String("sql", querydb.SQLRaw()))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -147,11 +147,11 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 	if querydb.DB == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
-	querydb.Sql.Sql = query
-	querydb.Sql.Args = args
+	querydb.SQL.SQL = query
+	querydb.SQL.Args = args
 	start := time.Now()
 	defer func() {
-		querydb.Sql.CostTime = time.Since(start)
+		querydb.SQL.CostTime = time.Since(start)
 	}()
 
 	if ctx == nil || ctx.Err() != nil {
@@ -170,7 +170,7 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 			ext.PeerHostname.Set(span, hostName)
 			ext.DBInstance.Set(span, querydb.DBName)
 			ext.DBStatement.Set(span, querydb.DriverName)
-			span.LogFields(log.String("sql", querydb.SqlRaw()))
+			span.LogFields(log.String("sql", querydb.SQLRaw()))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -231,11 +231,11 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 	if querytx.TX == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
-	querytx.Sql.Sql = query
-	querytx.Sql.Args = args
+	querytx.SQL.SQL = query
+	querytx.SQL.Args = args
 	start := time.Now()
 	defer func() {
-		querytx.Sql.CostTime = time.Since(start)
+		querytx.SQL.CostTime = time.Since(start)
 
 	}()
 
@@ -255,7 +255,7 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 			ext.PeerHostname.Set(span, hostName)
 			ext.DBInstance.Set(span, querytx.DBName)
 			ext.DBStatement.Set(span, querytx.DriverName)
-			span.LogFields(log.String("sql", querytx.SqlRaw()))
+			span.LogFields(log.String("sql", querytx.SQLRaw()))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -299,11 +299,11 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 	if querytx.TX == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
-	querytx.Sql.Sql = query
-	querytx.Sql.Args = args
+	querytx.SQL.SQL = query
+	querytx.SQL.Args = args
 	start := time.Now()
 	defer func() {
-		querytx.Sql.CostTime = time.Since(start)
+		querytx.SQL.CostTime = time.Since(start)
 	}()
 
 	if ctx == nil || ctx.Err() != nil {
@@ -322,7 +322,7 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 			ext.PeerHostname.Set(span, hostName)
 			ext.DBInstance.Set(span, querytx.DBName)
 			ext.DBStatement.Set(span, querytx.DriverName)
-			span.LogFields(log.String("sql", querytx.SqlRaw()))
+			span.LogFields(log.String("sql", querytx.SQLRaw()))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -358,32 +358,32 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 	return res, err
 }
 
-// SqlRaw ...
-func (querytx *QueryTx) SqlRaw() string {
-	return querytx.Sql.ToString()
+// SQLRaw ...
+func (querytx *QueryTx) SQLRaw() string {
+	return querytx.SQL.ToString()
 }
 
-// SqlRaw ...
-func (querydb *QueryDb) SqlRaw() string {
-	return querydb.Sql.ToString()
+// SQLRaw ...
+func (querydb *QueryDb) SQLRaw() string {
+	return querydb.SQL.ToString()
 }
 
-// LastSql ...
-func (querytx *QueryTx) LastSql(query string, args ...interface{}) {
-	querytx.Sql.Sql = query
-	querytx.Sql.Args = args
+// LastSQL ...
+func (querytx *QueryTx) LastSQL(query string, args ...interface{}) {
+	querytx.SQL.SQL = query
+	querytx.SQL.Args = args
 }
 
-// LastSql ...
-func (querydb *QueryDb) LastSql(query string, args ...interface{}) {
-	querydb.Sql.Sql = query
-	querydb.Sql.Args = args
+// LastSQL ...
+func (querydb *QueryDb) LastSQL(query string, args ...interface{}) {
+	querydb.SQL.SQL = query
+	querydb.SQL.Args = args
 }
 
 // ToString sql语句转出string
-func (sqlRaw Sql) ToString() string {
-	s := sqlRaw.Sql
-	for _, v := range sqlRaw.Args {
+func (SQLRaw SQL) ToString() string {
+	s := SQLRaw.SQL
+	for _, v := range SQLRaw.Args {
 		if isNilFixed(v) {
 			v = "NULL"
 		} else {
@@ -425,14 +425,13 @@ func convert(s string, v interface{}) string {
 	case string:
 		if val := fmt.Sprintf("%v", v); val == "NULL" {
 			return strings.Replace(s, "?", fmt.Sprintf("%v", v), 1)
-		} else {
-			return strings.Replace(s, "?", strconv.Quote(fmt.Sprintf("%v", v)), 1)
 		}
+		return strings.Replace(s, "?", strconv.Quote(fmt.Sprintf("%v", v)), 1)
 	}
 	return strings.Replace(s, "?", fmt.Sprintf("%v", v), 1)
 }
 
 // ToJson sql语句转出json
-func (sql Sql) ToJson() string {
+func (sql SQL) ToJson() string {
 	return fmt.Sprintf(`{"sql":%s,"costtime":"%s"}`, strconv.Quote(sql.ToString()), sql.CostTime)
 }

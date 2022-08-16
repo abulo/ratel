@@ -130,7 +130,7 @@ func NewTask(tname string, spec string, f TaskFunc, opts ...Option) *Task {
 		ErrLimit: 100,
 		SpecStr:  spec,
 		// we only store the pointer, so it won't use too many space
-		Errlist: make([]*taskerr, 100, 100),
+		Errlist: make([]*taskerr, 0),
 	}
 
 	for _, opt := range opts {
@@ -449,31 +449,31 @@ func (t *TaskManager) WorkerStop() error {
 }
 
 // StartTask start all tasks
-func (m *TaskManager) StartTask() {
-	m.taskLock.Lock()
-	defer m.taskLock.Unlock()
-	if m.started {
+func (t *TaskManager) StartTask() {
+	t.taskLock.Lock()
+	defer t.taskLock.Unlock()
+	if t.started {
 		// If already started， no need to start another goroutine.
 		return
 	}
-	m.started = true
-	go m.run()
+	t.started = true
+	go t.run()
 }
 
-func (m *TaskManager) run() {
+func (t *TaskManager) run() {
 	now := time.Now().Local()
 	// first run the tasks, so set all tasks next run time.
-	m.setTasksStartTime(now)
+	t.setTasksStartTime(now)
 
 	for {
 		// we only use RLock here because NewMapSorter copy the reference, do not change any thing
 		// here, we sort all task and get first task running time (effective).
-		m.taskLock.RLock()
-		sortList := NewMapSorter(m.adminTaskList)
-		m.taskLock.RUnlock()
+		t.taskLock.RLock()
+		sortList := NewMapSorter(t.adminTaskList)
+		t.taskLock.RUnlock()
 		sortList.Sort()
 		var effective time.Time
-		if len(m.adminTaskList) == 0 || sortList.Vals[0].GetNext(context.Background()).IsZero() {
+		if len(t.adminTaskList) == 0 || sortList.Vals[0].GetNext(context.Background()).IsZero() {
 			// If there are no entries yet, just sleep - it still handles new entries
 			// and stop requests.
 			effective = now.AddDate(10, 0, 0)
@@ -483,39 +483,39 @@ func (m *TaskManager) run() {
 
 		select {
 		case now = <-time.After(effective.Sub(now)): // wait for effective time
-			m.runNextTasks(sortList, effective)
+			t.runNextTasks(sortList, effective)
 			continue
-		case <-m.changed: // tasks have been changed, set all tasks run again now
+		case <-t.changed: // tasks have been changed, set all tasks run again now
 			now = time.Now().Local()
-			m.setTasksStartTime(now)
+			t.setTasksStartTime(now)
 			continue
-		case <-m.stop: // manager is stopped, and mark manager is stopped
-			m.markManagerStop()
+		case <-t.stop: // manager is stopped, and mark manager is stopped
+			t.markManagerStop()
 			return
 		}
 	}
 }
 
 // setTasksStartTime is set all tasks next running time
-func (m *TaskManager) setTasksStartTime(now time.Time) {
-	m.taskLock.Lock()
-	for _, task := range m.adminTaskList {
+func (t *TaskManager) setTasksStartTime(now time.Time) {
+	t.taskLock.Lock()
+	for _, task := range t.adminTaskList {
 		task.SetNext(context.Background(), now)
 	}
-	m.taskLock.Unlock()
+	t.taskLock.Unlock()
 }
 
 // markManagerStop it sets manager to be stopped
-func (m *TaskManager) markManagerStop() {
-	m.taskLock.Lock()
-	if m.started {
-		m.started = false
+func (t *TaskManager) markManagerStop() {
+	t.taskLock.Lock()
+	if t.started {
+		t.started = false
 	}
-	m.taskLock.Unlock()
+	t.taskLock.Unlock()
 }
 
 // runNextTasks it runs next task which next run time is equal to effective
-func (m *TaskManager) runNextTasks(sortList *MapSorter, effective time.Time) {
+func (t *TaskManager) runNextTasks(sortList *MapSorter, effective time.Time) {
 	// Run every entry whose next time was this effective time.
 	i := 0
 	for _, e := range sortList.Vals {
@@ -526,10 +526,10 @@ func (m *TaskManager) runNextTasks(sortList *MapSorter, effective time.Time) {
 
 		// check if timeout is on, if yes passing the timeout context
 		ctx := context.Background()
-		m.wait.Add(1)
+		t.wait.Add(1)
 		if duration := e.GetTimeout(ctx); duration != 0 {
 			go func(e Tasker) {
-				defer m.wait.Done()
+				defer t.wait.Done()
 				ctx, cancelFunc := context.WithTimeout(ctx, duration)
 				defer cancelFunc()
 				err := e.Run(ctx)
@@ -539,7 +539,7 @@ func (m *TaskManager) runNextTasks(sortList *MapSorter, effective time.Time) {
 			}(e)
 		} else {
 			go func(e Tasker) {
-				defer m.wait.Done()
+				defer t.wait.Done()
 				err := e.Run(ctx)
 				if err != nil {
 					log.Printf("tasker.run err: %s\n", err.Error())
@@ -553,78 +553,78 @@ func (m *TaskManager) runNextTasks(sortList *MapSorter, effective time.Time) {
 }
 
 // StopTask stop all tasks
-func (m *TaskManager) StopTask() {
+func (t *TaskManager) StopTask() {
 	go func() {
-		m.stop <- true
+		t.stop <- true
 	}()
 }
 
 // GracefulShutdown wait all task done
-func (m *TaskManager) GracefulShutdown() <-chan struct{} {
+func (t *TaskManager) GracefulShutdown() <-chan struct{} {
 	done := make(chan struct{})
 	go func() {
-		m.stop <- true
-		m.wait.Wait()
+		t.stop <- true
+		t.wait.Wait()
 		close(done)
 	}()
 	return done
 }
 
 // AddTask add task with name
-func (m *TaskManager) AddTask(taskname string, t Tasker) {
+func (t *TaskManager) AddTask(taskname string, task Tasker) {
 	isChanged := false
-	m.taskLock.Lock()
-	t.SetNext(context.TODO(), time.Now().Local())
-	m.adminTaskList[taskname] = t
-	if m.started {
+	t.taskLock.Lock()
+	task.SetNext(context.TODO(), time.Now().Local())
+	t.adminTaskList[taskname] = task
+	if t.started {
 		isChanged = true
 	}
-	m.taskLock.Unlock()
+	t.taskLock.Unlock()
 
 	if isChanged {
 		go func() {
-			m.changed <- true
+			t.changed <- true
 		}()
 	}
 }
 
 // Len ...
-func (m *TaskManager) Len() int {
-	return len(m.adminTaskList)
+func (t *TaskManager) Len() int {
+	return len(t.adminTaskList)
 }
 
 // DeleteTask delete task with name
-func (m *TaskManager) DeleteTask(taskname string) {
+func (t *TaskManager) DeleteTask(taskname string) {
 	isChanged := false
 
-	m.taskLock.Lock()
-	delete(m.adminTaskList, taskname)
-	if m.started {
+	t.taskLock.Lock()
+	delete(t.adminTaskList, taskname)
+	if t.started {
 		isChanged = true
 	}
-	m.taskLock.Unlock()
+	t.taskLock.Unlock()
 
 	if isChanged {
 		go func() {
-			m.changed <- true
+			t.changed <- true
 		}()
 	}
 }
 
 // ClearTask clear all tasks
-func (m *TaskManager) ClearTask() {
+func (t *TaskManager) ClearTask() {
 	isChanged := false
 
-	m.taskLock.Lock()
-	m.adminTaskList = make(map[string]Tasker)
-	if m.started {
+	t.taskLock.Lock()
+	t.adminTaskList = make(map[string]Tasker)
+	if t.started {
 		isChanged = true
 	}
-	m.taskLock.Unlock()
+	t.taskLock.Unlock()
 
 	if isChanged {
 		go func() {
-			m.changed <- true
+			t.changed <- true
 		}()
 	}
 }

@@ -45,7 +45,6 @@ func Greenf(msg string, arg ...interface{}) string {
 func sprint(colorValue int, msg string, arg ...interface{}) string {
 	if arg != nil {
 		return fmt.Sprintf("\x1b[%dm%s\x1b[0m %+v", colorValue, msg, arrToTransform(arg))
-	} else {
-		return fmt.Sprintf("\x1b[%dm%s\x1b[0m", colorValue, msg)
 	}
+	return fmt.Sprintf("\x1b[%dm%s\x1b[0m", colorValue, msg)
 }

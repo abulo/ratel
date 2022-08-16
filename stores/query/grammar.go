@@ -24,9 +24,8 @@ func (g Grammar) compileTable(from bool) string {
 	}
 	if from {
 		return " FROM " + strings.Join(g.builder.table, ",")
-	} else {
-		return strings.Join(g.builder.table, ",")
 	}
+	return strings.Join(g.builder.table, ",")
 
 }
 func (g Grammar) compileOrder(isUnion bool) string {
@@ -56,9 +55,9 @@ func (g Grammar) compileLimit(isUnion bool) string {
 	}
 	if limit > 0 {
 		return " LIMIT " + strconv.FormatInt(offset, 10) + "," + strconv.FormatInt(limit, 10)
-	} else {
-		return ""
 	}
+	return ""
+
 }
 
 func (g Grammar) compileDistinct() string {
@@ -121,7 +120,6 @@ func (g Grammar) compileUnion() string {
 
 	for i := 0; i < len; i++ {
 		g1.builder = &unions[i].query
-
 		sql += " " + unions[i].operator
 		sql += " (" + g1.Select() + ")"
 	}

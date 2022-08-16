@@ -80,7 +80,7 @@ func NewClient(config *Config) *query.QueryDb {
 		MaxIdleTime:  config.MaxIdleTime,
 	}
 
-	db, err := query.NewSqlConn(config.DriverName, config.URI(), opt)
+	db, err := query.NewSQLConn(config.DriverName, config.URI(), opt)
 	if err != nil {
 		logger.Logger.Panic(err)
 	}

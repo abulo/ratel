@@ -73,9 +73,9 @@ func (ns NullString) Result() interface{} {
 }
 
 // Convert ...
-func (n NullString) Convert() string {
-	if n.Valid {
-		return n.String
+func (ns NullString) Convert() string {
+	if ns.Valid {
+		return ns.String
 	}
 	return ""
 }
@@ -100,52 +100,50 @@ func (nt *NullDateTime) Scan(value interface{}) error {
 	if reflect.TypeOf(value) == nil {
 		*nt = NewNullDateTime()
 		return nil
-	} else {
-		var s sql.NullString
-		if err := s.Scan(value); err != nil {
-			return err
-		} else {
-			*nt, err = NewDateTime(s.String), nil
-			return err
-		}
 	}
+	var s sql.NullString
+	if err := s.Scan(value); err != nil {
+		return err
+	}
+	*nt = NewDateTime(s.String)
+	return nil
 }
 
 // MarshalJSON ...
-func (ns NullDateTime) MarshalJSON() ([]byte, error) {
-	if !ns.Valid {
+func (nt NullDateTime) MarshalJSON() ([]byte, error) {
+	if !nt.Valid {
 		return nullJSON, nil
 	}
-	return json.Marshal(ns.String)
+	return json.Marshal(nt.String)
 }
 
 // UnmarshalJSON ...
-func (ns *NullDateTime) UnmarshalJSON(b []byte) error {
+func (nt *NullDateTime) UnmarshalJSON(b []byte) error {
 	var err error = nil
 	if bytes.Equal(nullJSON, b) {
-		ns.String = ""
-		ns.Valid = false
+		nt.String = ""
+		nt.Valid = false
 	} else {
-		err = json.Unmarshal(b, &ns.String)
-		ns.Valid = (err == nil)
+		err = json.Unmarshal(b, &nt.String)
+		nt.Valid = (err == nil)
 	}
 	return err
 }
 
 // IsEmpty ...
-func (ns NullDateTime) IsEmpty() bool {
-	return !ns.Valid || ns.String == ""
+func (nt NullDateTime) IsEmpty() bool {
+	return !nt.Valid || nt.String == ""
 }
 
 // IsValid ...
-func (ns NullDateTime) IsValid() bool {
-	return ns.Valid
+func (nt NullDateTime) IsValid() bool {
+	return nt.Valid
 }
 
 // Result ...
-func (ns NullDateTime) Result() interface{} {
-	if ns.Valid {
-		return ns.String
+func (nt NullDateTime) Result() interface{} {
+	if nt.Valid {
+		return nt.String
 	}
 	return "NULL"
 }
@@ -185,27 +183,27 @@ func (ni *NullInt64) UnmarshalJSON(b []byte) error {
 }
 
 // IsEmpty ...
-func (n NullInt64) IsEmpty() bool {
-	return !n.Valid
+func (ni NullInt64) IsEmpty() bool {
+	return !ni.Valid
 }
 
 // IsValid ...
-func (n NullInt64) IsValid() bool {
-	return n.Valid
+func (ni NullInt64) IsValid() bool {
+	return ni.Valid
 }
 
 // Result ...
-func (ns NullInt64) Result() interface{} {
-	if ns.Valid {
-		return ns.Int64
+func (ni NullInt64) Result() interface{} {
+	if ni.Valid {
+		return ni.Int64
 	}
 	return "NULL"
 }
 
 // Convert ...
-func (n NullInt64) Convert() string {
-	if n.Valid {
-		return cast.ToString(n.Int64)
+func (ni NullInt64) Convert() string {
+	if ni.Valid {
+		return cast.ToString(ni.Int64)
 	}
 	return ""
 }
@@ -245,27 +243,27 @@ func (ni *NullInt32) UnmarshalJSON(b []byte) error {
 }
 
 // IsEmpty ...
-func (n NullInt32) IsEmpty() bool {
-	return !n.Valid
+func (ni NullInt32) IsEmpty() bool {
+	return !ni.Valid
 }
 
 // IsValid ...
-func (n NullInt32) IsValid() bool {
-	return n.Valid
+func (ni NullInt32) IsValid() bool {
+	return ni.Valid
 }
 
 // Result ...
-func (ns NullInt32) Result() interface{} {
-	if ns.Valid {
-		return ns.Int32
+func (ni NullInt32) Result() interface{} {
+	if ni.Valid {
+		return ni.Int32
 	}
 	return "NULL"
 }
 
 // Convert ...
-func (n NullInt32) Convert() string {
-	if n.Valid {
-		return cast.ToString(n.Int32)
+func (ni NullInt32) Convert() string {
+	if ni.Valid {
+		return cast.ToString(ni.Int32)
 	}
 	return ""
 }
@@ -305,27 +303,27 @@ func (nf *NullFloat64) UnmarshalJSON(b []byte) error {
 }
 
 // IsEmpty ...
-func (n NullFloat64) IsEmpty() bool {
-	return !n.Valid
+func (nf NullFloat64) IsEmpty() bool {
+	return !nf.Valid
 }
 
 // IsValid ...
-func (n NullFloat64) IsValid() bool {
-	return n.Valid
+func (nf NullFloat64) IsValid() bool {
+	return nf.Valid
 }
 
 // Result ...
-func (ns NullFloat64) Result() interface{} {
-	if ns.Valid {
-		return ns.Float64
+func (nf NullFloat64) Result() interface{} {
+	if nf.Valid {
+		return nf.Float64
 	}
 	return "NULL"
 }
 
 // Convert ...
-func (n NullFloat64) Convert() string {
-	if n.Valid {
-		return cast.ToString(n.Float64)
+func (nf NullFloat64) Convert() string {
+	if nf.Valid {
+		return cast.ToString(nf.Float64)
 	}
 	return ""
 }
@@ -365,35 +363,34 @@ func (nb *NullBool) UnmarshalJSON(b []byte) error {
 }
 
 // IsEmpty ...
-func (n NullBool) IsEmpty() bool {
-	return !n.Valid
+func (nb NullBool) IsEmpty() bool {
+	return !nb.Valid
 }
 
 // IsValid ...
-func (n NullBool) IsValid() bool {
-	return n.Valid
+func (nb NullBool) IsValid() bool {
+	return nb.Valid
 }
 
 // Result ...
-func (ns NullBool) Result() interface{} {
-	if ns.Valid {
-		if ns.Bool {
+func (nb NullBool) Result() interface{} {
+	if nb.Valid {
+		if nb.Bool {
 			return 1
-		} else {
-			return 0
 		}
+		return 0
 	}
 	return "NULL"
 }
 
 // Convert ...
-func (n NullBool) Convert() string {
-	if n.Valid {
-		if n.Bool {
+func (nb NullBool) Convert() string {
+	if nb.Valid {
+		if nb.Bool {
 			return cast.ToString("true")
-		} else {
-			return cast.ToString("false")
 		}
+		return cast.ToString("false")
+
 	}
 	return "false"
 }
@@ -418,52 +415,51 @@ func (nt *NullDate) Scan(value interface{}) error {
 	if reflect.TypeOf(value) == nil {
 		*nt = NewNullDate()
 		return nil
-	} else {
-		var s sql.NullString
-		if err := s.Scan(value); err != nil {
-			return err
-		} else {
-			*nt, err = NewDate(s.String), nil
-			return err
-		}
 	}
+	var s sql.NullString
+	if err := s.Scan(value); err != nil {
+		return err
+	}
+	*nt = NewDate(s.String)
+	return nil
+
 }
 
 // MarshalJSON ...
-func (ns NullDate) MarshalJSON() ([]byte, error) {
-	if !ns.Valid {
+func (nt NullDate) MarshalJSON() ([]byte, error) {
+	if !nt.Valid {
 		return nullJSON, nil
 	}
-	return json.Marshal(ns.String)
+	return json.Marshal(nt.String)
 }
 
 // UnmarshalJSON ...
-func (ns *NullDate) UnmarshalJSON(b []byte) error {
+func (nt *NullDate) UnmarshalJSON(b []byte) error {
 	var err error = nil
 	if bytes.Equal(nullJSON, b) {
-		ns.String = ""
-		ns.Valid = false
+		nt.String = ""
+		nt.Valid = false
 	} else {
-		err = json.Unmarshal(b, &ns.String)
-		ns.Valid = (err == nil)
+		err = json.Unmarshal(b, &nt.String)
+		nt.Valid = (err == nil)
 	}
 	return err
 }
 
 // IsEmpty ...
-func (ns NullDate) IsEmpty() bool {
-	return !ns.Valid || ns.String == ""
+func (nt NullDate) IsEmpty() bool {
+	return !nt.Valid || nt.String == ""
 }
 
 // IsValid ...
-func (ns NullDate) IsValid() bool {
-	return ns.Valid
+func (nt NullDate) IsValid() bool {
+	return nt.Valid
 }
 
 // Result ...
-func (ns NullDate) Result() interface{} {
-	if ns.Valid {
-		return ns.String
+func (nt NullDate) Result() interface{} {
+	if nt.Valid {
+		return nt.String
 	}
 	return "NULL"
 }
@@ -488,52 +484,50 @@ func (nt *NullTime) Scan(value interface{}) error {
 	if reflect.TypeOf(value) == nil {
 		*nt = NewNullTime()
 		return nil
-	} else {
-		var s sql.NullString
-		if err := s.Scan(value); err != nil {
-			return err
-		} else {
-			*nt, err = NewTime(s.String), nil
-			return err
-		}
 	}
+	var s sql.NullString
+	if err := s.Scan(value); err != nil {
+		return err
+	}
+	*nt = NewTime(s.String)
+	return nil
 }
 
 // MarshalJSON ...
-func (ns NullTime) MarshalJSON() ([]byte, error) {
-	if !ns.Valid {
+func (nt NullTime) MarshalJSON() ([]byte, error) {
+	if !nt.Valid {
 		return nullJSON, nil
 	}
-	return json.Marshal(ns.String)
+	return json.Marshal(nt.String)
 }
 
 // UnmarshalJSON ...
-func (ns *NullTime) UnmarshalJSON(b []byte) error {
+func (nt *NullTime) UnmarshalJSON(b []byte) error {
 	var err error = nil
 	if bytes.Equal(nullJSON, b) {
-		ns.String = ""
-		ns.Valid = false
+		nt.String = ""
+		nt.Valid = false
 	} else {
-		err = json.Unmarshal(b, &ns.String)
-		ns.Valid = (err == nil)
+		err = json.Unmarshal(b, &nt.String)
+		nt.Valid = (err == nil)
 	}
 	return err
 }
 
 // IsEmpty ...
-func (ns NullTime) IsEmpty() bool {
-	return !ns.Valid || ns.String == ""
+func (nt NullTime) IsEmpty() bool {
+	return !nt.Valid || nt.String == ""
 }
 
 // IsValid ...
-func (ns NullTime) IsValid() bool {
-	return ns.Valid
+func (nt NullTime) IsValid() bool {
+	return nt.Valid
 }
 
 // Result ...
-func (ns NullTime) Result() interface{} {
-	if ns.Valid {
-		return ns.String
+func (nt NullTime) Result() interface{} {
+	if nt.Valid {
+		return nt.String
 	}
 	return "NULL"
 }
@@ -558,52 +552,50 @@ func (nt *NullYear) Scan(value interface{}) error {
 	if reflect.TypeOf(value) == nil {
 		*nt = NewNullYear()
 		return nil
-	} else {
-		var s sql.NullString
-		if err := s.Scan(value); err != nil {
-			return err
-		} else {
-			*nt, err = NewYear(s.String), nil
-			return err
-		}
 	}
+	var s sql.NullString
+	if err := s.Scan(value); err != nil {
+		return err
+	}
+	*nt = NewYear(s.String)
+	return nil
 }
 
 // MarshalJSON ...
-func (ns NullYear) MarshalJSON() ([]byte, error) {
-	if !ns.Valid {
+func (nt NullYear) MarshalJSON() ([]byte, error) {
+	if !nt.Valid {
 		return nullJSON, nil
 	}
-	return json.Marshal(ns.String)
+	return json.Marshal(nt.String)
 }
 
 // UnmarshalJSON ...
-func (ns *NullYear) UnmarshalJSON(b []byte) error {
+func (nt *NullYear) UnmarshalJSON(b []byte) error {
 	var err error = nil
 	if bytes.Equal(nullJSON, b) {
-		ns.String = ""
-		ns.Valid = false
+		nt.String = ""
+		nt.Valid = false
 	} else {
-		err = json.Unmarshal(b, &ns.String)
-		ns.Valid = (err == nil)
+		err = json.Unmarshal(b, &nt.String)
+		nt.Valid = (err == nil)
 	}
 	return err
 }
 
 // IsEmpty ...
-func (ns NullYear) IsEmpty() bool {
-	return !ns.Valid || ns.String == ""
+func (nt NullYear) IsEmpty() bool {
+	return !nt.Valid || nt.String == ""
 }
 
 // IsValid ...
-func (ns NullYear) IsValid() bool {
-	return ns.Valid
+func (nt NullYear) IsValid() bool {
+	return nt.Valid
 }
 
 // Result ...
-func (ns NullYear) Result() interface{} {
-	if ns.Valid {
-		return ns.String
+func (nt NullYear) Result() interface{} {
+	if nt.Valid {
+		return nt.String
 	}
 	return "NULL"
 }
@@ -628,52 +620,50 @@ func (nt *NullTimeStamp) Scan(value interface{}) error {
 	if reflect.TypeOf(value) == nil {
 		*nt = NewNullTimeStamp()
 		return nil
-	} else {
-		var s sql.NullString
-		if err := s.Scan(value); err != nil {
-			return err
-		} else {
-			*nt, err = NewTimeStamp(s.String), nil
-			return err
-		}
 	}
+	var s sql.NullString
+	if err := s.Scan(value); err != nil {
+		return err
+	}
+	*nt = NewTimeStamp(s.String)
+	return nil
 }
 
 // MarshalJSON ...
-func (ns NullTimeStamp) MarshalJSON() ([]byte, error) {
-	if !ns.Valid {
+func (nt NullTimeStamp) MarshalJSON() ([]byte, error) {
+	if !nt.Valid {
 		return nullJSON, nil
 	}
-	return json.Marshal(ns.String)
+	return json.Marshal(nt.String)
 }
 
 // UnmarshalJSON ...
-func (ns *NullTimeStamp) UnmarshalJSON(b []byte) error {
+func (nt *NullTimeStamp) UnmarshalJSON(b []byte) error {
 	var err error = nil
 	if bytes.Equal(nullJSON, b) {
-		ns.String = ""
-		ns.Valid = false
+		nt.String = ""
+		nt.Valid = false
 	} else {
-		err = json.Unmarshal(b, &ns.String)
-		ns.Valid = (err == nil)
+		err = json.Unmarshal(b, &nt.String)
+		nt.Valid = (err == nil)
 	}
 	return err
 }
 
 // IsEmpty ...
-func (ns NullTimeStamp) IsEmpty() bool {
-	return !ns.Valid || ns.String == ""
+func (nt NullTimeStamp) IsEmpty() bool {
+	return !nt.Valid || nt.String == ""
 }
 
 // IsValid ...
-func (ns NullTimeStamp) IsValid() bool {
-	return ns.Valid
+func (nt NullTimeStamp) IsValid() bool {
+	return nt.Valid
 }
 
 // Result ...
-func (ns NullTimeStamp) Result() interface{} {
-	if ns.Valid {
-		return ns.String
+func (nt NullTimeStamp) Result() interface{} {
+	if nt.Valid {
+		return nt.String
 	}
 	return "NULL"
 }

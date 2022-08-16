@@ -598,8 +598,8 @@ func (query *QueryBuilder) MultiInsertSQL(datas ...interface{}) string {
 		if len(query.columns) < 1 {
 			return ""
 		}
-		query.connection.LastSql(sql, query.args...)
-		return query.connection.SqlRaw()
+		query.connection.LastSQL(sql, query.args...)
+		return query.connection.SQLRaw()
 	}
 	return ""
 }
@@ -667,8 +667,8 @@ func (query *QueryBuilder) ReplaceSQL(datas ...interface{}) string {
 		if len(query.columns) < 1 {
 			return ""
 		}
-		query.connection.LastSql(sql, query.args...)
-		return query.connection.SqlRaw()
+		query.connection.LastSQL(sql, query.args...)
+		return query.connection.SQLRaw()
 	}
 	return ""
 }
@@ -728,8 +728,8 @@ func (query *QueryBuilder) InsertUpdateSQL(insert interface{}, update interface{
 	query.setData(bindingsInsert, bindingsUpdate)
 	grammar := Grammar{builder: query}
 	sql := grammar.InsertUpdate()
-	query.connection.LastSql(sql, query.args...)
-	return query.connection.SqlRaw()
+	query.connection.LastSQL(sql, query.args...)
+	return query.connection.SQLRaw()
 }
 
 // Insert 插入数据
@@ -765,8 +765,8 @@ func (query *QueryBuilder) InsertSQL(data interface{}) string {
 	query.setData(bindings)
 	grammar := Grammar{builder: query}
 	sql := grammar.Insert()
-	query.connection.LastSql(sql, query.args...)
-	return query.connection.SqlRaw()
+	query.connection.LastSQL(sql, query.args...)
+	return query.connection.SQLRaw()
 }
 
 // Update 更新
@@ -805,8 +805,8 @@ func (query *QueryBuilder) UpdateSQL(data interface{}) string {
 	grammar := Grammar{builder: query}
 	sql := grammar.Update()
 	args := append(query.whereArgs, query.args...)
-	query.connection.LastSql(sql, args...)
-	return query.connection.SqlRaw()
+	query.connection.LastSQL(sql, args...)
+	return query.connection.SQLRaw()
 }
 
 // Delete .
@@ -824,8 +824,8 @@ func (query *QueryBuilder) Delete() (int64, error) {
 func (query *QueryBuilder) DeleteSQL() string {
 	grammar := Grammar{builder: query}
 	sql := grammar.Delete()
-	query.connection.LastSql(sql, query.args...)
-	return query.connection.SqlRaw()
+	query.connection.LastSQL(sql, query.args...)
+	return query.connection.SQLRaw()
 }
 
 // Count ...
@@ -853,8 +853,8 @@ func (query *QueryBuilder) Exec(sql string, args ...interface{}) (int64, error) 
 
 // ExecSQL 原始SQl语句执行
 func (query *QueryBuilder) ExecSQL(sql string, args ...interface{}) string {
-	query.connection.LastSql(sql, args...)
-	return query.connection.SqlRaw()
+	query.connection.LastSQL(sql, args...)
+	return query.connection.SQLRaw()
 }
 
 // QueryRows ...
@@ -868,14 +868,14 @@ func (query *QueryBuilder) QueryRows(sql string, args ...interface{}) *Rows {
 
 // QueryRowsSQL ...
 func (query *QueryBuilder) QueryRowsSQL(sql string, args ...interface{}) string {
-	query.connection.LastSql(sql, args...)
-	return query.connection.SqlRaw()
+	query.connection.LastSQL(sql, args...)
+	return query.connection.SQLRaw()
 }
 
 // QueryRowSQL ...
 func (query *QueryBuilder) QueryRowSQL(sql string, args ...interface{}) string {
-	query.connection.LastSql(sql, args...)
-	return query.connection.SqlRaw()
+	query.connection.LastSQL(sql, args...)
+	return query.connection.SQLRaw()
 }
 
 // QueryRow ...
@@ -901,8 +901,8 @@ func (query *QueryBuilder) RowSQL() string {
 	grammar := Grammar{builder: query}
 	sql := grammar.Select()
 
-	query.connection.LastSql(sql, query.args...)
-	return query.connection.SqlRaw()
+	query.connection.LastSQL(sql, query.args...)
+	return query.connection.SQLRaw()
 }
 
 // RowsSQL ...
@@ -910,8 +910,8 @@ func (query *QueryBuilder) RowsSQL() string {
 	grammar := Grammar{builder: query}
 	sql := grammar.Select()
 
-	query.connection.LastSql(sql, query.args...)
-	return query.connection.SqlRaw()
+	query.connection.LastSQL(sql, query.args...)
+	return query.connection.SQLRaw()
 }
 
 // Rows 获取多条记录

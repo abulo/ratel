@@ -16,13 +16,13 @@ type Stage int
 // String ...
 func (s Stage) String() string {
 	switch s {
-	case Stage_BeforeLoadConfig:
+	case StageBeforeLoadConfig:
 		return "BeforeLoadConfig"
-	case Stage_AfterLoadConfig:
+	case StageAfterLoadConfig:
 		return "AfterLoadStart"
-	case Stage_BeforeStop:
+	case StageBeforeStop:
 		return "BeforeStop"
-	case Stage_AfterStop:
+	case StageAfterStop:
 		return "AfterStop"
 	}
 
@@ -31,10 +31,10 @@ func (s Stage) String() string {
 
 // Stage_BeforeLoadConfig ...
 const (
-	Stage_BeforeLoadConfig Stage = iota + 1
-	Stage_AfterLoadConfig
-	Stage_BeforeStop
-	Stage_AfterStop
+	StageBeforeLoadConfig Stage = iota + 1
+	StageAfterLoadConfig
+	StageBeforeStop
+	StageAfterStop
 )
 
 // Register 注册一个defer函数

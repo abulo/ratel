@@ -261,7 +261,7 @@ func (app *Application) exitHandler() {
 func (app *Application) GracefulStop(ctx context.Context) (err error) {
 	app.stopOnce.Do(func() {
 		app.stopped <- struct{}{}
-		app.runHooks(hooks.Stage_BeforeStop)
+		app.runHooks(hooks.StageBeforeStop)
 		//stop servers
 		for _, s := range app.servers {
 			func(s server.Server) {
@@ -281,7 +281,7 @@ func (app *Application) GracefulStop(ctx context.Context) (err error) {
 		// stop executor
 		<-app.cycle.Done()
 		// run hooks
-		app.runHooks(hooks.Stage_AfterStop)
+		app.runHooks(hooks.StageAfterStop)
 		app.cycle.Close()
 	})
 	return err
@@ -291,7 +291,7 @@ func (app *Application) GracefulStop(ctx context.Context) (err error) {
 func (app *Application) Stop() (err error) {
 	app.stopOnce.Do(func() {
 		app.stopped <- struct{}{}
-		app.runHooks(hooks.Stage_BeforeStop)
+		app.runHooks(hooks.StageBeforeStop)
 		//stop servers
 		for _, s := range app.servers {
 			func(s server.Server) {
@@ -309,7 +309,7 @@ func (app *Application) Stop() (err error) {
 
 		<-app.cycle.Done()
 		// run hook
-		app.runHooks(hooks.Stage_AfterStop)
+		app.runHooks(hooks.StageAfterStop)
 		app.cycle.Close()
 	})
 	return
