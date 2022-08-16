@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -16,6 +16,7 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Client ...
@@ -44,7 +45,7 @@ func newClient(config *Config) (*Client, error) {
 	}
 
 	if !config.Secure {
-		conf.DialOptions = append(conf.DialOptions, grpc.WithInsecure())
+		conf.DialOptions = append(conf.DialOptions, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
 	if config.BasicAuth {
@@ -58,7 +59,7 @@ func newClient(config *Config) (*Client, error) {
 	}
 
 	if config.CaCert != "" {
-		certBytes, err := ioutil.ReadFile(config.CaCert)
+		certBytes, err := os.ReadFile(config.CaCert)
 		if err != nil {
 			logger.Logger.WithFields(logrus.Fields{
 				"err": err,

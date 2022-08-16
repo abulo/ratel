@@ -8,9 +8,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/any"
 	spb "google.golang.org/genproto/googleapis/rpc/status"
+	"google.golang.org/protobuf/proto"
+	any "google.golang.org/protobuf/types/known/anypb"
 )
 
 // Status ...
@@ -133,5 +133,5 @@ func marshalAnyProtoMessage(pb proto.Message) (*any.Any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &any.Any{TypeUrl: proto.MessageName(pb), Value: value}, nil
+	return &any.Any{TypeUrl: string(pb.ProtoReflect().Descriptor().FullName()), Value: value}, nil
 }

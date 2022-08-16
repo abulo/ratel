@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/fsnotify/fsnotify"
 )
@@ -46,7 +47,13 @@ func (c *Config) WatchConfig(suffix string) {
 		if err != nil {
 			return
 		}
-		defer watcher.Close()
+
+		defer func() {
+			if err := watcher.Close(); err != nil {
+				logger.Logger.Error("Error closing watcher: ", err)
+			}
+		}()
+
 		done := make(chan bool)
 		// Process events
 		go func() {
@@ -107,6 +114,6 @@ func (c *Config) WatchConfig(suffix string) {
 			}
 		}
 		<-done
-		watcher.Close()
+		_ = watcher.Close()
 	}()
 }

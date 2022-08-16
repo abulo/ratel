@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/abulo/ratel/v3/logger"
 	"github.com/jlaffaye/ftp"
 )
 
@@ -78,7 +79,11 @@ func (client *Client) DownFile(serverPath, destPath string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Close()
+	defer func() {
+		if err := resp.Close(); err != nil {
+			logger.Logger.Error("Error closing response: ", err)
+		}
+	}()
 	return os.WriteFile(destPath, fileData, 0664)
 }
 
@@ -92,7 +97,11 @@ func (client *Client) UploadFile(srcFullPath, serverPath string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			logger.Logger.Error("Error closing file: ", err)
+		}
+	}()
 	return client.ftp.Stor(serverPath, file)
 }
 

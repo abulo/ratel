@@ -92,6 +92,6 @@ func (s *Server) Healthz() bool {
 		return false
 	}
 
-	conn.Close()
+	_ = conn.Close()
 	return true
 }

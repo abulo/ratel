@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"os"
 	"time"
 
@@ -98,7 +98,7 @@ func main() {
 	logger.Logger.SetFormatter(&logrus.JSONFormatter{})
 	logger.Logger.SetReportCaller(true)
 	if initial.Core.Config.Bool("DisableDebug", true) {
-		logger.Logger.SetOutput(ioutil.Discard)
+		logger.Logger.SetOutput(io.Discard)
 	} else {
 		logger.Logger.SetOutput(os.Stdout)
 	}

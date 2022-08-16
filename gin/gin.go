@@ -17,6 +17,7 @@ import (
 
 	"github.com/abulo/ratel/v3/gin/internal/bytesconv"
 	"github.com/abulo/ratel/v3/gin/render"
+	"github.com/abulo/ratel/v3/logger"
 	"github.com/olekukonko/tablewriter"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -578,8 +579,18 @@ func (engine *Engine) RunUnix(file string) (err error) {
 	if err != nil {
 		return
 	}
-	defer listener.Close()
-	defer os.Remove(file)
+
+	defer func() {
+		if err := listener.Close(); err != nil {
+			logger.Logger.Error("Error closing listener: ", err)
+		}
+	}()
+
+	defer func(file string) {
+		if err := os.Remove(file); err != nil {
+			logger.Logger.Error("Error closing os: ", err)
+		}
+	}(file)
 
 	err = http.Serve(listener, engine.Handler())
 	return
@@ -602,7 +613,13 @@ func (engine *Engine) RunFd(fd int) (err error) {
 	if err != nil {
 		return
 	}
-	defer listener.Close()
+
+	defer func() {
+		if err := listener.Close(); err != nil {
+			logger.Logger.Error("Error closing listener: ", err)
+		}
+	}()
+
 	err = engine.RunListener(listener)
 	return
 }

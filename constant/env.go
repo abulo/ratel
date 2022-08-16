@@ -19,8 +19,8 @@ const (
 	EnvAppZone     = "APP_ZONE"
 	EnvAppHost     = "APP_HOST"
 	EnvAppInstance = "APP_INSTANCE" // application unique instance id.
-	EnvPOD_IP      = "POD_IP"       //k8s环境
-	EnvPOD_NAME    = "POD_NAME"     //k8s环境
+	EnvPodIP       = "POD_IP"       //k8s环境
+	EnvPodNAME     = "POD_NAME"     //k8s环境
 )
 
 // DefaultDeployment ...

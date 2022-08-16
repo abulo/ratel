@@ -123,13 +123,21 @@ func getTransfer(client *sftp.Client, remoteFilepath, localFilepath string, tfBy
 	if localFileErr != nil {
 		return 0, errors.New("localFileErr: " + localFileErr.Error())
 	}
-	defer localFile.Close()
+	defer func() {
+		if err := localFile.Close(); err != nil {
+			logger.Logger.Error("Error closing localFile: ", err)
+		}
+	}()
 
 	remoteFile, remoteFileErr := client.Open(remoteFilepath)
 	if remoteFileErr != nil {
 		return 0, errors.New("remoteFileErr: " + remoteFileErr.Error())
 	}
-	defer remoteFile.Close()
+	defer func() {
+		if err := remoteFile.Close(); err != nil {
+			logger.Logger.Error("Error closing remoteFile: ", err)
+		}
+	}()
 
 	var bytes int64
 	var copyErr error
@@ -205,13 +213,23 @@ func putTransfer(client *sftp.Client, localFilepath string, remoteFilepath strin
 	if remoteFileErr != nil {
 		return 0, errors.New("remoteFileErr: " + remoteFileErr.Error())
 	}
-	defer remoteFile.Close()
+
+	defer func() {
+		if err := remoteFile.Close(); err != nil {
+			logger.Logger.Error("Error closing remoteFile: ", err)
+		}
+	}()
 
 	localFile, localFileErr := os.Open(localFilepath)
 	if localFileErr != nil {
 		return 0, errors.New("localFileErr: " + localFileErr.Error())
 	}
-	defer localFile.Close()
+
+	defer func() {
+		if err := localFile.Close(); err != nil {
+			logger.Logger.Error("Error closing localFile: ", err)
+		}
+	}()
 
 	var bytes int64
 	var copyErr error

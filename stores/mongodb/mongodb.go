@@ -80,7 +80,8 @@ func NewClient(config *Config) *MongoDB {
 		return nil
 	}
 	name := u.Path[1:]
-	ctx, _ := context.WithTimeout(context.TODO(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	defer cancel()
 	err = client.Connect(ctx)
 	if err != nil {
 		logger.Logger.Panic("MongoDB连接失败->", err)
@@ -457,8 +458,8 @@ func (collection *collection) UpdateOrInsert(ctx context.Context, documents []in
 // UpdateOne ...
 func (collection *collection) UpdateOne(ctx context.Context, document interface{}) (*mongo.UpdateResult, error) {
 	start := time.Now()
-	var update bson.M
-	update = bson.M{"$set": BeforeUpdate(document)}
+	// var update bson.M
+	update := bson.M{"$set": BeforeUpdate(document)}
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
@@ -540,8 +541,8 @@ func (collection *collection) UpdateOneRaw(ctx context.Context, document interfa
 // UpdateMany ...
 func (collection *collection) UpdateMany(ctx context.Context, document interface{}) (*mongo.UpdateResult, error) {
 	start := time.Now()
-	var update bson.M
-	update = bson.M{"$set": BeforeUpdate(document)}
+	// var update bson.M
+	update := bson.M{"$set": BeforeUpdate(document)}
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
@@ -670,7 +671,13 @@ func (collection *collection) FindMany(ctx context.Context, documents interface{
 		collection.reset()
 		return
 	}
-	defer result.Close(ctx)
+
+	defer func(ctx context.Context) {
+		if err := result.Close(ctx); err != nil {
+			logger.Logger.Error("Error closing result: ", err)
+		}
+	}(ctx)
+
 	val := reflect.ValueOf(documents)
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Slice {
 		err = errors.New("result argument must be a slice address")
@@ -738,7 +745,8 @@ func (collection *collection) Delete(ctx context.Context) (count int64, err erro
 		return
 	}
 
-	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	result, err := collection.Table.DeleteMany(ctx, collection.filter)
 	if err != nil {
 		collection.reset()
@@ -783,7 +791,8 @@ func (collection *collection) Drop(ctx context.Context) error {
 		}
 
 	}
-	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	err := collection.Table.Drop(ctx)
 
 	if !collection.DisableMetric {
@@ -822,7 +831,8 @@ func (collection *collection) Count(ctx context.Context) (result int64, err erro
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
-	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	result, err = collection.Table.CountDocuments(ctx, collection.filter)
 	if err != nil {
 		collection.reset()
@@ -921,20 +931,21 @@ func BeforeUpdate(document interface{}) interface{} {
 		return val.Interface()
 	}
 }
-func isZero(value reflect.Value) bool {
-	switch value.Kind() {
-	case reflect.String:
-		return value.Len() == 0
-	case reflect.Bool:
-		return !value.Bool()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return value.Int() == 0
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return value.Uint() == 0
-	case reflect.Float32, reflect.Float64:
-		return value.Float() == 0
-	case reflect.Interface, reflect.Ptr:
-		return value.IsNil()
-	}
-	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
-}
+
+// func isZero(value reflect.Value) bool {
+// 	switch value.Kind() {
+// 	case reflect.String:
+// 		return value.Len() == 0
+// 	case reflect.Bool:
+// 		return !value.Bool()
+// 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+// 		return value.Int() == 0
+// 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+// 		return value.Uint() == 0
+// 	case reflect.Float32, reflect.Float64:
+// 		return value.Float() == 0
+// 	case reflect.Interface, reflect.Ptr:
+// 		return value.IsNil()
+// 	}
+// 	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
+// }

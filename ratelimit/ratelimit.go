@@ -279,7 +279,6 @@ func (tb *Bucket) adjustavailableTokens(tick int64) {
 	if tb.availableTokens > tb.capacity {
 		tb.availableTokens = tb.capacity
 	}
-	return
 }
 
 // Clock represents the passage of time in a way that

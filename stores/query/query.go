@@ -46,15 +46,15 @@ type QueryBuilder struct {
 	limit      int64
 	offset     int64
 	distinct   bool
-	binds      []string
-	joins      []join
-	unions     []union
-	unLimit    int64
-	unOffset   int64
-	unOrders   []string
-	args       []interface{}
-	whereArgs  []interface{}
-	data       []map[string]interface{}
+	// binds      []string
+	joins     []join
+	unions    []union
+	unLimit   int64
+	unOffset  int64
+	unOrders  []string
+	args      []interface{}
+	whereArgs []interface{}
+	data      []map[string]interface{}
 }
 type join struct {
 	table    string
@@ -528,7 +528,10 @@ func (query *QueryBuilder) IsZero(v reflect.Value) bool {
 	default:
 		// This should never happens, but will act as a safeguard for
 		// later, as a default value doesn't makes sense here.
-		panic(&reflect.ValueError{"reflect.Value.IsZero", v.Kind()})
+		panic(&reflect.ValueError{
+			Method: "reflect.Value.IsZero",
+			Kind:   v.Kind(),
+		})
 	}
 }
 

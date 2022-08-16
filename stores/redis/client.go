@@ -84,7 +84,7 @@ func NewClient(opts Options) *Client {
 		tc := redis.NewClusterClient(opts.GetClusterConfig())
 		ctx := context.TODO()
 		if !opts.DisableTrace || !opts.DisableMetric {
-			tc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
+			_ = tc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
 				shard.AddHook(OpenTraceHook{
 					DisableMetric: opts.DisableMetric,
 					DisableTrace:  opts.DisableTrace,

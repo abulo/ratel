@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"hash/crc32"
 	"html"
-	"io/ioutil"
 	"math/rand"
 	"net/url"
 	"os"
@@ -723,7 +722,7 @@ func Md5File(path string) (string, error) {
 	hash := md5.New()
 
 	if fi.Size() < size {
-		data, err := ioutil.ReadFile(path)
+		data, err := os.ReadFile(path)
 		if err != nil {
 			return "", err
 		}
@@ -752,7 +751,7 @@ func Sha1(str string) string {
 
 // Sha1File sha1_file()
 func Sha1File(path string) (string, error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

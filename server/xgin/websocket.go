@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/abulo/ratel/v3/logger"
 	"github.com/gorilla/websocket"
 )
 
@@ -51,7 +52,11 @@ type WebSocket struct {
 func (ws *WebSocket) Upgrade(w http.ResponseWriter, r *http.Request) {
 	conn, err := ws.Upgrader.Upgrade(w, r, ws.Header)
 	if err == nil {
-		defer conn.Close()
+		defer func() {
+			if err := conn.Close(); err != nil {
+				logger.Logger.Error("Error closing conn: ", err)
+			}
+		}()
 	}
 	ws.Handler(conn, err)
 }

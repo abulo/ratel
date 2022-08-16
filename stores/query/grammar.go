@@ -89,7 +89,7 @@ func (g Grammar) compileWhere() string {
 				sql += " " + w[i].operator + "(?" + strings.Repeat(",?", intNum) + ")"
 			case ISNULL, ISNOTNULL:
 				sql += " " + w[i].operator
-				break
+				// break
 			default:
 				sql += " " + w[i].operator + " ?"
 			}

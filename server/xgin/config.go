@@ -60,7 +60,7 @@ func (config *Config) WithDisableSlowQuery(disableSlowQuery bool) *Config {
 	return config
 }
 
-// WithDisableMetric WithDisableTrace ...
+// WithDisableMetric  ...
 func (config *Config) WithDisableMetric(disableMetric bool) *Config {
 	config.DisableMetric = disableMetric
 	return config

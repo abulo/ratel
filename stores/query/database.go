@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/metric"
 	"github.com/abulo/ratel/v3/trace"
 	"github.com/opentracing/opentracing-go"
@@ -116,15 +117,16 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 		//添加预处理
 		stmt, err = querydb.DB.PrepareContext(ctx, query)
 		if err != nil {
-			querydb.DB.PingContext(ctx)
 			return nil, err
 		}
-		defer stmt.Close()
+		defer func() {
+			if err := stmt.Close(); err != nil {
+				logger.Logger.Error("Error closing stmt: ", err)
+			}
+		}()
 		res, err = stmt.ExecContext(ctx, args...)
-		querydb.DB.PingContext(ctx)
 	} else {
 		res, err = querydb.DB.ExecContext(ctx, query, args...)
-		querydb.DB.PingContext(ctx)
 	}
 
 	if !querydb.DisableMetric {
@@ -181,15 +183,16 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 		//添加预处理
 		stmt, err = querydb.DB.PrepareContext(ctx, query)
 		if err != nil {
-			querydb.DB.PingContext(ctx)
 			return nil, err
 		}
-		defer stmt.Close()
+		defer func() {
+			if err := stmt.Close(); err != nil {
+				logger.Logger.Error("Error closing stmt: ", err)
+			}
+		}()
 		res, err = stmt.QueryContext(ctx, args...)
-		querydb.DB.PingContext(ctx)
 	} else {
 		res, err = querydb.DB.QueryContext(ctx, query, args...)
-		querydb.DB.PingContext(ctx)
 	}
 
 	if !querydb.DisableMetric {
@@ -267,7 +270,11 @@ func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interfac
 		if err != nil {
 			return nil, err
 		}
-		defer stmt.Close()
+		defer func() {
+			if err := stmt.Close(); err != nil {
+				logger.Logger.Error("Error closing stmt: ", err)
+			}
+		}()
 		res, err = stmt.ExecContext(ctx, args...)
 	} else {
 		res, err = querytx.TX.ExecContext(ctx, query, args...)
@@ -330,7 +337,11 @@ func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interfa
 		if err != nil {
 			return nil, err
 		}
-		defer stmt.Close()
+		defer func() {
+			if err := stmt.Close(); err != nil {
+				logger.Logger.Error("Error closing stmt: ", err)
+			}
+		}()
 		res, err = stmt.QueryContext(ctx, args...)
 	} else {
 		res, err = querytx.TX.QueryContext(ctx, query, args...)

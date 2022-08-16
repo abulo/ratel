@@ -3,7 +3,6 @@ package util
 import (
 	"encoding/csv"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -97,12 +96,12 @@ func FileSize(filename string) (int64, error) {
 
 // FilePutContents file_put_contents()
 func FilePutContents(filename string, data string, mode os.FileMode) error {
-	return ioutil.WriteFile(filename, []byte(data), mode)
+	return os.WriteFile(filename, []byte(data), mode)
 }
 
 // FileGetContents file_get_contents()
 func FileGetContents(filename string) (string, error) {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	return string(data), err
 }
 

@@ -574,7 +574,7 @@ func (m *TaskManager) GracefulShutdown() <-chan struct{} {
 func (m *TaskManager) AddTask(taskname string, t Tasker) {
 	isChanged := false
 	m.taskLock.Lock()
-	t.SetNext(nil, time.Now().Local())
+	t.SetNext(context.TODO(), time.Now().Local())
 	m.adminTaskList[taskname] = t
 	if m.started {
 		isChanged = true

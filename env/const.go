@@ -17,8 +17,8 @@ var (
 	appZone     string
 	appHost     string
 	appInstance string
-	appPodIP    string
-	appPodName  string
+	// appPodIP    string
+	// appPodName  string
 )
 
 // InitEnv ...
@@ -32,8 +32,8 @@ func InitEnv() {
 	if appInstance == "" {
 		appInstance = fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s:%s", HostName(), AppID()))))
 	}
-	appPodIP = os.Getenv(constant.EnvPOD_IP)
-	appPodName = os.Getenv(constant.EnvPOD_NAME)
+	// appPodIP = os.Getenv(constant.EnvPOD_IP)
+	// appPodName = os.Getenv(constant.EnvPOD_NAME)
 }
 
 // AppMode ...

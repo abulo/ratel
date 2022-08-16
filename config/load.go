@@ -3,13 +3,14 @@ package config
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/abulo/ratel/v3/logger"
 	"github.com/pkg/errors"
 
 	"github.com/imdario/mergo"
@@ -82,15 +83,18 @@ func (c *Config) LoadRemote(format, url string) (err error) {
 		return err
 	}
 
-	//noinspection GoUnhandledErrorResult
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Logger.Error("Error closing resp: ", err)
+		}
+	}()
 
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("fetch remote resource error, reply status code is not equals to 200")
 	}
 
 	// read response content
-	bts, err := ioutil.ReadAll(resp.Body)
+	bts, err := io.ReadAll(resp.Body)
 	if err == nil {
 		// parse file content
 		if err = c.parseSourceCode(format, bts); err != nil {
@@ -297,11 +301,15 @@ func (c *Config) loadFile(file string, loadExist bool, format string) (err error
 		}
 		return err
 	}
-	//noinspection GoUnhandledErrorResult
-	defer fd.Close()
+
+	defer func() {
+		if err := fd.Close(); err != nil {
+			logger.Logger.Error("Error closing fd: ", err)
+		}
+	}()
 
 	// read file content
-	bts, err := ioutil.ReadAll(fd)
+	bts, err := io.ReadAll(fd)
 	if err == nil {
 		if format == "" {
 			// get format for file ext

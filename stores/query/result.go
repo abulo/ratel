@@ -4,13 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+
+	"github.com/abulo/ratel/v3/logger"
 )
 
 // Row 获取记录
 type Row struct {
-	rs          *Rows
-	lastError   error
-	transaction bool
+	rs        *Rows
+	lastError error
 }
 
 // ToArray get Array
@@ -68,7 +69,12 @@ func (r *Row) ToStruct(st interface{}) error {
 	if r.rs.rs == nil {
 		return r.lastError
 	}
-	defer r.rs.rs.Close()
+	defer func() {
+		if err := r.rs.rs.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
+
 	v := reflect.New(stTypeInd)
 	tagList, err := extractTagInfo(v)
 	if err != nil {
@@ -97,9 +103,8 @@ func (r *Row) ToStruct(st interface{}) error {
 
 // Rows get data
 type Rows struct {
-	rs          *sql.Rows
-	lastError   error
-	transaction bool
+	rs        *sql.Rows
+	lastError error
 }
 
 // ToArray get Array
@@ -107,7 +112,11 @@ func (r *Rows) ToArray() (data [][]string, err error) {
 	if r.rs == nil {
 		return nil, r.lastError
 	}
-	defer r.rs.Close()
+	defer func() {
+		if err := r.rs.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
 	//获取查询的字段
 	fields, err := r.rs.Columns()
 	if err != nil {
@@ -158,7 +167,13 @@ func (r *Rows) ToInterface() (data []map[string]interface{}, err error) {
 	if r.rs == nil {
 		return nil, r.lastError
 	}
-	defer r.rs.Close()
+
+	defer func() {
+		if err := r.rs.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
+
 	fields, err := r.rs.Columns()
 	if err != nil {
 		r.lastError = err
@@ -197,7 +212,11 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 	if r.rs == nil {
 		return nil, r.lastError
 	}
-	defer r.rs.Close()
+	defer func() {
+		if err := r.rs.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
 	fields, err := r.rs.Columns()
 	if err != nil {
 		r.lastError = err
@@ -251,7 +270,11 @@ func (r *Rows) ToStruct(st interface{}) error {
 	if r.rs == nil {
 		return r.lastError
 	}
-	defer r.rs.Close()
+	defer func() {
+		if err := r.rs.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
 	//初始化struct
 	v := reflect.New(stTypeInd.Elem())
 	//提取结构体中的tag

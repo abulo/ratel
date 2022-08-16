@@ -16,7 +16,7 @@ type Config struct {
 	Deployment string `json:"deployment"`
 	// Network network type, tcp4 by default
 	Network string `json:"network" toml:"network"`
-	// DisableTrace disbale Trace Interceptor, false by default
+	// DisableTrace  Trace Interceptor, false by default
 	DisableTrace bool
 	// DisableMetric disable Metric Interceptor, false by default
 	DisableMetric bool

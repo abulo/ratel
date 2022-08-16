@@ -9,7 +9,6 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
-	// "github.com/abulo/ratel/v3/metric"
 	"github.com/abulo/ratel/v3/metric"
 	"github.com/abulo/ratel/v3/trace"
 	"github.com/go-redis/redis/v8"
@@ -27,6 +26,12 @@ type OpenTraceHook struct {
 	DB            int
 	Addr          string
 }
+
+// const CmdStart = "start"
+
+type CmdStart string
+
+const RequestCmdStart = CmdStart("start")
 
 // BeforeProcess ...
 func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
@@ -52,7 +57,7 @@ func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (con
 	}
 	if !op.DisableMetric {
 		start := time.Now()
-		ctx = context.WithValue(ctx, "start", start)
+		ctx = context.WithValue(ctx, RequestCmdStart, start)
 	}
 
 	return ctx, nil
@@ -71,7 +76,7 @@ func (op OpenTraceHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error
 	}
 
 	if !op.DisableMetric {
-		start := ctx.Value("start")
+		start := ctx.Value(RequestCmdStart)
 		cost := time.Since(start.(time.Time))
 		if cmd.Err() != nil {
 			metric.LibHandleCounter.WithLabelValues("redis", cast.ToString(op.DB), op.Addr, "ERR").Inc()
@@ -135,7 +140,7 @@ func (op OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.
 
 	if !op.DisableMetric {
 		start := time.Now()
-		ctx = context.WithValue(ctx, "start", start)
+		ctx = context.WithValue(ctx, RequestCmdStart, start)
 	}
 
 	return ctx, nil
@@ -153,7 +158,7 @@ func (op OpenTraceHook) AfterProcessPipeline(ctx context.Context, cmds []redis.C
 		}
 	}
 	if !op.DisableMetric {
-		start := ctx.Value("start")
+		start := ctx.Value(RequestCmdStart)
 		cost := time.Since(start.(time.Time))
 		// if cmds != nil {
 		// metric.LibHandleCounter.WithLabelValues("redis", util.ToString(op.DB), op.Addr, "ERR").Inc()

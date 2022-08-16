@@ -3,7 +3,6 @@ package xgin
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -96,7 +95,7 @@ func recoverMiddleware(slowQueryThresholdInMilli int64) gin.HandlerFunc {
 				fields["err"] = err.Error()
 				logger.Logger.WithFields(fields).Error("access")
 				if brokenPipe {
-					c.Error(err)
+					_ = c.Error(err)
 					c.Abort()
 					return
 				}
@@ -131,7 +130,7 @@ func stack(skip int) []byte {
 		// Print this much at least.  If we can't find the source, it won't show.
 		fmt.Fprintf(buf, "%s:%d (0x%x)\n", file, line, pc)
 		if file != lastFile {
-			data, err := ioutil.ReadFile(file)
+			data, err := os.ReadFile(file)
 			if err != nil {
 				continue
 			}

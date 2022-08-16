@@ -224,7 +224,7 @@ func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileS
 			c.index = -1
 			return
 		}
-		f.Close()
+		_ = f.Close()
 
 		fileServer.ServeHTTP(c.Writer, c.Request)
 	}

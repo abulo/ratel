@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
 	"net"
+	"os"
 
 	"github.com/abulo/ratel/v3/constant"
 	"github.com/abulo/ratel/v3/server"
@@ -39,9 +39,9 @@ func newServer(config *Config) (*Server, error) {
 		}
 
 		certPool := x509.NewCertPool()
-		rootBuf, err := ioutil.ReadFile(config.CaFile)
+		rootBuf, err := os.ReadFile(config.CaFile)
 		if err != nil {
-			return nil, errors.Wrap(err, "ioutil.ReadFile failed")
+			return nil, errors.Wrap(err, "os.ReadFile failed")
 		}
 		if !certPool.AppendCertsFromPEM(rootBuf) {
 			return nil, errors.New("certPool.AppendCertsFromPEM failed")
@@ -84,7 +84,7 @@ func (s *Server) Healthz() bool {
 		return false
 	}
 
-	conn.Close()
+	_ = conn.Close()
 	return true
 }
 

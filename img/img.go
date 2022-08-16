@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/abulo/ratel/v3/img/fontx"
+	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/disintegration/imaging"
 	"github.com/golang/freetype"
@@ -366,12 +367,15 @@ func (img *Image) AddWaterMark(watermark *Image, anchor imaging.Anchor, marginX 
 // Quality ranges from 1 to 100 inclusive, higher is better.
 //
 // 在不改变图片尺寸的情况下压缩JPEG图像。图像质量为1-100
-func (img *Image) Compress(quality int) *Image {
+func (img *Image) Compress(quality int) (*Image, error) {
 	var buffer bytes.Buffer
-	jpeg.Encode(&buffer, img.src, &jpeg.Options{Quality: quality})
+	if err := jpeg.Encode(&buffer, img.src, &jpeg.Options{Quality: quality}); err != nil {
+		logger.Logger.Error("Compress error:", err)
+		return nil, err
+	}
 	encoded, _ := imaging.Decode(&buffer)
 	img.src = encoded
-	return img
+	return img, nil
 }
 
 // DrawText draws text on the image.

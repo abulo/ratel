@@ -3,13 +3,13 @@ package mysql2struct
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
 
 	"github.com/abulo/ratel/v3/stores/query"
+	"github.com/abulo/ratel/v3/util"
 )
 
 // MysqlToStruct ...
@@ -74,7 +74,7 @@ func MysqlToStruct(db *query.QueryDb, DbName, outputDir, outputPackage string) {
 		}
 		fileStr += ")\n"
 		fileStr += builder.String()
-		_ = ioutil.WriteFile(path.Join(outputDir, table.TableName+".go"), []byte(fileStr), os.ModePerm)
+		_ = os.WriteFile(path.Join(outputDir, table.TableName+".go"), []byte(fileStr), os.ModePerm)
 	}
 
 	_ = os.Chdir(outputDir)
@@ -103,6 +103,6 @@ func queryTables(db *query.QueryDb, DbName string) ([]Table, error) {
 // CamelStr 下划线转驼峰
 func CamelStr(name string) string {
 	name = strings.Replace(name, "_", " ", -1)
-	name = strings.Title(name)
+	name = util.UCWords(name)
 	return strings.Replace(name, " ", "", -1)
 }

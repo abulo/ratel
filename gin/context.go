@@ -6,7 +6,6 @@ package gin
 
 import (
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"mime/multipart"
@@ -20,6 +19,7 @@ import (
 
 	"github.com/abulo/ratel/v3/gin/binding"
 	"github.com/abulo/ratel/v3/gin/render"
+	"github.com/abulo/ratel/v3/logger"
 	"github.com/gin-contrib/sse"
 	"github.com/pkg/errors"
 )
@@ -583,7 +583,7 @@ func (c *Context) FormFile(name string) (*multipart.FileHeader, error) {
 	if err != nil {
 		return nil, err
 	}
-	f.Close()
+	_ = f.Close()
 	return fh, err
 }
 
@@ -599,13 +599,23 @@ func (c *Context) SaveUploadedFile(file *multipart.FileHeader, dst string) error
 	if err != nil {
 		return err
 	}
-	defer src.Close()
+
+	defer func() {
+		if err := src.Close(); err != nil {
+			logger.Logger.Error("Error closing src: ", err)
+		}
+	}()
 
 	out, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+
+	defer func() {
+		if err := out.Close(); err != nil {
+			logger.Logger.Error("Error closing out: ", err)
+		}
+	}()
 
 	_, err = io.Copy(out, src)
 	return err
@@ -748,7 +758,7 @@ func (c *Context) ShouldBindBodyWith(obj any, bb binding.BindingBody) (err error
 		}
 	}
 	if body == nil {
-		body, err = ioutil.ReadAll(c.Request.Body)
+		body, err = io.ReadAll(c.Request.Body)
 		if err != nil {
 			return err
 		}
@@ -867,7 +877,7 @@ func (c *Context) GetHeader(key string) string {
 
 // GetRawData returns stream data.
 func (c *Context) GetRawData() ([]byte, error) {
-	return ioutil.ReadAll(c.Request.Body)
+	return io.ReadAll(c.Request.Body)
 }
 
 // SetSameSite with cookie

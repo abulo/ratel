@@ -6,6 +6,7 @@ import (
 	"github.com/abulo/ratel/v3/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer/roundrobin"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
 
@@ -35,7 +36,7 @@ type Config struct {
 func New() *Config {
 	return &Config{
 		dialOptions: []grpc.DialOption{
-			grpc.WithInsecure(),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		},
 		BalancerName:           roundrobin.Name, // round robin by default
 		DialTimeout:            time.Second * 3,

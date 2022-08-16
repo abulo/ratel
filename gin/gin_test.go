@@ -8,7 +8,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"html/template"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -77,7 +77,7 @@ func TestLoadHTMLGlobDebugMode(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "<h1>Hello world</h1>", string(resp))
 }
 
@@ -115,7 +115,7 @@ func TestH2c(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "<h1>Hello world</h1>", string(resp))
 }
 
@@ -135,7 +135,7 @@ func TestLoadHTMLGlobTestMode(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "<h1>Hello world</h1>", string(resp))
 }
 
@@ -155,7 +155,7 @@ func TestLoadHTMLGlobReleaseMode(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "<h1>Hello world</h1>", string(resp))
 }
 
@@ -182,7 +182,7 @@ func TestLoadHTMLGlobUsingTLS(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "<h1>Hello world</h1>", string(resp))
 }
 
@@ -202,7 +202,7 @@ func TestLoadHTMLGlobFromFuncMap(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "Date: 2017/07/01", string(resp))
 }
 
@@ -233,7 +233,7 @@ func TestLoadHTMLFilesTestMode(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "<h1>Hello world</h1>", string(resp))
 }
 
@@ -253,7 +253,7 @@ func TestLoadHTMLFilesDebugMode(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "<h1>Hello world</h1>", string(resp))
 }
 
@@ -273,7 +273,7 @@ func TestLoadHTMLFilesReleaseMode(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "<h1>Hello world</h1>", string(resp))
 }
 
@@ -300,7 +300,7 @@ func TestLoadHTMLFilesUsingTLS(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "<h1>Hello world</h1>", string(resp))
 }
 
@@ -320,7 +320,7 @@ func TestLoadHTMLFilesFuncMap(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "Date: 2017/07/01", string(resp))
 }
 

@@ -46,7 +46,7 @@ func NewClient(config *Config) *Client {
 	if config.Username != "" && config.Password != "" {
 		options = append(options, elastic.SetBasicAuth(config.Username, config.Password))
 	}
-	if !config.DisableTrace || !config.DisableTrace {
+	if !config.DisableMetric || !config.DisableTrace {
 		options = append(options, elastic.SetHttpClient(ESTraceServerInterceptor(config.DisableMetric, config.DisableTrace, util.Implode(";", config.URL))))
 	}
 	options = append(options, elastic.SetSniff(false))

@@ -1773,7 +1773,7 @@ func loadTemplate() (*template.Template, error) {
 		if file.IsDir() || !strings.HasSuffix(name, ".tmpl") {
 			continue
 		}
-		h, err := ioutil.ReadAll(file)
+		h, err := io.ReadAll(file)
 		if err != nil {
 			return nil, err
 		}
