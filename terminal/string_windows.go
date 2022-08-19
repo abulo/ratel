@@ -45,7 +45,6 @@ func Greenf(msg string, arg ...interface{}) string {
 func sprint(msg string, arg ...interface{}) string {
 	if arg != nil {
 		return fmt.Sprintf("%s %+v\n", msg, arrToTransform(arg))
-	} else {
-		return fmt.Sprintf("%s", msg)
 	}
+	return fmt.Sprintf("%s", msg)
 }

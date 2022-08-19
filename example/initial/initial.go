@@ -24,7 +24,7 @@ import (
 type Initial struct {
 	Path       string           // 应用程序执行路径
 	Config     *config.Config   // 配置文件
-	Store      *proxy.ProxyPool // 数据库链接
+	Store      *proxy.Proxy     // 数据库链接
 	Session    *session.Session // 回话保存实例
 	LaunchTime time.Time        //时间设置
 }
@@ -41,7 +41,7 @@ func Default() *Initial {
 // New ...
 func New() *Initial {
 	Core = &Initial{
-		Store: proxy.NewProxyPool(),
+		Store: proxy.NewProxy(),
 	}
 	Core.InitPath(util.GetAppRootPath())
 	Core.InitLaunchTime(util.Now())
@@ -122,7 +122,7 @@ func (initial *Initial) InitMongoDB() *Initial {
 	proxyConfigs := initial.Config.Get("proxymongodb")
 	proxyRes := proxyConfigs.([]map[string]interface{})
 	for _, val := range proxyRes {
-		proxyPool := proxy.NewProxyMongoDB()
+		proxyPool := proxy.NewMongoDB()
 		if node := cast.ToStringSlice(val["Node"]); len(node) > 0 {
 			for _, v := range node {
 				proxyPool.Store(links[v])
@@ -204,7 +204,7 @@ func (initial *Initial) InitMysql() *Initial {
 	proxyConfigs := initial.Config.Get("proxymysql")
 	proxyRes := proxyConfigs.([]map[string]interface{})
 	for _, val := range proxyRes {
-		proxyPool := proxy.NewProxySQL()
+		proxyPool := proxy.NewSQL()
 		if Master := cast.ToStringSlice(val["Master"]); len(Master) > 0 {
 			for _, v := range Master {
 				proxyPool.SetWrite(links[v])
@@ -291,7 +291,7 @@ func (initial *Initial) InitClickHouse() *Initial {
 	proxyConfigs := initial.Config.Get("proxyclickhouse")
 	proxyRes := proxyConfigs.([]map[string]interface{})
 	for _, val := range proxyRes {
-		proxyPool := proxy.NewProxySQL()
+		proxyPool := proxy.NewSQL()
 		if node := cast.ToString(val["Node"]); node != "" {
 			proxyPool.SetWrite(links[node])
 		}
@@ -321,7 +321,7 @@ func (initial *Initial) InitElasticSearch() *Initial {
 	proxyConfigs := initial.Config.Get("proxyelasticsearch")
 	proxyRes := proxyConfigs.([]map[string]interface{})
 	for _, val := range proxyRes {
-		proxyPool := proxy.NewProxyElasticSearch()
+		proxyPool := proxy.NewElasticSearch()
 		if node := cast.ToStringSlice(val["Node"]); len(node) > 0 {
 			for _, v := range node {
 				proxyPool.Store(links[v])
@@ -366,7 +366,7 @@ func (initial *Initial) InitRedis() *Initial {
 	proxyConfigs := initial.Config.Get("proxyredis")
 	proxyRes := proxyConfigs.([]map[string]interface{})
 	for _, val := range proxyRes {
-		proxyPool := proxy.NewProxyRedis()
+		proxyPool := proxy.NewRedis()
 		if node := cast.ToStringSlice(val["Node"]); len(node) > 0 {
 			for _, v := range node {
 				proxyPool.Store(links[v])

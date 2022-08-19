@@ -35,7 +35,7 @@ func MysqlToStruct(db *query.QueryDb, DbName, outputDir, outputPackage string) {
 		//转换表名
 		builder.Reset()
 		packageTime := false
-		packageSql := false
+		packageSQL := false
 		builder.WriteString(fmt.Sprintf("//%s\ntype %s struct {\n", table.TableComment, CamelStr(table.TableName)))
 		for _, column := range columns {
 			//转换列名
@@ -44,7 +44,7 @@ func MysqlToStruct(db *query.QueryDb, DbName, outputDir, outputPackage string) {
 			if ok {
 				if column.IsNullable == "YES" {
 					dataType = value[1]
-					packageSql = true
+					packageSQL = true
 				} else {
 					dataType = value[0]
 				}
@@ -66,7 +66,7 @@ func MysqlToStruct(db *query.QueryDb, DbName, outputDir, outputPackage string) {
 
 		builder.WriteString("}\n")
 		fileStr := "package " + outputPackage + "\nimport ("
-		if packageSql {
+		if packageSQL {
 			fileStr += "\"github.com/abulo/ratel/v3/stores/query\"\n"
 		}
 		if packageTime {

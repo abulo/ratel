@@ -34,7 +34,6 @@ func debugUnaryClientInterceptor(addr string) grpc.UnaryClientInterceptor {
 			prefix = prefix + "(" + remote.Addr.String() + ")"
 		}
 
-		fmt.Printf("%-50s[%s] => %s\n", prefix, time.Now().Format("04:05.000"), "Send: "+method+" | "+util.JSONString(req))
 		err := invoker(ctx, method, req, reply, cc, append(opts, grpc.Peer(&p))...)
 		if err != nil {
 			fmt.Printf("%-50s[%s] => %s\n", prefix, time.Now().Format("04:05.000"), "Erro: "+err.Error())
@@ -156,18 +155,17 @@ func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) gr
 				}).Warn("access")
 			}
 			return err
-		} else {
-			if accessInterceptorLevel == "info" {
-				logger.Logger.WithFields(logrus.Fields{
-					"code":   spbStatus.Code,
-					"msg":    spbStatus.Message,
-					"name":   name,
-					"method": method,
-					"time":   time.Since(beg),
-					"req":    json.RawMessage(util.JSONString(req)),
-					"reply":  json.RawMessage(util.JSONString(reply)),
-				}).Info("access_unary")
-			}
+		}
+		if accessInterceptorLevel == "info" {
+			logger.Logger.WithFields(logrus.Fields{
+				"code":   spbStatus.Code,
+				"msg":    spbStatus.Message,
+				"name":   name,
+				"method": method,
+				"time":   time.Since(beg),
+				"req":    json.RawMessage(util.JSONString(req)),
+				"reply":  json.RawMessage(util.JSONString(reply)),
+			}).Info("access_unary")
 		}
 		return nil
 	}

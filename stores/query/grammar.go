@@ -8,30 +8,30 @@ import (
 
 // Grammar sql 语法
 type Grammar struct {
-	builder *QueryBuilder
-	method  string
+	query  *Query
+	method string
 }
 
 func (g Grammar) compileSelect() string {
-	if len(g.builder.columns) < 1 {
+	if len(g.query.columns) < 1 {
 		return "*"
 	}
-	return strings.Join(g.builder.columns, ",")
+	return strings.Join(g.query.columns, ",")
 }
 func (g Grammar) compileTable(from bool) string {
-	if len(g.builder.table) < 1 {
+	if len(g.query.table) < 1 {
 		return ""
 	}
 	if from {
-		return " FROM " + strings.Join(g.builder.table, ",")
+		return " FROM " + strings.Join(g.query.table, ",")
 	}
-	return strings.Join(g.builder.table, ",")
+	return strings.Join(g.query.table, ",")
 
 }
 func (g Grammar) compileOrder(isUnion bool) string {
-	orders := g.builder.orders
+	orders := g.query.orders
 	if isUnion {
-		orders = g.builder.unOrders
+		orders = g.query.unOrders
 	}
 	if len(orders) < 1 {
 		return ""
@@ -40,18 +40,18 @@ func (g Grammar) compileOrder(isUnion bool) string {
 }
 
 func (g Grammar) compileGroup() string {
-	if len(g.builder.groups) < 1 {
+	if len(g.query.groups) < 1 {
 		return ""
 	}
-	return " GROUP BY " + strings.Join(g.builder.groups, ",")
+	return " GROUP BY " + strings.Join(g.query.groups, ",")
 }
 
 func (g Grammar) compileLimit(isUnion bool) string {
-	limit := g.builder.limit
-	offset := g.builder.offset
+	limit := g.query.limit
+	offset := g.query.offset
 	if isUnion {
-		limit = g.builder.unLimit
-		offset = g.builder.offset
+		limit = g.query.unLimit
+		offset = g.query.offset
 	}
 	if limit > 0 {
 		return " LIMIT " + strconv.FormatInt(offset, 10) + "," + strconv.FormatInt(limit, 10)
@@ -61,17 +61,17 @@ func (g Grammar) compileLimit(isUnion bool) string {
 }
 
 func (g Grammar) compileDistinct() string {
-	if g.builder.distinct {
+	if g.query.distinct {
 		return " DISTINCT "
 	}
 	return ""
 }
 func (g Grammar) compileWhere() string {
-	len := len(g.builder.where)
+	len := len(g.query.where)
 	if len < 1 {
 		return ""
 	}
-	w := g.builder.where
+	w := g.query.where
 	sql := " WHERE "
 	for i := 0; i < len; i++ {
 		if i > 0 {
@@ -83,7 +83,7 @@ func (g Grammar) compileWhere() string {
 			case BETWEEN, NOTBETWEEN:
 				sql += " " + w[i].operator + " ? AND ?"
 			case IN, NOTIN:
-				int64Num := w[i].valuenum - 1
+				int64Num := w[i].valueNum - 1
 				intNum := *(*int)(unsafe.Pointer(&int64Num))
 				sql += " " + w[i].operator + "(?" + strings.Repeat(",?", intNum) + ")"
 			case ISNULL, ISNOTNULL:
@@ -98,28 +98,28 @@ func (g Grammar) compileWhere() string {
 	return sql
 }
 func (g Grammar) compileJoin() string {
-	len := len(g.builder.joins)
+	len := len(g.query.joins)
 	if len < 1 {
 		return ""
 	}
 	sql := ""
-	joins := g.builder.joins
+	joins := g.query.joins
 	for i := 0; i < len; i++ {
 		sql += " " + joins[i].operator + " " + joins[i].table + " ON " + joins[i].on
 	}
 	return sql
 }
 func (g Grammar) compileUnion() string {
-	len := len(g.builder.unions)
+	len := len(g.query.unions)
 	if len < 1 {
 		return ""
 	}
 	sql := ""
-	unions := g.builder.unions
+	unions := g.query.unions
 	var g1 Grammar
 
 	for i := 0; i < len; i++ {
-		g1.builder = &unions[i].query
+		g1.query = &unions[i].query
 		sql += " " + unions[i].operator
 		sql += " (" + g1.Select() + ")"
 	}
@@ -130,7 +130,7 @@ func (g Grammar) compileUnion() string {
 // Select 构造select
 func (g Grammar) Select() string {
 	s1, s2 := "", ""
-	if len(g.builder.unions) > 0 {
+	if len(g.query.unions) > 0 {
 		s1 = "("
 		s2 = ")"
 	}
@@ -168,26 +168,26 @@ func (g Grammar) Replace() string {
 }
 func (g Grammar) compileInsertValue() string {
 	sql := " ("
-	for k, v := range g.builder.data {
+	for k, v := range g.query.data {
 		for kv := range v {
 			if k == 0 { //取第一列
-				g.builder.columns = append(g.builder.columns, kv)
+				g.query.columns = append(g.query.columns, kv)
 			}
 		}
 	}
-	columns := g.builder.columns
-	columnsLen := len(g.builder.columns)
-	for index := 0; index < len(g.builder.data); index++ {
-		d := g.builder.data[index]
+	columns := g.query.columns
+	columnsLen := len(g.query.columns)
+	for index := 0; index < len(g.query.data); index++ {
+		d := g.query.data[index]
 		for i := 0; i < columnsLen; i++ {
 			field := columns[i]
-			g.builder.addArg(d[field])
+			g.query.addArg(d[field])
 		}
 	}
-	sql += strings.Join(g.builder.columns, ",")
-	colLen := len(g.builder.columns)
+	sql += strings.Join(g.query.columns, ",")
+	colLen := len(g.query.columns)
 	sql += ") VALUES (?" + strings.Repeat(",?", colLen-1) + ")"
-	len := len(g.builder.data)
+	len := len(g.query.data)
 	if len > 1 {
 		for i := 1; i < len; i++ {
 			sql += " ,(?" + strings.Repeat(",?", colLen-1) + ")"
@@ -202,21 +202,21 @@ func (g Grammar) Delete() string {
 	sql += g.compileTable(true)
 	sql += g.compileWhere()
 	sql += g.compileOrder(false)
-	if g.builder.limit > 0 {
-		sql += " LIMIT " + strconv.FormatInt(g.builder.limit, 10)
+	if g.query.limit > 0 {
+		sql += " LIMIT " + strconv.FormatInt(g.query.limit, 10)
 	}
 	return sql
 }
 func (g Grammar) compileUpdateValue() string {
 	sql := ""
-	data := g.builder.data[0] //取一个
+	data := g.query.data[0] //取一个
 	for k, v := range data {
 		switch vv := v.(type) {
 		case Epr:
 			sql += k + " = " + vv.ToString() + ","
 		default:
 			sql += k + " = ?,"
-			g.builder.beforeArg(vv)
+			g.query.beforeArg(vv)
 		}
 	}
 	sql = strings.Trim(sql, ",")
@@ -229,31 +229,31 @@ func (g Grammar) Update() string {
 	sql += g.compileTable(false)
 	sql += " SET "
 	sql += g.compileUpdateValue()
-	// sql += strings.Join(g.builder.columns, " = ?,") + " = ?"
+	// sql += strings.Join(g.query.columns, " = ?,") + " = ?"
 	sql += g.compileWhere()
 	sql += g.compileOrder(false)
-	if g.builder.limit > 0 {
-		sql += " LIMIT " + strconv.FormatInt(g.builder.limit, 10)
+	if g.query.limit > 0 {
+		sql += " LIMIT " + strconv.FormatInt(g.query.limit, 10)
 	}
 	return sql
 }
 
 // InsertUpdate ...
 func (g Grammar) InsertUpdate() string {
-	old := g.builder.data
+	old := g.query.data
 	//insert
-	g.builder.data = old[:1]
+	g.query.data = old[:1]
 	sql := "INSERT INTO "
 	sql += g.compileTable(false)
 	sql += " " + g.compileInsertValue()
 	sql += " ON DUPLICATE KEY UPDATE "
-	g.builder.data = old[1:]
+	g.query.data = old[1:]
 	sql += g.compileUpdateValue()
 	return sql
 }
 
-// ToSql ...
-func (g Grammar) ToSql() string {
+// ToSQL ...
+func (g Grammar) ToSQL() string {
 	g.method = strings.ToUpper(g.method)
 	switch g.method {
 	case "INSERT":

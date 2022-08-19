@@ -143,12 +143,7 @@ const (
 
 // IsReadOnly will return Is it read-only
 func (rw *RWType) IsReadOnly() bool {
-
-	if *rw == OnlyRead {
-		return true
-	} else {
-		return false
-	}
+	return *rw == OnlyRead
 }
 
 // FmtSuffix get fmtstring of  key+ "_" + suffix

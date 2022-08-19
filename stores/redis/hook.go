@@ -27,10 +27,10 @@ type OpenTraceHook struct {
 	Addr          string
 }
 
-// const CmdStart = "start"
-
+// CmdStart ...
 type CmdStart string
 
+// RequestCmdStart ...
 const RequestCmdStart = CmdStart("start")
 
 // BeforeProcess ...

@@ -736,7 +736,7 @@ func (c *Context) ShouldBindUri(obj any) error {
 	for _, v := range c.Params {
 		m[v.Key] = []string{v.Value}
 	}
-	return binding.Uri.BindUri(m, obj)
+	return binding.URI.BindUri(m, obj)
 }
 
 // ShouldBindWith binds the passed struct pointer using the specified binding engine.

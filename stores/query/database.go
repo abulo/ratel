@@ -23,12 +23,12 @@ import (
 type Connection interface {
 	Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
-	NewQuery(ctx context.Context) *QueryBuilder
+	NewQuery(ctx context.Context) *Query
 	SQLRaw() string
 	LastSQL(query string, args ...interface{})
 }
 
-// Sql sql语句
+// SQL sql语句
 type SQL struct {
 	SQL      string
 	Args     []interface{}
@@ -60,11 +60,11 @@ type QueryTx struct {
 }
 
 // NewQuery 生成一个新的查询构造器
-func (querydb *QueryDb) NewQuery(ctx context.Context) *QueryBuilder {
+func (querydb *QueryDb) NewQuery(ctx context.Context) *Query {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	return &QueryBuilder{connection: querydb, ctx: ctx}
+	return &Query{connection: querydb, ctx: ctx}
 }
 
 // Begin 开启一个事务
@@ -219,11 +219,11 @@ func (querytx *QueryTx) Rollback() error {
 }
 
 // NewQuery 生成一个新的查询构造器
-func (querytx *QueryTx) NewQuery(ctx context.Context) *QueryBuilder {
+func (querytx *QueryTx) NewQuery(ctx context.Context) *Query {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	return &QueryBuilder{connection: querytx, ctx: ctx}
+	return &Query{connection: querytx, ctx: ctx}
 }
 
 // Exec 复用执行语句
@@ -431,7 +431,7 @@ func convert(s string, v interface{}) string {
 	return strings.Replace(s, "?", fmt.Sprintf("%v", v), 1)
 }
 
-// ToJson sql语句转出json
-func (sql SQL) ToJson() string {
+// ToJSON sql语句转出json
+func (sql SQL) ToJSON() string {
 	return fmt.Sprintf(`{"sql":%s,"costtime":"%s"}`, strconv.Quote(sql.ToString()), sql.CostTime)
 }

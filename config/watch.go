@@ -24,8 +24,8 @@ func WatchConfig(suffix string) {
 func OnConfigChange(run func(in fsnotify.Event)) { dc.OnConfigChange(run) }
 
 // OnConfigChange ...
-func (v *Config) OnConfigChange(run func(in fsnotify.Event)) {
-	v.onConfigChange = run
+func (c *Config) OnConfigChange(run func(in fsnotify.Event)) {
+	c.onConfigChange = run
 }
 
 // ConfigDir ...
@@ -47,13 +47,11 @@ func (c *Config) WatchConfig(suffix string) {
 		if err != nil {
 			return
 		}
-
 		defer func() {
 			if err := watcher.Close(); err != nil {
 				logger.Logger.Error("Error closing watcher: ", err)
 			}
 		}()
-
 		done := make(chan bool)
 		// Process events
 		go func() {
@@ -106,9 +104,9 @@ func (c *Config) WatchConfig(suffix string) {
 				}
 			}
 		}()
-		dir := c.ConfigDir()
-		for _, v := range dir {
-			err = watcher.Add(v)
+		dirs := c.ConfigDir()
+		for _, dir := range dirs {
+			err = watcher.Add(dir)
 			if err != nil {
 				fmt.Println(err)
 			}

@@ -2,14 +2,14 @@ package proxy
 
 import "sync"
 
-// ProxyPool 代理池
-type ProxyPool struct {
+// Proxy 代理池
+type Proxy struct {
 	m sync.Map
 }
 
-// NewProxyPool 代理池
-func NewProxyPool() *ProxyPool {
-	return &ProxyPool{
+// NewProxy 代理池
+func NewProxy() *Proxy {
+	return &Proxy{
 		m: sync.Map{},
 	}
 }

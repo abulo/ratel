@@ -88,7 +88,7 @@ func (s *Server) Healthz() bool {
 	return true
 }
 
-// Server implements server.Server interface.
+// Serve implements server.Serve interface.
 func (s *Server) Serve() error {
 	err := s.Server.Serve(s.listener)
 	return err
