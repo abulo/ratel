@@ -14,11 +14,19 @@ var DataTypeMap = map[string][]string{
 	"DOUBLE":  {"float64", "query.NullFloat64"},
 	"DECIMAL": {"float64", "query.NullFloat64"},
 	//时间
-	"DATE":      {"time.Time", "query.NullDate"},
-	"TIME":      {"time.Time", "query.NullTime"},
-	"YEAR":      {"time.Time", "query.NullYear"},
-	"DATETIME":  {"time.Time", "query.NullDateTime"},
-	"TIMESTAMP": {"time.Time", "query.NullTime"},
+
+	// "DATE":      {"time.Time", "query.NullDate"},
+	// "TIME":      {"time.Time", "query.NullTime"},
+	// "YEAR":      {"time.Time", "query.NullYear"},
+	// "DATETIME":  {"time.Time", "query.NullDateTime"},
+	// "TIMESTAMP": {"time.Time", "query.NullTime"},
+
+	"DATE":      {"query.NullDate", "query.NullDate"},
+	"TIME":      {"query.NullTime", "query.NullTime"},
+	"YEAR":      {"query.NullYear", "query.NullYear"},
+	"DATETIME":  {"query.NullDateTime", "query.NullDateTime"},
+	"TIMESTAMP": {"query.NullTime", "query.NullTime"},
+
 	//字符串
 	"CHAR":       {"string", "query.NullString"},
 	"VARCHAR":    {"string", "query.NullString"},
