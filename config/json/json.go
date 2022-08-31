@@ -4,7 +4,7 @@ package json
 import (
 	"github.com/abulo/ratel/v3/config"
 	"github.com/gookit/goutil/jsonutil"
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 )
 
 var parser = jsoniter.ConfigCompatibleWithStandardLibrary

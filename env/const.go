@@ -86,7 +86,7 @@ func SetAppInstance(instance string) {
 	appInstance = instance
 }
 
-const ratelVersion = "ratel3.1.8"
+const ratelVersion = "ratel3.1.9"
 
 var (
 	startTime string

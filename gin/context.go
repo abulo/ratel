@@ -665,10 +665,10 @@ func (c *Context) BindHeader(obj any) error {
 	return c.MustBindWith(obj, binding.Header)
 }
 
-// BindUri binds the passed struct pointer using binding.Uri.
+// BindURI binds the passed struct pointer using binding.Uri.
 // It will abort the request with HTTP 400 if any error occurs.
-func (c *Context) BindUri(obj any) error {
-	if err := c.ShouldBindUri(obj); err != nil {
+func (c *Context) BindURI(obj any) error {
+	if err := c.ShouldBindURI(obj); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err).SetType(ErrorTypeBind) // nolint: errcheck
 		return err
 	}
@@ -731,7 +731,7 @@ func (c *Context) ShouldBindHeader(obj any) error {
 }
 
 // ShouldBindUri binds the passed struct pointer using the specified binding engine.
-func (c *Context) ShouldBindUri(obj any) error {
+func (c *Context) ShouldBindURI(obj any) error {
 	m := make(map[string][]string)
 	for _, v := range c.Params {
 		m[v.Key] = []string{v.Value}

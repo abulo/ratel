@@ -49,7 +49,7 @@ func (config *Config) WithDeployment(deployment string) *Config {
 }
 
 // WithMode ...
-func (config *Config) With(mode string) *Config {
+func (config *Config) WithMode(mode string) *Config {
 	config.Mode = mode
 	return config
 }

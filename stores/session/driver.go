@@ -175,7 +175,8 @@ func (session *Session) Has(key string) bool {
 func (session *Session) Push(key string, e interface{}) {
 }
 */
-//Destroy 释放
+
+// Destroy 释放
 func (session *Session) Destroy(ctx context.Context) int64 {
 	var h = session.Driver
 

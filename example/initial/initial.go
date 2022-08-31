@@ -149,7 +149,7 @@ func (initial *Initial) InitSession(name string) *Initial {
 func (initial *Initial) InitMysql() *Initial {
 	configs := initial.Config.Get("mysql")
 	list := configs.(map[string]interface{})
-	links := make(map[string]*query.QueryDb)
+	links := make(map[string]*query.Query)
 	for node, nodeConfig := range list {
 		opt := &mysql.Config{}
 		res := nodeConfig.(map[string]interface{})
@@ -227,7 +227,7 @@ func (initial *Initial) InitClickHouse() *Initial {
 	configs := initial.Config.Get("clickhouse")
 	list := configs.(map[string]interface{})
 
-	links := make(map[string]*query.QueryDb)
+	links := make(map[string]*query.Query)
 	for node, nodeConfig := range list {
 		opt := &clickhouse.Config{}
 		res := nodeConfig.(map[string]interface{})

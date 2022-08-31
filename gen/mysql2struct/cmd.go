@@ -18,7 +18,7 @@ import (
 //	 DbName  数据库名称
 //		outputDir: "输出目录",
 //		outputPackage: "struct文件的包名
-func MysqlToStruct(db *query.QueryDb, DbName, outputDir, outputPackage string) {
+func MysqlToStruct(db *query.Query, DbName, outputDir, outputPackage string) {
 	_ = os.MkdirAll(outputDir, os.ModePerm)
 	tables, err := queryTables(db, DbName)
 	if err != nil {
@@ -86,17 +86,17 @@ func MysqlToStruct(db *query.QueryDb, DbName, outputDir, outputPackage string) {
 	fmt.Printf("格式化结果:\n%s\n", string(out))
 }
 
-func queryColumns(db *query.QueryDb, DbName, tableName string) ([]Column, error) {
+func queryColumns(db *query.Query, DbName, tableName string) ([]Column, error) {
 	var columns []Column
 	sql := "SELECT COLUMN_NAME,IS_NULLABLE,DATA_TYPE,COLUMN_KEY,COLUMN_COMMENT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '" + DbName + "' and TABLE_NAME = '" + tableName + "'"
-	err := db.NewQuery(context.Background()).QueryRows(sql).ToStruct(&columns)
+	err := db.NewBuilder(context.Background()).QueryRows(sql).ToStruct(&columns)
 	return columns, err
 }
 
-func queryTables(db *query.QueryDb, DbName string) ([]Table, error) {
+func queryTables(db *query.Query, DbName string) ([]Table, error) {
 	var tables []Table
 	sql := "SELECT TABLE_NAME ,TABLE_COMMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '" + DbName + "'"
-	err := db.NewQuery(context.Background()).QueryRows(sql).ToStruct(&tables)
+	err := db.NewBuilder(context.Background()).QueryRows(sql).ToStruct(&tables)
 	return tables, err
 }
 

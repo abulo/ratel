@@ -15,7 +15,7 @@ type Pager struct {
 	itemsPerPage   int64 //每页多少数据
 	numPages       int64 //总页数
 	maxPagesToShow int64 //
-	Url            string
+	URL            string
 }
 
 type page struct {
@@ -30,7 +30,7 @@ func NewPage(items, curPage, perNum int64, url string) *Pager {
 		totalItems:     items,
 		currentPage:    curPage,
 		itemsPerPage:   perNum,
-		Url:            url,
+		URL:            url,
 		maxPagesToShow: 9,
 	}
 
@@ -138,5 +138,5 @@ func (pager *Pager) createPageEllipsis() page {
 }
 
 func (pager *Pager) getPageURL(pageNum string) string {
-	return util.StrReplace(":num", pageNum, pager.Url, -1)
+	return util.StrReplace(":num", pageNum, pager.URL, -1)
 }

@@ -114,7 +114,7 @@ func index(ctx *gin.Context) {
 
 	sql := "SELECT video.id as video_id,video.* ,provider.title as provider_title,GROUP_CONCAT(sp.title) as sp_title FROM video LEFT JOIN provider_video ON video.id = provider_video.video_id LEFT JOIN provider ON provider_video.provider_id = provider.id LEFT JOIN sp_provider ON provider.id = sp_provider.provider_id LEFT JOIN sp ON sp_provider.sp_id = sp.id "
 
-	db.NewQuery(ctx.Request.Context()).QueryRows(sql).ToMap()
+	db.NewBuilder(ctx.Request.Context()).QueryRows(sql).ToMap()
 
 	items := make([]map[string]interface{}, 0)
 	err := initial.Core.Store.LoadMongoDB("mongodb").Collection("op_logger").FindMany(ctx.Request.Context(), &items)

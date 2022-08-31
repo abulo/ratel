@@ -72,7 +72,7 @@ func (config *Config) URI() string {
 }
 
 // NewClient New 新连接
-func NewClient(config *Config) *query.QueryDb {
+func NewClient(config *Config) *query.Query {
 	opt := &query.Opt{
 		MaxOpenConns: config.MaxOpenConns,
 		MaxIdleConns: config.MaxIdleConns,
@@ -84,5 +84,5 @@ func NewClient(config *Config) *query.QueryDb {
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
-	return &query.QueryDb{DB: db, DriverName: config.DriverName, DisableMetric: config.DisableMetric, DisableTrace: config.DisableTrace, Prepare: false, DBName: config.Database, Addr: util.Implode(";", config.Addr)}
+	return &query.Query{DB: db, DriverName: config.DriverName, DisableMetric: config.DisableMetric, DisableTrace: config.DisableTrace, Prepare: false, DBName: config.Database, Addr: util.Implode(";", config.Addr)}
 }

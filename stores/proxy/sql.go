@@ -7,8 +7,8 @@ import (
 
 // SQL Proxy 代理
 type SQL struct {
-	write []*query.QueryDb
-	read  []*query.QueryDb
+	write []*query.Query
+	read  []*query.Query
 }
 
 // NewSQL 代理池
@@ -17,24 +17,24 @@ func NewSQL() *SQL {
 }
 
 // SetWrite 设置写库
-func (proxy *SQL) SetWrite(query *query.QueryDb) {
+func (proxy *SQL) SetWrite(query *query.Query) {
 	proxy.write = append(proxy.write, query)
 }
 
 // SetRead 设置读库
-func (proxy *SQL) SetRead(query *query.QueryDb) {
+func (proxy *SQL) SetRead(query *query.Query) {
 	proxy.read = append(proxy.read, query)
 }
 
 // Write 获取写库
-func (proxy *SQL) Write() *query.QueryDb {
+func (proxy *SQL) Write() *query.Query {
 	len := len(proxy.write)
 	write := util.Rand(0, len-1)
 	return proxy.write[write]
 }
 
 // Read 获取读库
-func (proxy *SQL) Read() *query.QueryDb {
+func (proxy *SQL) Read() *query.Query {
 	len := len(proxy.read)
 	if len < 1 {
 		return proxy.Write()
