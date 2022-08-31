@@ -4,8 +4,8 @@ go 1.19
 
 require (
 	github.com/BurntSushi/toml v1.2.0
-	github.com/ClickHouse/clickhouse-go/v2 v2.2.0
-	github.com/bytedance/sonic v1.3.5
+	github.com/ClickHouse/clickhouse-go/v2 v2.3.0
+	github.com/bytedance/sonic v1.4.0
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
 	github.com/fsnotify/fsnotify v1.5.4
@@ -16,7 +16,7 @@ require (
 	github.com/goccy/go-json v0.9.11
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.3.0
-	github.com/gookit/goutil v0.5.9
+	github.com/gookit/goutil v0.5.10
 	github.com/gookit/ini/v2 v2.1.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -24,7 +24,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/hcl/v2 v2.13.0
 	github.com/imdario/mergo v0.3.13
-	github.com/jlaffaye/ftp v0.0.0-20220818164422-4d1d644cf19d
+	github.com/jlaffaye/ftp v0.0.0-20220829015825-b85cf1edccd4
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.6
 	github.com/mattn/go-isatty v0.0.16
@@ -33,7 +33,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/pelletier/go-toml/v2 v2.0.3
+	github.com/pelletier/go-toml/v2 v2.0.5
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.5
 	github.com/prometheus/client_golang v1.13.0
@@ -41,7 +41,7 @@ require (
 	github.com/smallnest/weighted v0.0.0-20201102054551-85ac5c79528c
 	github.com/spf13/cast v1.5.0
 	github.com/stretchr/testify v1.8.0
-	github.com/tdewolff/parse/v2 v2.6.2
+	github.com/tdewolff/parse/v2 v2.6.3
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/ugorji/go/codec v1.2.7
 	github.com/yosuke-furukawa/json5 v0.1.1
@@ -49,21 +49,23 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.4
 	go.mongodb.org/mongo-driver v1.10.1
 	go.uber.org/multierr v1.8.0
-	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8
+	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 	golang.org/x/image v0.0.0-20220722155232-062f8c9fd539
-	golang.org/x/net v0.0.0-20220812174116-3211cb980234
+	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 	golang.org/x/text v0.3.7
-	google.golang.org/genproto v0.0.0-20220819153447-c7cd466b0e09
-	google.golang.org/grpc v1.48.0
+	google.golang.org/genproto v0.0.0-20220829175752-36a9c930ecbf
+	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
+	github.com/ClickHouse/ch-go v0.47.3 // indirect
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
+	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -72,6 +74,8 @@ require (
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/go-faster/city v1.0.1 // indirect
+	github.com/go-faster/errors v0.6.1 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -82,7 +86,7 @@ require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
@@ -99,6 +103,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
+	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
@@ -109,10 +114,10 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.4 // indirect
-	go.opentelemetry.io/otel v1.7.0 // indirect
-	go.opentelemetry.io/otel/trace v1.7.0 // indirect
-	go.uber.org/atomic v1.7.0 // indirect
-	go.uber.org/zap v1.17.0 // indirect
+	go.opentelemetry.io/otel v1.9.0 // indirect
+	go.opentelemetry.io/otel/trace v1.9.0 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
+	go.uber.org/zap v1.22.0 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect

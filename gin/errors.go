@@ -15,7 +15,6 @@ import (
 // ErrorType is an unsigned 64-bit error code as defined in the gin spec.
 type ErrorType uint64
 
-// ErrorTypeBind ...
 const (
 	// ErrorTypeBind is used when Context.Bind() fails.
 	ErrorTypeBind ErrorType = 1 << 63

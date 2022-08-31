@@ -24,7 +24,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// MIMEJSON Content-Type MIME of the most common data formats.
+// Content-Type MIME of the most common data formats.
 const (
 	MIMEJSON              = binding.MIMEJSON
 	MIMEHTML              = binding.MIMEHTML
