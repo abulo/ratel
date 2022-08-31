@@ -57,7 +57,7 @@ func MysqlToStruct(db *query.Query, DbName, outputDir, outputPackage string) {
 			}
 			//拼接字符串
 			camelStr := CamelStr(column.ColumnName)
-			builder.WriteString(fmt.Sprintf("	%s %s `db:\"%s\";json:\"%s\"` //%s", camelStr, dataType, column.ColumnName, strings.ToLower(string(camelStr[0]))+camelStr[1:], column.ColumnComment))
+			builder.WriteString(fmt.Sprintf("	%s %s `db:\"%s\"; json:\"%s\"` //%s", camelStr, dataType, column.ColumnName, strings.ToLower(string(camelStr[0]))+camelStr[1:], column.ColumnComment))
 			if column.ColumnKey != "" {
 				builder.WriteString("(" + column.ColumnKey + ")")
 			}
@@ -88,7 +88,7 @@ func MysqlToStruct(db *query.Query, DbName, outputDir, outputPackage string) {
 
 func queryColumns(db *query.Query, DbName, tableName string) ([]Column, error) {
 	var columns []Column
-	sql := "SELECT COLUMN_NAME,IS_NULLABLE,DATA_TYPE,COLUMN_KEY,COLUMN_COMMENT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '" + DbName + "' and TABLE_NAME = '" + tableName + "'"
+	sql := "SELECT COLUMN_NAME,IS_NULLABLE,DATA_TYPE,COLUMN_KEY,COLUMN_COMMENT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '" + DbName + "' and TABLE_NAME = '" + tableName + "'  ORDER BY ORDINAL_POSITION ASC"
 	err := db.NewBuilder(context.Background()).QueryRows(sql).ToStruct(&columns)
 	return columns, err
 }
