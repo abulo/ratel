@@ -57,7 +57,7 @@ func MysqlToStruct(db *query.Query, DbName, outputDir, outputPackage string) {
 			}
 			//拼接字符串
 			camelStr := CamelStr(column.ColumnName)
-			builder.WriteString(fmt.Sprintf("	%s %s `db:\"%s\"; json:\"%s\"` //%s", camelStr, dataType, column.ColumnName, strings.ToLower(string(camelStr[0]))+camelStr[1:], column.ColumnComment))
+			builder.WriteString(fmt.Sprintf("	%s %s `db:\"%s\" json:\"%s\"` //%s", camelStr, dataType, column.ColumnName, column.ColumnName, column.ColumnComment))
 			if column.ColumnKey != "" {
 				builder.WriteString("(" + column.ColumnKey + ")")
 			}
@@ -67,10 +67,10 @@ func MysqlToStruct(db *query.Query, DbName, outputDir, outputPackage string) {
 		builder.WriteString("}\n")
 		fileStr := "package " + outputPackage + "\nimport ("
 		if packageSQL {
-			fileStr += "\"github.com/abulo/ratel/v3/stores/query\"\n"
+			fileStr += "\"github.com/abulo/ratel/v3/stores/query\"\n\n"
 		}
 		if packageTime {
-			fileStr += "\"time\"\n"
+			fileStr += "\"time\"\n\n"
 		}
 		fileStr += ")\n"
 		fileStr += builder.String()
