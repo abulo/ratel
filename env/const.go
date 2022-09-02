@@ -189,13 +189,13 @@ func GoVersion() string {
 
 // PrintVersion print format version info
 func PrintVersion() {
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "GoVersion", GoVersion())
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "RatelVersion", ratelVersion)
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "Name", Name())
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "AppID", AppID())
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "Region", AppRegion())
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "Zone", AppZone())
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "BuildVersion", BuildVersion())
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "BuildTime", BuildTime())
-	fmt.Printf("%-8s]> %-30s => %s\n", "ratel", "StartTime", StartTime())
+	fmt.Printf("%-8s]> %-30s => %s\n", "App", "GoVersion", GoVersion())
+	fmt.Printf("%-8s]> %-30s => %s\n", "App", "RatelVersion", ratelVersion)
+	fmt.Printf("%-8s]> %-30s => %s\n", "App", "Name", Name())
+	fmt.Printf("%-8s]> %-30s => %s\n", "App", "AppID", AppID())
+	fmt.Printf("%-8s]> %-30s => %s\n", "App", "Region", AppRegion())
+	fmt.Printf("%-8s]> %-30s => %s\n", "App", "Zone", AppZone())
+	fmt.Printf("%-8s]> %-30s => %s\n", "App", "BuildVersion", BuildVersion())
+	fmt.Printf("%-8s]> %-30s => %s\n", "App", "BuildTime", BuildTime())
+	fmt.Printf("%-8s]> %-30s => %s\n", "App", "StartTime", StartTime())
 }
