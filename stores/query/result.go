@@ -16,6 +16,10 @@ type Row struct {
 
 // ToArray get Array
 func (r *Row) ToArray() (result []string, err error) {
+	if r.rs.lastError != nil {
+		err = r.rs.lastError
+		return
+	}
 	items, err := r.rs.ToArray()
 	if err != nil {
 		r.lastError = err
@@ -29,6 +33,10 @@ func (r *Row) ToArray() (result []string, err error) {
 
 // ToMap get Map
 func (r *Row) ToMap() (result map[string]string, err error) {
+	if r.rs.lastError != nil {
+		err = r.rs.lastError
+		return
+	}
 	items, err := r.rs.ToMap()
 	if err != nil {
 		r.lastError = err
@@ -42,6 +50,10 @@ func (r *Row) ToMap() (result map[string]string, err error) {
 
 // ToInterface ...
 func (r *Row) ToInterface() (result map[string]interface{}, err error) {
+	if r.rs.lastError != nil {
+		err = r.rs.lastError
+		return
+	}
 	items, err := r.rs.ToInterface()
 	if err != nil {
 		r.lastError = err
@@ -55,6 +67,9 @@ func (r *Row) ToInterface() (result map[string]interface{}, err error) {
 
 // ToStruct get Struct
 func (r *Row) ToStruct(st interface{}) error {
+	if r.rs.lastError != nil {
+		return r.rs.lastError
+	}
 	//获取变量的类型
 	stType := reflect.TypeOf(st)
 
@@ -63,11 +78,9 @@ func (r *Row) ToStruct(st interface{}) error {
 	if stType.Kind() != reflect.Ptr {
 		return fmt.Errorf("the variable type is %v, not a pointer", stType.Kind())
 	}
-
 	stTypeInd := stType.Elem()
-
 	if r.rs.rs == nil {
-		return r.lastError
+		return sql.ErrNoRows
 	}
 	defer func() {
 		if err := r.rs.rs.Close(); err != nil {
@@ -81,9 +94,7 @@ func (r *Row) ToStruct(st interface{}) error {
 		return err
 	}
 	fields, err := r.rs.rs.Columns()
-
 	if err != nil {
-		r.rs.lastError = err
 		return err
 	}
 	refs := make([]interface{}, len(fields))
@@ -93,6 +104,9 @@ func (r *Row) ToStruct(st interface{}) error {
 		} else {
 			refs[i] = new(interface{})
 		}
+	}
+	if !r.rs.rs.Next() {
+		return sql.ErrNoRows
 	}
 	if err := r.rs.rs.Scan(refs...); err != nil {
 		return err

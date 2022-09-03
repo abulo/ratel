@@ -5,7 +5,7 @@
         Username = "root"
         Password = "mysql"
         Charset = "utf8mb4"
-        Database = "xmt"
+        Database = "xiaobao"
         # MaxOpenConns 连接池最多同时打开的连接数
         MaxOpenConns = 64
         # MaxIdleConns 连接池里最大空闲连接数。必须要比maxOpenConns小
