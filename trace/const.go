@@ -3,11 +3,16 @@ package trace
 import (
 	"context"
 
+	"github.com/abulo/ratel/v3/gin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
 	"google.golang.org/grpc/metadata"
 )
+
+func SpanHttpStartName(ctx *gin.Context) string {
+	return "http " + ctx.FullPath()
+}
 
 // CustomTag ...
 func CustomTag(key string, val interface{}) opentracing.Tag {

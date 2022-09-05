@@ -1,0 +1,43 @@
+[server]
+    [server.admin]
+        # 是否开启
+        Disable = false
+        # 监听 IP,如果是注册发现服务，需要填写内网 IP,如果是单机模式，则填写 127.0.0.1
+        Host = "127.0.0.1"
+        # 监听端口
+        Port = 17777
+        # 注册发现服务中的分组名称
+        Deployment = "golang"
+        # 关闭指标采集
+        DisableMetric = false
+        # 关闭链路追踪
+        DisableTrace = false
+        # 关闭慢日志查询
+        DisableSlowQuery = true
+        # 同监听一样
+        ServiceAddress = "172.18.1.5:17777"
+        # 慢日志
+        SlowQueryThresholdInMilli = 10000
+    [server.api]
+        # 是否开启
+        Disable = false
+        # 监听 IP,如果是注册发现服务，需要填写内网 IP,如果是单机模式，则填写 127.0.0.1
+        Host = "127.0.0.1"
+        # 监听端口
+        Port = 18888
+        # 注册发现服务中的分组名称
+        Deployment = "golang"
+        # 关闭指标采集
+        DisableMetric = false
+        # 关闭链路追踪
+        DisableTrace = false
+        # 关闭慢日志查询
+        DisableSlowQuery = true
+        # 同监听一样
+        ServiceAddress = "172.18.1.5:18888"
+        # 慢日志
+        SlowQueryThresholdInMilli = 10000
+    # [server.monitor]
+    #     host = "0.0.0.0"
+    #     port = 18889
+    #     network = "tcp4"

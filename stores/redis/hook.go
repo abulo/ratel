@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
 	"strconv"
 	"time"
 	"unicode/utf8"
@@ -42,6 +43,10 @@ func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (con
 		ctx = context.TODO()
 	}
 	if !op.DisableTrace {
+		pc, file, lineNo, _ := runtime.Caller(5)
+		name := runtime.FuncForPC(pc).Name()
+		Path := file + ":" + cast.ToString(lineNo)
+		Func := name
 		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
@@ -51,6 +56,8 @@ func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (con
 				hostName = "unknown"
 			}
 			ext.PeerHostname.Set(span, hostName)
+			span.SetTag("call.func", Func)
+			span.SetTag("call.path", Path)
 			span.LogFields(log.String("cmd", String(b)))
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -124,6 +131,10 @@ func (op OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.
 		}
 	}
 	if !op.DisableTrace {
+		pc, file, lineNo, _ := runtime.Caller(5)
+		name := runtime.FuncForPC(pc).Name()
+		Path := file + ":" + cast.ToString(lineNo)
+		Func := name
 		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
@@ -133,6 +144,8 @@ func (op OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.
 				hostName = "unknown"
 			}
 			ext.PeerHostname.Set(span, hostName)
+			span.SetTag("call.func", Func)
+			span.SetTag("call.path", Path)
 			span.LogFields(log.String("cmds", String(b)))
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}

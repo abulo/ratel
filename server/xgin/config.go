@@ -87,6 +87,9 @@ func (config *Config) WithSlowQueryThresholdInMilli(milli int64) *Config {
 // Build create server instance, then initialize it with necessary interceptor
 func (config *Config) Build() *Server {
 	server := newServer(config)
+	if config.Mode == gin.DebugMode {
+		server.Use(gin.Logger())
+	}
 	server.Use(gin.Recovery())
 	if !config.DisableSlowQuery {
 		//慢日志查询

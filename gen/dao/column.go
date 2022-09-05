@@ -1,4 +1,4 @@
-package mysql2struct
+package dao
 
 // Column ...
 type Column struct {

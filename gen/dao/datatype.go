@@ -1,4 +1,4 @@
-package mysql2struct
+package dao
 
 // DataTypeMap ...
 var DataTypeMap = map[string][]string{

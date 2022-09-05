@@ -14,8 +14,6 @@ import (
 	"github.com/abulo/ratel/v3/logger"
 	"github.com/abulo/ratel/v3/metric"
 	"github.com/abulo/ratel/v3/trace"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/sirupsen/logrus"
 )
 
@@ -41,10 +39,9 @@ func metricServerInterceptor() gin.HandlerFunc {
 
 func traceServerInterceptor() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		span, ctx := trace.StartSpanFromContext(
 			c.Request.Context(),
-			c.Request.Method+" "+c.Request.URL.Path,
+			trace.SpanHttpStartName(c),
 			trace.TagComponent("http"),
 			trace.TagSpanKind("server"),
 			trace.HeaderExtractor(c.Request.Header),
@@ -52,18 +49,6 @@ func traceServerInterceptor() gin.HandlerFunc {
 			trace.CustomTag("http.method", c.Request.Method),
 			trace.CustomTag("peer.ipv4", c.ClientIP()),
 		)
-
-		if parentSpan := trace.SpanFromContext(c.Request.Context()); parentSpan != nil {
-			parentCtx := parentSpan.Context()
-			span = opentracing.StartSpan("http", opentracing.ChildOf(parentCtx))
-			ext.SpanKindRPCClient.Set(span)
-			hostName, err := os.Hostname()
-			if err != nil {
-				hostName = "unknown"
-			}
-			ext.PeerHostname.Set(span, hostName)
-
-		}
 		c.Request = c.Request.WithContext(ctx)
 		defer span.Finish()
 		c.Next()

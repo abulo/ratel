@@ -21,7 +21,7 @@
         # 关闭指标采集
         DisableMetric = false
         # 关闭链路追踪
-	    DisableTrace = false
+        DisableTrace = false
 [[proxyclickhouse]]
 Name = "clickhouse"
 Node = "clickhouse.common"

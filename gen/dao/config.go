@@ -1,4 +1,4 @@
-package mysql2struct
+package dao
 
 // Config ...
 type Config struct {

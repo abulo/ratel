@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
+	"github.com/spf13/cast"
 )
 
 // Connection 链接
@@ -45,6 +47,8 @@ type Query struct {
 	Prepare       bool
 	DBName        string
 	Addr          string
+	Func          string // 上个函数调用的函数名称
+	Path          string // 上个函数调用的函数位置
 }
 
 // Transaction 事务
@@ -57,12 +61,20 @@ type Transaction struct {
 	Prepare       bool
 	DBName        string
 	Addr          string
+	Func          string // 上个函数调用的函数名称
+	Path          string // 上个函数调用的函数位置
 }
 
 // NewBuilder 生成一个新的查询构造器
 func (query *Query) NewBuilder(ctx context.Context) *Builder {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
+	}
+	if !query.DisableTrace {
+		pc, file, lineNo, _ := runtime.Caller(1)
+		name := runtime.FuncForPC(pc).Name()
+		query.Path = file + ":" + cast.ToString(lineNo)
+		query.Func = name
 	}
 	return &Builder{connection: query, ctx: ctx}
 }
@@ -73,7 +85,7 @@ func (query *Query) Begin() (*Transaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{Transaction: transaction, DriverName: query.DriverName, DisableTrace: query.DisableTrace, DisableMetric: query.DisableMetric, Prepare: query.Prepare, DBName: query.DBName, Addr: query.Addr}, nil
+	return &Transaction{Transaction: transaction, DriverName: query.DriverName, DisableTrace: query.DisableTrace, DisableMetric: query.DisableMetric, Prepare: query.Prepare, DBName: query.DBName, Addr: query.Addr, Func: query.Func, Path: query.Path}, nil
 }
 
 // Exec 复用执行语句
@@ -104,6 +116,8 @@ func (query *Query) Exec(ctx context.Context, querySQL string, args ...interface
 			ext.PeerHostname.Set(span, hostName)
 			ext.DBInstance.Set(span, query.DBName)
 			ext.DBStatement.Set(span, query.DriverName)
+			span.SetTag("call.func", query.Func)
+			span.SetTag("call.path", query.Path)
 			span.LogFields(log.String("sql", query.SQLRaw()))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
@@ -170,6 +184,8 @@ func (query *Query) Query(ctx context.Context, querySQL string, args ...interfac
 			ext.PeerHostname.Set(span, hostName)
 			ext.DBInstance.Set(span, query.DBName)
 			ext.DBStatement.Set(span, query.DriverName)
+			span.SetTag("call.func", query.Func)
+			span.SetTag("call.path", query.Path)
 			span.LogFields(log.String("sql", query.SQLRaw()))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
@@ -255,6 +271,8 @@ func (query *Transaction) Exec(ctx context.Context, querySQL string, args ...int
 			ext.PeerHostname.Set(span, hostName)
 			ext.DBInstance.Set(span, query.DBName)
 			ext.DBStatement.Set(span, query.DriverName)
+			span.SetTag("call.func", query.Func)
+			span.SetTag("call.path", query.Path)
 			span.LogFields(log.String("sql", query.SQLRaw()))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
@@ -323,6 +341,8 @@ func (query *Transaction) Query(ctx context.Context, querySQL string, args ...in
 			ext.DBInstance.Set(span, query.DBName)
 			ext.DBStatement.Set(span, query.DriverName)
 			span.LogFields(log.String("sql", query.SQLRaw()))
+			span.SetTag("call.func", query.Func)
+			span.SetTag("call.path", query.Path)
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}

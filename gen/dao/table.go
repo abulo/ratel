@@ -1,4 +1,4 @@
-package mysql2struct
+package dao
 
 // Table ...
 type Table struct {

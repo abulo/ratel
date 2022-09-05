@@ -1,4 +1,4 @@
-package mysql2struct
+package dao
 
 import (
 	"context"
@@ -12,13 +12,13 @@ import (
 	"github.com/abulo/ratel/v3/util"
 )
 
-// MysqlToStruct ...
+// Run ...
 //
 //	 db		sql链接
 //	 DbName  数据库名称
 //		outputDir: "输出目录",
 //		outputPackage: "struct文件的包名
-func MysqlToStruct(db *query.Query, DbName, outputDir, outputPackage string) {
+func Run(db *query.Query, DbName, outputDir, outputPackage string) {
 	_ = os.MkdirAll(outputDir, os.ModePerm)
 	tables, err := queryTables(db, DbName)
 	if err != nil {
@@ -27,7 +27,6 @@ func MysqlToStruct(db *query.Query, DbName, outputDir, outputPackage string) {
 
 	builder := strings.Builder{}
 	for _, table := range tables {
-
 		columns, err := queryColumns(db, DbName, table.TableName)
 		if err != nil {
 			continue
@@ -57,7 +56,7 @@ func MysqlToStruct(db *query.Query, DbName, outputDir, outputPackage string) {
 			}
 			//拼接字符串
 			camelStr := CamelStr(column.ColumnName)
-			builder.WriteString(fmt.Sprintf("	%s %s `db:\"%s\" json:\"%s\"` //%s", camelStr, dataType, column.ColumnName, strings.ToLower(string(camelStr[0]))+camelStr[1:], column.ColumnComment))
+			builder.WriteString(fmt.Sprintf("	%s %s `db:\"%s\" json:\"%s\"  form:\"%s\"` //%s", camelStr, dataType, column.ColumnName, strings.ToLower(string(camelStr[0]))+camelStr[1:], strings.ToLower(string(camelStr[0]))+camelStr[1:], column.ColumnComment))
 			if column.ColumnKey != "" {
 				builder.WriteString("(" + column.ColumnKey + ")")
 			}
@@ -83,7 +82,14 @@ func MysqlToStruct(db *query.Query, DbName, outputDir, outputPackage string) {
 	if e != nil {
 		panic(e)
 	}
-	fmt.Printf("格式化结果:\n%s\n", string(out))
+	fmt.Printf("gofmt结果:\n%s\n", string(out))
+
+	cmdImport := exec.Command("goimports", "-w", path.Join(outputDir, "*.go"))
+	outImport, eI := cmdImport.CombinedOutput()
+	if eI != nil {
+		panic(eI)
+	}
+	fmt.Printf("goimports结果:\n%s\n", string(outImport))
 }
 
 func queryColumns(db *query.Query, DbName, tableName string) ([]Column, error) {

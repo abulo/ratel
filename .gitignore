@@ -7,3 +7,4 @@
 /go.sum
 /test
 /coverage.txt
+/gen/test.go
