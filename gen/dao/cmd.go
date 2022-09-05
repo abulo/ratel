@@ -82,14 +82,9 @@ func Run(db *query.Query, DbName, outputDir, outputPackage string) {
 	if e != nil {
 		panic(e)
 	}
-	fmt.Printf("gofmt结果:\n%s\n", string(out))
-
 	cmdImport := exec.Command("goimports", "-w", path.Join(outputDir, "*.go"))
-	outImport, eI := cmdImport.CombinedOutput()
-	if eI != nil {
-		panic(eI)
-	}
-	fmt.Printf("goimports结果:\n%s\n", string(outImport))
+	cmdImport.CombinedOutput()
+	fmt.Printf("gofmt结果:\n%s\n", string(out))
 }
 
 func queryColumns(db *query.Query, DbName, tableName string) ([]Column, error) {

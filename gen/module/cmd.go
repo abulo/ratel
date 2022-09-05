@@ -34,11 +34,7 @@ func Run(tableName, outputDir, outputPackage, dao, tpl string) {
 	}
 
 	cmdImport := exec.Command("goimports", "-w", path.Join(outputDir, "*.go"))
-	outImport, eI := cmdImport.CombinedOutput()
-	if eI != nil {
-		panic(eI)
-	}
-	fmt.Printf("goimports结果:\n%s\n", string(outImport))
+	cmdImport.CombinedOutput()
 
 	fmt.Printf("格式化结果:\n%s\n", string(out))
 }

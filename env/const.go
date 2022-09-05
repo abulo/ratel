@@ -11,6 +11,8 @@ import (
 	"github.com/abulo/ratel/v3/util"
 )
 
+const ratelVersion = "3.1.17"
+
 var (
 	appMode     string
 	appRegion   string
@@ -85,8 +87,6 @@ func AppInstance() string {
 func SetAppInstance(instance string) {
 	appInstance = instance
 }
-
-const ratelVersion = "3.1.16"
 
 var (
 	startTime string
