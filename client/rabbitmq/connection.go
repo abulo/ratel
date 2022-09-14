@@ -32,7 +32,7 @@ type Connection struct {
 	sync.Once                   // 用于保证 Dial 只被调用一次
 }
 
-// retryable 如果为 nil，则使用 emptyRetryable 替换。emptyRetryable 不会尝试重试操作。
+// NewConnection retryable 如果为 nil，则使用 emptyRetryable 替换。emptyRetryable 不会尝试重试操作。
 func NewConnection(url string, retryable Retryable) *Connection {
 	return &Connection{
 		url:           url,
@@ -131,7 +131,6 @@ func (c *Connection) reconnect(err error) bool {
 }
 
 // Channel 可用于发送、接收消息。
-//
 // 函数会先判断是否已连接，否则将尝试重连（使用您之前设置的 Retryable 配置）。
 // 在获得连接的情况下，会立刻创建 Channel。但可能会存在极少数情况下，因为网络不稳定等因素，
 // Channel 创建之前，连接又断开，则会因为网络原因产生错误。
@@ -162,9 +161,8 @@ func (c *Connection) RetryChannel(retryable Retryable) (ch *Channel, err error) 
 	return ch, err
 }
 
-// 注册并执行 Operation 。
+// RegisterAndExec 注册并执行 Operation 。
 // 每次重连后，重连监听器会自动使用 exec 执行一遍所有的 Operation 函数。
-//
 // 注意：
 //   - 函数会在 Operation 执行完后主动关闭 Channel，因此我们无需在 Operation 中手动关闭 Channel。
 //   - 由于使用了 go routine，该方法可能会在 Operation 操作执行完毕前返回。
@@ -239,31 +237,35 @@ func (c *Connection) Close() error {
 	return nil
 }
 
+// IsOpen returns true
 func (c *Connection) IsOpen() bool {
 	c.cMut.RLock()
 	defer c.cMut.RUnlock()
 	return c.c != nil
 }
 
+// CanRetry returns true
 func (c *Connection) CanRetry() bool {
 	return !c.retryable.hasGaveUp()
 }
 
+// Consumer returns the consumer for the connection
 func (c *Connection) Consumer() *Consumer {
 	return &Consumer{c}
 }
 
+// Producer returns the producer for the connection
 func (c *Connection) Producer() *Producer {
 	return &Producer{c}
 }
 
+// QueueBuilder returns the queue builder for the connection
 func (c *Connection) QueueBuilder() *QueueBuilder {
 	return NewQueueBuilder(c)
 }
 
 // reconnectListener 重连监听器。会不断监听是否断线。如果断线了，则尝试重连。
 // 如果重连成功，则执行注册的 Operation 。
-//
 // 理论上只要通过 dial 部分的连接，后面不大可能存在连接不上的问题。
 // 因此此处使用了无限循环重试的方式，除非 dial 失败达到指定次数。
 func (c *Connection) reconnectListener(monitor chan *amqp.Error) {

@@ -57,9 +57,8 @@ func SAdderGenerator(delta uint64) SAdder {
 func getNonNilArgs(args *amqp.Table) *amqp.Table {
 	if args == nil {
 		return &amqp.Table{}
-	} else {
-		return args
 	}
+	return args
 }
 
 func getNonNilRetryable(retryable Retryable) Retryable {
@@ -230,7 +229,7 @@ func (r *CtxRetry) GiveUp() {
 }
 
 var (
-	// 无格式、非持久化消息工厂方法
+	// MessagePlainTransient 无格式、非持久化消息工厂方法
 	MessagePlainTransient MessageFactory = func(body []byte) amqp.Publishing {
 		return amqp.Publishing{
 			ContentType:  "text/plain",
@@ -238,7 +237,7 @@ var (
 			Body:         body,
 		}
 	}
-	// 无格式、持久化消息工厂方法
+	// MessagePlainPersistent 无格式、持久化消息工厂方法
 	MessagePlainPersistent MessageFactory = func(body []byte) amqp.Publishing {
 		return amqp.Publishing{
 			ContentType:  "text/plain",
@@ -246,16 +245,16 @@ var (
 			Body:         body,
 		}
 	}
-	// JSON、非持久化消息工厂方法
-	MessageJsonTransient MessageFactory = func(body []byte) amqp.Publishing {
+	// MessageJSONTransient JSON、非持久化消息工厂方法
+	MessageJSONTransient MessageFactory = func(body []byte) amqp.Publishing {
 		return amqp.Publishing{
 			ContentType:  "text/json",
 			DeliveryMode: amqp.Transient,
 			Body:         body,
 		}
 	}
-	// JSON、持久化消息工厂方法
-	MessageJsonPersistent MessageFactory = func(body []byte) amqp.Publishing {
+	// MessageJSONPersistent JSON、持久化消息工厂方法
+	MessageJSONPersistent MessageFactory = func(body []byte) amqp.Publishing {
 		return amqp.Publishing{
 			ContentType:  "text/json",
 			DeliveryMode: amqp.Persistent,
@@ -264,9 +263,8 @@ var (
 	}
 )
 
-// 消息工厂方法。默认提供了如： MessagePlainTransient, MessagePlainPersistent, MessageJsonPersistent 等
+// MessageFactory 消息工厂方法。默认提供了如： MessagePlainTransient, MessagePlainPersistent, MessageJSONPersistent 等
 // 在内的工厂方法。
-//
 // 如果没有需要的工厂方法，则需要调用者自己提供对应的工厂方法。
 type MessageFactory func(body []byte) amqp.Publishing
 
@@ -287,8 +285,7 @@ type ReceiveListener interface {
 	Remove(key string, ch *Channel)
 }
 
-// ReceiveListener 的抽象实现。
-//
+// AbsReceiveListener 的抽象实现。
 // 如果 ConsumerMethod 为 nil 或不赋值，将 panic;
 // 如果 FinishMethod 为 nil 或不赋值，则默认不做任何操作。
 type AbsReceiveListener struct {

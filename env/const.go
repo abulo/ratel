@@ -11,7 +11,7 @@ import (
 	"github.com/abulo/ratel/v3/util"
 )
 
-const ratelVersion = "3.1.20"
+const ratelVersion = "3.1.21"
 
 var (
 	appMode     string

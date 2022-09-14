@@ -27,7 +27,7 @@ func main() {
 		[]byte("reSendSync() | "+time.Now().Format("2006-01-02 15:04:05")),
 		rabbitmq.NewSendOptsBuilder().
 			SetRetryable(rabbitmq.DefaultTimesRetry()).
-			SetMessageFactory(rabbitmq.MessageJsonPersistent).
+			SetMessageFactory(rabbitmq.MessageJSONPersistent).
 			Build(),
 	)
 	onErr(err)
