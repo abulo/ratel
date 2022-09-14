@@ -40,6 +40,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/smallnest/weighted v0.0.0-20201102054551-85ac5c79528c
 	github.com/spf13/cast v1.5.0
+	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.8.0
 	github.com/tdewolff/parse/v2 v2.6.3
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
