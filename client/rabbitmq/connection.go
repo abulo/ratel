@@ -1,13 +1,13 @@
 package rabbitmq
 
 import (
-	"errors"
 	"net"
 	"os"
 	"sync"
 	"syscall"
 
 	"github.com/abulo/ratel/v3/logger"
+	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 )
 
@@ -20,7 +20,7 @@ type Schema string
 type Operation func(key string, ch *Channel)
 type Operations map[string]Operation
 
-// Connection ampq 连接。 Connection 创建后不会直接连接服务器，而是要调用 Dial 后才会执行连接服务器操作
+// Connection amqp 连接。 Connection 创建后不会直接连接服务器，而是要调用 Dial 后才会执行连接服务器操作
 type Connection struct {
 	c             *amqp.Connection // 用于真正发起一个 amqp 连接
 	cMut          sync.RWMutex     // 用于读写 c 时加锁
@@ -303,7 +303,7 @@ func isTransportNetError(err error) bool {
 
 	switch t := opErr.Err.(type) {
 	case *net.DNSError:
-		logger.Logger.Debugf("net.DNSError:%+v", t)
+		logger.Logger.Debug("net.DNSError:%+v", t)
 		return true
 	case *os.SyscallError:
 		if errno, ok := t.Err.(syscall.Errno); ok {

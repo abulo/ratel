@@ -19,7 +19,7 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
-// 如果 retryable 为 nil，则表示不启用断线重连
+// Dial 如果 retryable 为 nil，则表示不启用断线重连
 func Dial(url string, retryable Retryable) (*Connection, error) {
 	conn := NewConnection(url, retryable)
 	err := conn.Dial()
@@ -29,23 +29,24 @@ func Dial(url string, retryable Retryable) (*Connection, error) {
 	return conn, nil
 }
 
-// 累加器。每次执行累加一定数额，返回一个 uint64。
+// Adder 累加器。每次执行累加一定数额，返回一个 uint64。
 type Adder func() uint64
 
-// 返回一个 uint64 的字符串
+// SAdder 返回一个 uint64 的字符串
 type SAdder func() string
 
-// 获取一个从 0 开始累加，每次加 1 的累加器。返回一个 uint64 的字符串
+// NewDefaultSAdder 获取一个从 0 开始累加，每次加 1 的累加器。返回一个 uint64 的字符串
 func NewDefaultSAdder() SAdder {
 	return SAdderGenerator(1)
 }
 
-// 累加器生成器。生成的累加器从 0 开始累加，delta 表示需要累加的数字
+// AdderGenerator 累加器生成器。生成的累加器从 0 开始累加，delta 表示需要累加的数字
 func AdderGenerator(delta uint64) Adder {
 	var i uint64 = 0
 	return func() uint64 { return atomic.AddUint64(&i, delta) }
 }
 
+// SAdderGenerator ..
 func SAdderGenerator(delta uint64) SAdder {
 	adder := AdderGenerator(delta)
 	return func() string {
@@ -75,6 +76,7 @@ func getNonNilMessageFactory(factory MessageFactory) MessageFactory {
 	return MessagePlainPersistent
 }
 
+// Retryable ..
 type Retryable interface {
 	// retry 会尝试重试 retryOperation 中的操作。retryOperation 返回 brk 表示终止循环；
 	// 否则继续尝试，直到尝试次数结束。
@@ -93,6 +95,7 @@ func (emptyRetry) retry(fn func() bool) { fn() } // 只执行一次 listener
 func (emptyRetry) hasGaveUp() bool      { return true }
 func (emptyRetry) GiveUp()              {}
 
+// TimesRetry ..
 type TimesRetry struct {
 	RetryTimes int           // 重试次数。如果 Always 为 true，此选项不可用。
 	Interval   time.Duration // 间隔时间，指定断线后间隔多久再尝试重试。
@@ -112,7 +115,7 @@ func DefaultTimesRetry() *TimesRetry {
 	return &TimesRetry{Always: true, Interval: defaultRetryInterval, RetryTimes: defaultRetryTimes}
 }
 
-// 见 Retryable.retry()
+// retry 见 Retryable.retry()
 func (r *TimesRetry) retry(retryOperation func() (brk bool)) {
 	var brk bool
 	// 超出指定连接次数或连接成功，则退出循环
@@ -130,49 +133,56 @@ func (r *TimesRetry) retry(retryOperation func() (brk bool)) {
 	if !r.Always && retryTimes == 0 {
 		r.GiveUp()
 	}
-	return
 }
 
-// 见 Retryable.hasGaveUp()
+// hasGaveUp 见 Retryable.hasGaveUp()
 func (r *TimesRetry) hasGaveUp() bool {
 	r.RLock()
-	r.RUnlock()
+	defer r.RUnlock()
 	return r.gaveUp
 }
 
+// GiveUp ..
 func (r *TimesRetry) GiveUp() {
 	r.Lock()
 	r.gaveUp = true
 	r.Unlock()
 }
 
+// TimesRetryBuilder ..
 type TimesRetryBuilder struct {
 	timesRetry *TimesRetry
 }
 
+// NewTimesRetryBuilder ..
 func NewTimesRetryBuilder() *TimesRetryBuilder {
 	return &TimesRetryBuilder{DefaultTimesRetry()}
 }
 
+// SetRetryTimes ...
 func (bld *TimesRetryBuilder) SetRetryTimes(retryTimes int) *TimesRetryBuilder {
 	bld.timesRetry.RetryTimes = retryTimes
 	return bld
 }
 
+// SetInterval ...
 func (bld *TimesRetryBuilder) SetInterval(interval time.Duration) *TimesRetryBuilder {
 	bld.timesRetry.Interval = interval
 	return bld
 }
 
+// SetAlways ...
 func (bld *TimesRetryBuilder) SetAlways(always bool) *TimesRetryBuilder {
 	bld.timesRetry.Always = always
 	return bld
 }
 
+// Builder ...
 func (bld *TimesRetryBuilder) Builder() *TimesRetry {
 	return bld.timesRetry
 }
 
+// CtxRetry ...
 type CtxRetry struct {
 	Ctx      context.Context
 	Interval time.Duration // 间隔时间，指定断线后间隔多久再尝试重试。
@@ -180,15 +190,17 @@ type CtxRetry struct {
 	sync.RWMutex
 }
 
+// NewCtxRetry ...
 func NewCtxRetry(ctx context.Context, interval time.Duration) *CtxRetry {
 	return &CtxRetry{Ctx: ctx, Interval: interval}
 }
 
+// DefaultCtxRetry ...
 func DefaultCtxRetry(ctx context.Context) *CtxRetry {
 	return &CtxRetry{Ctx: ctx, Interval: defaultRetryInterval}
 }
 
-// 见 Retryable.retry()
+// retry 见 Retryable.retry()
 func (r *CtxRetry) retry(retryOperation func() (brk bool)) {
 	var brk bool
 	for !r.hasGaveUp() {
@@ -201,7 +213,7 @@ func (r *CtxRetry) retry(retryOperation func() (brk bool)) {
 	logger.Logger.Debug("Gave up retrying or CtxRetry context done!")
 }
 
-// 见 Retryable.hasGaveUp()
+// hasGaveUp 见 Retryable.hasGaveUp()
 func (r *CtxRetry) hasGaveUp() bool {
 	var gaveUp bool
 	r.RLock()
@@ -210,6 +222,7 @@ func (r *CtxRetry) hasGaveUp() bool {
 	return gaveUp || r.Ctx.Err() != nil
 }
 
+// GiveUp ..
 func (r *CtxRetry) GiveUp() {
 	r.Lock()
 	defer r.Unlock()
@@ -257,6 +270,7 @@ var (
 // 如果没有需要的工厂方法，则需要调用者自己提供对应的工厂方法。
 type MessageFactory func(body []byte) amqp.Publishing
 
+// ReceiveListener ...
 type ReceiveListener interface {
 	// Consumer 用于实现消费操作。详见 ConsumerFunc。
 	//
@@ -282,6 +296,7 @@ type AbsReceiveListener struct {
 	FinishMethod   func(err error)
 }
 
+// Consumer ..
 func (lis *AbsReceiveListener) Consumer(delivery *amqp.Delivery) (brk bool) {
 	if lis.ConsumerMethod == nil {
 		panic("AbsReceiveListener.ConsumerMethod must not be nil")
@@ -289,6 +304,7 @@ func (lis *AbsReceiveListener) Consumer(delivery *amqp.Delivery) (brk bool) {
 	return lis.ConsumerMethod(delivery)
 }
 
+// Finish TODO
 func (lis *AbsReceiveListener) Finish(err error) {
 	if lis.FinishMethod == nil {
 		return
@@ -296,6 +312,7 @@ func (lis *AbsReceiveListener) Finish(err error) {
 	lis.FinishMethod(err)
 }
 
+// Remove TODO
 func (lis *AbsReceiveListener) Remove(key string, ch *Channel) {
 	ch.RemoveOperation(key)
 }

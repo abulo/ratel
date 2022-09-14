@@ -76,7 +76,7 @@ func ExampleConnection_RegisterAndExec() {
 
 	//注意：conn.RegisterAndExec 会导致重连时再次执行 Operation 中的操作。如果不希望发生此情况，应该使用 Connect.Channel 发送消息
 	conn.RegisterAndExec(func(key string, ch *Channel) {
-		e := ch.Send("amq.direct", "key.direct", []byte("ezmq addOperation() send test!"))
+		e := ch.Send("amq.direct", "key.direct", []byte("rabbitmq addOperation() send test!"))
 		if e != nil {
 			log.Fatal(e)
 		}
