@@ -73,7 +73,11 @@ func Run(db *query.Query, DbName, outputDir, outputPackage string) {
 		}
 		fileStr += ")\n"
 		fileStr += builder.String()
-		_ = os.WriteFile(path.Join(outputDir, table.TableName+".go"), []byte(fileStr), os.ModePerm)
+		outFile := path.Join(outputDir, table.TableName+".go")
+		if util.FileExists(outFile) {
+			util.Delete(outFile)
+		}
+		_ = os.WriteFile(outFile, []byte(fileStr), os.ModePerm)
 	}
 
 	_ = os.Chdir(outputDir)

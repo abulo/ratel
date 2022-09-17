@@ -45,6 +45,9 @@ func Run(db *query.Query, tableName, outputDir, outputPackage, dao, tplFile stri
 	tpl := template.Must(template.New("name").Funcs(template.FuncMap{"Helper": Helper}).Parse(content))
 	//输出文件
 	outFile := path.Join(outputDir, tableName+".go")
+	if util.FileExists(outFile) {
+		util.Delete(outFile)
+	}
 	file, err := os.OpenFile(outFile, os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
 		panic(err)
@@ -62,33 +65,6 @@ func Run(db *query.Query, tableName, outputDir, outputPackage, dao, tplFile stri
 	}
 	cmdImport := exec.Command("goimports", "-w", path.Join(outputDir, "*.go"))
 	cmdImport.CombinedOutput()
-	fmt.Printf("格式化结果:\n%s\n", string(out))
-}
-func Run1(tableName, outputDir, outputPackage, dao, tpl string) {
-
-	content, _ := util.FileGetContents(tpl)
-
-	content = util.StrReplace("{{.Package}}", outputPackage, content, -1)
-	content = util.StrReplace("{{.Dao}}", dao, content, -1)
-	content = util.StrReplace("{{.TableName}}", tableName, content, -1)
-	builder := strings.Builder{}
-	//转换表名
-	builder.Reset()
-
-	builder.WriteString(content)
-	fileStr := builder.String()
-	_ = os.WriteFile(path.Join(outputDir, tableName+".go"), []byte(fileStr), os.ModePerm)
-
-	_ = os.Chdir(outputDir)
-	cmd := exec.Command("go", "fmt")
-	out, e := cmd.CombinedOutput()
-	if e != nil {
-		panic(e)
-	}
-
-	cmdImport := exec.Command("goimports", "-w", path.Join(outputDir, "*.go"))
-	cmdImport.CombinedOutput()
-
 	fmt.Printf("格式化结果:\n%s\n", string(out))
 }
 

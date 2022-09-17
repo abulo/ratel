@@ -50,13 +50,13 @@ func IndexString() string {
 func CreateIndex(client *elasticsearch.Client) error {
 	ctx := context.Background()
 	//check es index
-	exists, err := client.IndexExists("logger").Do(ctx)
+	exists, err := client.IndexExists("logger_entry").Do(ctx)
 	if err != nil {
 		return err
 	}
 	if !exists {
 		// Create a new index.
-		createIndex, err := client.CreateIndex("logger").BodyJson(IndexString()).Do(ctx)
+		createIndex, err := client.CreateIndex("logger_entry").BodyJson(IndexString()).Do(ctx)
 		if err != nil {
 			return err
 		}

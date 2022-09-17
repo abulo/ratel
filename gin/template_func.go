@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abulo/ratel/v3/util"
 	"github.com/pkg/errors"
 )
 
@@ -193,6 +194,7 @@ func Htmlunquote(text string) string {
 //	 router /profile/:username
 //		print UrlFor("profile", ":username","John Doe")
 func URLFor(endpoint string, values ...interface{}) string {
+	endpoint = util.StrTrim(endpoint)
 	url, ok := App.routes[endpoint]
 	if !ok {
 		return ""

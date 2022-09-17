@@ -46,7 +46,7 @@ func (e *defaultExec) Exec(entry *entry.Entry) error {
 	data := bson.M(entry.Data)
 	item["data"] = data
 	ctx := context.Background()
-	_, err := e.client.Collection("logger").InsertOne(ctx, item)
+	_, err := e.client.Collection("logger_entry").InsertOne(ctx, item)
 	if err != nil {
 		return err
 	}

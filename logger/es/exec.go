@@ -37,7 +37,7 @@ func NewExecWithURL(client *elasticsearch.Client) ExecCloser {
 // Exec ...
 func (e *defaultExec) Exec(entry *entry.Entry) error {
 	ctx := context.Background()
-	_, err := e.client.Index().Index("logger").Id(uuid.New().String()).BodyJson(entry).Do(ctx)
+	_, err := e.client.Index().Index("logger_entry").Id(uuid.New().String()).BodyJson(entry).Do(ctx)
 	if err != nil {
 		return err
 	}

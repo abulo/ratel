@@ -1,4 +1,4 @@
-package dao
+package stage
 
 // DataTypeMap ...
 var DataTypeMap = map[string][]string{
