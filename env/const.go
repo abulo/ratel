@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	gitVersion   = "461e3ba62c7ed8933938234bf3348cf692bd9f3b"
+	gitVersion   = "747e6431b7b89db217a26d6ec029339a4c60e59f"
 	ratelVersion = "v3.2.1"
 )
 
