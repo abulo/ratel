@@ -11,7 +11,10 @@ import (
 	"github.com/abulo/ratel/v3/util"
 )
 
-const ratelVersion = "3.1.24"
+const (
+	gitVersion   = "461e3ba62c7ed8933938234bf3348cf692bd9f3b"
+	ratelVersion = "v3.2.1"
+)
 
 var (
 	appMode     string
@@ -157,9 +160,14 @@ func SetBuildVersion(s string) {
 	buildVersion = s
 }
 
-// RatelVersion get ratelVersion
+// RatelVersion get RatelVersion
 func RatelVersion() string {
 	return ratelVersion
+}
+
+// GitVersion get GitVersion
+func GitVersion() string {
+	return gitVersion
 }
 
 // BuildTime get buildTime
@@ -190,7 +198,8 @@ func GoVersion() string {
 // PrintVersion print format version info
 func PrintVersion() {
 	fmt.Printf("%-8s]> %-30s => %s\n", "App", "GoVersion", GoVersion())
-	fmt.Printf("%-8s]> %-30s => %s\n", "App", "RatelVersion", ratelVersion)
+	fmt.Printf("%-8s]> %-30s => %s\n", "App", "RatelVersion", RatelVersion())
+	fmt.Printf("%-8s]> %-30s => %s\n", "App", "GitVersion", GitVersion())
 	fmt.Printf("%-8s]> %-30s => %s\n", "App", "Name", Name())
 	fmt.Printf("%-8s]> %-30s => %s\n", "App", "AppID", AppID())
 	fmt.Printf("%-8s]> %-30s => %s\n", "App", "Region", AppRegion())

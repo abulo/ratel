@@ -3,35 +3,31 @@ PKG := "github.com/abulo/ratel/v3"
 PKG_LIST := $(shell go list ${PKG}/... | grep -v 'history')
 GO_FILES := $(shell find . -name '*.go' | grep -v 'vendor' | grep -v 'history'| grep -v _test.go)
 DIRS := $(shell ls -d */ | grep -v 'vendor/')
+GIT_VERSION := $(shell git rev-parse HEAD)
+GIT_TAG := $(shell git describe --abbrev=0 --tags)
+
 .DEFAULT_GOAL := default
 .PHONY: all test lint fmt fmtcheck cmt errcheck license
-
 all: fmt errcheck lint build
-
 ########################################################
 vet: ## vet the files
 	@go vet ./...
-
 ########################################################
 fmt: ## Format the files
 	@gofmt -l -w $(GO_FILES)
-
 ########################################################
 fmtcheck: ## Check and format the files
 	@gofmt -l -s $(GO_FILES) | read; if [ $$? == 0 ]; then echo "gofmt check failed for:"; gofmt -l -s $(GO_FILES); fi
-
 ########################################################
 lint:  ## lint check
 	@hash revive 2>&- || go install github.com/mgechev/revive@latest
 	@revive -formatter stylish ./...
-
 ########################################################
 cmt: ## auto comment exported Function   gocmt -d ${PWD} -i
 	@hash gocmt 2>&- || go install github.com/cuonglm/gocmt@latest
 	@set -e; for dir in ${DIRS}; do \
 	gocmt -d $${dir} -i;\
 	done
-
 ########################################################
 errcheck: ## check error
 	@hash errcheck 2>&- || go install github.com/kisielk/errcheck@latest
@@ -52,12 +48,12 @@ msan: dep ## Run memory sanitizer
 ########################################################
 dep: ## Get the dependencies
 	@go get -v -d ./...
-
 ########################################################
 version: ## Print git revision info
-	@git rev-parse HEAD
-
+	@echo "gitVersion = \"$(GIT_VERSION)\""
+	@echo "ratelVersion   = \"$(GIT_TAG)\""
+########################################################
 help: ## Display this help screen
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
-
+########################################################
 default: help
