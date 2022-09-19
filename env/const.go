@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	gitVersion   = "747e6431b7b89db217a26d6ec029339a4c60e59f"
-	ratelVersion = "v3.2.1"
+	ratelVersion = "v3.2.2"
 )
 
 var (
@@ -165,11 +164,6 @@ func RatelVersion() string {
 	return ratelVersion
 }
 
-// GitVersion get GitVersion
-func GitVersion() string {
-	return gitVersion
-}
-
 // BuildTime get buildTime
 func BuildTime() string {
 	return buildTime
@@ -199,7 +193,6 @@ func GoVersion() string {
 func PrintVersion() {
 	fmt.Printf("%-8s]> %-30s => %s\n", "App", "GoVersion", GoVersion())
 	fmt.Printf("%-8s]> %-30s => %s\n", "App", "RatelVersion", RatelVersion())
-	fmt.Printf("%-8s]> %-30s => %s\n", "App", "GitVersion", GitVersion())
 	fmt.Printf("%-8s]> %-30s => %s\n", "App", "Name", Name())
 	fmt.Printf("%-8s]> %-30s => %s\n", "App", "AppID", AppID())
 	fmt.Printf("%-8s]> %-30s => %s\n", "App", "Region", AppRegion())
