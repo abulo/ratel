@@ -25,7 +25,15 @@ func Run(db *query.Query, tableName, outputDir, outputPackage, dao, tplFile stri
 	var funcList []Func
 	for _, item := range columns {
 		if item.IndexName != "PRIMARY" {
-			res = append(res, util.Explode(",", item.ColumnName)...)
+			tmp := util.Explode(",", item.ColumnName)
+			if len(tmp) > 0 {
+				for _, v := range tmp {
+					if util.InArray(v, res) {
+						res = append(res, v)
+					}
+				}
+			}
+			// res = append(res, util.Explode(",", item.ColumnName)...)
 			tmpFunc := Func{}
 			tmpFunc.FuncName = CamelStr(strings.Replace(item.ColumnName, ",", "_", -1))
 			tmpFunc.CondiTion = util.Explode(",", item.ColumnName)
