@@ -28,7 +28,7 @@ func Run(db *query.Query, tableName, outputDir, outputPackage, dao, tplFile stri
 			tmp := util.Explode(",", item.ColumnName)
 			if len(tmp) > 0 {
 				for _, v := range tmp {
-					if util.InArray(v, res) {
+					if !util.InArray(v, res) {
 						res = append(res, v)
 					}
 				}
