@@ -56,7 +56,7 @@ func Run(db *query.Query, DbName, outputDir, outputPackage string) {
 			}
 			//拼接字符串
 			camelStr := CamelStr(column.ColumnName)
-			builder.WriteString(fmt.Sprintf("	%s %s `db:\"%s\" json:\"%s\"  form:\"%s\"` //%s", camelStr, dataType, column.ColumnName, strings.ToLower(string(camelStr[0]))+camelStr[1:], strings.ToLower(string(camelStr[0]))+camelStr[1:], column.ColumnComment))
+			builder.WriteString(fmt.Sprintf("	%s %s `db:\"%s\" json:\"%s\" form:\"%s\"` //%s", camelStr, dataType, column.ColumnName, strings.ToLower(string(camelStr[0]))+camelStr[1:], strings.ToLower(string(camelStr[0]))+camelStr[1:], column.ColumnComment))
 			if column.ColumnKey != "" {
 				builder.WriteString("(" + column.ColumnKey + ")")
 			}
