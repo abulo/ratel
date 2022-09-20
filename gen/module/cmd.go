@@ -16,14 +16,19 @@ import (
 
 func Run(db *query.Query, tableName, outputDir, outputPackage, dao, tplFile string) {
 
-	columns, err := queryColumns(db, db.DBName, tableName)
+	indexs, err := queryIndex(db, db.DBName, tableName)
+	if err != nil {
+		logger.Logger.Panic(err)
+	}
+
+	column, err := queryColumn(db, db.DBName, tableName)
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
 
 	var res []string
 	var funcList []Func
-	for _, item := range columns {
+	for _, item := range indexs {
 		if item.IndexName != "PRIMARY" {
 			tmp := util.Explode(",", item.ColumnName)
 			if len(tmp) > 0 {
@@ -36,7 +41,7 @@ func Run(db *query.Query, tableName, outputDir, outputPackage, dao, tplFile stri
 			// res = append(res, util.Explode(",", item.ColumnName)...)
 			tmpFunc := Func{}
 			tmpFunc.FuncName = CamelStr(strings.Replace(item.ColumnName, ",", "_", -1))
-			tmpFunc.CondiTion = util.Explode(",", item.ColumnName)
+			tmpFunc.CondiTion = ToCondiTion(util.Explode(",", item.ColumnName), column)
 			tmpFunc.NonUnique = item.NonUnique
 			funcList = append(funcList, tmpFunc)
 		}
@@ -46,7 +51,7 @@ func Run(db *query.Query, tableName, outputDir, outputPackage, dao, tplFile stri
 	parse.TableName = tableName
 	parse.Dao = dao
 	parse.Package = outputPackage
-	parse.CondiTion = res
+	parse.CondiTion = ToCondiTion(res, column)
 	parse.Func = funcList
 	_ = os.MkdirAll(outputDir, os.ModePerm)
 	content, _ := util.FileGetContents(tplFile)
@@ -88,9 +93,37 @@ func Helper(name string) string {
 	return strings.ToLower(string(name[0])) + name[1:]
 }
 
-func queryColumns(db *query.Query, DbName, tableName string) ([]Column, error) {
-	var columns []Column
+func queryIndex(db *query.Query, DbName, tableName string) ([]Index, error) {
+	var columns []Index
 	sql := "SELECT NON_UNIQUE,SEQ_IN_INDEX,INDEX_NAME,INDEX_TYPE,GROUP_CONCAT(COLUMN_NAME) AS COLUMN_NAME FROM `information_schema`.`STATISTICS` WHERE TABLE_SCHEMA = '" + DbName + "' and TABLE_NAME = '" + tableName + "'  GROUP BY TABLE_NAME, INDEX_NAME  ORDER BY NON_UNIQUE ASC,SEQ_IN_INDEX ASC"
 	err := db.NewBuilder(context.Background()).QueryRows(sql).ToStruct(&columns)
 	return columns, err
+}
+
+func queryColumn(db *query.Query, DbName, tableName string) ([]Column, error) {
+	var columns []Column
+	sql := "SELECT COLUMN_NAME,IS_NULLABLE,DATA_TYPE,COLUMN_KEY,COLUMN_COMMENT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '" + DbName + "' and TABLE_NAME = '" + tableName + "'  ORDER BY ORDINAL_POSITION ASC"
+	err := db.NewBuilder(context.Background()).QueryRows(sql).ToStruct(&columns)
+	return columns, err
+}
+
+func ToCondiTion(item []string, column []Column) []CondiTion {
+	var condition []CondiTion
+	for _, v := range column {
+		if util.InArray(v.ColumnName, item) {
+			dataType := strings.ToUpper(v.DataType)
+			value, ok := DataTypeMap[dataType]
+			if ok {
+				dataType = value[0]
+			} else {
+				dataType = "string"
+			}
+			tmp := CondiTion{
+				ItemType: dataType,
+				ItemName: v.ColumnName,
+			}
+			condition = append(condition, tmp)
+		}
+	}
+	return condition
 }

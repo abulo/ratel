@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/abulo/ratel/v3/env"
 	"github.com/abulo/ratel/v3/example/initial"
-	"github.com/abulo/ratel/v3/gen/stage"
+	"github.com/abulo/ratel/v3/gen/module"
 	"github.com/abulo/ratel/v3/util"
 )
 
@@ -33,29 +33,29 @@ func init() {
 	env.SetAppZone("cs")
 }
 
-// func main() {
-// 	filePath := "/home/www/golang/src/ratel/gen/module/template.tpl"
-// 	tableName := "area"
-// 	dao := module.CamelStr(tableName)
-// 	outputDir := "/home/www/golang/src/ratel/gen/lib/module/" + util.StrToLower(module.CamelStr(tableName))
-// 	outputPackage := util.StrToLower(module.CamelStr(tableName))
-
-// 	db := initial.Core.Store.LoadSQL("mysql")
-// 	module.Run(db.Write(), tableName, outputDir, outputPackage, dao, filePath)
-// }
-
 func main() {
-	goTpl := "/home/www/golang/src/ratel/gen/stage/template.tpl"
-	htmlTplDir := "/home/www/golang/src/ratel/gen/stage"
+	filePath := "/home/www/golang/src/ratel/gen/module/template.tpl"
 	tableName := "user"
-	moduleName := "user"
-	packageName := "user"
-	goDir := "/home/www/golang/src/ratel/gen/lib/stage/" + packageName
+	dao := module.CamelStr(tableName)
+	outputDir := "/home/www/golang/src/ratel/gen/lib/module/" + util.StrToLower(module.CamelStr(tableName))
+	outputPackage := util.StrToLower(module.CamelStr(tableName))
 
-	htmlDir := "/home/www/golang/src/ratel/gen/lib/stage/view/" + packageName
 	db := initial.Core.Store.LoadSQL("mysql")
-	title := "用户"
-	stage.Run(db.Write(), tableName, moduleName, packageName, goDir, goTpl, htmlDir, htmlTplDir, title)
-
-	//stage.Run(db *query.Query, tableName string, moduleName string, packageName string, goDir string, goTpl string, htmlDir string, htmlTplDir string
+	module.Run(db.Write(), tableName, outputDir, outputPackage, dao, filePath)
 }
+
+// func main() {
+// 	goTpl := "/home/www/golang/src/ratel/gen/stage/template.tpl"
+// 	htmlTplDir := "/home/www/golang/src/ratel/gen/stage"
+// 	tableName := "user"
+// 	moduleName := "user"
+// 	packageName := "user"
+// 	goDir := "/home/www/golang/src/ratel/gen/lib/stage/" + packageName
+
+// 	htmlDir := "/home/www/golang/src/ratel/gen/lib/stage/view/" + packageName
+// 	db := initial.Core.Store.LoadSQL("mysql")
+// 	title := "用户"
+// 	stage.Run(db.Write(), tableName, moduleName, packageName, goDir, goTpl, htmlDir, htmlTplDir, title)
+
+// 	//stage.Run(db *query.Query, tableName string, moduleName string, packageName string, goDir string, goTpl string, htmlDir string, htmlTplDir string
+// }
