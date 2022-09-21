@@ -171,6 +171,17 @@ func Convert(column Column, name string) string {
 		res = "cast.ToString(ctx.PostForm(\"" + Helper(name) + "\"))"
 	case "int64":
 		res = "cast.ToInt64(ctx.PostForm(\"" + Helper(name) + "\"))"
+	case "query.NullDate":
+		res = "query.NullDate{sql.NullString{String: ctx.PostForm(\"" + Helper(name) + "\"), Valid: true}}"
+	case "query.NullTime":
+		res = "query.NullTime{sql.NullString{String: ctx.PostForm(\"" + Helper(name) + "\"), Valid: true}}"
+	case "query.NullYear":
+		res = "query.NullYear{sql.NullString{String: ctx.PostForm(\"" + Helper(name) + "\"), Valid: true}}"
+	case "query.NullDateTime":
+		res = "query.NullDateTime{sql.NullString{String: ctx.PostForm(\"" + Helper(name) + "\"), Valid: true}}"
 	}
+
+	// "DATETIME":  {"query.NullDateTime", "query.NullDateTime"},
+	// "TIMESTAMP": {"query.NullTime", "query.NullTime"},
 	return res
 }
