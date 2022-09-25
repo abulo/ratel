@@ -26,7 +26,7 @@ const (
 	GREATER      = ">"
 	GREATEREQUAL = ">="
 	LESS         = "<"
-	LESSEQUAL    = "=<"
+	LESSEQUAL    = "<="
 	LIKE         = "LIKE"
 	JOIN         = "JOIN"
 	INNERJOIN    = "INNER JOIN"
