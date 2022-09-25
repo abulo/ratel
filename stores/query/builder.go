@@ -13,25 +13,29 @@ import (
 
 // BETWEEN ...
 const (
-	BETWEEN    = "BETWEEN"
-	NOTBETWEEN = "NOT BETWEEN"
-	IN         = "IN"
-	NOTIN      = "NOT IN"
-	AND        = "AND"
-	OR         = "OR"
-	ISNULL     = "IS NULL"
-	ISNOTNULL  = "IS NOT NULL"
-	EQUAL      = "="
-	NOTEQUAL   = "!="
-	LIKE       = "LIKE"
-	JOIN       = "JOIN"
-	INNERJOIN  = "INNER JOIN"
-	LEFTJOIN   = "LEFT JOIN"
-	RIGHTJOIN  = "RIGHT JOIN"
-	UNION      = "UNION"
-	UNIONALL   = "UNION ALL"
-	DESC       = "DESC"
-	ASC        = "ASC"
+	BETWEEN      = "BETWEEN"
+	NOTBETWEEN   = "NOT BETWEEN"
+	IN           = "IN"
+	NOTIN        = "NOT IN"
+	AND          = "AND"
+	OR           = "OR"
+	ISNULL       = "IS NULL"
+	ISNOTNULL    = "IS NOT NULL"
+	EQUAL        = "="
+	NOTEQUAL     = "!="
+	GREATER      = ">"
+	GREATEREQUAL = ">="
+	LESS         = "<"
+	LESSEQUAL    = "=<"
+	LIKE         = "LIKE"
+	JOIN         = "JOIN"
+	INNERJOIN    = "INNER JOIN"
+	LEFTJOIN     = "LEFT JOIN"
+	RIGHTJOIN    = "RIGHT JOIN"
+	UNION        = "UNION"
+	UNIONALL     = "UNION ALL"
+	DESC         = "DESC"
+	ASC          = "ASC"
 )
 
 // Builder 查询构造器
@@ -134,6 +138,34 @@ func (builder *Builder) OrEqual(column string, value interface{}) *Builder {
 // NotEqual 构造不等于
 func (builder *Builder) NotEqual(column string, value interface{}) *Builder {
 	builder.toWhere(column, NOTEQUAL, 1, AND)
+	builder.addArg(value)
+	return builder
+}
+
+// Greater 构造大于
+func (builder *Builder) Greater(column string, value interface{}) *Builder {
+	builder.toWhere(column, GREATER, 1, AND)
+	builder.addArg(value)
+	return builder
+}
+
+// Greater 构造大于等于
+func (builder *Builder) GreaterEqual(column string, value interface{}) *Builder {
+	builder.toWhere(column, GREATEREQUAL, 1, AND)
+	builder.addArg(value)
+	return builder
+}
+
+// Greater 构造小于
+func (builder *Builder) Less(column string, value interface{}) *Builder {
+	builder.toWhere(column, LESS, 1, AND)
+	builder.addArg(value)
+	return builder
+}
+
+// Greater 构造小于等于
+func (builder *Builder) LessEqual(column string, value interface{}) *Builder {
+	builder.toWhere(column, LESSEQUAL, 1, AND)
 	builder.addArg(value)
 	return builder
 }
