@@ -30,7 +30,7 @@ func NewString(s string) NullString {
 
 // NewNullString ...
 func NewNullString() NullString {
-	return NullString{sql.NullString{String: "", Valid: false}}
+	return NullString{sql.NullString{String: "", Valid: true}}
 }
 
 // MarshalJSON ...
@@ -92,7 +92,7 @@ func NewDateTime(s interface{}) NullDateTime {
 
 // NewNullDateTime ...
 func NewNullDateTime() NullDateTime {
-	return NullDateTime{sql.NullString{String: "", Valid: false}}
+	return NullDateTime{sql.NullString{String: "", Valid: true}}
 }
 
 // Scan ...
@@ -158,7 +158,7 @@ func NewInt64(i int64) NullInt64 {
 
 // NewNullInt64 ...
 func NewNullInt64() NullInt64 {
-	return NullInt64{sql.NullInt64{Int64: 0, Valid: false}}
+	return NullInt64{sql.NullInt64{Int64: 0, Valid: true}}
 }
 
 // MarshalJSON ...
@@ -218,7 +218,7 @@ func NewInt32(i int32) NullInt32 {
 
 // NewNullInt32 ...
 func NewNullInt32() NullInt32 {
-	return NullInt32{sql.NullInt32{Int32: 0, Valid: false}}
+	return NullInt32{sql.NullInt32{Int32: 0, Valid: true}}
 }
 
 // MarshalJSON ...
@@ -278,7 +278,7 @@ func NewFloat64(f float64) NullFloat64 {
 
 // NewNullFloat64 ...
 func NewNullFloat64() NullFloat64 {
-	return NullFloat64{sql.NullFloat64{Float64: 0.0, Valid: false}}
+	return NullFloat64{sql.NullFloat64{Float64: 0.0, Valid: true}}
 }
 
 // MarshalJSON ...
@@ -338,7 +338,7 @@ func NewBool(b bool) NullBool {
 
 // NewNullBool ...
 func NewNullBool() NullBool {
-	return NullBool{sql.NullBool{Bool: false, Valid: false}}
+	return NullBool{sql.NullBool{Bool: false, Valid: true}}
 }
 
 // MarshalJSON ...
@@ -407,7 +407,7 @@ func NewDate(s interface{}) NullDate {
 
 // NewNullDate ...
 func NewNullDate() NullDate {
-	return NullDate{sql.NullString{String: "", Valid: false}}
+	return NullDate{sql.NullString{String: "", Valid: true}}
 }
 
 // Scan ...
@@ -476,7 +476,7 @@ func NewTime(s interface{}) NullTime {
 
 // NewNullTime ...
 func NewNullTime() NullTime {
-	return NullTime{sql.NullString{String: "", Valid: false}}
+	return NullTime{sql.NullString{String: "", Valid: true}}
 }
 
 // Scan ...
@@ -544,7 +544,7 @@ func NewYear(s interface{}) NullYear {
 
 // NewNullYear ...
 func NewNullYear() NullYear {
-	return NullYear{sql.NullString{String: "", Valid: false}}
+	return NullYear{sql.NullString{String: "", Valid: true}}
 }
 
 // Scan ...
@@ -612,7 +612,7 @@ func NewTimeStamp(s interface{}) NullTimeStamp {
 
 // NewNullTimeStamp ...
 func NewNullTimeStamp() NullTimeStamp {
-	return NullTimeStamp{sql.NullString{String: "", Valid: false}}
+	return NullTimeStamp{sql.NullString{String: "", Valid: true}}
 }
 
 // Scan ...
