@@ -171,17 +171,17 @@ func (app *Application) startServers() error {
 	for _, s := range app.servers {
 		s := s
 		eg.Go(func() (err error) {
-			defer func() {
-				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-				defer cancel()
-				_ = registry.DefaultRegisterer.UnregisterService(ctx, s.Info())
-				logger.Logger.WithFields(logrus.Fields{
-					"app":    ecode.ModApp,
-					"action": "exit",
-					"name":   s.Info().Name,
-					"label":  s.Info().Label(),
-				}).Info("exit server")
-			}()
+			// defer func() {
+			// 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			// 	defer cancel()
+			// 	_ = registry.DefaultRegisterer.UnregisterService(ctx, s.Info())
+			// 	logger.Logger.WithFields(logrus.Fields{
+			// 		"app":    ecode.ModApp,
+			// 		"action": "exit",
+			// 		"name":   s.Info().Name,
+			// 		"label":  s.Info().Label(),
+			// 	}).Info("exit server")
+			// }()
 			time.AfterFunc(time.Second, func() {
 				_ = registry.DefaultRegisterer.RegisterService(ctx, s.Info())
 				logger.Logger.WithFields(logrus.Fields{
@@ -268,6 +268,14 @@ func (app *Application) GracefulStop(ctx context.Context) (err error) {
 				app.cycle.Run(func() error {
 					app.smu.RLock()
 					defer app.smu.RUnlock()
+					if err := registry.DefaultRegisterer.UnregisterService(ctx, s.Info()); err != nil {
+						logger.Logger.WithFields(logrus.Fields{
+							"ModApp": ecode.ModApp,
+							"Name":   s.Info().Name,
+							"Label":  s.Info().Label(),
+							"err":    err,
+						}).Info("exit server graceful stop")
+					}
 					return s.GracefulStop(ctx)
 				})
 			}(s)
@@ -296,6 +304,14 @@ func (app *Application) Stop() (err error) {
 		for _, s := range app.servers {
 			func(s server.Server) {
 				app.smu.RLock()
+				if err := registry.DefaultRegisterer.UnregisterService(context.Background(), s.Info()); err != nil {
+					logger.Logger.WithFields(logrus.Fields{
+						"ModApp": ecode.ModApp,
+						"Name":   s.Info().Name,
+						"Label":  s.Info().Label(),
+						"err":    err,
+					}).Info("exit server stop")
+				}
 				app.cycle.Run(s.Stop)
 				app.smu.RUnlock()
 			}(s)

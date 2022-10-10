@@ -16,7 +16,7 @@ require (
 	github.com/goccy/go-json v0.9.11
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.3.0
-	github.com/gookit/goutil v0.5.12
+	github.com/gookit/goutil v0.5.13
 	github.com/gookit/ini/v2 v2.1.2
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -42,21 +42,21 @@ require (
 	github.com/spf13/cast v1.5.0
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.8.0
-	github.com/tdewolff/parse/v2 v2.6.3
+	github.com/tdewolff/parse/v2 v2.6.4
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/ugorji/go/codec v1.2.7
 	github.com/yosuke-furukawa/json5 v0.1.1
 	go.etcd.io/etcd/api/v3 v3.5.5
 	go.etcd.io/etcd/client/v3 v3.5.5
-	go.mongodb.org/mongo-driver v1.10.2
+	go.mongodb.org/mongo-driver v1.10.3
 	go.uber.org/multierr v1.8.0
-	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be
+	golang.org/x/crypto v0.0.0-20221005025214-4161e89ecf1b
 	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69
-	golang.org/x/net v0.0.0-20220927171203-f486391704dc
-	golang.org/x/sync v0.0.0-20220923202941-7f9b1623fab7
+	golang.org/x/net v0.0.0-20221004154528-8021a29435af
+	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0
 	golang.org/x/text v0.3.7
-	google.golang.org/genproto v0.0.0-20220927151529-dcaddaf36704
-	google.golang.org/grpc v1.49.0
+	google.golang.org/genproto v0.0.0-20220930163606-c98284e70a91
+	google.golang.org/grpc v1.50.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
