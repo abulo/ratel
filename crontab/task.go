@@ -9,6 +9,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/abulo/ratel/v2/logger"
+	"github.com/sirupsen/logrus"
 )
 
 // bounds provides a range of acceptable values (plus a map of name to value).
@@ -158,6 +161,15 @@ func (t *Task) GetStatus(context.Context) string {
 
 // Run run all tasks
 func (t *Task) Run(ctx context.Context) error {
+
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Error("recover")
+		}
+	}()
+
 	err := t.DoFunc(ctx)
 	if err != nil {
 		index := t.errCnt % t.ErrLimit
@@ -221,11 +233,16 @@ func TimeoutOption(timeout time.Duration) Option {
 //       week：0-6（0 means Sunday）
 
 // SetCron some signals：
-//       *： any time
-//       ,：　 separate signal
+//
+//	*： any time
+//	,：　 separate signal
+//
 // 　　    －：duration
-//       /n : do as n times of time duration
+//
+//	/n : do as n times of time duration
+//
 // ///////////////////////////////////////////////////////
+//
 //	0/30 * * * * *                        every 30s
 //	0 43 21 * * *                         21:43
 //	0 15 05 * * * 　　                     05:15
@@ -601,7 +618,7 @@ func (m *TaskManager) DeleteTask(taskname string) {
 	}
 }
 
-//  ClearTask clear all tasks
+// ClearTask clear all tasks
 func (m *TaskManager) ClearTask() {
 	isChanged := false
 
@@ -670,7 +687,8 @@ func getField(field string, r bounds) uint64 {
 }
 
 // getRange returns the bits indicated by the given expression:
-//   number | number "-" number [ "/" number ]
+//
+//	number | number "-" number [ "/" number ]
 func getRange(expr string, r bounds) uint64 {
 	var (
 		start, end, step uint
