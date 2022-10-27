@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/abulo/ratel/v3/logger"
-	"github.com/abulo/ratel/v3/metric"
-	"github.com/abulo/ratel/v3/trace"
+	"github.com/abulo/ratel/v3/core/logger"
+	"github.com/abulo/ratel/v3/core/metric"
+	"github.com/abulo/ratel/v3/core/trace"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/olivere/elastic/v7"
 	"github.com/opentracing/opentracing-go"

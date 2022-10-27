@@ -4,7 +4,7 @@ import (
 	"time"
 
 	_ "github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/abulo/ratel/v3/logger"
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/stores/query"
 	"github.com/abulo/ratel/v3/util"
 )

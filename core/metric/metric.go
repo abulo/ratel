@@ -3,8 +3,8 @@ package metric
 import (
 	"time"
 
-	"github.com/abulo/ratel/v3/constant"
-	"github.com/abulo/ratel/v3/env"
+	"github.com/abulo/ratel/v3/core/constant"
+	"github.com/abulo/ratel/v3/core/env"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

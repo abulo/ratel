@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/abulo/ratel/v3/logger"
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/jlaffaye/ftp"
 )
 

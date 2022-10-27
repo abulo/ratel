@@ -3,7 +3,7 @@ package rabbitmq
 import (
 	"fmt"
 
-	"github.com/abulo/ratel/v3/logger"
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 )

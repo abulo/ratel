@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/abulo/ratel/v3/constant"
+	"github.com/abulo/ratel/v3/core/constant"
 	"github.com/abulo/ratel/v3/registry"
 	"github.com/abulo/ratel/v3/server"
 	"github.com/smallnest/weighted"

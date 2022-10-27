@@ -17,9 +17,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/gin/binding"
 	"github.com/abulo/ratel/v3/gin/render"
-	"github.com/abulo/ratel/v3/logger"
 	"github.com/gin-contrib/sse"
 	"github.com/pkg/errors"
 )

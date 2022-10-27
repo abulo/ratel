@@ -3,8 +3,8 @@ package xgrpc
 import (
 	"fmt"
 
-	"github.com/abulo/ratel/v3/constant"
-	"github.com/abulo/ratel/v3/logger"
+	"github.com/abulo/ratel/v3/core/constant"
+	"github.com/abulo/ratel/v3/core/logger"
 	"google.golang.org/grpc"
 )
 

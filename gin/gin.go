@@ -15,9 +15,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/gin/internal/bytesconv"
 	"github.com/abulo/ratel/v3/gin/render"
-	"github.com/abulo/ratel/v3/logger"
 	"github.com/olekukonko/tablewriter"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"

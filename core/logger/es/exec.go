@@ -3,7 +3,7 @@ package es
 import (
 	"context"
 
-	"github.com/abulo/ratel/v3/logger/entry"
+	"github.com/abulo/ratel/v3/core/logger/entry"
 	"github.com/abulo/ratel/v3/stores/elasticsearch"
 	"github.com/google/uuid"
 )

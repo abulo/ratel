@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/abulo/ratel/v3/env"
+	"github.com/abulo/ratel/v3/core/env"
 	"github.com/abulo/ratel/v3/example/initial"
 	"github.com/abulo/ratel/v3/gen/module"
 	"github.com/abulo/ratel/v3/util"

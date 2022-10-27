@@ -4,9 +4,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/abulo/ratel/v3/env"
-	"github.com/abulo/ratel/v3/logger"
-	"github.com/abulo/ratel/v3/stack"
+	"github.com/abulo/ratel/v3/core/env"
+	"github.com/abulo/ratel/v3/core/logger"
+	"github.com/abulo/ratel/v3/core/stack"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"

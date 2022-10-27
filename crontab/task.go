@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/abulo/ratel/v3/logger"
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/sirupsen/logrus"
 )
 

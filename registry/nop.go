@@ -3,7 +3,7 @@ package registry
 import (
 	"context"
 
-	"github.com/abulo/ratel/v3/logger"
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/server"
 	"github.com/sirupsen/logrus"
 )

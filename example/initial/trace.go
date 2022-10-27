@@ -1,8 +1,8 @@
 package initial
 
 import (
-	"github.com/abulo/ratel/v3/trace"
-	"github.com/abulo/ratel/v3/trace/jaeger"
+	"github.com/abulo/ratel/v3/core/trace"
+	"github.com/abulo/ratel/v3/core/trace/jaeger"
 	"github.com/spf13/cast"
 )
 
