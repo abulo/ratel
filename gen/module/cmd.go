@@ -127,3 +127,25 @@ func ToCondiTion(item []string, column []Column) []CondiTion {
 	}
 	return condition
 }
+
+// SELECT
+// 	statistics.NON_UNIQUE,
+// 	statistics.SEQ_IN_INDEX,
+// 	statistics.INDEX_NAME,
+// 	statistics.INDEX_TYPE,
+// 	statistics.COLUMN_NAME,
+// 	`columns`.DATA_TYPE,
+// 	GROUP_CONCAT(CONCAT( statistics.COLUMN_NAME, ":", `columns`.DATA_TYPE )) AS field
+// FROM
+// 	`information_schema`.`STATISTICS` AS statistics
+// 	LEFT JOIN information_schema.`COLUMNS` AS `columns` ON statistics.COLUMN_NAME = `columns`.COLUMN_NAME
+// WHERE
+// 	statistics.TABLE_SCHEMA = 'jxm_online'
+// 	AND statistics.TABLE_NAME = 'video'
+// 	AND `columns`.TABLE_SCHEMA = 'jxm_online'
+// 	AND `columns`.TABLE_NAME = 'video'
+// 	AND statistics.INDEX_NAME != 'PRIMARY'
+// 	GROUP BY statistics.TABLE_NAME, statistics.INDEX_NAME
+// ORDER BY
+// 	statistics.NON_UNIQUE ASC,
+// 	statistics.SEQ_IN_INDEX ASC
