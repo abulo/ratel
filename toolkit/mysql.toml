@@ -1,0 +1,19 @@
+[mysql]
+    Host = "172.18.1.3"
+    Port = "3306"
+    Username = "root"
+    Password = "mysql"
+    Charset = "utf8mb4"
+    Database = "safety"
+    # MaxOpenConns 连接池最多同时打开的连接数
+    MaxOpenConns = 64
+    # MaxIdleConns 连接池里最大空闲连接数。必须要比maxOpenConns小
+    MaxIdleConns = 64
+    # MaxLifetime 连接池里面的连接最大存活时长(分钟)
+    MaxLifetime = 5
+    # MaxIdleTime 连接池里面的连接最大空闲时长(分钟)
+    MaxIdleTime = 5
+    # 关闭指标采集
+    DisableMetric = false
+    # 关闭链路追踪
+    DisableTrace = false

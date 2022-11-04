@@ -135,7 +135,7 @@ func ToCondiTion(item []string, column []Column) []CondiTion {
 // 	statistics.INDEX_TYPE,
 // 	statistics.COLUMN_NAME,
 // 	`columns`.DATA_TYPE,
-// 	GROUP_CONCAT(CONCAT( statistics.COLUMN_NAME, ":", `columns`.DATA_TYPE )) AS field
+// 	GROUP_CONCAT(CONCAT( statistics.COLUMN_NAME, ":", `columns`.DATA_TYPE )) AS FIELD
 // FROM
 // 	`information_schema`.`STATISTICS` AS statistics
 // 	LEFT JOIN information_schema.`COLUMNS` AS `columns` ON statistics.COLUMN_NAME = `columns`.COLUMN_NAME
