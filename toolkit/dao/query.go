@@ -2,7 +2,6 @@ package dao
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/abulo/ratel/v3/stores/query"
 )
@@ -60,8 +59,6 @@ var DataTypeMap = map[string][]string{
 func QueryTable(ctx context.Context, DbName string) ([]Table, error) {
 	var res []Table
 	builder := Link.NewBuilder(ctx).Select("TABLE_NAME", "TABLE_COMMENT").Table("information_schema.TABLES").Where("TABLE_SCHEMA", DbName)
-	sql := builder.RowsSQL()
-	fmt.Println(sql)
 	err := builder.Rows().ToStruct(&res)
 	return res, err
 }

@@ -68,7 +68,7 @@ type RouteInfo struct {
 // RoutesInfo defines a RouteInfo slice.
 type RoutesInfo []RouteInfo
 
-// PlatformGoogleAppEngine Trusted platforms
+// Trusted platforms
 const (
 	// PlatformGoogleAppEngine when running on Google App Engine. Trust X-Appengine-Remote-Addr
 	// for determining the client's IP
@@ -174,7 +174,7 @@ type Engine struct {
 // App ...
 var (
 	App *Engine
-	_   IRouter = &Engine{}
+	_   IRouter = (*Engine)(nil)
 )
 
 // New returns a new blank Engine instance without any middleware attached.
@@ -221,7 +221,7 @@ func New() *Engine {
 	}
 	App.RouterGroup.engine = App
 	App.pool.New = func() any {
-		return App.allocateContext()
+		return App.allocateContext(App.maxParams)
 	}
 	return App
 }
@@ -244,8 +244,8 @@ func (engine *Engine) Handler() http.Handler {
 	return h2c.NewHandler(engine, h2s)
 }
 
-func (engine *Engine) allocateContext() *Context {
-	v := make(Params, 0, engine.maxParams)
+func (engine *Engine) allocateContext(maxParams uint16) *Context {
+	v := make(Params, 0, maxParams)
 	skippedNodes := make([]skippedNode, 0, engine.maxSections)
 	return &Context{engine: engine, params: &v, skippedNodes: &skippedNodes}
 }

@@ -19,7 +19,7 @@ import (
 var (
 	errUnknownType = errors.New("unknown type")
 
-	// ErrConvertMapStringSlice can not covert to map[string][]string
+	// ErrConvertMapStringSlice can not convert to map[string][]string
 	ErrConvertMapStringSlice = errors.New("can not convert to map slices of strings")
 
 	// ErrConvertToMapString can not convert to map[string]string
@@ -34,7 +34,6 @@ func mapForm(ptr any, form map[string][]string) error {
 	return mapFormByTag(ptr, form, "form")
 }
 
-// MapFormWithTag ...
 func MapFormWithTag(ptr any, form map[string][]string, tag string) error {
 	return mapFormByTag(ptr, form, tag)
 }

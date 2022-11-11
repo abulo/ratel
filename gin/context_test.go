@@ -148,7 +148,7 @@ func TestSaveUploadedCreateFailed(t *testing.T) {
 
 func TestContextReset(t *testing.T) {
 	router := New()
-	c := router.allocateContext()
+	c := router.allocateContext(0)
 	assert.Equal(t, c.engine, router)
 
 	c.index = 2

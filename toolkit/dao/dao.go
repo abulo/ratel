@@ -23,8 +23,8 @@ var (
 	// CmdNew represents the new command.
 	CmdNew = &cobra.Command{
 		Use:   "dao",
-		Short: "Create a dao",
-		Long:  "Create a dao using the repository template. Example: ratel dao",
+		Short: "数据访问对象",
+		Long:  "创建数据访问对象: toolkit dao",
 		Run:   run,
 	}
 	AppConfig *config.Config
@@ -46,7 +46,7 @@ func run(cmd *cobra.Command, args []string) {
 	mysqlConfig := "mysql.toml"
 	configFile := wd + "/" + mysqlConfig
 	if !util.FileExists(configFile) {
-		fmt.Println("The mysql configuration file does not exist.")
+		fmt.Println("数据库配置文件不存在")
 		return
 	}
 
@@ -107,7 +107,7 @@ func run(cmd *cobra.Command, args []string) {
 	//获取表信息
 	tableList, err := QueryTable(ctx, AppConfig.String("mysql.Database"))
 	if err != nil {
-		fmt.Println("QueryTable is Error:", err)
+		fmt.Println("没有在数据中创建存储表:", err)
 		return
 	}
 
@@ -167,14 +167,14 @@ func run(cmd *cobra.Command, args []string) {
 			util.Delete(outFile)
 		}
 		if err := os.WriteFile(outFile, []byte(fileStr), os.ModePerm); err == nil {
-			fmt.Printf("\n🍺 Create  "+dir+" %s\n", color.GreenString(dir+"/"+table.TableName+".go"))
+			fmt.Printf("\n🍺 CREATED  "+dir+" %s\n", color.GreenString(dir+"/"+table.TableName+".go"))
 		}
 	}
 
 	_ = os.Chdir(dir)
 	cmdShell := exec.Command("go", "fmt")
 	if _, err := cmdShell.CombinedOutput(); err != nil {
-		fmt.Println("go fmt is Error:", err)
+		fmt.Println("代码格式化错误:", err)
 		return
 	}
 	cmdImport := exec.Command("goimports", "-w", path.Join(dir, "*.go"))

@@ -10,8 +10,8 @@ import (
 // CmdUpgrade represents the upgrade command.
 var CmdUpgrade = &cobra.Command{
 	Use:   "upgrade",
-	Short: "Upgrade the ratel tools",
-	Long:  "Upgrade the ratel tools. Example: ratel upgrade",
+	Short: "升级脚手架",
+	Long:  "升级脚手架命令 : ratel upgrade",
 	Run:   Run,
 }
 

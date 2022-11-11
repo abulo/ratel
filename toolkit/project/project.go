@@ -16,8 +16,8 @@ import (
 // CmdNew represents the new command.
 var CmdNew = &cobra.Command{
 	Use:   "new",
-	Short: "Create a project",
-	Long:  "Create a project using the repository template. Example: ratel new helloworld",
+	Short: "项目创建",
+	Long:  "新建微服务项目: toolkit new helloworld",
 	Run:   run,
 }
 
@@ -53,8 +53,8 @@ func run(cmd *cobra.Command, args []string) {
 	name := ""
 	if len(args) == 0 {
 		prompt := &survey.Input{
-			Message: "What is project name ?",
-			Help:    "Created project name.",
+			Message: "项目名称",
+			Help:    "项目命名:字母小写",
 		}
 		err = survey.AskOne(prompt, &name)
 		if err != nil || name == "" {
@@ -71,7 +71,7 @@ func run(cmd *cobra.Command, args []string) {
 			return
 		}
 		if _, e := os.Stat(path.Join(wd, "go.mod")); os.IsNotExist(e) {
-			done <- fmt.Errorf("🚫 go.mod don't exists in %s", wd)
+			done <- fmt.Errorf("🚫 未在 %s 中找到 go.mod 文件", wd)
 			return
 		}
 
@@ -84,13 +84,13 @@ func run(cmd *cobra.Command, args []string) {
 	select {
 	case <-ctx.Done():
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			fmt.Fprint(os.Stderr, "\033[31mERROR: project creation timed out\033[m\n")
+			fmt.Fprint(os.Stderr, "\033[31mERROR: 项目创建超时 \033[m\n")
 			return
 		}
-		fmt.Fprintf(os.Stderr, "\033[31mERROR: failed to create project(%s)\033[m\n", ctx.Err().Error())
+		fmt.Fprintf(os.Stderr, "\033[31mERROR: 项目创建失败(%s)\033[m\n", ctx.Err().Error())
 	case err = <-done:
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "\033[31mERROR: Failed to create project(%s)\033[m\n", err.Error())
+			fmt.Fprintf(os.Stderr, "\033[31mERROR: 项目创建失败(%s)\033[m\n", err.Error())
 		}
 	}
 }

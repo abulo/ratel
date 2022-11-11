@@ -107,7 +107,8 @@ func countSections(path string) uint16 {
 type nodeType uint8
 
 const (
-	root nodeType = iota + 1
+	static nodeType = iota
+	root
 	param
 	catchAll
 )
@@ -175,6 +176,7 @@ walk:
 			child := node{
 				path:      n.path[i:],
 				wildChild: n.wildChild,
+				nType:     static,
 				indices:   n.indices,
 				children:  n.children,
 				handlers:  n.handlers,
@@ -616,6 +618,11 @@ walk: // Outer loop for walking the tree
 			// wildcard child, there must be a handle for this path with an
 			// additional trailing slash
 			if path == "/" && n.wildChild && n.nType != root {
+				value.tsr = true
+				return
+			}
+
+			if path == "/" && n.nType == static {
 				value.tsr = true
 				return
 			}

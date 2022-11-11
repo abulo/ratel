@@ -21,11 +21,11 @@ type Project struct {
 func (p *Project) New(ctx context.Context, dir string, layout string, branch string) error {
 	to := path.Join(dir, p.Name)
 	if _, err := os.Stat(to); !os.IsNotExist(err) {
-		fmt.Printf("🚫 %s already exists\n", p.Name)
+		fmt.Printf("🚫 %s 已经存在\n", p.Name)
 		override := false
 		prompt := &survey.Confirm{
-			Message: "📂 Do you want to override the folder ?",
-			Help:    "Delete the existing folder and create the project.",
+			Message: "📂 您想要覆盖文件夹吗 ?",
+			Help:    "删除现有文件夹并创建项目.",
 		}
 		e := survey.AskOne(prompt, &override)
 		if e != nil {
@@ -36,17 +36,17 @@ func (p *Project) New(ctx context.Context, dir string, layout string, branch str
 		}
 		os.RemoveAll(to)
 	}
-	fmt.Printf("🚀 Creating service %s, layout repo is %s, please wait a moment.\n\n", p.Name, layout)
+	fmt.Printf("🚀 正在创建服务 %s, 代码仓库是 %s, 请稍候.\n\n", p.Name, layout)
 	repo := base.NewRepo(layout, branch)
 	if err := repo.CopyTo(ctx, to, p.Path, []string{".git", ".github"}); err != nil {
 		return err
 	}
 	base.Tree(to, dir)
 
-	fmt.Printf("\n🍺 Project creation succeeded %s\n", color.GreenString(p.Name))
-	fmt.Print("💻 Use the following command to start the project 👇:\n\n")
+	fmt.Printf("\n🍺 项目创建成功 %s\n", color.GreenString(p.Name))
+	fmt.Print("💻 使用以下命令进入项目 👇:\n\n")
 
 	fmt.Println(color.WhiteString("$ cd %s", p.Name))
-	fmt.Println("			🤝 Thanks for using Ratel")
+	fmt.Println("			🤝 感谢使用 Ratel")
 	return nil
 }

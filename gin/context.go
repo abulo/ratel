@@ -557,7 +557,7 @@ func (c *Context) GetPostFormMap(key string) (map[string]string, bool) {
 	return c.get(c.formCache, key)
 }
 
-// get is an internal method and returns a map which satisfy conditions.
+// get is an internal method and returns a map which satisfies conditions.
 func (c *Context) get(m map[string][]string, key string) (map[string]string, bool) {
 	dicts := make(map[string]string)
 	exist := false
@@ -583,7 +583,7 @@ func (c *Context) FormFile(name string) (*multipart.FileHeader, error) {
 	if err != nil {
 		return nil, err
 	}
-	_ = f.Close()
+	f.Close()
 	return fh, err
 }
 

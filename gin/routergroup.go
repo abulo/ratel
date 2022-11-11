@@ -58,7 +58,7 @@ type RouterGroup struct {
 	root     bool
 }
 
-var _ IRouter = &RouterGroup{}
+var _ IRouter = (*RouterGroup)(nil)
 
 // Use adds middleware to the group, see example code in GitHub.
 func (group *RouterGroup) Use(middleware ...HandlerFunc) IRoutes {
@@ -191,7 +191,7 @@ func (group *RouterGroup) Static(relativePath, root string) IRoutes {
 }
 
 // StaticFS works just like `Static()` but a custom `http.FileSystem` can be used instead.
-// Gin by default user: gin.Dir()
+// Gin by default uses: gin.Dir()
 func (group *RouterGroup) StaticFS(relativePath string, fs http.FileSystem) IRoutes {
 	if strings.Contains(relativePath, ":") || strings.Contains(relativePath, "*") {
 		panic("URL parameters can not be used when serving a static folder")
@@ -224,7 +224,7 @@ func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileS
 			c.index = -1
 			return
 		}
-		_ = f.Close()
+		f.Close()
 
 		fileServer.ServeHTTP(c.Writer, c.Request)
 	}

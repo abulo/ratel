@@ -25,8 +25,8 @@ var (
 	// CmdNew represents the new command.
 	CmdNew = &cobra.Command{
 		Use:   "module",
-		Short: "Create a module",
-		Long:  "Create a module using the repository template. Example: ratel module dir table_name",
+		Short: "数据模型层",
+		Long:  "创建数据库模型层: ratel module dir table_name",
 		Run:   run,
 	}
 	AppConfig *config.Config
@@ -50,7 +50,7 @@ func run(cmd *cobra.Command, args []string) {
 	mysqlConfig := "mysql.toml"
 	configFile := wd + "/" + mysqlConfig
 	if !util.FileExists(configFile) {
-		fmt.Println("The mysql configuration file does not exist.")
+		fmt.Println("数据库配置文件不存在")
 		return
 	}
 
@@ -62,29 +62,25 @@ func run(cmd *cobra.Command, args []string) {
 	moduleDir := ""
 	tableName := ""
 	if len(args) == 0 {
-		promptModule := &survey.Input{
-			Message: "What is module name ?",
-			Help:    "The folder path of the module.",
-		}
-		err = survey.AskOne(promptModule, &moduleDir)
-		if err != nil || moduleDir == "" {
+		if err = survey.AskOne(&survey.Input{
+			Message: "表名称",
+			Help:    "数据库中某个表名称",
+		}, &tableName); err != nil || tableName == "" {
 			return
 		}
-		promptTable := &survey.Input{
-			Message: "What is table name ?",
-			Help:    "Data table name.",
-		}
-		err = survey.AskOne(promptTable, &tableName)
-		if err != nil || tableName == "" {
+		if err = survey.AskOne(&survey.Input{
+			Message: "模型层名称",
+			Help:    "模块的文件夹路径",
+		}, &moduleDir); err != nil || moduleDir == "" {
 			return
 		}
 	} else {
-		moduleDir = args[0]
-		tableName = args[1]
+		tableName = args[0]
+		moduleDir = args[1]
 	}
 
 	if tableName == "" || moduleDir == "" {
-		fmt.Println("TableName & ModuleDir arguments cannot be empty")
+		fmt.Println("模型层名称 & 表名称 必须填写")
 		return
 	}
 
@@ -139,61 +135,85 @@ func run(cmd *cobra.Command, args []string) {
 	opt.DisableTrace = cast.ToBool(AppConfig.Bool("mysql.DisableTrace"))
 	Link = mysql.NewClient(opt)
 	//获取表信息
-	indexList, err := QueryIndex(ctx, AppConfig.String("mysql.Database"), tableName)
-	if err != nil {
-		fmt.Println("QueryIndex is Error:", err)
-		return
-	}
-
 	functionList := make([]Function, 0)
 	fieldList := make([]string, 0)
-	for _, index := range indexList {
-		// index.IndexName
-		indexName := util.Explode(":", index.IndexName)
-		if len(indexName) < 2 {
-			continue
-		}
+	indexList, err := QueryIndex(ctx, AppConfig.String("mysql.Database"), tableName)
+	if err != nil {
 		function := Function{}
-		function.Type = indexName[0]
-		function.Name = CamelStr(indexName[1])
+		function.Type = "list"
+		function.Name = CamelStr("list")
 		function.TableName = tableName
 		function.Mark = CamelStr(tableName)
-		function.Default = false
-		//获取参数
-		fields := util.Explode(",", index.Field)
-		fieldList = append(fieldList, fields...)
-
+		function.Default = true
 		argument := make([]Argument, 0)
-		for _, field := range fields {
-			tmp := Argument{}
-			arg := util.Explode(":", field)
-			tmp.Field = arg[0]
-			tmp.FieldInput = Helper(arg[0])
-			tmp.FieldType = arg[1]
-			argument = append(argument, tmp)
+		if len(fieldList) > 0 {
+			for _, field := range fieldList {
+				tmp := Argument{}
+				arg := util.Explode(":", field)
+				tmp.Field = arg[0]
+				tmp.FieldInput = Helper(arg[0])
+				tmp.FieldType = arg[1]
+				argument = append(argument, tmp)
+			}
+		}
+		function.Argument = argument
+		functionList = append(functionList, function)
+	} else {
+
+		for _, index := range indexList {
+			// index.IndexName
+			indexName := util.Explode(":", index.IndexName)
+			if len(indexName) < 2 {
+				continue
+			}
+			function := Function{}
+			function.Type = indexName[0]
+			function.Name = CamelStr(indexName[1])
+			function.TableName = tableName
+			function.Mark = CamelStr(tableName)
+			function.Default = false
+			//获取参数
+			fields := util.Explode(",", index.Field)
+			for _, field := range fields {
+				if !util.InArray(field, fieldList) {
+					fieldList = append(fieldList, field)
+				}
+			}
+
+			argument := make([]Argument, 0)
+			for _, field := range fields {
+				tmp := Argument{}
+				arg := util.Explode(":", field)
+				tmp.Field = arg[0]
+				tmp.FieldInput = Helper(arg[0])
+				tmp.FieldType = arg[1]
+				argument = append(argument, tmp)
+			}
+			function.Argument = argument
+			functionList = append(functionList, function)
+		}
+
+		function := Function{}
+		function.Type = "list"
+		function.Name = CamelStr("list")
+		function.TableName = tableName
+		function.Mark = CamelStr(tableName)
+		function.Default = true
+		argument := make([]Argument, 0)
+		if len(fieldList) > 0 {
+			for _, field := range fieldList {
+				tmp := Argument{}
+				arg := util.Explode(":", field)
+				tmp.Field = arg[0]
+				tmp.FieldInput = Helper(arg[0])
+				tmp.FieldType = arg[1]
+				argument = append(argument, tmp)
+			}
 		}
 		function.Argument = argument
 		functionList = append(functionList, function)
 	}
-	function := Function{}
-	function.Type = "list"
-	function.Name = CamelStr("list")
-	function.TableName = tableName
-	function.Mark = CamelStr(tableName)
-	function.Default = true
-	argument := make([]Argument, 0)
-	if len(fieldList) > 0 {
-		for _, field := range fieldList {
-			tmp := Argument{}
-			arg := util.Explode(":", field)
-			tmp.Field = arg[0]
-			tmp.FieldInput = Helper(arg[0])
-			tmp.FieldType = arg[1]
-			argument = append(argument, tmp)
-		}
-	}
-	function.Argument = argument
-	functionList = append(functionList, function)
+
 	n := strings.LastIndex(moduleDir, "/")
 	newModule := ModuleArg{}
 	newModule.PackageName = moduleDir[n+1:]
@@ -209,24 +229,24 @@ func run(cmd *cobra.Command, args []string) {
 	}
 	file, err := os.OpenFile(outFile, os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
-		fmt.Println("os.OpenFile is Error:", err)
+		fmt.Println("文件句柄错误:", err)
 		return
 	}
 	//渲染输出
 	err = tpl.Execute(file, newModule)
 	if err != nil {
-		fmt.Println("tpl.Execute is Error:", err)
+		fmt.Println("模板解析错误:", err)
 		return
 	}
 	_ = os.Chdir(newModuleDir)
 	cmdShell := exec.Command("go", "fmt")
 	if _, err := cmdShell.CombinedOutput(); err != nil {
-		fmt.Println("go fmt is Error:", err)
+		fmt.Println("代码格式化错误:", err)
 		return
 	}
 	cmdImport := exec.Command("goimports", "-w", path.Join(newModuleDir, "*.go"))
 	cmdImport.CombinedOutput()
-	fmt.Printf("\n🍺 Create   %s\n", color.GreenString(outFile))
+	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(outFile))
 }
 
 // CamelStr 下划线转驼峰
@@ -279,42 +299,34 @@ func {{.Mark}}Item(ctx context.Context, id int64) (dao.{{.Mark}}, error) {
 	return res, err
 }
 
-{{range .FunctionList}}
-
-
-{{if eq .Type "one"}}
+{{- range .FunctionList}}
+{{- if eq .Type "one"}}
 // {{.Mark}}ItemBy{{.Name}} 获取数据
 func {{.Mark}}ItemBy{{.Name}}(ctx context.Context, condition map[string]interface{}) (dao.{{.Mark}}, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	var res dao.{{.Mark}}
 	builder := db.NewBuilder(ctx).Table("{{.TableName}}")
-	{{range .Argument}}
+	{{- range .Argument}}
 	if !util.Empty(condition["{{.FieldInput}}"]) {
 		builder.Where("{{.Field}}", condition["{{.FieldInput}}"])
 	}
-	{{end}}
+	{{- end}}
 	err := builder.Row().ToStruct(&res)
 	return res, err
 }
-{{end}}
-
-
-
-{{if eq .Type "list"}}
-
-
-
-{{if .Default}}
+{{- end}}
+{{- if eq .Type "list"}}
+{{- if .Default}}
 // {{.Mark}}List 获取数据
 func {{.Mark}}List(ctx context.Context, condition map[string]interface{}) ([]dao.{{.Mark}}, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	var res []dao.{{.Mark}}
 	builder := db.NewBuilder(ctx).Table("{{.TableName}}")
-	{{range .Argument}}
+	{{- range .Argument}}
 	if !util.Empty(condition["{{.FieldInput}}"]) {
 		builder.Where("{{.Field}}", condition["{{.FieldInput}}"])
 	}
-	{{end}}
+	{{- end}}
 	if !util.Empty(condition["pageOffset"]) {
 		builder.Offset(cast.ToInt64(condition["pageOffset"]))
 	}
@@ -328,14 +340,14 @@ func {{.Mark}}List(ctx context.Context, condition map[string]interface{}) ([]dao
 func {{.Mark}}Total(ctx context.Context, condition map[string]interface{}) (int64, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	builder := db.NewBuilder(ctx).Table("{{.TableName}}")
-	{{range .Argument}}
+	{{- range .Argument}}
 	if !util.Empty(condition["{{.FieldInput}}"]) {
 		builder.Where("{{.Field}}", condition["{{.FieldInput}}"])
 	}
-	{{end}}
+	{{- end}}
 	return builder.Count()
 }
-{{else}}
+{{- else}}
 
 
 
@@ -344,11 +356,11 @@ func {{.Mark}}ListBy{{.Name}}(ctx context.Context, condition map[string]interfac
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	var res []dao.{{.Mark}}
 	builder := db.NewBuilder(ctx).Table("{{.TableName}}")
-	{{range .Argument}}
+	{{- range .Argument}}
 	if !util.Empty(condition["{{.FieldInput}}"]) {
 		builder.Where("{{.Field}}", condition["{{.FieldInput}}"])
 	}
-	{{end}}
+	{{- end}}
 	if !util.Empty(condition["pageOffset"]) {
 		builder.Offset(cast.ToInt64(condition["pageOffset"]))
 	}
@@ -362,15 +374,15 @@ func {{.Mark}}ListBy{{.Name}}(ctx context.Context, condition map[string]interfac
 func {{.Mark}}TotalBy{{.Name}}(ctx context.Context, condition map[string]interface{}) (int64, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	builder := db.NewBuilder(ctx).Table("{{.TableName}}")
-	{{range .Argument}}
+	{{- range .Argument}}
 	if !util.Empty(condition["{{.FieldInput}}"]) {
 		builder.Where("{{.Field}}", condition["{{.FieldInput}}"])
 	}
-	{{end}}
+	{{- end}}
 	return builder.Count()
 }
 
-{{end}}
-{{end}}
-{{end}}
+{{- end}}
+{{- end}}
+{{- end}}
 `
