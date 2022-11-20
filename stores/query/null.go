@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/abulo/ratel/v3/util"
 	"github.com/spf13/cast"
 )
 
@@ -87,7 +86,8 @@ type NullDateTime struct {
 
 // NewDateTime ...
 func NewDateTime(s interface{}) NullDateTime {
-	return NullDateTime{sql.NullString{String: util.Date("Y-m-d H:i:s", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
+	// return NullDateTime{sql.NullString{String: util.Date("Y-m-d H:i:s", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
+	return NullDateTime{sql.NullString{String: cast.ToString(s), Valid: true}}
 }
 
 // NewNullDateTime ...
@@ -402,7 +402,8 @@ type NullDate struct {
 
 // NewDate ...
 func NewDate(s interface{}) NullDate {
-	return NullDate{sql.NullString{String: util.Date("Y-m-d", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
+	// return NullDate{sql.NullString{String: util.Date("Y-m-d", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
+	return NullDate{sql.NullString{String: cast.ToString(s), Valid: true}}
 }
 
 // NewNullDate ...
@@ -471,7 +472,8 @@ type NullTime struct {
 
 // NewTime ...
 func NewTime(s interface{}) NullTime {
-	return NullTime{sql.NullString{String: util.Date("H:i:s", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
+	// return NullTime{sql.NullString{String: util.Date("H:i:s", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
+	return NullTime{sql.NullString{String: cast.ToString(s), Valid: true}}
 }
 
 // NewNullTime ...
@@ -539,7 +541,8 @@ type NullYear struct {
 
 // NewYear ...
 func NewYear(s interface{}) NullYear {
-	return NullYear{sql.NullString{String: util.Date("Y", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
+	// return NullYear{sql.NullString{String: util.Date("Y", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
+	return NullYear{sql.NullString{String: cast.ToString(s), Valid: true}}
 }
 
 // NewNullYear ...
@@ -607,7 +610,8 @@ type NullTimeStamp struct {
 
 // NewTimeStamp ...
 func NewTimeStamp(s interface{}) NullTimeStamp {
-	return NullTimeStamp{sql.NullString{String: cast.ToString(cast.ToTimeInDefaultLocation(s, util.TimeZone()).Unix()), Valid: true}}
+	// return NullTimeStamp{sql.NullString{String: cast.ToString(cast.ToTimeInDefaultLocation(s, util.TimeZone()).Unix()), Valid: true}}
+	return NullTimeStamp{sql.NullString{String: cast.ToString(s), Valid: true}}
 }
 
 // NewNullTimeStamp ...

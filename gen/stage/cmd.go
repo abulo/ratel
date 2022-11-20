@@ -180,8 +180,5 @@ func Convert(column Column, name string) string {
 	case "query.NullDateTime":
 		res = "query.NullDateTime{sql.NullString{String: ctx.PostForm(\"" + Helper(name) + "\"), Valid: true}}"
 	}
-
-	// "DATETIME":  {"query.NullDateTime", "query.NullDateTime"},
-	// "TIMESTAMP": {"query.NullTime", "query.NullTime"},
 	return res
 }

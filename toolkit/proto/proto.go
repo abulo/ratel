@@ -25,7 +25,7 @@ var (
 	CmdNew = &cobra.Command{
 		Use:   "proto",
 		Short: "gRPC",
-		Long:  "Create a proto using the repository template. Example: ratel proto dir table_name",
+		Long:  "创建proto文件. Example: ratel proto dir table_name",
 		Run:   run,
 	}
 	AppConfig *config.Config
@@ -115,21 +115,21 @@ func run(cmd *cobra.Command, args []string) {
 			return
 		}
 		if err = survey.AskOne(&survey.Input{
-			Message: "模型层名称",
+			Message: "模块的文件夹",
 			Help:    "模块的文件夹路径",
 		}, &moduleDir); err != nil || moduleDir == "" {
 			return
 		}
 	} else {
 		if len(args) < 2 {
-			fmt.Println("模型层名称 & 表名称 必须填写")
+			fmt.Println("模块的文件夹 & 表名称 必须填写")
 			return
 		}
 		tableName = args[0]
 		moduleDir = args[1]
 	}
 	if tableName == "" || moduleDir == "" {
-		fmt.Println("模型层名称 & 表名称 必须填写")
+		fmt.Println("模块的文件夹 & 表名称 必须填写")
 		return
 	}
 	tableInfo, err := QueryTable(ctx, AppConfig.String("mysql.Database"), tableName)

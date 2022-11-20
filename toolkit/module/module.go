@@ -220,8 +220,15 @@ func run(cmd *cobra.Command, args []string) {
 	newModule.TableName = tableName
 	newModule.Mark = CamelStr(tableName)
 	newModule.FunctionList = functionList
+	priInfo, err := QueryColumnPrimaryKey(ctx, AppConfig.String("mysql.Database"), tableName)
+	if err != nil {
+		fmt.Println("该数据没有主键类型:", err)
+		return
+	}
+	newModule.PrimaryKey = Helper(tableName + "_" + priInfo.ColumnName)
+	newModule.ColumnName = priInfo.ColumnName
 	//go文件生成地址
-	tpl := template.Must(template.New("name").Parse(moduleTemplate))
+	tpl := template.Must(template.New("name").Funcs(template.FuncMap{"Characters": Characters}).Parse(strings.TrimSpace(moduleTemplate)))
 	//输出文件
 	outFile := path.Join(newModuleDir, tableName+".go")
 	if util.FileExists(outFile) {
@@ -247,6 +254,10 @@ func run(cmd *cobra.Command, args []string) {
 	cmdImport := exec.Command("goimports", "-w", path.Join(newModuleDir, "*.go"))
 	cmdImport.CombinedOutput()
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(outFile))
+}
+
+func Characters(in string) string {
+	return "`" + in + "`"
 }
 
 // CamelStr 下划线转驼峰
@@ -276,26 +287,26 @@ import (
 // {{.Mark}}Create 创建数据
 func {{.Mark}}Create(ctx context.Context, data dao.{{.Mark}}) (int64, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Write()
-	return db.NewBuilder(ctx).Table("{{.TableName}}").Insert(data)
+	return db.NewBuilder(ctx).Table("{{Characters .TableName}}").Insert(data)
 }
 
 // {{.Mark}}Update 更新数据
-func {{.Mark}}Update(ctx context.Context, id int64, data dao.{{.Mark}}) (int64, error) {
+func {{.Mark}}Update(ctx context.Context, {{.PrimaryKey}} int64, data dao.{{.Mark}}) (int64, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Write()
-	return db.NewBuilder(ctx).Table("{{.TableName}}").Where("id", id).Update(data)
+	return db.NewBuilder(ctx).Table("{{Characters .TableName}}").Where("{{Characters .ColumnName}}", {{.PrimaryKey}}).Update(data)
 }
 
 // {{.Mark}}Delete 删除数据
-func {{.Mark}}Delete(ctx context.Context, id int64) (int64, error) {
+func {{.Mark}}Delete(ctx context.Context, {{.PrimaryKey}} int64) (int64, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Write()
-	return db.NewBuilder(ctx).Table("{{.TableName}}").Where("id", id).Delete()
+	return db.NewBuilder(ctx).Table("{{Characters .TableName}}").Where("{{Characters .ColumnName}}", {{.PrimaryKey}}).Delete()
 }
 
 // {{.Mark}}Item 获取数据
-func {{.Mark}}Item(ctx context.Context, id int64) (dao.{{.Mark}}, error) {
+func {{.Mark}}Item(ctx context.Context, {{.PrimaryKey}} int64) (dao.{{.Mark}}, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	var res dao.{{.Mark}}
-	err := db.NewBuilder(ctx).Table("{{.TableName}}").Where("id", id).Row().ToStruct(&res)
+	err := db.NewBuilder(ctx).Table("{{Characters .TableName}}").Where("{{Characters .ColumnName}}", {{.PrimaryKey}}).Row().ToStruct(&res)
 	return res, err
 }
 
@@ -305,10 +316,10 @@ func {{.Mark}}Item(ctx context.Context, id int64) (dao.{{.Mark}}, error) {
 func {{.Mark}}ItemBy{{.Name}}(ctx context.Context, condition map[string]interface{}) (dao.{{.Mark}}, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	var res dao.{{.Mark}}
-	builder := db.NewBuilder(ctx).Table("{{.TableName}}")
+	builder := db.NewBuilder(ctx).Table("{{Characters .TableName}}")
 	{{- range .Argument}}
 	if !util.Empty(condition["{{.FieldInput}}"]) {
-		builder.Where("{{.Field}}", condition["{{.FieldInput}}"])
+		builder.Where("{{Characters .Field}}", condition["{{.FieldInput}}"])
 	}
 	{{- end}}
 	err := builder.Row().ToStruct(&res)
@@ -321,10 +332,10 @@ func {{.Mark}}ItemBy{{.Name}}(ctx context.Context, condition map[string]interfac
 func {{.Mark}}List(ctx context.Context, condition map[string]interface{}) ([]dao.{{.Mark}}, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	var res []dao.{{.Mark}}
-	builder := db.NewBuilder(ctx).Table("{{.TableName}}")
+	builder := db.NewBuilder(ctx).Table("{{Characters .TableName}}")
 	{{- range .Argument}}
 	if !util.Empty(condition["{{.FieldInput}}"]) {
-		builder.Where("{{.Field}}", condition["{{.FieldInput}}"])
+		builder.Where("{{Characters .Field}}", condition["{{.FieldInput}}"])
 	}
 	{{- end}}
 	if !util.Empty(condition["pageOffset"]) {
@@ -333,16 +344,16 @@ func {{.Mark}}List(ctx context.Context, condition map[string]interface{}) ([]dao
 	if !util.Empty(condition["pageSize"]) {
 		builder.Limit(cast.ToInt64(condition["pageSize"]))
 	}
-	err := builder.OrderBy("id", query.DESC).Rows().ToStruct(&res)
+	err := builder.OrderBy("{{Characters $.ColumnName}}", query.DESC).Rows().ToStruct(&res)
 	return res, err
 }
 // {{.Mark}}Total 获取数据数量
 func {{.Mark}}Total(ctx context.Context, condition map[string]interface{}) (int64, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Read()
-	builder := db.NewBuilder(ctx).Table("{{.TableName}}")
+	builder := db.NewBuilder(ctx).Table("{{Characters .TableName}}")
 	{{- range .Argument}}
 	if !util.Empty(condition["{{.FieldInput}}"]) {
-		builder.Where("{{.Field}}", condition["{{.FieldInput}}"])
+		builder.Where("{{Characters .Field}}", condition["{{.FieldInput}}"])
 	}
 	{{- end}}
 	return builder.Count()
@@ -355,10 +366,10 @@ func {{.Mark}}Total(ctx context.Context, condition map[string]interface{}) (int6
 func {{.Mark}}ListBy{{.Name}}(ctx context.Context, condition map[string]interface{}) ([]dao.{{.Mark}}, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	var res []dao.{{.Mark}}
-	builder := db.NewBuilder(ctx).Table("{{.TableName}}")
+	builder := db.NewBuilder(ctx).Table("{{Characters .TableName}}")
 	{{- range .Argument}}
 	if !util.Empty(condition["{{.FieldInput}}"]) {
-		builder.Where("{{.Field}}", condition["{{.FieldInput}}"])
+		builder.Where("{{Characters .Field}}", condition["{{.FieldInput}}"])
 	}
 	{{- end}}
 	if !util.Empty(condition["pageOffset"]) {
@@ -367,16 +378,16 @@ func {{.Mark}}ListBy{{.Name}}(ctx context.Context, condition map[string]interfac
 	if !util.Empty(condition["pageSize"]) {
 		builder.Limit(cast.ToInt64(condition["pageSize"]))
 	}
-	err := builder.OrderBy("id", query.DESC).Rows().ToStruct(&res)
+	err := builder.OrderBy("{{Characters $.ColumnName}}", query.DESC).Rows().ToStruct(&res)
 	return res, err
 }
 // {{.Mark}}TotalBy{{.Name}} 获取数据数量
 func {{.Mark}}TotalBy{{.Name}}(ctx context.Context, condition map[string]interface{}) (int64, error) {
 	db := initial.Core.Store.LoadSQL("mysql").Read()
-	builder := db.NewBuilder(ctx).Table("{{.TableName}}")
+	builder := db.NewBuilder(ctx).Table("{{Characters .TableName}}")
 	{{- range .Argument}}
 	if !util.Empty(condition["{{.FieldInput}}"]) {
-		builder.Where("{{.Field}}", condition["{{.FieldInput}}"])
+		builder.Where("{{Characters .Field}}", condition["{{.FieldInput}}"])
 	}
 	{{- end}}
 	return builder.Count()

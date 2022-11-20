@@ -22,6 +22,8 @@ type ModuleArg struct {
 	TableName    string
 	Mark         string
 	FunctionList []Function
+	PrimaryKey   string
+	ColumnName   string
 }
 
 type Function struct {
@@ -37,4 +39,23 @@ type Argument struct {
 	Field      string
 	FieldType  string
 	FieldInput string
+}
+
+// Column ...
+type Column struct {
+	ColumnName    string `db:"COLUMN_NAME"`
+	IsNullable    string `db:"IS_NULLABLE"`
+	DataType      string `db:"DATA_TYPE"`
+	ColumnKey     string `db:"COLUMN_KEY"`
+	ColumnComment string `db:"COLUMN_COMMENT"`
+}
+
+//PrimaryKey
+
+// QueryColumn 获取数据中表中字段的信息
+func QueryColumnPrimaryKey(ctx context.Context, DbName, TableName string) (Column, error) {
+	var res Column
+	builder := Link.NewBuilder(ctx).Select("COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "COLUMN_KEY", "COLUMN_COMMENT").Table("information_schema.COLUMNS").Where("TABLE_SCHEMA", DbName).Where("TABLE_NAME", TableName).Where("COLUMN_KEY", "PRI").OrderBy("ORDINAL_POSITION", query.ASC)
+	err := builder.Row().ToStruct(&res)
+	return res, err
 }

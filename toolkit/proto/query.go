@@ -67,7 +67,6 @@ type Argument struct {
 
 // DataTypeMap ...
 var DataTypeMap = map[string]string{
-	//整型
 	"json":       "string",
 	"char":       "string",
 	"varchar":    "string",

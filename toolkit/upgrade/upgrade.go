@@ -8,7 +8,7 @@ import (
 )
 
 // CmdUpgrade represents the upgrade command.
-var CmdUpgrade = &cobra.Command{
+var CmdNew = &cobra.Command{
 	Use:   "upgrade",
 	Short: "升级脚手架",
 	Long:  "升级脚手架命令 : ratel upgrade",

@@ -39,7 +39,7 @@ var DataTypeMap = map[string][]string{
 	"TIME":      {"query.NullTime", "query.NullTime"},
 	"YEAR":      {"query.NullYear", "query.NullYear"},
 	"DATETIME":  {"query.NullDateTime", "query.NullDateTime"},
-	"TIMESTAMP": {"query.NullTime", "query.NullTime"},
+	"TIMESTAMP": {"query.NullTimeStamp", "query.NullTimeStamp"},
 
 	//字符串
 	"CHAR":       {"string", "query.NullString"},
