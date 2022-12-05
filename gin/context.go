@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -386,7 +387,9 @@ func (c *Context) GetStringMapStringSlice(key string) (smss map[string][]string)
 //
 //	router.GET("/user/:id", func(c *gin.Context) {
 //	    // a GET request to /user/john
-//	    id := c.Param("id") // id == "john"
+//	    id := c.Param("id") // id == "/john"
+//	    // a GET request to /user/john/
+//	    id := c.Param("id") // id == "/john/"
 //	})
 func (c *Context) Param(key string) string {
 	return c.Params.ByName(key)
@@ -605,6 +608,10 @@ func (c *Context) SaveUploadedFile(file *multipart.FileHeader, dst string) error
 			logger.Logger.Error("Error closing src: ", err)
 		}
 	}()
+
+	if err = os.MkdirAll(filepath.Dir(dst), 0750); err != nil {
+		return err
+	}
 
 	out, err := os.Create(dst)
 	if err != nil {

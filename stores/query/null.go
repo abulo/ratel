@@ -1,673 +1,496 @@
 package query
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
 	"reflect"
+	"time"
 
+	"github.com/abulo/ratel/v3/util"
 	"github.com/spf13/cast"
 )
 
-var nullJSON = []byte("null")
+var NULL = []byte("NULL")
 
-// Nullable ...
-type Nullable interface {
-	IsEmpty() bool
-	IsValid() bool
-}
+// embeds  for custom json un/marshalling
+type Any = interface{}
 
-// NullString 空字符串
-type NullString struct {
-	sql.NullString
-}
+// NullTime 新定义
+type NullTime sql.NullTime
 
-// NewString ...
-func NewString(s string) NullString {
-	return NullString{sql.NullString{String: s, Valid: true}}
-}
-
-// NewNullString ...
-func NewNullString() NullString {
-	return NullString{sql.NullString{String: "", Valid: true}}
-}
-
-// MarshalJSON ...
-func (ns NullString) MarshalJSON() ([]byte, error) {
-	if !ns.Valid {
-		return nullJSON, nil
+func NewNullTime(s Any) NullTime {
+	if reflect.TypeOf(s) == nil {
+		return NullTime{}
 	}
-	return json.Marshal(ns.String)
+	return NullTime{
+		Time:  cast.ToTime(s),
+		Valid: true,
+	}
 }
 
-// UnmarshalJSON ...
-func (ns *NullString) UnmarshalJSON(b []byte) error {
-	var err error = nil
-	if bytes.Equal(nullJSON, b) {
-		ns.String = ""
-		ns.Valid = false
+// UnmarshalJSON satisfies the json.Unmarshaler interface
+func (n *NullTime) UnmarshalJSON(data []byte) error {
+	location := util.TimeZone()
+	// Ignore null, like in the main JSON package.
+	if string(data) == "NULL" {
+		return nil
+	}
+	tt, err := time.ParseInLocation(`"`+"2006-01-02T15:04:05"+`"`, string(data), location)
+	if err != nil {
+		return err
+	}
+	n.Time = tt
+	if n.Time.IsZero() {
+		n.Valid = false
 	} else {
-		err = json.Unmarshal(b, &ns.String)
-		ns.Valid = (err == nil)
+		n.Valid = true
 	}
 	return err
 }
 
-// IsEmpty ...
-func (ns NullString) IsEmpty() bool {
-	return !ns.Valid || ns.String == ""
-}
-
-// IsValid ...
-func (ns NullString) IsValid() bool {
-	return ns.Valid
-}
-
-// Result ...
-func (ns NullString) Result() interface{} {
-	if ns.Valid {
-		return ns.String
+func (n NullTime) MarshalJSON() ([]byte, error) {
+	if n.Time.IsZero() || !n.Valid {
+		return NULL, nil
 	}
-	return "NULL"
+	return []byte(n.Time.Format(time.RFC3339)), nil
 }
 
-// Convert ...
-func (ns NullString) Convert() string {
-	if ns.Valid {
-		return ns.String
+// Result for NullString
+func (n NullTime) Result() interface{} {
+	if n.Valid {
+		return n.Time.Format(time.RFC3339)
 	}
-	return ""
+	return cast.ToString(NULL)
 }
 
-// NullDateTime NullDate 空字符串
-type NullDateTime struct {
-	sql.NullString
+// NullString 新定义
+type NullString sql.NullString
+
+// NewNullString 函数将一个字符串转换为sql.NullString
+func NewNullString(s Any) NullString {
+	res := cast.ToString(s)
+	if len(res) == 0 {
+		return NullString{}
+	}
+	return NullString{
+		String: res,
+		Valid:  true,
+	}
 }
 
-// NewDateTime ...
-func NewDateTime(s interface{}) NullDateTime {
-	// return NullDateTime{sql.NullString{String: util.Date("Y-m-d H:i:s", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
-	return NullDateTime{sql.NullString{String: cast.ToString(s), Valid: true}}
-}
+// UnmarshalJSON satisfies the json.Unmarshaler interface
+func (n *NullString) UnmarshalJSON(data []byte) error {
 
-// NewNullDateTime ...
-func NewNullDateTime() NullDateTime {
-	return NullDateTime{sql.NullString{String: "", Valid: true}}
-}
-
-// Scan ...
-func (nt *NullDateTime) Scan(value interface{}) error {
-	if reflect.TypeOf(value) == nil {
-		*nt = NewNullDateTime()
+	// Ignore null, like in the main JSON package.
+	if string(data) == "NULL" || string(data) == "" || string(data) == "~" {
 		return nil
 	}
-	var s sql.NullString
-	if err := s.Scan(value); err != nil {
-		return err
+
+	// var v string
+	if err := json.Unmarshal(data, &n.String); err != nil {
+		return nil
 	}
-	*nt = NewDateTime(s.String)
+	n.Valid = true
 	return nil
 }
 
-// MarshalJSON ...
-func (nt NullDateTime) MarshalJSON() ([]byte, error) {
-	if !nt.Valid {
-		return nullJSON, nil
+func (n NullString) MarshalJSON() ([]byte, error) {
+	if !n.Valid {
+		return NULL, nil
 	}
-	return json.Marshal(nt.String)
+	return json.Marshal(n.String)
 }
 
-// UnmarshalJSON ...
-func (nt *NullDateTime) UnmarshalJSON(b []byte) error {
-	var err error = nil
-	if bytes.Equal(nullJSON, b) {
-		nt.String = ""
-		nt.Valid = false
-	} else {
-		err = json.Unmarshal(b, &nt.String)
-		nt.Valid = (err == nil)
+// Result for NullString
+func (n NullString) Result() interface{} {
+	if n.Valid {
+		return n.String
 	}
-	return err
+	return cast.ToString(NULL)
 }
 
-// IsEmpty ...
-func (nt NullDateTime) IsEmpty() bool {
-	return !nt.Valid || nt.String == ""
-}
+type NullBool sql.NullBool
 
-// IsValid ...
-func (nt NullDateTime) IsValid() bool {
-	return nt.Valid
-}
-
-// Result ...
-func (nt NullDateTime) Result() interface{} {
-	if nt.Valid {
-		return nt.String
+func NewNullBool(s Any) NullBool {
+	if reflect.TypeOf(s) == nil {
+		return NullBool{}
 	}
-	return "NULL"
-}
-
-// NullInt64 ...
-type NullInt64 struct{ sql.NullInt64 }
-
-// NewInt64 ...
-func NewInt64(i int64) NullInt64 {
-	return NullInt64{sql.NullInt64{Int64: i, Valid: true}}
-}
-
-// NewNullInt64 ...
-func NewNullInt64() NullInt64 {
-	return NullInt64{sql.NullInt64{Int64: 0, Valid: true}}
-}
-
-// MarshalJSON ...
-func (ni NullInt64) MarshalJSON() ([]byte, error) {
-	if !ni.Valid {
-		return nullJSON, nil
+	return NullBool{
+		Bool:  cast.ToBool(s),
+		Valid: true,
 	}
-	return json.Marshal(ni.Int64)
 }
 
-// UnmarshalJSON ...
-func (ni *NullInt64) UnmarshalJSON(b []byte) error {
-	var err error = nil
-	if bytes.Equal(nullJSON, b) {
-		ni.Int64 = 0
-		ni.Valid = false
-	} else {
-		err = json.Unmarshal(b, &ni.Int64)
-		ni.Valid = (err == nil)
-	}
-	return err
-}
-
-// IsEmpty ...
-func (ni NullInt64) IsEmpty() bool {
-	return !ni.Valid
-}
-
-// IsValid ...
-func (ni NullInt64) IsValid() bool {
-	return ni.Valid
-}
-
-// Result ...
-func (ni NullInt64) Result() interface{} {
-	if ni.Valid {
-		return ni.Int64
-	}
-	return "NULL"
-}
-
-// Convert ...
-func (ni NullInt64) Convert() string {
-	if ni.Valid {
-		return cast.ToString(ni.Int64)
-	}
-	return ""
-}
-
-// NullInt32 ...
-type NullInt32 struct{ sql.NullInt32 }
-
-// NewInt32 ...
-func NewInt32(i int32) NullInt32 {
-	return NullInt32{sql.NullInt32{Int32: i, Valid: true}}
-}
-
-// NewNullInt32 ...
-func NewNullInt32() NullInt32 {
-	return NullInt32{sql.NullInt32{Int32: 0, Valid: true}}
-}
-
-// MarshalJSON ...
-func (ni NullInt32) MarshalJSON() ([]byte, error) {
-	if !ni.Valid {
-		return nullJSON, nil
-	}
-	return json.Marshal(ni.Int32)
-}
-
-// UnmarshalJSON ...
-func (ni *NullInt32) UnmarshalJSON(b []byte) error {
-	var err error = nil
-	if bytes.Equal(nullJSON, b) {
-		ni.Int32 = 0
-		ni.Valid = false
-	} else {
-		err = json.Unmarshal(b, &ni.Int32)
-		ni.Valid = (err == nil)
-	}
-	return err
-}
-
-// IsEmpty ...
-func (ni NullInt32) IsEmpty() bool {
-	return !ni.Valid
-}
-
-// IsValid ...
-func (ni NullInt32) IsValid() bool {
-	return ni.Valid
-}
-
-// Result ...
-func (ni NullInt32) Result() interface{} {
-	if ni.Valid {
-		return ni.Int32
-	}
-	return "NULL"
-}
-
-// Convert ...
-func (ni NullInt32) Convert() string {
-	if ni.Valid {
-		return cast.ToString(ni.Int32)
-	}
-	return ""
-}
-
-// NullFloat64 ...
-type NullFloat64 struct{ sql.NullFloat64 }
-
-// NewFloat64 ...
-func NewFloat64(f float64) NullFloat64 {
-	return NullFloat64{sql.NullFloat64{Float64: f, Valid: true}}
-}
-
-// NewNullFloat64 ...
-func NewNullFloat64() NullFloat64 {
-	return NullFloat64{sql.NullFloat64{Float64: 0.0, Valid: true}}
-}
-
-// MarshalJSON ...
-func (nf NullFloat64) MarshalJSON() ([]byte, error) {
-	if !nf.Valid {
-		return nullJSON, nil
-	}
-	return json.Marshal(nf.Float64)
-}
-
-// UnmarshalJSON ...
-func (nf *NullFloat64) UnmarshalJSON(b []byte) error {
-	var err error = nil
-	if bytes.Equal(nullJSON, b) {
-		nf.Float64 = 0.0
-		nf.Valid = false
-	} else {
-		err = json.Unmarshal(b, &nf.Float64)
-		nf.Valid = (err == nil)
-	}
-	return err
-}
-
-// IsEmpty ...
-func (nf NullFloat64) IsEmpty() bool {
-	return !nf.Valid
-}
-
-// IsValid ...
-func (nf NullFloat64) IsValid() bool {
-	return nf.Valid
-}
-
-// Result ...
-func (nf NullFloat64) Result() interface{} {
-	if nf.Valid {
-		return nf.Float64
-	}
-	return "NULL"
-}
-
-// Convert ...
-func (nf NullFloat64) Convert() string {
-	if nf.Valid {
-		return cast.ToString(nf.Float64)
-	}
-	return ""
-}
-
-// NullBool ...
-type NullBool struct{ sql.NullBool }
-
-// NewBool ...
-func NewBool(b bool) NullBool {
-	return NullBool{sql.NullBool{Bool: b, Valid: true}}
-}
-
-// NewNullBool ...
-func NewNullBool() NullBool {
-	return NullBool{sql.NullBool{Bool: false, Valid: true}}
-}
-
-// MarshalJSON ...
-func (nb NullBool) MarshalJSON() ([]byte, error) {
-	if !nb.Valid {
-		return nullJSON, nil
-	}
-	return json.Marshal(nb.Bool)
-}
-
-// UnmarshalJSON ...
-func (nb *NullBool) UnmarshalJSON(b []byte) error {
-	var err error = nil
-	if bytes.Equal(nullJSON, b) {
-		nb.Bool = false
-		nb.Valid = false
-	} else {
-		err = json.Unmarshal(b, &nb.Bool)
-		nb.Valid = (err == nil)
-	}
-	return err
-}
-
-// IsEmpty ...
-func (nb NullBool) IsEmpty() bool {
-	return !nb.Valid
-}
-
-// IsValid ...
-func (nb NullBool) IsValid() bool {
-	return nb.Valid
-}
-
-// Result ...
-func (nb NullBool) Result() interface{} {
-	if nb.Valid {
-		if nb.Bool {
-			return 1
-		}
-		return 0
-	}
-	return "NULL"
-}
-
-// Convert ...
-func (nb NullBool) Convert() string {
-	if nb.Valid {
-		if nb.Bool {
-			return cast.ToString("true")
-		}
-		return cast.ToString("false")
-
-	}
-	return "false"
-}
-
-// NullDate 空字符串
-type NullDate struct {
-	sql.NullString
-}
-
-// NewDate ...
-func NewDate(s interface{}) NullDate {
-	// return NullDate{sql.NullString{String: util.Date("Y-m-d", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
-	return NullDate{sql.NullString{String: cast.ToString(s), Valid: true}}
-}
-
-// NewNullDate ...
-func NewNullDate() NullDate {
-	return NullDate{sql.NullString{String: "", Valid: true}}
-}
-
-// Scan ...
-func (nt *NullDate) Scan(value interface{}) error {
-	if reflect.TypeOf(value) == nil {
-		*nt = NewNullDate()
+// UnmarshalJSON satisfies the json.Unmarshaler interface
+func (n *NullBool) UnmarshalJSON(data []byte) error {
+	// Ignore null, like in the main JSON package.
+	if string(data) == "NULL" || string(data) == "" || string(data) == "~" {
 		return nil
 	}
-	var s sql.NullString
-	if err := s.Scan(value); err != nil {
-		return err
-	}
-	*nt = NewDate(s.String)
-	return nil
 
-}
-
-// MarshalJSON ...
-func (nt NullDate) MarshalJSON() ([]byte, error) {
-	if !nt.Valid {
-		return nullJSON, nil
-	}
-	return json.Marshal(nt.String)
-}
-
-// UnmarshalJSON ...
-func (nt *NullDate) UnmarshalJSON(b []byte) error {
-	var err error = nil
-	if bytes.Equal(nullJSON, b) {
-		nt.String = ""
-		nt.Valid = false
-	} else {
-		err = json.Unmarshal(b, &nt.String)
-		nt.Valid = (err == nil)
-	}
-	return err
-}
-
-// IsEmpty ...
-func (nt NullDate) IsEmpty() bool {
-	return !nt.Valid || nt.String == ""
-}
-
-// IsValid ...
-func (nt NullDate) IsValid() bool {
-	return nt.Valid
-}
-
-// Result ...
-func (nt NullDate) Result() interface{} {
-	if nt.Valid {
-		return nt.String
-	}
-	return "NULL"
-}
-
-// NullTime 空字符串
-type NullTime struct {
-	sql.NullString
-}
-
-// NewTime ...
-func NewTime(s interface{}) NullTime {
-	// return NullTime{sql.NullString{String: util.Date("H:i:s", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
-	return NullTime{sql.NullString{String: cast.ToString(s), Valid: true}}
-}
-
-// NewNullTime ...
-func NewNullTime() NullTime {
-	return NullTime{sql.NullString{String: "", Valid: true}}
-}
-
-// Scan ...
-func (nt *NullTime) Scan(value interface{}) error {
-	if reflect.TypeOf(value) == nil {
-		*nt = NewNullTime()
+	// var v string
+	if err := json.Unmarshal(data, &n.Bool); err != nil {
 		return nil
 	}
-	var s sql.NullString
-	if err := s.Scan(value); err != nil {
-		return err
-	}
-	*nt = NewTime(s.String)
+	n.Valid = true
 	return nil
 }
 
-// MarshalJSON ...
-func (nt NullTime) MarshalJSON() ([]byte, error) {
-	if !nt.Valid {
-		return nullJSON, nil
+func (n NullBool) MarshalJSON() ([]byte, error) {
+	if !n.Valid {
+		return NULL, nil
 	}
-	return json.Marshal(nt.String)
+	return json.Marshal(n.Bool)
 }
 
-// UnmarshalJSON ...
-func (nt *NullTime) UnmarshalJSON(b []byte) error {
-	var err error = nil
-	if bytes.Equal(nullJSON, b) {
-		nt.String = ""
-		nt.Valid = false
-	} else {
-		err = json.Unmarshal(b, &nt.String)
-		nt.Valid = (err == nil)
+func (n NullBool) Result() interface{} {
+	if n.Valid {
+		return n.Bool
 	}
-	return err
+	return cast.ToString(NULL)
 }
 
-// IsEmpty ...
-func (nt NullTime) IsEmpty() bool {
-	return !nt.Valid || nt.String == ""
-}
+type NullByte sql.NullByte
 
-// IsValid ...
-func (nt NullTime) IsValid() bool {
-	return nt.Valid
-}
-
-// Result ...
-func (nt NullTime) Result() interface{} {
-	if nt.Valid {
-		return nt.String
+func NewNullByte(s Any) NullByte {
+	if reflect.TypeOf(s) == nil {
+		return NullByte{}
 	}
-	return "NULL"
+	return NullByte{
+		Byte:  cast.ToUint8(s),
+		Valid: true,
+	}
 }
 
-// NullYear 空字符串
-type NullYear struct {
-	sql.NullString
-}
-
-// NewYear ...
-func NewYear(s interface{}) NullYear {
-	// return NullYear{sql.NullString{String: util.Date("Y", cast.ToTimeInDefaultLocation(s, util.TimeZone())), Valid: true}}
-	return NullYear{sql.NullString{String: cast.ToString(s), Valid: true}}
-}
-
-// NewNullYear ...
-func NewNullYear() NullYear {
-	return NullYear{sql.NullString{String: "", Valid: true}}
-}
-
-// Scan ...
-func (nt *NullYear) Scan(value interface{}) error {
-	if reflect.TypeOf(value) == nil {
-		*nt = NewNullYear()
+// UnmarshalJSON satisfies the json.Unmarshaler interface
+func (n *NullByte) UnmarshalJSON(data []byte) error {
+	// Ignore null, like in the main JSON package.
+	if string(data) == "NULL" || string(data) == "" || string(data) == "~" {
 		return nil
 	}
-	var s sql.NullString
-	if err := s.Scan(value); err != nil {
-		return err
+
+	// var v string
+	if err := json.Unmarshal(data, &n.Byte); err != nil {
+		return nil
 	}
-	*nt = NewYear(s.String)
+	n.Valid = true
 	return nil
 }
 
-// MarshalJSON ...
-func (nt NullYear) MarshalJSON() ([]byte, error) {
-	if !nt.Valid {
-		return nullJSON, nil
+func (n NullByte) MarshalJSON() ([]byte, error) {
+	if !n.Valid {
+		return NULL, nil
 	}
-	return json.Marshal(nt.String)
+	return json.Marshal(n.Byte)
 }
 
-// UnmarshalJSON ...
-func (nt *NullYear) UnmarshalJSON(b []byte) error {
-	var err error = nil
-	if bytes.Equal(nullJSON, b) {
-		nt.String = ""
-		nt.Valid = false
-	} else {
-		err = json.Unmarshal(b, &nt.String)
-		nt.Valid = (err == nil)
+// Result for NullString
+func (n NullByte) Result() interface{} {
+	if n.Valid {
+		return cast.ToUint8(n.Byte)
 	}
-	return err
+	return cast.ToString(NULL)
 }
 
-// IsEmpty ...
-func (nt NullYear) IsEmpty() bool {
-	return !nt.Valid || nt.String == ""
+type NullFloat32 struct {
+	Float32 float32
+	Valid   bool // Valid is true if Float32 is not NULL
 }
 
-// IsValid ...
-func (nt NullYear) IsValid() bool {
-	return nt.Valid
-}
-
-// Result ...
-func (nt NullYear) Result() interface{} {
-	if nt.Valid {
-		return nt.String
+func NewNullFloat32(s Any) NullFloat32 {
+	if reflect.TypeOf(s) == nil {
+		return NullFloat32{}
 	}
-	return "NULL"
+	return NullFloat32{
+		Float32: cast.ToFloat32(s),
+		Valid:   true,
+	}
 }
 
-// NullTimeStamp NullYear 空字符串
-type NullTimeStamp struct {
-	sql.NullString
-}
-
-// NewTimeStamp ...
-func NewTimeStamp(s interface{}) NullTimeStamp {
-	// return NullTimeStamp{sql.NullString{String: cast.ToString(cast.ToTimeInDefaultLocation(s, util.TimeZone()).Unix()), Valid: true}}
-	return NullTimeStamp{sql.NullString{String: cast.ToString(s), Valid: true}}
-}
-
-// NewNullTimeStamp ...
-func NewNullTimeStamp() NullTimeStamp {
-	return NullTimeStamp{sql.NullString{String: "", Valid: true}}
-}
-
-// Scan ...
-func (nt *NullTimeStamp) Scan(value interface{}) error {
-	if reflect.TypeOf(value) == nil {
-		*nt = NewNullTimeStamp()
+// Scan implements the Scanner interface.
+func (n *NullFloat32) Scan(value Any) error {
+	if value == nil {
+		n.Float32, n.Valid = 0, false
 		return nil
 	}
-	var s sql.NullString
-	if err := s.Scan(value); err != nil {
-		return err
-	}
-	*nt = NewTimeStamp(s.String)
+	n.Valid = true
+	n.Float32 = cast.ToFloat32(value)
 	return nil
 }
 
-// MarshalJSON ...
-func (nt NullTimeStamp) MarshalJSON() ([]byte, error) {
-	if !nt.Valid {
-		return nullJSON, nil
+func (n NullFloat32) Value() (Any, error) {
+	if !n.Valid {
+		return nil, nil
 	}
-	return json.Marshal(nt.String)
+	return n.Float32, nil
 }
 
-// UnmarshalJSON ...
-func (nt *NullTimeStamp) UnmarshalJSON(b []byte) error {
-	var err error = nil
-	if bytes.Equal(nullJSON, b) {
-		nt.String = ""
-		nt.Valid = false
-	} else {
-		err = json.Unmarshal(b, &nt.String)
-		nt.Valid = (err == nil)
+// UnmarshalJSON satisfies the json.Unmarshaler interface
+func (n *NullFloat32) UnmarshalJSON(data []byte) error {
+	// Ignore null, like in the main JSON package.
+	if string(data) == "NULL" || string(data) == "" || string(data) == "~" {
+		return nil
 	}
-	return err
-}
 
-// IsEmpty ...
-func (nt NullTimeStamp) IsEmpty() bool {
-	return !nt.Valid || nt.String == ""
-}
-
-// IsValid ...
-func (nt NullTimeStamp) IsValid() bool {
-	return nt.Valid
-}
-
-// Result ...
-func (nt NullTimeStamp) Result() interface{} {
-	if nt.Valid {
-		return nt.String
+	// var v string
+	if err := json.Unmarshal(data, &n.Float32); err != nil {
+		return nil
 	}
-	return "NULL"
+	n.Valid = true
+	return nil
+}
+
+func (n NullFloat32) MarshalJSON() ([]byte, error) {
+	if !n.Valid {
+		return NULL, nil
+	}
+	return json.Marshal(n.Float32)
+}
+
+// Result for NullString
+func (n NullFloat32) Result() interface{} {
+	if n.Valid {
+		return n.Float32
+	}
+	return cast.ToString(NULL)
+}
+
+type NullFloat64 sql.NullFloat64
+
+func NewNullFloat64(s Any) NullFloat64 {
+	if reflect.TypeOf(s) == nil {
+		return NullFloat64{}
+	}
+	return NullFloat64{
+		Float64: cast.ToFloat64(s),
+		Valid:   true,
+	}
+}
+
+// UnmarshalJSON satisfies the json.Unmarshaler interface
+func (n *NullFloat64) UnmarshalJSON(data []byte) error {
+	// Ignore null, like in the main JSON package.
+	if string(data) == "NULL" || string(data) == "" || string(data) == "~" {
+		return nil
+	}
+
+	// var v string
+	if err := json.Unmarshal(data, &n.Float64); err != nil {
+		return nil
+	}
+	n.Valid = true
+	return nil
+}
+
+func (n NullFloat64) MarshalJSON() ([]byte, error) {
+	if !n.Valid {
+		return NULL, nil
+	}
+	return json.Marshal(n.Float64)
+}
+
+// Result for NullString
+func (n NullFloat64) Result() interface{} {
+	if n.Valid {
+		return n.Float64
+	}
+	return cast.ToString(NULL)
+}
+
+type NullInt16 sql.NullInt16
+
+// NewNullInt16 函数将一个字符串转换为sql.NullInt16
+func NewNullInt16(s Any) NullInt16 {
+	if reflect.TypeOf(s) == nil {
+		return NullInt16{}
+	}
+	res := cast.ToInt16(s)
+	return NullInt16{
+		Int16: res,
+		Valid: true,
+	}
+}
+
+// UnmarshalJSON satisfies the json.Unmarshaler interface
+func (n *NullInt16) UnmarshalJSON(data []byte) error {
+	// Ignore null, like in the main JSON package.
+	if string(data) == "NULL" || string(data) == "" || string(data) == "~" {
+		return nil
+	}
+
+	// var v string
+	if err := json.Unmarshal(data, &n.Int16); err != nil {
+		return nil
+	}
+	n.Valid = true
+	return nil
+}
+
+func (n NullInt16) MarshalJSON() ([]byte, error) {
+	if !n.Valid {
+		return NULL, nil
+	}
+	return json.Marshal(n.Int16)
+}
+
+// Result for NullInt16
+func (n NullInt16) Result() interface{} {
+	if n.Valid {
+		return n.Int16
+	}
+	return cast.ToString(NULL)
+}
+
+type NullInt32 sql.NullInt32
+
+// NewNullInt32 函数将一个字符串转换为sql.NullInt32
+func NewNullInt32(s Any) NullInt32 {
+	if reflect.TypeOf(s) == nil {
+		return NullInt32{}
+	}
+	res := cast.ToInt32(s)
+	return NullInt32{
+		Int32: res,
+		Valid: true,
+	}
+}
+
+// UnmarshalJSON satisfies the json.Unmarshaler interface
+func (n *NullInt32) UnmarshalJSON(data []byte) error {
+	// Ignore null, like in the main JSON package.
+	if string(data) == "NULL" || string(data) == "" || string(data) == "~" {
+		return nil
+	}
+
+	// var v string
+	if err := json.Unmarshal(data, &n.Int32); err != nil {
+		return nil
+	}
+	n.Valid = true
+	return nil
+}
+
+func (n NullInt32) MarshalJSON() ([]byte, error) {
+	if !n.Valid {
+		return NULL, nil
+	}
+	return json.Marshal(n.Int32)
+}
+
+// Result for NullString
+func (n NullInt32) Result() interface{} {
+	if n.Valid {
+		return n.Int32
+	}
+	return cast.ToString(NULL)
+}
+
+type NullInt64 sql.NullInt64
+
+// NewNullInt64 函数将一个字符串转换为sql.NullInt64
+func NewNullInt64(s Any) NullInt64 {
+	if reflect.TypeOf(s) == nil {
+		return NullInt64{}
+	}
+	res := cast.ToInt64(s)
+	return NullInt64{
+		Int64: res,
+		Valid: true,
+	}
+}
+
+// UnmarshalJSON satisfies the json.Unmarshaler interface
+func (n *NullInt64) UnmarshalJSON(data []byte) error {
+	// Ignore null, like in the main JSON package.
+	if string(data) == "NULL" || string(data) == "" || string(data) == "~" {
+		return nil
+	}
+
+	// var v string
+	if err := json.Unmarshal(data, &n.Int64); err != nil {
+		return nil
+	}
+	n.Valid = true
+	return nil
+}
+
+func (n NullInt64) MarshalJSON() ([]byte, error) {
+	if !n.Valid {
+		return NULL, nil
+	}
+	return json.Marshal(n.Int64)
+}
+
+// Result for NullInt64
+func (n NullInt64) Result() interface{} {
+	if n.Valid {
+		return n.Int64
+	}
+	return cast.ToString(NULL)
+}
+
+// NullBytes can be an []byte or a null value.
+type NullBytes struct {
+	Bytes []byte
+	Valid bool // Valid is true if Bytes is not NULL
+}
+
+// NewNullBytes 函数将一个字符串转换为sql.NullBytes
+func NewNullBytes(s Any) NullBytes {
+	if reflect.TypeOf(s) == nil {
+		return NullBytes{}
+	}
+	return NullBytes{
+		Bytes: []byte(cast.ToString(s)),
+		Valid: true,
+	}
+}
+
+// Scan implements the Scanner interface.
+func (n *NullBytes) Scan(value interface{}) error {
+	if value == nil {
+		n.Bytes, n.Valid = nil, false
+		return nil
+	}
+	n.Valid = true
+	n.Bytes = []byte(cast.ToString(value))
+	return nil
+}
+
+// Value implements the driver Valuer interface.
+func (n NullBytes) Value() (Any, error) {
+	if !n.Valid {
+		return nil, nil
+	}
+	return n.Bytes, nil
+}
+
+// UnmarshalJSON satisfies the json.Unmarshaler interface
+func (n *NullBytes) UnmarshalJSON(data []byte) error {
+	// Ignore null, like in the main JSON package.
+	if string(data) == "NULL" || string(data) == "" || string(data) == "~" {
+		return nil
+	}
+
+	// var v string
+	if err := json.Unmarshal(data, &n.Bytes); err != nil {
+		return nil
+	}
+	n.Valid = true
+	return nil
+}
+
+func (n NullBytes) MarshalJSON() ([]byte, error) {
+	if !n.Valid {
+		return NULL, nil
+	}
+	return json.Marshal(n.Bytes)
+}
+
+// Result for NullBytes
+func (n NullBytes) Result() interface{} {
+	if n.Valid {
+		return n.Bytes
+	}
+	return cast.ToString(NULL)
 }

@@ -419,19 +419,25 @@ func (builder *Builder) getInsertMap(data interface{}) (columns []string, values
 				switch v.Interface().(type) {
 				case time.Time:
 					ignore = true
-				case NullDateTime:
+				case NullTime:
 					ignore = true
 				case NullString:
 					ignore = true
 				case NullBool:
 					ignore = true
-				case NullInt64:
+				case NullByte:
 					ignore = true
-				case NullInt32:
+				case NullBytes:
+					ignore = true
+				case NullFloat32:
 					ignore = true
 				case NullFloat64:
 					ignore = true
-				case NullDate:
+				case NullInt16:
+					ignore = true
+				case NullInt32:
+					ignore = true
+				case NullInt64:
 					ignore = true
 				}
 

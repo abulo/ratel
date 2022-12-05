@@ -4,12 +4,15 @@ import (
 	"log"
 
 	"github.com/abulo/ratel/v3/core/env"
-	"github.com/abulo/ratel/v3/toolkit/backstage"
-	"github.com/abulo/ratel/v3/toolkit/dao"
-	"github.com/abulo/ratel/v3/toolkit/module"
+	// "github.com/abulo/ratel/v3/toolkit/backstage"
+	// "github.com/abulo/ratel/v3/toolkit/dao"
+	// "github.com/abulo/ratel/v3/toolkit/module"
 	"github.com/abulo/ratel/v3/toolkit/project"
-	"github.com/abulo/ratel/v3/toolkit/proto"
-	"github.com/abulo/ratel/v3/toolkit/upgrade"
+	// "github.com/abulo/ratel/v3/toolkit/proto"
+	// "github.com/abulo/ratel/v3/toolkit/module"
+	// "github.com/abulo/ratel/v3/toolkit/project"
+	// "github.com/abulo/ratel/v3/toolkit/proto"
+	// "github.com/abulo/ratel/v3/toolkit/upgrade"
 	"github.com/spf13/cobra"
 )
 
@@ -33,11 +36,11 @@ func init() {
 		Hidden: true,
 	})
 	rootCmd.AddCommand(project.CmdNew)
-	rootCmd.AddCommand(dao.CmdNew)
-	rootCmd.AddCommand(module.CmdNew)
-	rootCmd.AddCommand(proto.CmdNew)
-	rootCmd.AddCommand(backstage.CmdNew)
-	rootCmd.AddCommand(upgrade.CmdNew)
+	// rootCmd.AddCommand(dao.CmdNew)
+	// rootCmd.AddCommand(module.CmdNew)
+	// rootCmd.AddCommand(proto.CmdNew)
+	// rootCmd.AddCommand(backstage.CmdNew)
+	// rootCmd.AddCommand(upgrade.CmdNew)
 	// rootCmd.AddCommand(change.CmdChange)
 	// rootCmd.AddCommand(run.CmdRun)
 }

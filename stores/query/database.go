@@ -408,20 +408,26 @@ func (SQLRaw SQL) ToString() string {
 			v = "NULL"
 		} else {
 			switch reflect.ValueOf(v).Interface().(type) {
+			case NullTime:
+				v = v.(NullTime).Result()
 			case NullString:
 				v = v.(NullString).Result()
-			case NullInt64:
-				v = v.(NullInt64).Result()
-			case NullInt32:
-				v = v.(NullInt32).Result()
-			case NullFloat64:
-				v = v.(NullFloat64).Result()
 			case NullBool:
 				v = v.(NullBool).Result()
-			case NullDateTime:
-				v = v.(NullDateTime).Result()
-			case NullDate:
-				v = v.(NullDate).Result()
+			case NullByte:
+				v = v.(NullByte).Result()
+			case NullBytes:
+				v = v.(NullBytes).Result()
+			case NullFloat32:
+				v = v.(NullFloat32).Result()
+			case NullFloat64:
+				v = v.(NullFloat64).Result()
+			case NullInt16:
+				v = v.(NullInt16).Result()
+			case NullInt32:
+				v = v.(NullInt32).Result()
+			case NullInt64:
+				v = v.(NullInt64).Result()
 			}
 		}
 		s = convert(s, v)
