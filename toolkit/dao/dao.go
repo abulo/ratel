@@ -89,11 +89,7 @@ func GenerateDao(table base.Table, column []base.Column) {
 	}).Parse(DaoTemplate()))
 
 	//定义结构体接收数据
-	type DaoParam struct {
-		Table       base.Table
-		TableColumn []base.Column
-	}
-	data := DaoParam{
+	data := base.DaoParam{
 		Table:       table,
 		TableColumn: column,
 	}
@@ -106,6 +102,7 @@ func GenerateDao(table base.Table, column []base.Column) {
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(filePath))
 }
 
+// DaoTemplate 模板
 func DaoTemplate() string {
 	outString := `
 package dao
@@ -116,9 +113,9 @@ import "github.com/abulo/ratel/v3/stores/query"
 type {{CamelStr .Table.TableName}} struct {
 	{{- range .TableColumn }}
 	{{- if eq .IsNullable "YES" }}
-	{{CamelStr .ColumnName}}	{{.DataTypeMap.Empty}}	{{SymbolChar}}db:"{{Helper .ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"{{SymbolChar}}  //DataType:{{.DataType}} {{.ColumnComment}}
+	{{CamelStr .ColumnName}}	{{.DataTypeMap.Empty}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"{{SymbolChar}}  //DataType:{{.DataType}} {{.ColumnComment}}
 	{{- else }}
-	{{CamelStr .ColumnName}}	{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{Helper .ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"{{SymbolChar}}  //DataType:{{.DataType}} {{.ColumnComment}}
+	{{CamelStr .ColumnName}}	{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"{{SymbolChar}}  //DataType:{{.DataType}} {{.ColumnComment}}
 	{{- end}}
 	{{- end}}
 }

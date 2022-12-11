@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/abulo/ratel/v3/stores/null"
 )
 
 // 转换成string
@@ -104,25 +106,31 @@ func extractTagInfo(st reflect.Value) (tagList map[string]reflect.Value, err err
 			switch v.Interface().(type) {
 			case time.Time:
 				ignore = true
-			case NullTime:
+			case null.Bool:
 				ignore = true
-			case NullString:
+			case null.Decimal:
 				ignore = true
-			case NullBool:
+			case null.Float32:
 				ignore = true
-			case NullByte:
+			case null.Float64:
 				ignore = true
-			case NullBytes:
+			case null.Int8:
 				ignore = true
-			case NullFloat32:
+			case null.Int16:
 				ignore = true
-			case NullFloat64:
+			case null.Int32:
 				ignore = true
-			case NullInt16:
+			case null.Int64:
 				ignore = true
-			case NullInt32:
+			case null.String:
 				ignore = true
-			case NullInt64:
+			case null.Uint8:
+				ignore = true
+			case null.Uint16:
+				ignore = true
+			case null.Uint32:
+				ignore = true
+			case null.Uint64:
 				ignore = true
 			}
 

@@ -7,6 +7,11 @@ import (
 	"github.com/spf13/cast"
 )
 
+type DaoParam struct {
+	Table       Table
+	TableColumn []Column
+}
+
 // Table 表信息
 type Table struct {
 	TableName    string `db:"TABLE_NAME"`    // 表名
@@ -21,7 +26,7 @@ type Column struct {
 	ColumnKey     string   `db:"COLUMN_KEY"`     // 是否索引
 	ColumnComment string   `db:"COLUMN_COMMENT"` // 字段描述
 	PosiTion      int64    // 排序信息
-	DataTypeMap   DataType //字段类型信息
+	DataTypeMap   DataType // 字段类型信息
 }
 
 // DataType 字段类型信息
@@ -29,31 +34,58 @@ type DataType struct {
 	Default string // 不空时
 	Empty   string // 为空时
 	Proto   string // Grpc 协议
+	Convert string
+}
+
+// Index 索引信息
+type Index struct {
+	IndexName string `db:"INDEX_NAME"` // 索引名称
+	Field     string `db:"FIELD"`      // 索引作用字段
+}
+
+type ModuleParam struct {
+	Table       Table
+	TableColumn []Column
+	Method      []Method // 方法
+	Pkg         string   // 包名
+	Primary     Column   // 主键信息
+	ModName     string   // go.mod 信息
+}
+
+// Method 构造的函数
+type Method struct {
+	Type        string   // 方法类型(list多个/one单条)
+	Name        string   // 函数名称
+	Condition   []Column // 函数需要的条件信息
+	Table       Table    // 表信息
+	TableColumn []Column // 表结构信息
+	Default     bool     // 默认
+	Primary     Column   // 主键信息
 }
 
 func NewDataType() map[string]DataType {
 	res := make(map[string]DataType)
-	res["numeric"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32"}
-	res["integer"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32"}
-	res["int"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32"}
-	res["smallint"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32"}
-	res["mediumint"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32"}
-	res["tinyint"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32"}
-	res["bigint"] = DataType{Default: "int64", Empty: "query.NullInt64", Proto: "int64"}
+	res["numeric"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
+	res["integer"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
+	res["int"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
+	res["smallint"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
+	res["mediumint"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
+	res["tinyint"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
+	res["bigint"] = DataType{Default: "int64", Empty: "query.NullInt64", Proto: "int64", Convert: "cast.ToInt64(\"%s\")"}
 
-	res["float"] = DataType{Default: "float32", Empty: "query.NullFloat32", Proto: "float"}
-	res["real"] = DataType{Default: "float64", Empty: "query.NullFloat64", Proto: "double"}
-	res["double"] = DataType{Default: "float64", Empty: "query.NullFloat64", Proto: "double"}
-	res["decimal"] = DataType{Default: "float64", Empty: "query.NullFloat64", Proto: "double"}
+	res["float"] = DataType{Default: "float32", Empty: "query.NullFloat32", Proto: "float", Convert: "cast.ToFloat32(\"%s\")"}
+	res["real"] = DataType{Default: "float64", Empty: "query.NullFloat64", Proto: "double", Convert: "cast.ToFloat64(\"%s\")"}
+	res["double"] = DataType{Default: "float64", Empty: "query.NullFloat64", Proto: "double", Convert: "cast.ToFloat64(\"%s\")"}
+	res["decimal"] = DataType{Default: "float64", Empty: "query.NullFloat64", Proto: "double", Convert: "cast.ToFloat64(\"%s\")"}
 
-	res["char"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string"}
-	res["varchar"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string"}
-	res["tinytext"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string"}
-	res["mediumtext"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string"}
-	res["longtext"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string"}
-	res["text"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string"}
-	res["json"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string"}
-	res["enum"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string"}
+	res["char"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string", Convert: "cast.ToString(\"%s\")"}
+	res["varchar"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string", Convert: "cast.ToString(\"%s\")"}
+	res["tinytext"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string", Convert: "cast.ToString(\"%s\")"}
+	res["mediumtext"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string", Convert: "cast.ToString(\"%s\")"}
+	res["longtext"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string", Convert: "cast.ToString(\"%s\")"}
+	res["text"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string", Convert: "cast.ToString(\"%s\")"}
+	res["json"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string", Convert: "cast.ToString(\"%s\")"}
+	res["enum"] = DataType{Default: "string", Empty: "query.NullString", Proto: "string", Convert: "cast.ToString(\"%s\")"}
 
 	// res["binary"] = DataType{Default: "[]byte", Empty: "query.NullBytes", Proto: "bytes"}
 	// res["varbinary"] = DataType{Default: "[]byte", Empty: "query.NullBytes", Proto: "bytes"}
@@ -62,29 +94,29 @@ func NewDataType() map[string]DataType {
 	// res["mediumblob"] = DataType{Default: "[]byte", Empty: "query.NullBytes", Proto: "bytes"}
 	// res["longblob"] = DataType{Default: "[]byte", Empty: "query.NullBytes", Proto: "bytes"}
 
-	res["binary"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
-	res["varbinary"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
-	res["tinyblob"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
-	res["blob"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
-	res["mediumblob"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
-	res["longblob"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
+	// res["binary"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
+	// res["varbinary"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
+	// res["tinyblob"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
+	// res["blob"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
+	// res["mediumblob"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
+	// res["longblob"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
 
 	// res["time"] = DataType{Default: "time.Time", Empty: "query.NullTime", Proto: "google.protobuf.Timestamp"}
 	// res["date"] = DataType{Default: "time.Time", Empty: "query.NullTime", Proto: "google.protobuf.Timestamp"}
 	// res["datetime"] = DataType{Default: "time.Time", Empty: "query.NullTime", Proto: "google.protobuf.Timestamp"}
 	// res["timestamp"] = DataType{Default: "time.Time", Empty: "query.NullTime", Proto: "google.protobuf.Timestamp"}
-
-	res["time"] = DataType{Default: "query.NullTime", Empty: "query.NullTime", Proto: "google.protobuf.Timestamp"}
-	res["date"] = DataType{Default: "query.NullTime", Empty: "query.NullTime", Proto: "google.protobuf.Timestamp"}
-	res["datetime"] = DataType{Default: "query.NullTime", Empty: "query.NullTime", Proto: "google.protobuf.Timestamp"}
-	res["timestamp"] = DataType{Default: "query.NullTime", Empty: "query.NullTime", Proto: "google.protobuf.Timestamp"}
-	res["year"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32"}
+	//INSERT INTO `test`.`dddd` (`time`, `date`, `datetime`, `timestamp`) VALUES ('17:45:05', '2022-12-10', '2022-12-10 17:45:16', '2022-12-10 17:45:19');
+	res["time"] = DataType{Default: "query.NullTime", Empty: "query.NullTime", Proto: "google.protobuf.Timestamp", Convert: "cast.ToTime(\"%s\")"}
+	res["date"] = DataType{Default: "query.NullTime", Empty: "query.NullTime", Proto: "google.protobuf.Timestamp", Convert: "cast.ToTime(\"%s\")"}
+	res["datetime"] = DataType{Default: "query.NullTime", Empty: "query.NullTime", Proto: "google.protobuf.Timestamp", Convert: "cast.ToTime(\"%s\")"}
+	res["timestamp"] = DataType{Default: "query.NullTime", Empty: "query.NullTime", Proto: "google.protobuf.Timestamp", Convert: "cast.ToTime(\"%s\")"}
+	res["year"] = DataType{Default: "int32", Empty: "query.NullInt32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
 
 	// res["bit"] = DataType{Default: "[]byte", Empty: "query.NullBytes", Proto: "bytes"}
 	// res["boolean"] = DataType{Default: "bool", Empty: "query.NullBool", Proto: "bool"}
 
-	res["bit"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
-	res["boolean"] = DataType{Default: "query.NullBool", Empty: "query.NullBool", Proto: "bool"}
+	// res["bit"] = DataType{Default: "query.NullBytes", Empty: "query.NullBytes", Proto: "bytes"}
+	// res["boolean"] = DataType{Default: "query.NullBool", Empty: "query.NullBool", Proto: "bool"}
 
 	return res
 }
@@ -94,6 +126,14 @@ func TableList(ctx context.Context, DbName string) ([]Table, error) {
 	var res []Table
 	builder := Query.NewBuilder(ctx).Select("TABLE_NAME", "TABLE_COMMENT").Table("information_schema.TABLES").Where("TABLE_SCHEMA", DbName)
 	err := builder.Rows().ToStruct(&res)
+	return res, err
+}
+
+// TableItem 获取数据中表的信息
+func TableItem(ctx context.Context, DbName, TableName string) (Table, error) {
+	var res Table
+	builder := Query.NewBuilder(ctx).Select("TABLE_NAME", "TABLE_COMMENT").Table("information_schema.TABLES").Where("TABLE_SCHEMA", DbName).Where("TABLE_NAME", TableName)
+	err := builder.Row().ToStruct(&res)
 	return res, err
 }
 
@@ -109,6 +149,26 @@ func TableColumn(ctx context.Context, DbName, TableName string) ([]Column, error
 			newKey := key + 1
 			res[key].PosiTion = cast.ToInt64(newKey)
 		}
+	}
+	return res, err
+}
+
+// TableIndex 获取表的索引信息
+func TableIndex(ctx context.Context, DbName, TableName string) ([]Index, error) {
+	var res []Index
+	err := Query.NewBuilder(ctx).Select("statistics.INDEX_NAME", "GROUP_CONCAT(CONCAT(statistics.COLUMN_NAME)) AS FIELD").Table("`information_schema`.`STATISTICS` AS statistics").LeftJoin("information_schema.`COLUMNS` AS `columns`", "statistics.COLUMN_NAME = `columns`.COLUMN_NAME").Where("statistics.TABLE_SCHEMA", DbName).Where("statistics.TABLE_NAME", TableName).Where("`columns`.TABLE_SCHEMA", DbName).Where("`columns`.TABLE_NAME", TableName).NotEqual("statistics.INDEX_NAME", "PRIMARY").GroupBy("statistics.TABLE_NAME", "statistics.INDEX_NAME").OrderBy("statistics.NON_UNIQUE", query.ASC).OrderBy("statistics.SEQ_IN_INDEX", query.ASC).Rows().ToStruct(&res)
+	return res, err
+}
+
+// TablePrimary 获取主键
+func TablePrimary(ctx context.Context, DbName, TableName string) (Column, error) {
+	var res Column
+	builder := Query.NewBuilder(ctx).Select("COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "COLUMN_KEY", "COLUMN_COMMENT").Table("information_schema.COLUMNS").Where("TABLE_SCHEMA", DbName).Where("TABLE_NAME", TableName).Where("COLUMN_KEY", "PRI").OrderBy("ORDINAL_POSITION", query.ASC)
+	err := builder.Row().ToStruct(&res)
+	if err == nil {
+		dataType := NewDataType()
+		res.DataTypeMap = dataType[res.DataType]
+		res.PosiTion = 1
 	}
 	return res, err
 }

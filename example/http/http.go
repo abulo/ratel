@@ -14,7 +14,7 @@ import (
 	"github.com/abulo/ratel/v3/gin"
 	"github.com/abulo/ratel/v3/pprof"
 	"github.com/abulo/ratel/v3/server/xgin"
-	"github.com/abulo/ratel/v3/stores/query"
+	"github.com/abulo/ratel/v3/stores/null"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
@@ -48,14 +48,14 @@ func init() {
 
 // 权限表
 type Permission struct {
-	Id       int64          `db:"id" json:"id"`              //主键,自增(PRI)
-	ParentId int64          `db:"parent_id" json:"parentId"` //父ID
-	Title    string         `db:"title" json:"title"`        //权限名称
-	Handle   string         `db:"handle" json:"handle"`      //路由别名(UNI)
-	Type     string         `db:"type" json:"type"`          //分类(作用前后端)(MUL)
-	Weight   int64          `db:"weight" json:"weight"`      //权重
-	CreateAt query.NullTime `db:"create_at" json:"createAt"` //
-	UpdateAt query.NullTime `db:"update_at" json:"updateAt"` //
+	Id       int64     `db:"id" json:"id"`              //主键,自增(PRI)
+	ParentId int64     `db:"parent_id" json:"parentId"` //父ID
+	Title    string    `db:"title" json:"title"`        //权限名称
+	Handle   string    `db:"handle" json:"handle"`      //路由别名(UNI)
+	Type     string    `db:"type" json:"type"`          //分类(作用前后端)(MUL)
+	Weight   int64     `db:"weight" json:"weight"`      //权重
+	CreateAt null.Time `db:"create_at" json:"createAt"` //
+	// UpdateAt query.NullTime `db:"update_at" json:"updateAt"` //
 }
 
 func main() {

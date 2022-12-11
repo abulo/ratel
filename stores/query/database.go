@@ -14,6 +14,7 @@ import (
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
 	"github.com/abulo/ratel/v3/core/trace"
+	"github.com/abulo/ratel/v3/stores/null"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
@@ -408,26 +409,32 @@ func (SQLRaw SQL) ToString() string {
 			v = "NULL"
 		} else {
 			switch reflect.ValueOf(v).Interface().(type) {
-			case NullTime:
-				v = v.(NullTime).Result()
-			case NullString:
-				v = v.(NullString).Result()
-			case NullBool:
-				v = v.(NullBool).Result()
-			case NullByte:
-				v = v.(NullByte).Result()
-			case NullBytes:
-				v = v.(NullBytes).Result()
-			case NullFloat32:
-				v = v.(NullFloat32).Result()
-			case NullFloat64:
-				v = v.(NullFloat64).Result()
-			case NullInt16:
-				v = v.(NullInt16).Result()
-			case NullInt32:
-				v = v.(NullInt32).Result()
-			case NullInt64:
-				v = v.(NullInt64).Result()
+			case null.Bool:
+				v = v.(null.Bool).String()
+			case null.Decimal:
+				v = v.(null.Decimal).String()
+			case null.Float32:
+				v = v.(null.Float32).String()
+			case null.Float64:
+				v = v.(null.Float64).String()
+			case null.Int8:
+				v = v.(null.Int8).String()
+			case null.Int16:
+				v = v.(null.Int16).String()
+			case null.Int32:
+				v = v.(null.Int32).String()
+			case null.Int64:
+				v = v.(null.Int64).String()
+			case null.String:
+				v = v.(null.String).String()
+			case null.Uint8:
+				v = v.(null.Uint8).String()
+			case null.Uint16:
+				v = v.(null.Bool).String()
+			case null.Uint32:
+				v = v.(null.Uint16).String()
+			case null.Uint64:
+				v = v.(null.Uint64).String()
 			}
 		}
 		s = convert(s, v)

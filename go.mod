@@ -14,7 +14,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/go-sql-driver/mysql v1.6.0
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/goccy/go-json v0.10.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.3.0
@@ -40,7 +40,7 @@ require (
 	github.com/pkg/sftp v1.13.5
 	github.com/prometheus/client_golang v1.14.0
 	github.com/sirupsen/logrus v1.9.0
-	github.com/smallnest/weighted v0.0.0-20201102054551-85ac5c79528c
+	github.com/smallnest/weighted v0.0.0-20221208081316-3995bfd8f628
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/cobra v1.6.1
 	github.com/streadway/amqp v1.0.0
@@ -51,15 +51,15 @@ require (
 	github.com/yosuke-furukawa/json5 v0.1.1
 	go.etcd.io/etcd/api/v3 v3.5.6
 	go.etcd.io/etcd/client/v3 v3.5.6
-	go.mongodb.org/mongo-driver v1.11.0
+	go.mongodb.org/mongo-driver v1.11.1
 	go.uber.org/multierr v1.8.0
-	golang.org/x/crypto v0.3.0
-	golang.org/x/image v0.1.0
+	golang.org/x/crypto v0.4.0
+	golang.org/x/image v0.2.0
 	golang.org/x/mod v0.7.0
-	golang.org/x/net v0.2.0
+	golang.org/x/net v0.4.0
 	golang.org/x/sync v0.1.0
-	golang.org/x/text v0.4.0
-	google.golang.org/genproto v0.0.0-20221201204527-e3fa12d562f3
+	golang.org/x/text v0.5.0
+	google.golang.org/genproto v0.0.0-20221207170731-23e4bf6bdc37
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -130,6 +130,6 @@ require (
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
-	golang.org/x/sys v0.2.0 // indirect
-	golang.org/x/term v0.2.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/term v0.3.0 // indirect
 )
