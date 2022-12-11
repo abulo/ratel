@@ -168,3 +168,12 @@ func (t CTime) Value() (driver.Value, error) {
 	}
 	return t.CTime, nil
 }
+
+
+// ValueOrDefault returns the inner value if valid, otherwise default.
+func (t CTime) ValueOrDefault() time.Time {
+	if !t.Valid {
+		return time.Time{}
+	}
+	return t.CTime
+}

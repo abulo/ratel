@@ -139,3 +139,11 @@ func (b Bytes) Value() (driver.Value, error) {
 	}
 	return b.Bytes, nil
 }
+
+// ValueOrDefault returns the inner value if valid, otherwise default.
+func (t Bytes) ValueOrDefault() []byte {
+	if !t.Valid {
+		return []byte{}
+	}
+	return t.Bytes
+}

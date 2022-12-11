@@ -175,3 +175,11 @@ func (t Date) Value() (driver.Value, error) {
 	}
 	return t.Date, nil
 }
+
+// ValueOrDefault returns the inner value if valid, otherwise default.
+func (t Date) ValueOrDefault() time.Time {
+	if !t.Valid {
+		return time.Time{}
+	}
+	return t.Date
+}

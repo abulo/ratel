@@ -176,3 +176,13 @@ func (t TimeStamp) Value() (driver.Value, error) {
 	}
 	return t.TimeStamp, nil
 }
+
+
+
+// ValueOrDefault returns the inner value if valid, otherwise default.
+func (t TimeStamp) ValueOrDefault() time.Time {
+	if !t.Valid {
+		return time.Time{}
+	}
+	return t.TimeStamp
+}

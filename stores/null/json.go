@@ -188,3 +188,11 @@ func (j JSON) Value() (driver.Value, error) {
 	}
 	return j.JSON, nil
 }
+
+// ValueOrDefault returns the inner value if valid, otherwise default.
+func (t JSON) ValueOrDefault() []byte {
+	if !t.Valid {
+		return []byte{}
+	}
+	return t.JSON
+}

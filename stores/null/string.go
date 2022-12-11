@@ -131,3 +131,11 @@ func (s String) Value() (driver.Value, error) {
 	}
 	return s.String, nil
 }
+
+// ValueOrDefault returns the inner value if valid, otherwise default.
+func (t String) ValueOrDefault() string {
+	if !t.Valid {
+		return ""
+	}
+	return t.String
+}
