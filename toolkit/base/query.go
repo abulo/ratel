@@ -34,7 +34,6 @@ type DataType struct {
 	Default string // 不空时
 	Empty   string // 为空时
 	Proto   string // Grpc 协议
-	Convert string
 }
 
 // Index 索引信息
@@ -54,38 +53,39 @@ type ModuleParam struct {
 
 // Method 构造的函数
 type Method struct {
-	Type        string   // 方法类型(list多个/one单条)
-	Name        string   // 函数名称
-	Condition   []Column // 函数需要的条件信息
-	Table       Table    // 表信息
-	TableColumn []Column // 表结构信息
-	Default     bool     // 默认
-	Primary     Column   // 主键信息
+	Type           string   // 方法类型(list多个/one单条)
+	Name           string   // 函数名称
+	Condition      []Column // 函数需要的条件信息
+	ConditionTotal int      // 条件数量
+	Table          Table    // 表信息
+	TableColumn    []Column // 表结构信息
+	Default        bool     // 默认
+	Primary        Column   // 主键信息
 }
 
 func NewDataType() map[string]DataType {
 	res := make(map[string]DataType)
-	res["numeric"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
-	res["integer"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
-	res["int"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
-	res["smallint"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
-	res["mediumint"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
-	res["tinyint"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
-	res["bigint"] = DataType{Default: "int64", Empty: "null.Int64", Proto: "int64", Convert: "cast.ToInt64(\"%s\")"}
+	res["numeric"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32"}
+	res["integer"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32"}
+	res["int"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32"}
+	res["smallint"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32"}
+	res["mediumint"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32"}
+	res["tinyint"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32"}
+	res["bigint"] = DataType{Default: "int64", Empty: "null.Int64", Proto: "int64"}
 
-	res["float"] = DataType{Default: "float32", Empty: "null.Float32", Proto: "float", Convert: "cast.ToFloat32(\"%s\")"}
-	res["real"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double", Convert: "cast.ToFloat64(\"%s\")"}
-	res["double"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double", Convert: "cast.ToFloat64(\"%s\")"}
-	res["decimal"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double", Convert: "cast.ToFloat64(\"%s\")"}
+	res["float"] = DataType{Default: "float32", Empty: "null.Float32", Proto: "float"}
+	res["real"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double"}
+	res["double"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double"}
+	res["decimal"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double"}
 
-	res["char"] = DataType{Default: "string", Empty: "null.String", Proto: "string", Convert: "cast.ToString(\"%s\")"}
-	res["varchar"] = DataType{Default: "string", Empty: "null.String", Proto: "string", Convert: "cast.ToString(\"%s\")"}
-	res["tinytext"] = DataType{Default: "string", Empty: "null.String", Proto: "string", Convert: "cast.ToString(\"%s\")"}
-	res["mediumtext"] = DataType{Default: "string", Empty: "null.String", Proto: "string", Convert: "cast.ToString(\"%s\")"}
-	res["longtext"] = DataType{Default: "string", Empty: "null.String", Proto: "string", Convert: "cast.ToString(\"%s\")"}
-	res["text"] = DataType{Default: "string", Empty: "null.String", Proto: "string", Convert: "cast.ToString(\"%s\")"}
-	res["json"] = DataType{Default: "string", Empty: "null.String", Proto: "string", Convert: "cast.ToString(\"%s\")"}
-	res["enum"] = DataType{Default: "string", Empty: "null.String", Proto: "string", Convert: "cast.ToString(\"%s\")"}
+	res["char"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
+	res["varchar"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
+	res["tinytext"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
+	res["mediumtext"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
+	res["longtext"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
+	res["text"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
+	res["json"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
+	res["enum"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
 
 	res["binary"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes"}
 	res["varbinary"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes"}
@@ -94,11 +94,11 @@ func NewDataType() map[string]DataType {
 	res["mediumblob"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes"}
 	res["longblob"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes"}
 
-	res["time"] = DataType{Default: "null.CTime", Empty: "null.CTime", Proto: "google.protobuf.Timestamp", Convert: "cast.ToTime(\"%s\")"}
-	res["date"] = DataType{Default: "null.Date", Empty: "null.Date", Proto: "google.protobuf.Timestamp", Convert: "cast.ToTime(\"%s\")"}
-	res["datetime"] = DataType{Default: "null.DateTime", Empty: "null.DateTime", Proto: "google.protobuf.Timestamp", Convert: "cast.ToTime(\"%s\")"}
-	res["timestamp"] = DataType{Default: "null.TimeStamp", Empty: "null.TimeStamp", Proto: "google.protobuf.Timestamp", Convert: "cast.ToTime(\"%s\")"}
-	res["year"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", Convert: "cast.ToInt32(\"%s\")"}
+	res["time"] = DataType{Default: "null.CTime", Empty: "null.CTime", Proto: "google.protobuf.Timestamp"}
+	res["date"] = DataType{Default: "null.Date", Empty: "null.Date", Proto: "google.protobuf.Timestamp"}
+	res["datetime"] = DataType{Default: "null.DateTime", Empty: "null.DateTime", Proto: "google.protobuf.Timestamp"}
+	res["timestamp"] = DataType{Default: "null.TimeStamp", Empty: "null.TimeStamp", Proto: "google.protobuf.Timestamp"}
+	res["year"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32"}
 
 	res["bit"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes"}
 	res["boolean"] = DataType{Default: "bool", Empty: "null.Bool", Proto: "bool"}
