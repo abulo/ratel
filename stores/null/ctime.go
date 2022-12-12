@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/abulo/ratel/v3/util"
-	"github.com/spf13/cast"
 )
 
 // CTime (Customize Time) is a nullable time.Time that accept only hour,minutes,seconds and ignore elses.
@@ -149,7 +148,7 @@ func (t *CTime) Scan(value interface{}) error {
 	var err error
 	switch x := value.(type) {
 	case []byte:
-		t.CTime = time.Date(0, 1, 1, cast.ToInt(cast.ToString(x[0:2])), cast.ToInt(cast.ToString(x[3:5])), cast.ToInt(cast.ToString(x[6:8])), 0, util.TimeZone())
+		t.CTime, _ = time.ParseInLocation(RFC3339TimeOnly, string(x), util.TimeZone())
 	case time.Time:
 		// because time.parser setting default year 0, month 1, and day 1 for emptied time.Time so we follow it
 		t.CTime = time.Date(0, 1, 1, x.Hour(), x.Minute(), x.Second(), 0, x.Location())

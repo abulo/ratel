@@ -18,9 +18,7 @@ import (
 )
 
 func init() {
-	// var cstZone = time.FixedZone("GMT", 8*3600)
-	// var cstZone = time.FixedZone("CST", 8*3600)
-	var cstZone, _ = time.LoadLocation("PRC")
+	var cstZone = time.FixedZone("CST", 8*3600) // 东八
 	time.Local = cstZone
 	// 全局设置
 	global := initial.New()

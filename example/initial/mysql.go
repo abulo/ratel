@@ -35,7 +35,9 @@ func (initial *Initial) InitMysql() *Initial {
 		if Database := cast.ToString(res["Database"]); Database != "" {
 			opt.Database = Database
 		}
-
+		if Local := cast.ToString(res["Local"]); Local != "" {
+			opt.Local = Local
+		}
 		// # MaxOpenConns 连接池最多同时打开的连接数
 		// MaxOpenConns = 128
 		// # MaxIdleConns 连接池里最大空闲连接数。必须要比maxOpenConns小

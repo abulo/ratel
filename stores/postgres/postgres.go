@@ -16,6 +16,7 @@ type Config struct {
 	Port          string        //端口 3306
 	Charset       string        //字符编码 utf8mb4
 	Database      string        //默认连接数据库
+	Local         string        //数据库时区
 	MaxOpenConns  int           //连接池最多同时打开的连接数
 	MaxIdleConns  int           //连接池里最大空闲连接数。必须要比maxOpenConns小
 	MaxLifetime   time.Duration //连接池里面的连接最大存活时长
@@ -47,5 +48,5 @@ func (config *Config) URI() string {
 		config.Host + ":" +
 		config.Port + ")/" +
 		config.Database + "?charset=" +
-		config.Charset + "&loc=" + time.Local.String() + "&parseTime=true"
+		config.Charset + "&loc=" + config.Local + "&parseTime=true"
 }

@@ -4,6 +4,7 @@
         Password = "zeus"
         Addr = ["172.18.1.10:9000"]
         Database = "xmt"
+        Local = "PRC"
         DialTimeout = "3s"
         OpenStrategy = "random"
         Compress = true

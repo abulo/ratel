@@ -30,6 +30,9 @@ func (initial *Initial) InitClickHouse() *Initial {
 		if Database := cast.ToString(res["Database"]); Database != "" {
 			opt.Database = Database
 		}
+		if Local := cast.ToString(res["Local"]); Local != "" {
+			opt.Local = Local
+		}
 		if DialTimeout := cast.ToString(res["DialTimeout"]); DialTimeout != "" {
 			opt.DialTimeout = DialTimeout
 		}
