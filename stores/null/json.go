@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
+	"github.com/spf13/cast"
 )
 
 // JSON is a nullable []byte that contains JSON.
@@ -195,4 +196,12 @@ func (t JSON) ValueOrDefault() []byte {
 		return []byte{}
 	}
 	return t.JSON
+}
+
+// String returns the string representation of the float or null.
+func (t JSON) Result() string {
+	if !t.Valid {
+		return "null"
+	}
+	return cast.ToString(t.JSON)
 }

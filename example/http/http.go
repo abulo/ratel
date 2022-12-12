@@ -2,25 +2,26 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io"
-	"net/http"
 	"os"
+	"time"
 
-	"github.com/abulo/ratel/v3/core/app"
 	"github.com/abulo/ratel/v3/core/env"
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/logger/mongo"
 	"github.com/abulo/ratel/v3/example/initial"
-	"github.com/abulo/ratel/v3/gin"
-	"github.com/abulo/ratel/v3/pprof"
-	"github.com/abulo/ratel/v3/server/xgin"
 	"github.com/abulo/ratel/v3/stores/null"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/cast"
 )
 
 func init() {
+	// var cstZone = time.FixedZone("GMT", 8*3600)
+	// var cstZone = time.FixedZone("CST", 8*3600)
+	var cstZone, _ = time.LoadLocation("PRC")
+	time.Local = cstZone
 	// 全局设置
 	global := initial.New()
 	// 获取配置文件目录
@@ -46,16 +47,14 @@ func init() {
 	env.SetAppZone("cs")
 }
 
-// 权限表
-type Permission struct {
-	Id       int64     `db:"id" json:"id"`              //主键,自增(PRI)
-	ParentId int64     `db:"parent_id" json:"parentId"` //父ID
-	Title    string    `db:"title" json:"title"`        //权限名称
-	Handle   string    `db:"handle" json:"handle"`      //路由别名(UNI)
-	Type     string    `db:"type" json:"type"`          //分类(作用前后端)(MUL)
-	Weight   int64     `db:"weight" json:"weight"`      //权重
-	CreateAt null.Time `db:"create_at" json:"createAt"` //
-	// UpdateAt query.NullTime `db:"update_at" json:"updateAt"` //
+type Test struct {
+	Id            int64          `db:"id" json:"id" form:"id" uri:"id" xml:"id" proto:"id"`                                                                    //DataType:bigint
+	NullString    null.String    `db:"null_string" json:"nullString" form:"nullString" uri:"nullString" xml:"nullString" proto:"nullString"`                   //DataType:varchar
+	NullDate      null.Date      `db:"null_date" json:"nullDate" form:"nullDate" uri:"nullDate" xml:"nullDate" proto:"nullDate"`                               //DataType:date
+	NullDatetime  null.DateTime  `db:"null_datetime" json:"nullDatetime" form:"nullDatetime" uri:"nullDatetime" xml:"nullDatetime" proto:"nullDatetime"`       //DataType:datetime
+	NullYear      null.Int32     `db:"null_year" json:"nullYear" form:"nullYear" uri:"nullYear" xml:"nullYear" proto:"nullYear"`                               //DataType:year
+	NullTime      null.CTime     `db:"null_time" json:"nullTime" form:"nullTime" uri:"nullTime" xml:"nullTime" proto:"nullTime"`                               //DataType:time
+	NullTimestamp null.TimeStamp `db:"null_timestamp" json:"nullTimestamp" form:"nullTimestamp" uri:"nullTimestamp" xml:"nullTimestamp" proto:"nullTimestamp"` //DataType:timestamp
 }
 
 func main() {
@@ -71,107 +70,23 @@ func main() {
 	} else {
 		logger.Logger.SetOutput(os.Stdout)
 	}
+	ctx := context.TODO()
 
-	eng := NewEngine()
+	db := initial.Core.Store.LoadSQL("mysql").Write()
+	var res Test
+	err := db.NewBuilder(ctx).Table("test").Where("id", 1).Row().ToStruct(&res)
+	// fmt.Println(err)
+	// fmt.Println("=====")
+	fmt.Println(res)
+	// fmt.Println("=====")
+	str, _ := json.Marshal(res)
+	fmt.Println(string(str))
 
-	if err := eng.Run(); err != nil {
-		logger.Logger.Panic(err.Error())
-	}
+	var update Test
+	// update.NullString
+	update.NullString = null.NewString("", false)
 
+	id, err := db.NewBuilder(ctx).Table("test").Where("id", 1).Update(update)
+
+	fmt.Println(id, err)
 }
-
-type Engine struct {
-	app.Application
-}
-
-func NewEngine() *Engine {
-	eng := &Engine{}
-	//加载计划任务
-	// eng.Schedule(eng.CrontabWork())
-	// 注册函数
-	// eng.RegisterHooks(hooks.Stage_AfterLoadConfig, eng.BeforeInit)
-	if err := eng.Startup(
-		eng.NewAdminHttpServer,
-		// eng.ApiServer,
-	); err != nil {
-		logger.Logger.WithFields(logrus.Fields{
-			"err": err,
-		}).Panic("startup")
-	}
-	return eng
-}
-
-func (eng *Engine) NewAdminHttpServer() error {
-	configAdmin := initial.Core.Config.Get("server.admin")
-	cfg := configAdmin.(map[string]interface{})
-	//先获取这个服务是否是需要开启
-	if disable := cast.ToBool(cfg["Disable"]); disable {
-		logger.Logger.Error("server.admin is disabled")
-		return nil
-	}
-	client := xgin.New()
-	client.Host = cast.ToString(cfg["Host"])
-	client.Port = cast.ToInt(cfg["Port"])
-	client.Deployment = cast.ToString(cfg["Deployment"])
-	client.DisableMetric = cast.ToBool(cfg["DisableMetric"])
-	client.DisableTrace = cast.ToBool(cfg["DisableTrace"])
-	client.DisableSlowQuery = cast.ToBool(cfg["DisableSlowQuery"])
-	client.ServiceAddress = cast.ToString(cfg["ServiceAddress"])
-	client.SlowQueryThresholdInMilli = cast.ToInt64(cfg["SlowQueryThresholdInMilli"])
-	server := client.Build()
-	if !initial.Core.Config.Bool("DisableDebug", true) {
-		client.Mode = gin.DebugMode
-		server.Use(gin.Logger())
-		server.Use(gin.Recovery())
-	} else {
-		client.Mode = gin.ReleaseMode
-	}
-	server.SetTrustedProxies([]string{"0.0.0.0/0"})
-	//添加路由
-	pprof.Register(server.Engine)
-	Route(server.Engine)
-	if gin.IsDebugging() {
-		gin.App.Table.Render()
-	}
-	return eng.Serve(server)
-}
-
-func Route(r *gin.Engine) {
-	groupRoutes := r.Group("/admin/v1")
-	{
-		groupRoutes.GET("/permission/:id", "test", Show)
-	}
-}
-
-func Show(ctx *gin.Context) {
-	id := cast.ToInt64(ctx.Param("id"))
-	//实例化
-	data, err := ShowData(ctx.Request.Context(), id)
-	err = nil
-	if err != nil {
-		ctx.JSON(http.StatusOK, gin.H{
-			"code": http.StatusBadRequest,
-			"msg":  err.Error(),
-		})
-		return
-	}
-
-	cache := initial.Core.Store.LoadRedis("redis")
-	cache.Set(ctx.Request.Context(), "test", "test", -1).Result()
-	//成功
-	ctx.JSON(http.StatusOK, gin.H{
-		"code": http.StatusOK,
-		"msg":  "",
-		"data": data,
-	})
-}
-
-func ShowData(ctx context.Context, id int64) (Permission, error) {
-	db := initial.Core.Store.LoadSQL("mysql").Read()
-	var res Permission
-	err := db.NewBuilder(ctx).Table("permission").Where("id", id).Row().ToStruct(&res)
-	return res, err
-}
-
-//struct{}{}
-//[]interface{}

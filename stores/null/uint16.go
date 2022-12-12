@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
+	"github.com/spf13/cast"
 )
 
 // Uint16 is an nullable uint16.
@@ -150,4 +151,12 @@ func (u Uint16) ValueOrDefault() uint16 {
 		return 0
 	}
 	return u.Uint16
+}
+
+// String returns the string representation of the float or null.
+func (t Uint16) Result() string {
+	if !t.Valid {
+		return "null"
+	}
+	return cast.ToString(t.Uint16)
 }

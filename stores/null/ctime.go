@@ -5,6 +5,9 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"time"
+
+	"github.com/abulo/ratel/v3/util"
+	"github.com/spf13/cast"
 )
 
 // CTime (Customize Time) is a nullable time.Time that accept only hour,minutes,seconds and ignore elses.
@@ -106,7 +109,6 @@ func (t *CTime) UnmarshalText(text []byte) error {
 		t.Valid = false
 		return nil
 	}
-
 	// customize from golang time/time.go
 	// Fractional seconds are handled implicitly by Parse.
 	var err error
@@ -146,6 +148,8 @@ func (t CTime) IsZero() bool {
 func (t *CTime) Scan(value interface{}) error {
 	var err error
 	switch x := value.(type) {
+	case []byte:
+		t.CTime = time.Date(0, 1, 1, cast.ToInt(cast.ToString(x[0:2])), cast.ToInt(cast.ToString(x[3:5])), cast.ToInt(cast.ToString(x[6:8])), 0, util.TimeZone())
 	case time.Time:
 		// because time.parser setting default year 0, month 1, and day 1 for emptied time.Time so we follow it
 		t.CTime = time.Date(0, 1, 1, x.Hour(), x.Minute(), x.Second(), 0, x.Location())
@@ -169,11 +173,18 @@ func (t CTime) Value() (driver.Value, error) {
 	return t.CTime, nil
 }
 
-
 // ValueOrDefault returns the inner value if valid, otherwise default.
 func (t CTime) ValueOrDefault() time.Time {
 	if !t.Valid {
 		return time.Time{}
 	}
 	return t.CTime
+}
+
+// String returns the string representation of the float or null.
+func (t CTime) Result() string {
+	if !t.Valid {
+		return "null"
+	}
+	return t.CTime.Format(RFC3339TimeOnly)
 }

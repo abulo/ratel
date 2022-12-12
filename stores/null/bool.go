@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"strconv"
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
 )
@@ -155,4 +156,12 @@ func (t Bool) ValueOrDefault() bool {
 		return false
 	}
 	return t.Bool
+}
+
+// Result returns the string representation of the float or null.
+func (t Bool) Result() string {
+	if !t.Valid {
+		return "null"
+	}
+	return strconv.FormatBool(t.Bool)
 }

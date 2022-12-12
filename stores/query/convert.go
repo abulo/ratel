@@ -108,11 +108,21 @@ func extractTagInfo(st reflect.Value) (tagList map[string]reflect.Value, err err
 				ignore = true
 			case null.Bool:
 				ignore = true
-			case null.Decimal:
+			case null.Byte:
+				ignore = true
+			case null.Bytes:
+				ignore = true
+			case null.CTime:
+				ignore = true
+			case null.Date:
+				ignore = true
+			case null.DateTime:
 				ignore = true
 			case null.Float32:
 				ignore = true
 			case null.Float64:
+				ignore = true
+			case null.Int:
 				ignore = true
 			case null.Int8:
 				ignore = true
@@ -122,7 +132,15 @@ func extractTagInfo(st reflect.Value) (tagList map[string]reflect.Value, err err
 				ignore = true
 			case null.Int64:
 				ignore = true
+			case null.JSON:
+				ignore = true
 			case null.String:
+				ignore = true
+			case null.Time:
+				ignore = true
+			case null.TimeStamp:
+				ignore = true
+			case null.Uint:
 				ignore = true
 			case null.Uint8:
 				ignore = true

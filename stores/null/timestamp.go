@@ -177,12 +177,18 @@ func (t TimeStamp) Value() (driver.Value, error) {
 	return t.TimeStamp, nil
 }
 
-
-
 // ValueOrDefault returns the inner value if valid, otherwise default.
 func (t TimeStamp) ValueOrDefault() time.Time {
 	if !t.Valid {
 		return time.Time{}
 	}
 	return t.TimeStamp
+}
+
+// Result returns the string representation of the float or null.
+func (t TimeStamp) Result() string {
+	if !t.Valid {
+		return "null"
+	}
+	return t.TimeStamp.Format(TimeStampSQL)
 }

@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
+	"github.com/spf13/cast"
 )
 
 // Uint64 is an nullable uint64.
@@ -154,4 +155,12 @@ func (u Uint64) ValueOrDefault() uint64 {
 		return 0
 	}
 	return u.Uint64
+}
+
+// String returns the string representation of the float or null.
+func (t Uint64) Result() string {
+	if !t.Valid {
+		return "null"
+	}
+	return cast.ToString(t.Uint64)
 }

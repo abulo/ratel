@@ -52,7 +52,7 @@ var datePatterns = []string{
 }
 
 // timeZone 默认时区
-var timeZone *time.Location
+// var timeZone *time.Location
 
 // DateTimeParse 时间解析
 func DateTimeParse(st string) (int, error) {
@@ -105,18 +105,21 @@ func GetHourDiffer(startTime, endTime interface{}) int64 {
 
 // TimeZone GetTimeZone 获取时区
 func TimeZone() *time.Location {
-	if timeZone == nil {
-		timeZone, _ = time.LoadLocation("Local")
-	}
-	return timeZone
+	// if timeZone == nil {
+	// 	timeZone, _ = time.LoadLocation("Local")
+	// }
+	return time.Local
 }
 
-// SetTimeZone 设置时区
-func SetTimeZone(zone string) *time.Location {
-	//loc, err := time.LoadLocation("Asia/Shanghai")
-	timeZone, _ = time.LoadLocation(zone)
-	return timeZone
-}
+// // SetTimeZone 设置时区
+// func SetTimeZone(zone string) *time.Location {
+// 	//loc, err := time.LoadLocation("Asia/Shanghai")
+// res, _ := time.LoadLocation(zone)
+// 	timeZone = res
+
+// 	fmt.Println(timeZone.String())
+// 	return res
+// }
 
 // DateTime Functions
 

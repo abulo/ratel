@@ -140,3 +140,11 @@ func (i Int64) ValueOrDefault() int64 {
 	}
 	return i.Int64
 }
+
+// String returns the string representation of the int or null.
+func (a Int64) Result() string {
+	if !a.Valid {
+		return "null"
+	}
+	return strconv.FormatInt(a.Int64, 10)
+}

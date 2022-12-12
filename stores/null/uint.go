@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
+	"github.com/spf13/cast"
 )
 
 // Uint is an nullable uint.
@@ -144,4 +145,12 @@ func (u Uint) ValueOrDefault() uint {
 		return 0
 	}
 	return u.Uint
+}
+
+// String returns the string representation of the float or null.
+func (t Uint) Result() string {
+	if !t.Valid {
+		return "null"
+	}
+	return cast.ToString(t.Uint)
 }

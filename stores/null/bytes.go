@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
+	"github.com/spf13/cast"
 )
 
 // NullBytes is a global byte slice of JSON null
@@ -146,4 +147,12 @@ func (t Bytes) ValueOrDefault() []byte {
 		return []byte{}
 	}
 	return t.Bytes
+}
+
+// String returns the string representation of the float or null.
+func (t Bytes) Result() string {
+	if !t.Valid {
+		return "null"
+	}
+	return cast.ToString(t.Bytes)
 }

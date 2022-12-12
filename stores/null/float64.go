@@ -140,3 +140,11 @@ func (t Float64) ValueOrDefault() float64 {
 	}
 	return t.Float64
 }
+
+// String returns the string representation of the float or null.
+func (a Float64) Result() string {
+	if !a.Valid {
+		return "null"
+	}
+	return strconv.FormatFloat(a.Float64, 'f', -1, 64)
+}

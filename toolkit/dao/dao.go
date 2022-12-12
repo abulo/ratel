@@ -107,7 +107,7 @@ func DaoTemplate() string {
 	outString := `
 package dao
 
-import "github.com/abulo/ratel/v3/stores/query"
+import "github.com/abulo/ratel/v3/stores/null"
 
 // {{CamelStr .Table.TableName}} {{.Table.TableComment}} {{.Table.TableName}}
 type {{CamelStr .Table.TableName}} struct {

@@ -5,6 +5,8 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+
+	"github.com/spf13/cast"
 )
 
 // Byte is an nullable int.
@@ -155,4 +157,12 @@ func (t Byte) ValueOrDefault() byte {
 		return 0
 	}
 	return t.Byte
+}
+
+// String returns the string representation of the float or null.
+func (t Byte) Result() string {
+	if !t.Valid {
+		return "null"
+	}
+	return cast.ToString(t.Byte)
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
+	"github.com/spf13/cast"
 )
 
 // String is a nullable string. It supports SQL and JSON serialization.
@@ -138,4 +139,12 @@ func (t String) ValueOrDefault() string {
 		return ""
 	}
 	return t.String
+}
+
+// Result returns the string representation of the float or null.
+func (t String) Result() string {
+	if !t.Valid {
+		return "null"
+	}
+	return cast.ToString(t.String)
 }

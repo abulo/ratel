@@ -410,31 +410,49 @@ func (SQLRaw SQL) ToString() string {
 		} else {
 			switch reflect.ValueOf(v).Interface().(type) {
 			case null.Bool:
-				v = v.(null.Bool).String()
-			case null.Decimal:
-				v = v.(null.Decimal).String()
+				v = v.(null.Bool).Result()
+			case null.Byte:
+				v = v.(null.Byte).Result()
+			case null.Bytes:
+				v = v.(null.Bytes).Result()
+			case null.CTime:
+				v = v.(null.CTime).Result()
+			case null.Date:
+				v = v.(null.Date).Result()
+			case null.DateTime:
+				v = v.(null.DateTime).Result()
 			case null.Float32:
-				v = v.(null.Float32).String()
+				v = v.(null.Float32).Result()
 			case null.Float64:
-				v = v.(null.Float64).String()
+				v = v.(null.Float64).Result()
+			case null.Int:
+				v = v.(null.Int).Result()
 			case null.Int8:
-				v = v.(null.Int8).String()
+				v = v.(null.Int8).Result()
 			case null.Int16:
-				v = v.(null.Int16).String()
+				v = v.(null.Int16).Result()
 			case null.Int32:
-				v = v.(null.Int32).String()
+				v = v.(null.Int32).Result()
 			case null.Int64:
-				v = v.(null.Int64).String()
+				v = v.(null.Int64).Result()
+			case null.JSON:
+				v = v.(null.JSON).Result()
 			case null.String:
-				v = v.(null.String).String()
+				v = v.(null.String).Result()
+			case null.Time:
+				v = v.(null.Time).Result()
+			case null.TimeStamp:
+				v = v.(null.TimeStamp).Result()
+			case null.Uint:
+				v = v.(null.Uint).Result()
 			case null.Uint8:
-				v = v.(null.Uint8).String()
+				v = v.(null.Uint8).Result()
 			case null.Uint16:
-				v = v.(null.Bool).String()
+				v = v.(null.Uint16).Result()
 			case null.Uint32:
-				v = v.(null.Uint16).String()
+				v = v.(null.Uint32).Result()
 			case null.Uint64:
-				v = v.(null.Uint64).String()
+				v = v.(null.Uint64).Result()
 			}
 		}
 		s = convert(s, v)

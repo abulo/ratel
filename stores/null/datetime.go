@@ -184,3 +184,11 @@ func (t DateTime) ValueOrDefault() time.Time {
 	}
 	return t.DateTime
 }
+
+// String returns the string representation of the float or null.
+func (t DateTime) Result() string {
+	if !t.Valid {
+		return "null"
+	}
+	return t.DateTime.Format(DateTimeSQL)
+}
