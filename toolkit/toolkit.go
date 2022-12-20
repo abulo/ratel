@@ -33,11 +33,8 @@ func init() {
 	rootCmd.AddCommand(project.CmdNew)
 	rootCmd.AddCommand(dao.CmdNew)
 	rootCmd.AddCommand(module.CmdNew)
-	// rootCmd.AddCommand(proto.CmdNew)
 	// rootCmd.AddCommand(backstage.CmdNew)
 	rootCmd.AddCommand(upgrade.CmdNew)
-	// rootCmd.AddCommand(change.CmdChange)
-	// rootCmd.AddCommand(run.CmdRun)
 }
 
 func main() {

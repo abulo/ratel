@@ -66,7 +66,9 @@ func InitQuery() error {
 	if Database := cast.ToString(Config.String("mysql.Database")); Database != "" {
 		opt.Database = Database
 	}
-
+	if Local := cast.ToString(Config.String("mysql.Local")); Local != "" {
+		opt.Local = Local
+	}
 	// # MaxOpenConns 连接池最多同时打开的连接数
 	// MaxOpenConns = 128
 	// # MaxIdleConns 连接池里最大空闲连接数。必须要比maxOpenConns小
@@ -75,7 +77,6 @@ func InitQuery() error {
 	// MaxLifetime = 10
 	// # MaxIdleTime 连接池里面的连接最大空闲时长(分钟)
 	// MaxIdleTime = 5
-
 	if MaxLifetime := cast.ToInt(Config.Int("mysql.MaxLifetime")); MaxLifetime > 0 {
 		opt.MaxLifetime = time.Duration(MaxLifetime) * time.Minute
 	}

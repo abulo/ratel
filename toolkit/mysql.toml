@@ -5,6 +5,8 @@
     Password = "mysql"
     Charset = "utf8mb4"
     Database = "safety"
+    #数据库时区
+    Local = "PRC"
     # MaxOpenConns 连接池最多同时打开的连接数
     MaxOpenConns = 64
     # MaxIdleConns 连接池里最大空闲连接数。必须要比maxOpenConns小
