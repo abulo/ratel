@@ -7,8 +7,8 @@ import (
 
 	"github.com/abulo/ratel/v3/core/constant"
 	"github.com/abulo/ratel/v3/core/logger"
-	"github.com/abulo/ratel/v3/gin"
 	"github.com/abulo/ratel/v3/server"
+	"github.com/gin-gonic/gin"
 )
 
 // Server ...
@@ -35,7 +35,7 @@ func newServer(config *Config) *Server {
 
 // Upgrade protocol to WebSocket
 func (s *Server) Upgrade(ws *WebSocket) gin.IRoutes {
-	return s.GET(ws.Pattern, ws.Name, func(c *gin.Context) {
+	return s.GET(ws.Pattern, func(c *gin.Context) {
 		ws.Upgrade(c.Writer, c.Request)
 	})
 }

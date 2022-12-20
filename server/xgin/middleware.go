@@ -13,7 +13,7 @@ import (
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
 	"github.com/abulo/ratel/v3/core/trace"
-	"github.com/abulo/ratel/v3/gin"
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 

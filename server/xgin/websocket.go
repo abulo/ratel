@@ -42,7 +42,6 @@ type WebSocketFunc func(WebSocketConn, error)
 // WebSocket ..
 type WebSocket struct {
 	Pattern string
-	Name    string
 	Handler WebSocketFunc
 	*websocket.Upgrader
 	Header http.Header
@@ -65,10 +64,9 @@ func (ws *WebSocket) Upgrade(w http.ResponseWriter, r *http.Request) {
 type WebSocketOption func(*WebSocket)
 
 // WebSocketOptions ..
-func WebSocketOptions(pattern, name string, handler WebSocketFunc, opts ...WebSocketOption) *WebSocket {
+func WebSocketOptions(pattern string, handler WebSocketFunc, opts ...WebSocketOption) *WebSocket {
 	ws := &WebSocket{
 		Pattern:  pattern,
-		Name:     name,
 		Handler:  handler,
 		Upgrader: &websocket.Upgrader{},
 	}

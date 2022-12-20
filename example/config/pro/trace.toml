@@ -1,7 +1,0 @@
-[trace]
-    # 是否开启
-    EnableRPCMetrics = true
-    LocalAgentHostPort = "172.18.1.6:6831"
-    LogSpans = true
-    Param = 1.0
-    PanicOnError = true
