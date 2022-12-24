@@ -3,6 +3,7 @@ package trace
 import (
 	"context"
 
+	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -10,7 +11,11 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func SpanHttpStartName(ctx *gin.Context) string {
+func SpanGinHttpStartName(ctx *gin.Context) string {
+	return "http " + ctx.FullPath()
+}
+
+func SpanHertzHttpStartName(ctx *app.RequestContext) string {
 	return "http " + ctx.FullPath()
 }
 

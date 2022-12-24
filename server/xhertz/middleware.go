@@ -1,7 +1,8 @@
-package xgin
+package xhertz
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -13,8 +14,10 @@ import (
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
 	"github.com/abulo/ratel/v3/core/trace"
-	"github.com/gin-gonic/gin"
+	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/common/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 )
 
 var (
@@ -24,39 +27,36 @@ var (
 	slash     = []byte("/")
 )
 
-func extractAID(ctx *gin.Context) string {
-	return ctx.Request.Header.Get("AID")
-}
-
-func metricServerInterceptor() gin.HandlerFunc {
-	return func(c *gin.Context) {
+func metricServerInterceptor() app.HandlerFunc {
+	return func(c context.Context, ctx *app.RequestContext) {
 		beg := time.Now()
-		c.Next()
-		metric.ServerHandleHistogram.Observe(time.Since(beg).Seconds(), metric.TypeHTTP, c.Request.Method+"."+c.Request.URL.Path, extractAID(c))
-		metric.ServerHandleCounter.Inc(metric.TypeHTTP, c.Request.Method+"."+c.Request.URL.Path, extractAID(c), http.StatusText(c.Writer.Status()))
+		ctx.Next(c)
+		metric.ServerHandleHistogram.Observe(time.Since(beg).Seconds(), metric.TypeHTTP, string(ctx.Request.Method())+"."+string(ctx.Request.Path()), extractAID(ctx))
+		metric.ServerHandleCounter.Inc(metric.TypeHTTP, string(ctx.Request.Method())+"."+string(ctx.Request.Path()), extractAID(ctx), http.StatusText(ctx.Response.StatusCode()))
 	}
 }
 
-func traceServerInterceptor() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		span, ctx := trace.StartSpanFromContext(
-			c.Request.Context(),
-			trace.SpanGinHttpStartName(c),
+func traceServerInterceptor() app.HandlerFunc {
+	return func(c context.Context, ctx *app.RequestContext) {
+		span, ctxNew := trace.StartSpanFromContext(
+			c,
+			trace.SpanHertzHttpStartName(ctx),
 			trace.TagComponent("http"),
 			trace.TagSpanKind("server"),
-			trace.HeaderExtractor(c.Request.Header),
-			trace.CustomTag("http.url", c.Request.URL.Path),
-			trace.CustomTag("http.method", c.Request.Method),
-			trace.CustomTag("peer.ipv4", c.ClientIP()),
+			// trace.HeaderExtractor(ctx.Request.Header.GetHeaders()),
+			trace.CustomTag("http.url", string(ctx.Request.Path())),
+			trace.CustomTag("http.method", string(ctx.Request.Method())),
+			trace.CustomTag("peer.ipv4", ctx.ClientIP()),
 		)
-		c.Request = c.Request.WithContext(ctx)
+		c = ctxNew
 		defer span.Finish()
-		c.Next()
+		ctx.Next(c)
 	}
 }
 
-func recoverMiddleware(slowQueryThresholdInMilli int64) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func recoverMiddleware(slowQueryThresholdInMilli int64) app.HandlerFunc {
+	return func(c context.Context, ctx *app.RequestContext) {
+
 		var beg = time.Now()
 		fields := make(logrus.Fields)
 		var brokenPipe bool
@@ -80,23 +80,23 @@ func recoverMiddleware(slowQueryThresholdInMilli int64) gin.HandlerFunc {
 				fields["err"] = err.Error()
 				logger.Logger.WithFields(fields).Error("access")
 				if brokenPipe {
-					_ = c.Error(err)
-					c.Abort()
+					_ = ctx.Error(err)
+					ctx.Abort()
 					return
 				}
-				c.AbortWithStatus(http.StatusInternalServerError)
+				ctx.AbortWithStatus(http.StatusInternalServerError)
 				return
 			}
-			fields["method"] = c.Request.Method
-			fields["code"] = c.Writer.Status()
-			fields["size"] = c.Writer.Size()
-			fields["host"] = c.Request.Host
-			fields["path"] = c.Request.URL.Path
-			fields["ip"] = c.ClientIP()
-			fields["err"] = c.Errors.ByType(gin.ErrorTypePrivate).String()
+			fields["method"] = cast.ToString(ctx.Request.Method())
+			fields["code"] = ctx.Response.StatusCode()
+			fields["size"] = len(ctx.Response.BodyBytes())
+			fields["host"] = cast.ToString(ctx.Request.Host())
+			fields["path"] = cast.ToString(ctx.Request.Path())
+			fields["ip"] = ctx.ClientIP()
+			fields["err"] = ctx.Errors.ByType(errors.ErrorTypePrivate).String()
 			logger.Logger.WithFields(fields).Info("access")
 		}()
-		c.Next()
+		ctx.Next(c)
 	}
 }
 
@@ -159,4 +159,46 @@ func source(lines [][]byte, n int) []byte {
 		return dunno
 	}
 	return bytes.TrimSpace(lines[n])
+}
+
+func extractAID(ctx *app.RequestContext) string {
+	return ctx.Request.Header.Get("AID")
+}
+
+// HTTPHeader is provided to wrap an http.Header into an HTTPHeaderCarrier.
+type HTTPHeader map[string][]string
+
+// Visit implements the HTTPHeaderCarrier interface.
+func (h HTTPHeader) Visit(v func(k, v string)) {
+	for k, vs := range h {
+		v(k, vs[0])
+	}
+}
+
+// Set sets the header entries associated with key to the single element value.
+// The key will converted into lowercase as the HTTP/2 protocol requires.
+func (h HTTPHeader) Set(key, value string) {
+	h[strings.ToLower(key)] = []string{value}
+}
+
+// HTTPHeaderCarrier accepts a visitor to access all key value pairs in an HTTP header.
+type HTTPHeaderCarrier interface {
+	Visit(func(k, v string))
+}
+
+// HTTPHeaderSetter sets a key with a value into a HTTP header.
+type HTTPHeaderSetter interface {
+	Set(key, value string)
+}
+
+// HTTPHeaderToCGIVariable performs an CGI variable conversion.
+// For example, an HTTP header key `abc-def` will result in `ABC_DEF`.
+func HTTPHeaderToCGIVariable(key string) string {
+	return strings.ToUpper(strings.ReplaceAll(key, "-", "_"))
+}
+
+// CGIVariableToHTTPHeader converts a CGI variable into an HTTP header key.
+// For example, `ABC_DEF` will be converted to `abc-def`.
+func CGIVariableToHTTPHeader(key string) string {
+	return strings.ToLower(strings.ReplaceAll(key, "_", "-"))
 }
