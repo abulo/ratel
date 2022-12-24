@@ -129,6 +129,5 @@ require (
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/term v0.3.0 // indirect
-	modernc.org/b v1.0.0 // indirect
 	modernc.org/b/v2 v2.1.0 // indirect
 )
