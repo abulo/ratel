@@ -1,9 +1,10 @@
 package config
 
 import (
-	"errors"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/gookit/goutil/envutil"
 	"github.com/gookit/goutil/mathutil"
@@ -261,7 +262,7 @@ func (c *Config) getString(key string) (value string, ok bool) {
 		}
 	default:
 		// value = fmt.Sprintf("%v", val)
-		value,_ = strutil.AnyToString(val, false)
+		value, _ = strutil.AnyToString(val, false)
 	}
 
 	// add cache
@@ -357,12 +358,13 @@ func Bool(key string, defVal ...bool) bool { return dc.Bool(key, defVal...) }
 // Bool looks up a value for a key in this section and attempts to parse that value as a boolean,
 // along with a boolean result similar to a map lookup.
 // of following(case insensitive):
-//  - true
-//  - yes
-//  - false
-//  - no
-//  - 1
-//  - 0
+//   - true
+//   - yes
+//   - false
+//   - no
+//   - 1
+//   - 0
+//
 // The `ok` boolean will be false in the event that the value could not be parsed as a bool
 func (c *Config) Bool(key string, defVal ...bool) (value bool) {
 	rawVal, ok := c.getString(key)
@@ -535,15 +537,14 @@ func (c *Config) StringMap(key string) (mp map[string]string) {
 		mp = make(map[string]string)
 
 		for k, v := range typeData {
-			switch v.(type) {
+			switch tv := v.(type) {
 			case string:
 				if c.opts.ParseEnv {
-					mp[k] = envutil.ParseEnvValue(v.(string))
+					mp[k] = envutil.ParseEnvValue(tv)
 				} else {
-					mp[k] = v.(string)
+					mp[k] = tv
 				}
 			default:
-				// mp[k] = fmt.Sprintf("%v", v)
 				mp[k], _ = strutil.AnyToString(v, false)
 			}
 		}

@@ -7,6 +7,7 @@ import (
 	"github.com/gookit/ini/v2/dotenv"
 )
 
+// UpperEnvKey ...
 var (
 	// UpperEnvKey change key to upper on set ENV
 	UpperEnvKey = true
@@ -21,7 +22,7 @@ var (
 	// originalEnv []string
 
 	// cache all loaded ENV data
-	loadedData = map[string]string{}
+	// loadedData = map[string]string{}
 )
 
 // LoadedData get all loaded data by dontenv
@@ -42,7 +43,8 @@ func DontUpperEnvKey() {
 // Load parse .env file data to os ENV.
 //
 // Usage:
-// 	dotenv.Load("./", ".env")
+//
+//	dotenv.Load("./", ".env")
 func Load(dir string, filenames ...string) (err error) {
 	return dotenv.Load(dir, filenames...)
 }

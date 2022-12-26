@@ -1,0 +1,24 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+  skip-dirs: # 设置要忽略的目录
+    - util
+    - example
+    - .*~
+    - api/swagger/docs
+    - watch
+    - goroutine
+  skip-files: # 设置不需要检查的go源码文件，支持正则匹配，这里建议包括：_test.go
+    - ".*\\.my\\.go$"
+    - _test.go
+linters:
+  enable:
+    - errcheck
+    - goimports
+    - govet
+    - staticcheck
+    - revive
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0

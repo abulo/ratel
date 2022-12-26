@@ -3,17 +3,16 @@ package grpc
 import (
 	"time"
 
-	"github.com/abulo/ratel/v2/logger"
 	"github.com/abulo/ratel/v2/util"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer/roundrobin"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
 
 // Config ...
 type Config struct {
-	Name                      string // config's name
+	Name                      string
 	BalancerName              string
 	Address                   string
 	Block                     bool
@@ -24,7 +23,6 @@ type Config struct {
 	KeepAlive                 *keepalive.ClientParameters
 	dialOptions               []grpc.DialOption
 	SlowThreshold             time.Duration
-	logger                    *logrus.Logger
 	Debug                     bool
 	DisableTraceInterceptor   bool
 	DisableAidInterceptor     bool
@@ -38,7 +36,7 @@ type Config struct {
 func New() *Config {
 	return &Config{
 		dialOptions: []grpc.DialOption{
-			grpc.WithInsecure(),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		},
 		BalancerName:           roundrobin.Name, // round robin by default
 		DialTimeout:            time.Second * 3,
@@ -46,7 +44,6 @@ func New() *Config {
 		SlowThreshold:          util.Duration("600ms"),
 		OnDialError:            "panic",
 		AccessInterceptorLevel: "info",
-		logger:                 logger.Logger,
 		Block:                  true,
 	}
 }
@@ -76,7 +73,7 @@ func (config *Config) Build() *grpc.ClientConn {
 
 	if !config.DisableTimeoutInterceptor {
 		config.dialOptions = append(config.dialOptions,
-			grpc.WithChainUnaryInterceptor(timeoutUnaryClientInterceptor(config.logger, config.ReadTimeout, config.SlowThreshold)),
+			grpc.WithChainUnaryInterceptor(timeoutUnaryClientInterceptor(config.ReadTimeout, config.SlowThreshold)),
 		)
 	}
 
@@ -88,7 +85,7 @@ func (config *Config) Build() *grpc.ClientConn {
 
 	if !config.DisableAccessInterceptor {
 		config.dialOptions = append(config.dialOptions,
-			grpc.WithChainUnaryInterceptor(loggerUnaryClientInterceptor(config.logger, config.Name, config.AccessInterceptorLevel)),
+			grpc.WithChainUnaryInterceptor(loggerUnaryClientInterceptor(config.Name, config.AccessInterceptorLevel)),
 		)
 	}
 

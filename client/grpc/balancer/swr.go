@@ -1,11 +1,12 @@
 package balancer
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 
-	"github.com/abulo/ratel/v2/constant"
+	"github.com/pkg/errors"
+
+	"github.com/abulo/ratel/v2/core/constant"
 	"github.com/abulo/ratel/v2/registry"
 	"github.com/abulo/ratel/v2/server"
 	"github.com/smallnest/weighted"
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/grpc/balancer/base"
 )
 
+// NameSmoothWeightRoundRobin ...
 const (
 	// NameSmoothWeightRoundRobin ...
 	NameSmoothWeightRoundRobin = "swr"
@@ -46,9 +48,9 @@ func (s swrPickerBuilder) Build(info PickerBuildInfo) balancer.Picker {
 }
 
 type swrPicker struct {
-	readySCs     map[balancer.SubConn]base.SubConnInfo
-	mu           sync.Mutex
-	next         int
+	readySCs map[balancer.SubConn]base.SubConnInfo
+	mu       sync.Mutex
+	// next         int
 	buckets      *weighted.SW
 	routeBuckets map[string]*weighted.SW
 	*attributes.Attributes
@@ -92,7 +94,7 @@ func (p *swrPicker) parseBuildInfo(info PickerBuildInfo) {
 		if info.Address.Attributes != nil {
 			if serviceInfo, ok := info.Address.Attributes.Value(constant.KeyServiceInfo).(server.ServiceInfo); ok {
 				// todo(gorexlv): 分组
-				group := serviceInfo.Label()
+				group := serviceInfo.Group
 				if _, ok := groupedSubConns[group]; !ok {
 					groupedSubConns[group] = make([]balancer.SubConn, 0)
 				}

@@ -3,8 +3,8 @@ package resolver
 import (
 	"context"
 
-	"github.com/abulo/ratel/v2/constant"
-	"github.com/abulo/ratel/v2/goroutine"
+	"github.com/abulo/ratel/v2/core/constant"
+	"github.com/abulo/ratel/v2/core/goroutine"
 	"github.com/abulo/ratel/v2/registry"
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/resolver"
@@ -25,7 +25,8 @@ type baseBuilder struct {
 
 // Build ...
 func (b *baseBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
-	endpoints, err := b.reg.WatchServices(context.Background(), target.Endpoint, "grpc")
+	uri := target.URL.Path
+	endpoints, err := b.reg.WatchServices(context.Background(), uri, "grpc")
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +46,7 @@ func (b *baseBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts
 				for _, node := range endpoint.Nodes {
 					var address resolver.Address
 					address.Addr = node.Address
-					address.ServerName = target.Endpoint
+					address.ServerName = uri
 					address.Attributes = attributes.New(constant.KeyServiceInfo, node)
 					state.Addresses = append(state.Addresses, address)
 				}

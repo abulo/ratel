@@ -2,9 +2,10 @@ package config
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
+
+	"github.com/pkg/errors"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -12,8 +13,9 @@ import (
 // MapStruct alias method of the 'Structure'
 //
 // Usage:
-// 	dbInfo := &Db{}
-// 	config.MapStruct("db", dbInfo)
+//
+//	dbInfo := &Db{}
+//	config.MapStruct("db", dbInfo)
 func MapStruct(key string, dst interface{}) error { return dc.MapStruct(key, dst) }
 
 // MapStruct alias method of the 'Structure'
@@ -47,8 +49,9 @@ func (c *Config) MapOnExists(key string, dst interface{}) error {
 // Structure get config data and binding to the dst structure.
 //
 // Usage:
-// 	dbInfo := Db{}
-// 	config.Structure("db", &dbInfo)
+//
+//	dbInfo := Db{}
+//	config.Structure("db", &dbInfo)
 func (c *Config) Structure(key string, dst interface{}) error {
 	var data interface{}
 	if key == "" { // binding all data

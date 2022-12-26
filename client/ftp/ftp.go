@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/abulo/ratel/v2/core/logger"
 	"github.com/jlaffaye/ftp"
 )
 
@@ -18,7 +19,7 @@ type Config struct {
 	Timeout  time.Duration
 }
 
-//FileData 文件
+// FileData 文件
 type FileData struct {
 	Name string
 	Size uint64
@@ -31,7 +32,7 @@ type Client struct {
 	config *Config
 }
 
-//New 新建连接
+// New 新建连接
 func (config *Config) New() (*Client, error) {
 	conn, err := ftp.Dial(config.Host+":"+config.Port, ftp.DialWithTimeout(config.Timeout))
 	if err != nil {
@@ -48,22 +49,22 @@ func (client *Client) ChangeDir(path string) error {
 	return client.ftp.ChangeDir(path)
 }
 
-//ChangeDirToParent 将当前目录更改为父目录。这类似于对ChangeDir的调用，路径设置为“..”
+// ChangeDirToParent 将当前目录更改为父目录。这类似于对ChangeDir的调用，路径设置为“..”
 func (client *Client) ChangeDirToParent() error {
 	return client.ftp.ChangeDirToParent()
 }
 
-//CurrentDir 返回当前目录的路径
+// CurrentDir 返回当前目录的路径
 func (client *Client) CurrentDir() (string, error) {
 	return client.ftp.CurrentDir()
 }
 
-//Delete 从远程FTP服务器删除指定的文件
+// Delete 从远程FTP服务器删除指定的文件
 func (client *Client) Delete(path string) error {
 	return client.ftp.Delete(path)
 }
 
-//FileSize 返回文件的大小
+// FileSize 返回文件的大小
 func (client *Client) FileSize(path string) (int64, error) {
 	return client.ftp.FileSize(path)
 }
@@ -78,7 +79,11 @@ func (client *Client) DownFile(serverPath, destPath string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Close()
+	defer func() {
+		if err := resp.Close(); err != nil {
+			logger.Logger.Error("Error closing response: ", err)
+		}
+	}()
 	return os.WriteFile(destPath, fileData, 0664)
 }
 
@@ -92,11 +97,15 @@ func (client *Client) UploadFile(srcFullPath, serverPath string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			logger.Logger.Error("Error closing file: ", err)
+		}
+	}()
 	return client.ftp.Stor(serverPath, file)
 }
 
-//List 返回文件夹下所有文件
+// List 返回文件夹下所有文件
 func (client *Client) List(path string) (filesData []FileData, err error) {
 	err = client.ChangeDir(path)
 	if err != nil {
@@ -120,7 +129,7 @@ func (client *Client) List(path string) (filesData []FileData, err error) {
 	return
 }
 
-//NameList 返回文件夹下所有文件
+// NameList 返回文件夹下所有文件
 func (client *Client) NameList(path string) ([]string, error) {
 	err := client.ChangeDir(path)
 	if err != nil {
@@ -159,7 +168,7 @@ func (client *Client) Quit() error {
 	return client.ftp.Quit()
 }
 
-//Login 验证登录
+// Login 验证登录
 func (client *Client) Login() error {
 	return client.ftp.Login(client.config.User, client.config.Password)
 }

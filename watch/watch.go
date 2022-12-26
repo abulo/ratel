@@ -20,7 +20,7 @@ import (
 
 var configFile string = "watch.toml"
 
-//AppPath 运行路径
+// AppPath 运行路径
 func AppPath() string {
 
 	dir, err := os.Getwd()
@@ -31,7 +31,7 @@ func AppPath() string {
 
 }
 
-//ParseConfig 解析配置文件
+// ParseConfig 解析配置文件
 func ParseConfig() *config.Config {
 
 	AppConfig := config.New("watch")
@@ -45,16 +45,18 @@ func ParseConfig() *config.Config {
 	return AppConfig
 }
 
-//FileExist 判断文件是否存在
+// FileExist 判断文件是否存在
 func FileExist(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil || os.IsExist(err)
 }
 
+// Level ...
 type (
 	Level int
 )
 
+// LevelFatal ...
 const (
 	LevelFatal = iota
 	LevelError
@@ -65,48 +67,59 @@ const (
 
 var _log *logger = New()
 
+// Fatal ...
 func Fatal(s string) {
 	_log.Output(LevelFatal, s)
 	os.Exit(1)
 }
 
+// Fatalf ...
 func Fatalf(format string, v ...interface{}) {
 	_log.Output(LevelFatal, fmt.Sprintf(format, v...))
 	os.Exit(1)
 }
 
+// Error ...
 func Error(s string) {
 	_log.Output(LevelError, s)
 }
 
+// Errorf ...
 func Errorf(format string, v ...interface{}) {
 	_log.Output(LevelError, fmt.Sprintf(format, v...))
 }
 
+// Warn ...
 func Warn(s string) {
 	_log.Output(LevelWarning, s)
 }
 
+// Warnf ...
 func Warnf(format string, v ...interface{}) {
 	_log.Output(LevelWarning, fmt.Sprintf(format, v...))
 }
 
+// Info ...
 func Info(s string) {
 	_log.Output(LevelInfo, s)
 }
 
+// Infof ...
 func Infof(format string, v ...interface{}) {
 	_log.Output(LevelInfo, fmt.Sprintf(format, v...))
 }
 
+// Debug ...
 func Debug(s string) {
 	_log.Output(LevelDebug, s)
 }
 
+// Debugf ...
 func Debugf(format string, v ...interface{}) {
 	_log.Output(LevelDebug, fmt.Sprintf(format, v...))
 }
 
+// SetLogLevel ...
 func SetLogLevel(level Level) {
 	_log.SetLogLevel(level)
 }
@@ -117,16 +130,17 @@ type logger struct {
 	logLevel Level
 }
 
-//NewLogger 实例化，供自定义
+// NewLogger 实例化，供自定义
 func NewLogger() *logger {
 	return &logger{_log: log.New(os.Stderr, "", log.Lshortfile|log.LstdFlags), logLevel: LevelDebug}
 }
 
-//New 实例化，供外部直接调用 log.XXXX
+// New 实例化，供外部直接调用 log.XXXX
 func New() *logger {
 	return &logger{_log: log.New(os.Stderr, "", log.Lshortfile|log.LstdFlags), logLevel: LevelDebug}
 }
 
+// Output ...
 func (l *logger) Output(level Level, s string) error {
 	if l.logLevel < level {
 		return nil
@@ -148,48 +162,59 @@ func (l *logger) Output(level Level, s string) error {
 	return l._log.Output(3, s)
 }
 
+// Fatal ...
 func (l *logger) Fatal(s string) {
 	l.Output(LevelFatal, s)
 	os.Exit(1)
 }
 
+// Fatalf ...
 func (l *logger) Fatalf(format string, v ...interface{}) {
 	l.Output(LevelFatal, fmt.Sprintf(format, v...))
 	os.Exit(1)
 }
 
+// Error ...
 func (l *logger) Error(s string) {
 	l.Output(LevelError, s)
 }
 
+// Errorf ...
 func (l *logger) Errorf(format string, v ...interface{}) {
 	l.Output(LevelError, fmt.Sprintf(format, v...))
 }
 
+// Warn ...
 func (l *logger) Warn(s string) {
 	l.Output(LevelWarning, s)
 }
 
+// Warnf ...
 func (l *logger) Warnf(format string, v ...interface{}) {
 	l.Output(LevelWarning, fmt.Sprintf(format, v...))
 }
 
+// Info ...
 func (l *logger) Info(s string) {
 	l.Output(LevelInfo, s)
 }
 
+// Infof ...
 func (l *logger) Infof(format string, v ...interface{}) {
 	l.Output(LevelInfo, fmt.Sprintf(format, v...))
 }
 
+// Debug ...
 func (l *logger) Debug(s string) {
 	l.Output(LevelDebug, s)
 }
 
+// Debugf ...
 func (l *logger) Debugf(format string, v ...interface{}) {
 	l.Output(LevelDebug, fmt.Sprintf(format, v...))
 }
 
+// SetLogLevel ...
 func (l *logger) SetLogLevel(level Level) {
 	l.logLevel = level
 }
@@ -277,7 +302,7 @@ func getFileModTime(path string) int64 {
 	return fi.ModTime().Unix()
 }
 
-//NewWatcher new watcher
+// NewWatcher new watcher
 func NewWatcher(paths []string, files []string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -329,7 +354,7 @@ func NewWatcher(paths []string, files []string) {
 	}
 }
 
-//Autobuild auto build
+// Autobuild auto build
 func Autobuild(files []string) {
 	state.Lock()
 	defer state.Unlock()
@@ -378,7 +403,7 @@ func Autobuild(files []string) {
 
 }
 
-//Kill kill process
+// Kill kill process
 func Kill() {
 	defer func() {
 		if e := recover(); e != nil {
@@ -393,14 +418,14 @@ func Kill() {
 	}
 }
 
-//Restart restart app
+// Restart restart app
 func Restart(appname string) {
 	// Debugf("杀掉进程")
 	Kill()
 	go Start(appname)
 }
 
-//Start start app
+// Start start app
 func Start(appname string) {
 	Infof("开始运行 %s ...\n", appname)
 
@@ -418,7 +443,7 @@ func Start(appname string) {
 
 // end watch
 
-///main starts
+// /main starts
 var (
 	cfg      *config.Config
 	currpath string
@@ -444,7 +469,7 @@ func runApp() {
 	}
 }
 
-//Run 运行
+// Run 运行
 func Run(cmd, args string) {
 	runcmd = cmd
 	runArgs = args

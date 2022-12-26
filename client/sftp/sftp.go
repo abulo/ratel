@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/abulo/ratel/v2/logger"
+	"github.com/abulo/ratel/v2/core/logger"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
@@ -34,13 +34,14 @@ type IOReaderProgress struct {
 	TransferredBytes *int64 // Total of bytes transferred
 }
 
+// Read ...
 func (iorp *IOReaderProgress) Read(p []byte) (int, error) {
 	n, err := iorp.Reader.Read(p)
 	*iorp.TransferredBytes += int64(n)
 	return n, err
 }
 
-//New 新建连接
+// New 新建连接
 func (config *Config) New() (*Client, error) {
 	clientConfig := &ssh.ClientConfig{
 		User: config.User,
@@ -122,13 +123,21 @@ func getTransfer(client *sftp.Client, remoteFilepath, localFilepath string, tfBy
 	if localFileErr != nil {
 		return 0, errors.New("localFileErr: " + localFileErr.Error())
 	}
-	defer localFile.Close()
+	defer func() {
+		if err := localFile.Close(); err != nil {
+			logger.Logger.Error("Error closing localFile: ", err)
+		}
+	}()
 
 	remoteFile, remoteFileErr := client.Open(remoteFilepath)
 	if remoteFileErr != nil {
 		return 0, errors.New("remoteFileErr: " + remoteFileErr.Error())
 	}
-	defer remoteFile.Close()
+	defer func() {
+		if err := remoteFile.Close(); err != nil {
+			logger.Logger.Error("Error closing remoteFile: ", err)
+		}
+	}()
 
 	var bytes int64
 	var copyErr error
@@ -204,13 +213,23 @@ func putTransfer(client *sftp.Client, localFilepath string, remoteFilepath strin
 	if remoteFileErr != nil {
 		return 0, errors.New("remoteFileErr: " + remoteFileErr.Error())
 	}
-	defer remoteFile.Close()
+
+	defer func() {
+		if err := remoteFile.Close(); err != nil {
+			logger.Logger.Error("Error closing remoteFile: ", err)
+		}
+	}()
 
 	localFile, localFileErr := os.Open(localFilepath)
 	if localFileErr != nil {
 		return 0, errors.New("localFileErr: " + localFileErr.Error())
 	}
-	defer localFile.Close()
+
+	defer func() {
+		if err := localFile.Close(); err != nil {
+			logger.Logger.Error("Error closing localFile: ", err)
+		}
+	}()
 
 	var bytes int64
 	var copyErr error
@@ -263,7 +282,7 @@ func (client *Client) Quit() (errors []error) {
 	return client.Close()
 }
 
-//Chmod ..
+// Chmod ..
 func (client *Client) Chmod(path string, mode os.FileMode) error {
 	return client.SFTPClient.Chmod(path, mode)
 }

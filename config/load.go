@@ -1,22 +1,25 @@
 package config
 
 import (
-	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/abulo/ratel/v2/core/logger"
+	"github.com/pkg/errors"
+
 	"github.com/imdario/mergo"
 )
 
+// LoadDir ...
 func LoadDir(dir, suffix string) error { return dc.LoadDir(dir, suffix) }
 
-// loadDir
+// LoadDir loadDir
 func (c *Config) LoadDir(dir, suffix string) (err error) {
 	fileList := []string{}
 	err = filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
@@ -70,7 +73,8 @@ func LoadRemote(format, url string) error { return dc.LoadRemote(format, url) }
 // LoadRemote load config data from remote URL.
 //
 // Usage:
-// 	c.LoadRemote(config.JSON, "http://abc.com/api-config.json")
+//
+//	c.LoadRemote(config.JSON, "http://abc.com/api-config.json")
 func (c *Config) LoadRemote(format, url string) (err error) {
 	// create http client
 	client := http.Client{Timeout: 300 * time.Second}
@@ -79,15 +83,18 @@ func (c *Config) LoadRemote(format, url string) (err error) {
 		return err
 	}
 
-	//noinspection GoUnhandledErrorResult
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Logger.Error("Error closing resp: ", err)
+		}
+	}()
 
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("fetch remote resource error, reply status code is not equals to 200")
 	}
 
 	// read response content
-	bts, err := ioutil.ReadAll(resp.Body)
+	bts, err := io.ReadAll(resp.Body)
 	if err == nil {
 		// parse file content
 		if err = c.parseSourceCode(format, bts); err != nil {
@@ -131,8 +138,9 @@ func LoadFlags(keys []string) error { return dc.LoadFlags(keys) }
 
 // LoadFlags parse command line arguments, based on provide keys.
 // Usage:
-// 	// debug flag is bool type
-// 	c.LoadFlags([]string{"env", "debug:bool"})
+//
+//	// debug flag is bool type
+//	c.LoadFlags([]string{"env", "debug:bool"})
 func (c *Config) LoadFlags(keys []string) (err error) {
 	hash := map[string]interface{}{}
 
@@ -184,7 +192,7 @@ func LoadData(dataSource ...interface{}) error { return dc.LoadData(dataSource..
 // LoadData load data from map OR struct
 //
 // The dataSources can be:
-//  - map[string]interface{}
+//   - map[string]interface{}
 func (c *Config) LoadData(dataSources ...interface{}) (err error) {
 	if c.opts.Delimiter == 0 {
 		c.opts.Delimiter = defaultDelimiter
@@ -209,10 +217,12 @@ func LoadSources(format string, src []byte, more ...[]byte) error {
 // LoadSources load data from byte content.
 //
 // Usage:
-// 	config.LoadSources(config.Yml, []byte(`
-// 	name: blog
-// 	arr:
-// 		key: val
+//
+//	config.LoadSources(config.Yml, []byte(`
+//	name: blog
+//	arr:
+//		key: val
+//
 // `))
 func (c *Config) LoadSources(format string, src []byte, more ...[]byte) (err error) {
 	err = c.parseSourceCode(format, src)
@@ -291,11 +301,15 @@ func (c *Config) loadFile(file string, loadExist bool, format string) (err error
 		}
 		return err
 	}
-	//noinspection GoUnhandledErrorResult
-	defer fd.Close()
+
+	defer func() {
+		if err := fd.Close(); err != nil {
+			logger.Logger.Error("Error closing fd: ", err)
+		}
+	}()
 
 	// read file content
-	bts, err := ioutil.ReadAll(fd)
+	bts, err := io.ReadAll(fd)
 	if err == nil {
 		if format == "" {
 			// get format for file ext
@@ -330,6 +344,7 @@ func (c *Config) parseSourceCode(format string, blob []byte) (err error) {
 	if err = decode(blob, &data); err != nil {
 		return
 	}
+
 	// init config data
 	if len(c.data) == 0 {
 		c.data = data

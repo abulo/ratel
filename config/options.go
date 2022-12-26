@@ -2,7 +2,7 @@ package config
 
 import "github.com/mitchellh/mapstructure"
 
-// there are some event names for config data changed.
+// OnSetValue there are some event names for config data changed.
 const (
 	OnSetValue  = "set.value"
 	OnSetData   = "set.data"
@@ -121,8 +121,9 @@ func (c *Config) With(fn func(c *Config)) *Config {
 // Readonly disable set data to config.
 //
 // Usage:
-// 	config.LoadFiles(a, b, c)
-// 	config.Readonly()
+//
+//	config.LoadFiles(a, b, c)
+//	config.Readonly()
 func (c *Config) Readonly() {
 	c.opts.Readonly = true
 }

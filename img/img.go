@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/abulo/ratel/v2/core/logger"
 	"github.com/abulo/ratel/v2/img/fontx"
 	"github.com/abulo/ratel/v2/util"
 	"github.com/disintegration/imaging"
@@ -18,10 +19,12 @@ import (
 	"golang.org/x/image/font"
 )
 
+// DefaultDPI ...
 const (
 	DefaultDPI = 72
 )
 
+// Image ...
 type Image struct {
 	src image.Image
 }
@@ -77,17 +80,18 @@ func (img *Image) GetSource() image.Image {
 	return img.src
 }
 
+// SetSource ...
 func (img *Image) SetSource(src image.Image) *Image {
 	img.src = src
 	return img
 }
 
-//Width 获取文件的宽度
+// Width 获取文件的宽度
 func (img *Image) Width() int {
 	return img.src.Bounds().Size().X
 }
 
-//Width 获取文件的高度
+// Height Width 获取文件的高度
 func (img *Image) Height() int {
 	// img.src.Decode
 	return img.src.Bounds().Size().Y
@@ -112,7 +116,8 @@ func (img *Image) Clone() *Image {
 //
 // Example:
 //
-//  dstImage := imaging.Resize(srcImage, 800, 600, imaging.Lanczos)
+//	dstImage := imaging.Resize(srcImage, 800, 600, imaging.Lanczos)
+//
 // 调整大小使用指定的重采样过滤器将图像调整为指定的宽度和高度，并返回变换后的图像。 如果宽度或高度中的一个为0，则保留图像宽高比。
 func (img *Image) Resize(width int, height int, filter imaging.ResampleFilter) *Image {
 	img.src = imaging.Resize(img.src, width, height, filter)
@@ -123,7 +128,8 @@ func (img *Image) Resize(width int, height int, filter imaging.ResampleFilter) *
 // the specified anchor point and returns the cropped image.
 // Example:
 //
-//  imaging.CropAnchor(src, 100, 100, imaging.TopLeft)
+//	imaging.CropAnchor(src, 100, 100, imaging.TopLeft)
+//
 // 使用指定的锚点从图像中剪切出具有指定大小的矩形区域，并返回裁剪后的图像。
 func (img *Image) Crop(width int, height int, anchor imaging.Anchor) *Image {
 	img.src = imaging.CropAnchor(img.src, width, height, anchor)
@@ -135,7 +141,8 @@ func (img *Image) Crop(width int, height int, anchor imaging.Anchor) *Image {
 //
 // Example:
 //
-//  dstImage := imaging.Blur(srcImage, 3.5)
+//	dstImage := imaging.Blur(srcImage, 3.5)
+//
 // 模糊使用高斯函数生成图像的模糊版本。 Sigma参数必须为正，表示图像模糊的程度。
 func (img *Image) Blur(sigma float64) *Image {
 	img.src = imaging.Blur(img.src, sigma)
@@ -154,9 +161,13 @@ func (img *Image) Gray() *Image {
 // The percentage = -100 gives solid gray image.
 // Examples:
 // Decrease image contrast by 10%.
-//  dstImage = imaging.AdjustContrast(srcImage, -10)
+//
+//	dstImage = imaging.AdjustContrast(srcImage, -10)
+//
 // Increase image con
-//  dstImage = imaging.AdjustContrast(srcImage, 20)
+//
+//	dstImage = imaging.AdjustContrast(srcImage, 20)
+//
 // 使用百分比参数更改图像的对比度并返回调整后的图像。
 //
 // 百分比必须在范围内（-100,100）。
@@ -169,8 +180,10 @@ func (img *Image) AdjustContrast(percentage float64) *Image {
 
 // Sharpen produces a sharpened version of the image. Sigma parameter must be positive and indicates how much the image will be sharpened.
 // Example:
-//  dstImage := imaging.Sharpen(srcImage, 3.5)
-//锐化生成图像的锐化版本。 Sigma参数必须为正，表示图像将被锐化多少。
+//
+//	dstImage := imaging.Sharpen(srcImage, 3.5)
+//
+// 锐化生成图像的锐化版本。 Sigma参数必须为正，表示图像将被锐化多少。
 func (img *Image) Sharpen(percentage float64) *Image {
 	img.src = imaging.Sharpen(img.src, percentage)
 	return img
@@ -207,9 +220,13 @@ func (img *Image) Convolve5x5(kernel [25]float64) *Image {
 // AdjustBrightness changes the brightness of the image using the percentage parameter and returns the adjusted image. The percentage must be in range (-100, 100). The percentage = 0 gives the original image. The percentage = -100 gives solid black image. The percentage = 100 gives solid white image.
 // Examples:
 // Decrease image brightness by 15%.
-//  dstImage = imaging.AdjustBrightness(srcImage, -15)
+//
+//	dstImage = imaging.AdjustBrightness(srcImage, -15)
+//
 // Increase image brightness by 10%.
-//  dstImage = imaging.AdjustBrightness(srcImage, 10)
+//
+//	dstImage = imaging.AdjustBrightness(srcImage, 10)
+//
 // AdjustBrightness使用百分比参数更改图像的亮度，并返回调整后的图像。
 // 百分比必须在范围内（-100,100）。 百分比= 0给出原始图像。
 // 百分比= -100给出纯黑色图像。 百分比= 100给出纯白图像。
@@ -220,7 +237,9 @@ func (img *Image) AdjustBrightness(percentage float64) *Image {
 
 // AdjustGamma performs a gamma correction on the image and returns the adjusted image. Gamma parameter must be positive. Gamma = 1.0 gives the original image. Gamma less than 1.0 darkens the image and gamma greater than 1.0 lightens it.
 // Example:
-//  dstImage = imaging.AdjustGamma(srcImage, 0.7)
+//
+//	dstImage = imaging.AdjustGamma(srcImage, 0.7)
+//
 // AdjustGamma对图像执行伽玛校正并返回调整后的图像。
 // Gamma参数必须为正数。 Gamma = 1.0给出原始图像。
 // 小于1.0的伽玛使图像变暗，大于1.0的伽玛使其变亮。
@@ -236,9 +255,13 @@ func (img *Image) AdjustGamma(gamma float64) *Image {
 // with the saturation value zeroed for each pixel (grayscale).
 // Examples:
 // Increase image saturation by 25%.
-//  dstImage = imaging.AdjustSaturation(srcImage, 25)
+//
+//	dstImage = imaging.AdjustSaturation(srcImage, 25)
+//
 // Decrease image saturation by 10%.
-//  dstImage = imaging.AdjustSaturation(srcImage, -10)
+//
+//	dstImage = imaging.AdjustSaturation(srcImage, -10)
+//
 // AdjustSaturation使用百分比参数更改图像的饱和度并返回调整后的图像。 百分比必须在范围（-100,100）内。 百分比= 0给出原始图像。
 // 百分比= 100表示每个像素的饱和度值加倍的图像。 百分比= -100给出的图像的饱和度值为每个像素（灰度）。
 func (img *Image) AdjustSaturation(percentage float64) *Image {
@@ -249,9 +272,13 @@ func (img *Image) AdjustSaturation(percentage float64) *Image {
 // AdjustSigmoid changes the contrast of the image using a sigmoidal function and returns the adjusted image. It's a non-linear contrast change useful for photo adjustments as it preserves highlight and shadow detail. The midpoint parameter is the midpoint of contrast that must be between 0 and 1, typically 0.5. The factor parameter indicates how much to increase or decrease the contrast, typically in range (-10, 10). If the factor parameter is positive the image contrast is increased otherwise the contrast is decreased.
 // Examples:
 // Increase the contrast.
-//  dstImage = imaging.AdjustSigmoid(srcImage, 0.5, 3.0)
+//
+//	dstImage = imaging.AdjustSigmoid(srcImage, 0.5, 3.0)
+//
 // Decrease the contrast.
-//  dstImage = imaging.AdjustSigmoid(srcImage, 0.5, -3.0)
+//
+//	dstImage = imaging.AdjustSigmoid(srcImage, 0.5, -3.0)
+//
 // AdjustSigmoid使用S形函数更改图像的对比度并返回调整后的图像。
 // 这是一种非线性对比度变化，可用于照片调整，因为它可以保留高光和阴影细节。
 // 中点参数是对比度的中点，必须介于0和1之间，通常为0.5。 因子参数表示增加或减少对比度的程度，
@@ -279,7 +306,9 @@ func (img *Image) Transverse() *Image {
 
 // Fit scales down the image using the specified resample filter to fit the specified maximum width and height and returns the transformed image.
 // Example:
-//  dstImage := imaging.Fit(srcImage, 800, 600, imaging.Lanczos)
+//
+//	dstImage := imaging.Fit(srcImage, 800, 600, imaging.Lanczos)
+//
 // 使用指定的重采样滤镜按比例缩小图像以适合指定的最大宽度和高度，并返回变换后的图像。
 func (img *Image) Fit(width int, height int, filter imaging.ResampleFilter) *Image {
 	img.src = imaging.Fit(img.src, width, height, filter)
@@ -289,7 +318,9 @@ func (img *Image) Fit(width int, height int, filter imaging.ResampleFilter) *Ima
 // Fill creates an image with the specified dimensions and fills it with the scaled source image.
 // To achieve the correct aspect ratio without stretching, the source image will be cropped.
 // Example:
-//  dstImage := imaging.Fill(srcImage, 800, 600, imaging.Center, imaging.Lanczos)
+//
+//	dstImage := imaging.Fill(srcImage, 800, 600, imaging.Center, imaging.Lanczos)
+//
 // Fill创建具有指定尺寸的图像，并使用缩放的源图像填充它。 要在不拉伸的情况下获得正确的宽高比，将裁剪源图像。
 func (img *Image) Fill(width int, height int, anchor imaging.Anchor, filter imaging.ResampleFilter) *Image {
 	img.src = imaging.Fill(img.src, width, height, anchor, filter)
@@ -298,7 +329,9 @@ func (img *Image) Fill(width int, height int, anchor imaging.Anchor, filter imag
 
 // Paste pastes the an image to this image at the specified position.
 // Example:
-//  imaging.Paste(src1, src2, image.Pt(10, 100))
+//
+//	imaging.Paste(src1, src2, image.Pt(10, 100))
+//
 // 粘贴将img图像粘贴到指定位置的背景图像并返回组合图像。
 func (img *Image) Paste(top *Image, pos image.Point) *Image {
 	img.src = imaging.Paste(img.src, top.src, pos)
@@ -314,12 +347,14 @@ func (img *Image) Paste(top *Image, pos image.Point) *Image {
 //	dstImage := imaging.Overlay(backgroundImage, spriteImage, image.Pt(50, 50), 1.0)
 //
 //	dstImage := imaging.Overlay(imageOne, imageTwo, image.Pt(0, 0), 0.5)
+//
 // 叠加在给定位置的背景图像上绘制img图像并返回合成图像。 不透明度参数是img图像层的不透明度，用于构成图像，它必须从0.0到1.0。
 func (img *Image) Overlay(top *Image, pos image.Point, opacity float64) *Image {
 	img.src = imaging.Overlay(img.src, top.src, pos, opacity)
 	return img
 }
 
+// AddWaterMark ...
 func (img *Image) AddWaterMark(watermark *Image, anchor imaging.Anchor, marginX int, marginY int, opacity float64) *Image {
 	pot := CalculatePt(img.src.Bounds().Size(), watermark.GetSource().Bounds().Size(), anchor, marginX, marginY)
 	// render watermark.
@@ -327,17 +362,20 @@ func (img *Image) AddWaterMark(watermark *Image, anchor imaging.Anchor, marginX 
 	return img
 }
 
-// JPEGQuality compressions jpeg without change the image size.
+// Compress JPEGQuality compressions jpeg without change the image size.
 //
 // Quality ranges from 1 to 100 inclusive, higher is better.
 //
 // 在不改变图片尺寸的情况下压缩JPEG图像。图像质量为1-100
-func (img *Image) Compress(quality int) *Image {
+func (img *Image) Compress(quality int) (*Image, error) {
 	var buffer bytes.Buffer
-	jpeg.Encode(&buffer, img.src, &jpeg.Options{Quality: quality})
+	if err := jpeg.Encode(&buffer, img.src, &jpeg.Options{Quality: quality}); err != nil {
+		logger.Logger.Error("Compress error:", err)
+		return nil, err
+	}
 	encoded, _ := imaging.Decode(&buffer)
 	img.src = encoded
-	return img
+	return img, nil
 }
 
 // DrawText draws text on the image.
@@ -345,15 +383,17 @@ func (img *Image) Compress(quality int) *Image {
 // marginX and marginY is the margin to nearest border, if the nearest border is not clear, such as imaging.Center,
 // marginX and marginY always reference to the left border or the top border.
 // example:
-//  im, _ := img.OpenLocalFile("E:\\test\\1.jpg") // 1900x1283
-//	fo, _ := fontx.LoadFont("E:\\test\\Inkfree.ttf")
-//	fc := &fontx.FontConfig{
-//		Font:     fo.Font,
-//		FontSize: 200,
-//		Color:    color.Black,
-//	}
-//	metrics := fo.GetMetrics(fc)
-//	im.DrawText("Hello", fc, metrics, imaging.BottomRight, 500, 700)
+//
+//	 im, _ := img.OpenLocalFile("E:\\test\\1.jpg") // 1900x1283
+//		fo, _ := fontx.LoadFont("E:\\test\\Inkfree.ttf")
+//		fc := &fontx.FontConfig{
+//			Font:     fo.Font,
+//			FontSize: 200,
+//			Color:    color.Black,
+//		}
+//		metrics := fo.GetMetrics(fc)
+//		im.DrawText("Hello", fc, metrics, imaging.BottomRight, 500, 700)
+//
 // 尝试在image上绘制文字。
 // 参数anchor是文字的对齐方式，marginX和marginY是文字的边距。
 // 例如，当anchor=imaging.BottomRight，此时marginX是距离底边的距离，marginY是距离有边框的距离。
@@ -457,7 +497,7 @@ func CalculatePt(targetSize image.Point,
 	}
 }
 
-// CalculatePt calculates point according to the given point.
+// CalculatePt2 CalculatePt calculates point according to the given point.
 func CalculatePt2(targetSize image.Point,
 	watermark image.Point,
 	anchor imaging.Anchor,

@@ -7,6 +7,8 @@ import (
 	"os"
 	"regexp"
 	"time"
+
+	"github.com/abulo/ratel/v2/core/logger"
 )
 
 // Filter 敏感词过滤器
@@ -36,7 +38,12 @@ func (filter *Filter) LoadWordDict(path string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+
+	defer func() {
+		if err := f.Close(); err != nil {
+			logger.Logger.Error("Error closing filter: ", err)
+		}
+	}()
 
 	return filter.Load(f)
 }
@@ -50,7 +57,12 @@ func (filter *Filter) LoadNetWordDict(url string) error {
 	if err != nil {
 		return err
 	}
-	defer rsp.Body.Close()
+
+	defer func() {
+		if err := rsp.Body.Close(); err != nil {
+			logger.Logger.Error("Error closing rsp: ", err)
+		}
+	}()
 
 	return filter.Load(rsp.Body)
 }

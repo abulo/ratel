@@ -35,7 +35,6 @@ JSON format content example:
 	}
 
 Usage please see example(more example please see examples folder in the lib):
-
 */
 package config
 
@@ -46,7 +45,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-// There are supported config format
+// Ini There are supported config format
 const (
 	Ini  = "ini"
 	Hcl  = "hcl"
@@ -62,29 +61,18 @@ const (
 )
 
 // internal vars
-type intArr []int
+// type intArr []int
 type strArr []string
-type intMap map[string]int
+
+// type intMap map[string]int
 type strMap map[string]string
 
 // This is a default config manager instance
 var dc = New("default")
 
-// Driver interface
-type Driver interface {
-	Name() string
-	GetDecoder() Decoder
-	GetEncoder() Encoder
-}
-
-// Decoder for decode yml,json,toml format content
-type Decoder func(blob []byte, v interface{}) (err error)
-
-// Encoder for decode yml,json,toml format content
-type Encoder func(v interface{}) (out []byte, err error)
-
 // Config structure definition
 type Config struct {
+	// save latest error, will clear after read.
 	err error
 	// config instance name
 	name string
@@ -96,21 +84,22 @@ type Config struct {
 	data map[string]interface{}
 
 	// loaded config files records
-	loadedFiles  []string
-	loadedDriver []string
+	loadedFiles []string
+	driverNames []string
+
+	// TODO Deprecated decoder and encoder, use driver instead
+	// drivers map[string]Driver
 
 	// decoders["toml"] = func(blob []byte, v interface{}) (err error){}
 	// decoders["yaml"] = func(blob []byte, v interface{}) (err error){}
-	// drivers map[string]Driver TODO Deprecated decoder and encoder, use driver instead
 	decoders map[string]Decoder
 	encoders map[string]Encoder
 
-	// cache got config data
+	// cache on got config data
 	intCache map[string]int
 	strCache map[string]string
-
-	iArrCache map[string]intArr
-	iMapCache map[string]intMap
+	// iArrCache map[string]intArr TODO cache it
+	// iMapCache map[string]intMap
 	sArrCache map[string]strArr
 	sMapCache map[string]strMap
 
@@ -168,6 +157,8 @@ func AddDriver(driver Driver) { dc.AddDriver(driver) }
 // AddDriver set a decoder and encoder driver for a format.
 func (c *Config) AddDriver(driver Driver) {
 	format := driver.Name()
+
+	c.driverNames = append(c.driverNames, format)
 	c.decoders[format] = driver.GetDecoder()
 	c.encoders[format] = driver.GetEncoder()
 }
@@ -189,14 +180,8 @@ func (c *Config) HasEncoder(format string) bool {
 // DelDriver delete driver of the format
 func (c *Config) DelDriver(format string) {
 	format = fixFormat(format)
-
-	if _, ok := c.decoders[format]; ok {
-		delete(c.decoders, format)
-	}
-
-	if _, ok := c.encoders[format]; ok {
-		delete(c.encoders, format)
-	}
+	delete(c.decoders, format)
+	delete(c.encoders, format)
 }
 
 /*************************************************************
@@ -208,9 +193,11 @@ func (c *Config) Name() string {
 	return c.name
 }
 
-// Error get last error
+// Error get last error, will clear after read.
 func (c *Config) Error() error {
-	return c.err
+	err := c.err
+	c.err = nil
+	return err
 }
 
 // IsEmpty of the config
@@ -221,6 +208,11 @@ func (c *Config) IsEmpty() bool {
 // LoadedFiles get loaded files name
 func (c *Config) LoadedFiles() []string {
 	return c.loadedFiles
+}
+
+// DriverNames get loaded driver names
+func (c *Config) DriverNames() []string {
+	return c.driverNames
 }
 
 // ClearAll data and caches

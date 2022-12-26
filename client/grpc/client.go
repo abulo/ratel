@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/abulo/ratel/v2/ecode"
-	"github.com/abulo/ratel/v2/logger"
+	"github.com/abulo/ratel/v2/core/ecode"
+	"github.com/abulo/ratel/v2/core/logger"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -19,21 +20,24 @@ func newGRPCClient(config *Config) *grpc.ClientConn {
 			ctx, cancel = context.WithTimeout(ctx, config.DialTimeout)
 			defer cancel()
 		}
-
 		dialOptions = append(dialOptions, grpc.WithBlock())
 	}
-
 	if config.KeepAlive != nil {
 		dialOptions = append(dialOptions, grpc.WithKeepaliveParams(*config.KeepAlive))
 	}
-	dialOptions = append(dialOptions, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"`+config.BalancerName+`"}`))
+	grpcServiceConfig := `{"loadBalancingPolicy":"` + config.BalancerName + `"}`
+	dialOptions = append(dialOptions, grpc.WithDefaultServiceConfig(grpcServiceConfig))
 	cc, err := grpc.DialContext(ctx, config.Address, dialOptions...)
-
 	if err != nil {
 		if config.OnDialError == "panic" {
-			logger.Logger.Panic("dial grpc server", ecode.ErrKindRequestErr, err)
+			logger.Logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Panic("dial grpc server,", ecode.ErrKindRequestErr)
+
 		} else {
-			logger.Logger.Error("dial grpc server", ecode.ErrKindRequestErr, err)
+			logger.Logger.WithFields(logrus.Fields{
+				"err": err,
+			}).Error("dial grpc server,", ecode.ErrKindRequestErr)
 		}
 	}
 	logger.Logger.Info("start grpc client")
