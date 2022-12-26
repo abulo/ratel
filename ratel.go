@@ -32,12 +32,12 @@ func Name() string {
 	return appName
 }
 
-//SetName set app anme
+// SetName set app anme
 func SetName(s string) {
 	appName = s
 }
 
-//AppID get appID
+// AppID get appID
 func AppID() string {
 	if appID == "" {
 		return "1234567890" //default appid when APP_ID Env var not set
@@ -45,7 +45,7 @@ func AppID() string {
 	return appID
 }
 
-//SetAppID set appID
+// SetAppID set appID
 func SetAppID(s string) {
 	appID = s
 }
@@ -55,7 +55,7 @@ func HostName() string {
 	return hostName
 }
 
-//SetHostName set app anme
+// SetHostName set app anme
 func SetHostName(s string) {
 	hostName = s
 }
@@ -84,7 +84,7 @@ type Ratel struct {
 
 var App *Ratel
 
-//New new a Application
+// New new a Application
 func New(fns ...func() error) (*Ratel, error) {
 	App = &Ratel{}
 	if err := App.Startup(fns...); err != nil {
@@ -93,7 +93,7 @@ func New(fns ...func() error) (*Ratel, error) {
 	return App, nil
 }
 
-//Startup ..
+// Startup ..
 func (app *Ratel) Startup(fns ...func() error) error {
 	app.initialize()
 	// if err := app.startup(); err != nil {
@@ -118,7 +118,7 @@ func (app *Ratel) initialize() {
 	})
 }
 
-//init hooks
+// init hooks
 func (app *Ratel) initHooks(hookKeys ...uint32) {
 	app.hooks = make(map[uint32]*stack.DeferStack, len(hookKeys))
 	for _, k := range hookKeys {
@@ -126,7 +126,7 @@ func (app *Ratel) initHooks(hookKeys ...uint32) {
 	}
 }
 
-//run hooks
+// run hooks
 func (app *Ratel) runHooks(k uint32) {
 	hooks, ok := app.hooks[k]
 	if ok {
@@ -134,7 +134,7 @@ func (app *Ratel) runHooks(k uint32) {
 	}
 }
 
-//RegisterHooks register a stage Hook
+// RegisterHooks register a stage Hook
 func (app *Ratel) RegisterHooks(k uint32, fns ...func() error) error {
 	hooks, ok := app.hooks[k]
 	if ok {
@@ -177,7 +177,7 @@ func (app *Ratel) Worker(w worker.Worker) *Ratel {
 	return app
 }
 
-//Tracer ...
+// Tracer ...
 func Tracer(name, host string) error {
 	cfg := trace.InitConfig(host)
 	cfg.ServiceName = name
