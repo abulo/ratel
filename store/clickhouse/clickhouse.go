@@ -9,12 +9,13 @@ import (
 	"github.com/abulo/ratel/v2/util"
 )
 
-//Config 数据库配置
+// Config 数据库配置
 type Config struct {
 	Username         string   //账号 root
 	Password         string   //密码
 	Addr             []string //ip:port
 	Database         string   //连接数据库
+	Local            string   //数据库时区
 	DialTimeout      string   //200ms
 	OpenStrategy     string   //random/in_order (default random)
 	Compress         bool     //enable lz4 compression
@@ -24,11 +25,12 @@ type Config struct {
 	MaxLifetime      time.Duration //连接池里面的连接最大存活时长
 	MaxIdleTime      time.Duration //连接池里面的连接最大空闲时长
 	DriverName       string
-	Debug            bool
-	Trace            bool
+	DisableDebug     bool // 关闭 debug模式
+	DisableMetric    bool // 关闭指标采集
+	DisableTrace     bool // 关闭链路追踪
 }
 
-//URI 构造数据库连接
+// URI 构造数据库连接
 func (config *Config) URI() string {
 	//clickhouse://username:password@host1:9000,host2:9000/database?dial_timeout=200ms&max_execution_time=60
 
@@ -61,17 +63,18 @@ func (config *Config) URI() string {
 	} else {
 		param = append(param, "compress=false")
 	}
-	if config.Debug {
+	if !config.DisableDebug {
 		param = append(param, "debug=true")
 	} else {
 		param = append(param, "debug=false")
 	}
-	param = append(param, "loc="+time.Local.String())
+	param = append(param, "loc="+config.Local)
+	param = append(param, "parseTime=true")
 	return link + "?" + util.Implode("&", param)
 }
 
-//New 新连接
-func New(config *Config) *query.QueryDb {
+// NewClient New 新连接
+func NewClient(config *Config) *query.Query {
 	opt := &query.Opt{
 		MaxOpenConns: config.MaxOpenConns,
 		MaxIdleConns: config.MaxIdleConns,
@@ -79,9 +82,9 @@ func New(config *Config) *query.QueryDb {
 		MaxIdleTime:  config.MaxIdleTime,
 	}
 
-	db, err := query.NewSqlConn(config.DriverName, config.URI(), opt)
+	db, err := query.NewSQLConn(config.DriverName, config.URI(), opt)
 	if err != nil {
 		logger.Logger.Panic(err)
 	}
-	return &query.QueryDb{DB: db, DriverName: config.DriverName, Trace: config.Trace, Prepare: false}
+	return &query.Query{DB: db, DriverName: config.DriverName, DisableMetric: config.DisableMetric, DisableTrace: config.DisableTrace, Prepare: false, DBName: config.Database, Addr: util.Implode(";", config.Addr)}
 }

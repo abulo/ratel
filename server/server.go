@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/abulo/ratel/v2/util"
+	"github.com/spf13/cast"
 )
 
 type Option func(c *ServiceInfo)
 
-var nextId = util.ToInt(1)
+var nextId = cast.ToInt(1)
 
 // ServiceInfo represents service info
 type ServiceInfo struct {

@@ -14,7 +14,7 @@ type pingedDB struct {
 	once sync.Once
 }
 
-func getCachedSqlConn(driverName, server string, opt *Opt) (*pingedDB, error) {
+func getCachedSQLConn(driverName, server string, opt *Opt) (*pingedDB, error) {
 	val, err := connManager.GetResource(server, func() (io.Closer, error) {
 		conn, err := newDBConnection(driverName, server, opt)
 		if err != nil {
@@ -32,8 +32,9 @@ func getCachedSqlConn(driverName, server string, opt *Opt) (*pingedDB, error) {
 	return val.(*pingedDB), nil
 }
 
-func NewSqlConn(driverName, server string, opt *Opt) (*sql.DB, error) {
-	pdb, err := getCachedSqlConn(driverName, server, opt)
+// NewSQLConn ...
+func NewSQLConn(driverName, server string, opt *Opt) (*sql.DB, error) {
+	pdb, err := getCachedSQLConn(driverName, server, opt)
 	if err != nil {
 		return nil, err
 	}

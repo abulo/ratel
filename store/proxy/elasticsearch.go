@@ -2,29 +2,30 @@ package proxy
 
 import "github.com/abulo/ratel/v2/store/elasticsearch"
 
-type ProxyElasticSearch struct {
+// ElasticSearch ...
+type ElasticSearch struct {
 	*elasticsearch.Client
 }
 
-//NewProxyElasticSearch 缓存
-func NewProxyElasticSearch() *ProxyElasticSearch {
-	return &ProxyElasticSearch{}
+// NewElasticSearch 缓存
+func NewElasticSearch() *ElasticSearch {
+	return &ElasticSearch{}
 }
 
-//Store 设置写库
-func (proxy *ProxyElasticSearch) Store(client *elasticsearch.Client) {
+// Store 设置写库
+func (proxy *ElasticSearch) Store(client *elasticsearch.Client) {
 	proxy.Client = client
 }
 
-//StoreEs 设置组
-func (proxypool *ProxyPool) StoreElasticSearch(group string, proxy *ProxyElasticSearch) {
+// StoreElasticSearch StoreEs 设置组
+func (proxypool *Proxy) StoreElasticSearch(group string, proxy *ElasticSearch) {
 	proxypool.m.Store(group, proxy)
 }
 
-//LoadEs 获取分组
-func (proxypool *ProxyPool) LoadElasticSearch(group string) *elasticsearch.Client {
+// LoadElasticSearch LoadEs 获取分组
+func (proxypool *Proxy) LoadElasticSearch(group string) *elasticsearch.Client {
 	if f, ok := proxypool.m.Load(group); ok {
-		return f.(*ProxyElasticSearch).Client
+		return f.(*ElasticSearch).Client
 	}
 	return nil
 }

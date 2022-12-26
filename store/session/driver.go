@@ -9,17 +9,18 @@ import (
 	"github.com/abulo/ratel/v2/store/redis"
 )
 
+// Session ...
 type Session struct {
 	Driver *redis.Client
 	Name   string
 	TTL    int64 // seconds
 }
 
-// https://laravel.com/docs/5.8/session
+// Put https://laravel.com/docs/5.8/session
 // Pushing To Array Session Values
 // session.Put('user.teams', 'developers');  => {user: {teams: "developer"}}
-func (this *Session) Put(ctx context.Context, key string, value interface{}) error {
-	var h = this.Driver
+func (session *Session) Put(ctx context.Context, key string, value interface{}) error {
+	var h = session.Driver
 	var bytes []byte
 	var err error
 	var content string
@@ -28,15 +29,15 @@ func (this *Session) Put(ctx context.Context, key string, value interface{}) err
 	}
 	m := make(map[string]interface{})
 
-	// fmt.Printf("Exists %s?\n", this.Name)
-	if h.Exists(ctx, this.Name).Val() == 1 {
-		content = h.Get(ctx, this.Name).Val()
+	// fmt.Printf("Exists %s?\n", session.Name)
+	if h.Exists(ctx, session.Name).Val() == 1 {
+		content = h.Get(ctx, session.Name).Val()
 	} else {
 		content = "{}"
 	}
-	// fmt.Printf("%s => %s", this.Name, content)
+	// fmt.Printf("%s => %s", session.Name, content)
 
-	json.Unmarshal([]byte(content), &m)
+	err = json.Unmarshal([]byte(content), &m)
 	if err != nil {
 		return err
 	}
@@ -51,13 +52,13 @@ func (this *Session) Put(ctx context.Context, key string, value interface{}) err
 	}
 
 	bytes, _ = json.Marshal(m)
-	h.Set(ctx, this.Name, string(bytes), time.Duration(this.TTL)*time.Second)
+	h.Set(ctx, session.Name, string(bytes), time.Duration(session.TTL)*time.Second)
 	return nil
 }
 
-// s.Get
-func (this *Session) Get(ctx context.Context, key string) interface{} {
-	var h = this.Driver
+// Get s.Get
+func (session *Session) Get(ctx context.Context, key string) interface{} {
+	var h = session.Driver
 	var m map[string]interface{}
 	var content string
 
@@ -65,8 +66,8 @@ func (this *Session) Get(ctx context.Context, key string) interface{} {
 		ctx = context.TODO()
 	}
 
-	content = h.Get(ctx, this.Name).Val()
-	json.Unmarshal([]byte(content), &m)
+	content = h.Get(ctx, session.Name).Val()
+	_ = json.Unmarshal([]byte(content), &m)
 
 	var keys = strings.Split(key, ".")
 	var n = len(keys)
@@ -76,8 +77,9 @@ func (this *Session) Get(ctx context.Context, key string) interface{} {
 	return getSliceMap(m, keys)
 }
 
-func (this *Session) Remove(ctx context.Context, key string) {
-	var h = this.Driver
+// Remove ...
+func (session *Session) Remove(ctx context.Context, key string) {
+	var h = session.Driver
 	var m map[string]interface{}
 	var content string
 	var bytes []byte
@@ -86,20 +88,20 @@ func (this *Session) Remove(ctx context.Context, key string) {
 		ctx = context.TODO()
 	}
 
-	content = h.Get(ctx, this.Name).Val()
-	json.Unmarshal([]byte(content), &m)
+	content = h.Get(ctx, session.Name).Val()
+	_ = json.Unmarshal([]byte(content), &m)
 
 	var keys = strings.Split(key, ".")
 	var n = len(keys)
 	if n < 2 {
 		delete(m, key)
 		bytes, _ = json.Marshal(m)
-		h.Set(ctx, this.Name, string(bytes), time.Duration(this.TTL)*time.Second)
+		h.Set(ctx, session.Name, string(bytes), time.Duration(session.TTL)*time.Second)
 		return
 	}
 	delSliceMap(m, keys)
 	bytes, _ = json.Marshal(m)
-	h.Set(ctx, this.Name, string(bytes), time.Duration(this.TTL)*time.Second)
+	h.Set(ctx, session.Name, string(bytes), time.Duration(session.TTL)*time.Second)
 }
 
 // sess.Put("info.age", "28")
@@ -156,7 +158,7 @@ func delSliceMap(m map[string]interface{}, keys []string) {
 		}
 		itMap = v.(map[string]interface{})
 	}
-	v, ok = itMap[keys[i]]
+	_, ok = itMap[keys[i]]
 	if !ok {
 		return
 	}
@@ -165,22 +167,23 @@ func delSliceMap(m map[string]interface{}, keys []string) {
 
 /*
 // TO BE DONE
-func (this *Session) Has(key string) bool {
-	var h = this.getDriver()
-	return h.Exists(this.Name).Val() == 1
+func (session *Session) Has(key string) bool {
+	var h = session.getDriver()
+	return h.Exists(session.Name).Val() == 1
 }
 // TO BE DONE
-func (this *Session) Push(key string, e interface{}) {
+func (session *Session) Push(key string, e interface{}) {
 }
 */
-//Destroy 释放
-func (this *Session) Destroy(ctx context.Context) int64 {
-	var h = this.Driver
+
+// Destroy 释放
+func (session *Session) Destroy(ctx context.Context) int64 {
+	var h = session.Driver
 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	return h.Del(ctx, this.Name).Val()
+	return h.Del(ctx, session.Name).Val()
 }
 
 // func TestSession_Put(t *testing.T) {

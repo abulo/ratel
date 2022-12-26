@@ -6,9 +6,9 @@ import (
 	"unsafe"
 )
 
-//Grammar sql 语法
+// Grammar sql 语法
 type Grammar struct {
-	builder *QueryBuilder
+	builder *Builder
 	method  string
 }
 
@@ -24,9 +24,8 @@ func (g Grammar) compileTable(from bool) string {
 	}
 	if from {
 		return " FROM " + strings.Join(g.builder.table, ",")
-	} else {
-		return strings.Join(g.builder.table, ",")
 	}
+	return strings.Join(g.builder.table, ",")
 
 }
 func (g Grammar) compileOrder(isUnion bool) string {
@@ -56,9 +55,9 @@ func (g Grammar) compileLimit(isUnion bool) string {
 	}
 	if limit > 0 {
 		return " LIMIT " + strconv.FormatInt(offset, 10) + "," + strconv.FormatInt(limit, 10)
-	} else {
-		return ""
 	}
+	return ""
+
 }
 
 func (g Grammar) compileDistinct() string {
@@ -84,12 +83,12 @@ func (g Grammar) compileWhere() string {
 			case BETWEEN, NOTBETWEEN:
 				sql += " " + w[i].operator + " ? AND ?"
 			case IN, NOTIN:
-				int64Num := w[i].valuenum - 1
+				int64Num := w[i].valueNum - 1
 				intNum := *(*int)(unsafe.Pointer(&int64Num))
 				sql += " " + w[i].operator + "(?" + strings.Repeat(",?", intNum) + ")"
 			case ISNULL, ISNOTNULL:
 				sql += " " + w[i].operator
-				break
+				// break
 			default:
 				sql += " " + w[i].operator + " ?"
 			}
@@ -120,8 +119,7 @@ func (g Grammar) compileUnion() string {
 	var g1 Grammar
 
 	for i := 0; i < len; i++ {
-		g1.builder = &unions[i].query
-
+		g1.builder = &unions[i].builder
 		sql += " " + unions[i].operator
 		sql += " (" + g1.Select() + ")"
 	}
@@ -129,7 +127,7 @@ func (g Grammar) compileUnion() string {
 	return sql
 }
 
-//Select 构造select
+// Select 构造select
 func (g Grammar) Select() string {
 	s1, s2 := "", ""
 	if len(g.builder.unions) > 0 {
@@ -152,12 +150,16 @@ func (g Grammar) Select() string {
 
 	return sql
 }
+
+// Insert ...
 func (g Grammar) Insert() string {
 	sql := "INSERT INTO "
 	sql += g.compileTable(false)
 	sql += " " + g.compileInsertValue()
 	return sql
 }
+
+// Replace ...
 func (g Grammar) Replace() string {
 	sql := "REPLACE INTO "
 	sql += g.compileTable(false)
@@ -167,7 +169,7 @@ func (g Grammar) Replace() string {
 func (g Grammar) compileInsertValue() string {
 	sql := " ("
 	for k, v := range g.builder.data {
-		for kv, _ := range v {
+		for kv := range v {
 			if k == 0 { //取第一列
 				g.builder.columns = append(g.builder.columns, kv)
 			}
@@ -183,16 +185,18 @@ func (g Grammar) compileInsertValue() string {
 		}
 	}
 	sql += strings.Join(g.builder.columns, ",")
-	collen := len(g.builder.columns)
-	sql += ") VALUES (?" + strings.Repeat(",?", collen-1) + ")"
+	colLen := len(g.builder.columns)
+	sql += ") VALUES (?" + strings.Repeat(",?", colLen-1) + ")"
 	len := len(g.builder.data)
 	if len > 1 {
 		for i := 1; i < len; i++ {
-			sql += " ,(?" + strings.Repeat(",?", collen-1) + ")"
+			sql += " ,(?" + strings.Repeat(",?", colLen-1) + ")"
 		}
 	}
 	return sql
 }
+
+// Delete ...
 func (g Grammar) Delete() string {
 	sql := "DELETE "
 	sql += g.compileTable(true)
@@ -218,6 +222,8 @@ func (g Grammar) compileUpdateValue() string {
 	sql = strings.Trim(sql, ",")
 	return sql
 }
+
+// Update ...
 func (g Grammar) Update() string {
 	sql := "UPDATE "
 	sql += g.compileTable(false)
@@ -231,6 +237,8 @@ func (g Grammar) Update() string {
 	}
 	return sql
 }
+
+// InsertUpdate ...
 func (g Grammar) InsertUpdate() string {
 	old := g.builder.data
 	//insert
@@ -243,7 +251,9 @@ func (g Grammar) InsertUpdate() string {
 	sql += g.compileUpdateValue()
 	return sql
 }
-func (g Grammar) ToSql() string {
+
+// ToSQL ...
+func (g Grammar) ToSQL() string {
 	g.method = strings.ToUpper(g.method)
 	switch g.method {
 	case "INSERT":

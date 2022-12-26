@@ -73,7 +73,8 @@ type Options struct {
 	// Only for normal client
 	TLSConfig *tls.Config
 
-	Trace bool
+	DisableMetric bool // 关闭指标采集
+	DisableTrace  bool // 关闭链路追踪
 }
 
 // GetClusterConfig translates current configuration into a *redis.ClusterOptions
@@ -119,6 +120,7 @@ func (o Options) GetNormalConfig() *redis.Options {
 // ClientType type to define a redis client connector
 type ClientType string
 
+// ClientNormal ...
 const (
 	// ClientNormal for standard instance client
 	ClientNormal ClientType = "normal"
@@ -126,9 +128,10 @@ const (
 	ClientCluster ClientType = "cluster"
 )
 
-// Client Reader and Writer
+// RWType Client Reader and Writer
 type RWType string
 
+// OnlyRead ...
 const (
 	// OnlyRead serves as a search suffix for configuration parameters
 	OnlyRead RWType = "READER"
@@ -140,12 +143,7 @@ const (
 
 // IsReadOnly will return Is it read-only
 func (rw *RWType) IsReadOnly() bool {
-
-	if *rw == OnlyRead {
-		return true
-	} else {
-		return false
-	}
+	return *rw == OnlyRead
 }
 
 // FmtSuffix get fmtstring of  key+ "_" + suffix

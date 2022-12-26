@@ -10,8 +10,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-
-	"github.com/abulo/ratel/v2/util"
+	
+	"github.com/spf13/cast"
 )
 
 const ginSupportMinGoVer = 14
@@ -35,7 +35,7 @@ func debugPrintRoute(httpMethod, absolutePath string, handlers HandlersChain) {
 			data[0] = httpMethod
 			data[1] = absolutePath
 			data[2] = handlerName
-			data[3] = util.ToString(nuHandlers)
+			data[3] = cast.ToString(nuHandlers)
 			App.Table.Append(data)
 		} else {
 			DebugPrintRouteFunc(httpMethod, absolutePath, handlerName, nuHandlers)

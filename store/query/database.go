@@ -4,96 +4,122 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/abulo/ratel/v2/logger"
+	"github.com/abulo/ratel/v2/metric"
+	"github.com/abulo/ratel/v2/store/null"
+	"github.com/abulo/ratel/v2/trace"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
+	"github.com/spf13/cast"
 )
 
 // Connection 链接
 type Connection interface {
-	Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
-	Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
-	NewQuery(ctx context.Context) *QueryBuilder
-	GetLastSql() Sql
-	LastSql(query string, args ...interface{})
+	Exec(ctx context.Context, querySQL string, args ...interface{}) (sql.Result, error)
+	Query(ctx context.Context, querySQL string, args ...interface{}) (*sql.Rows, error)
+	NewBuilder(ctx context.Context) *Builder
+	SQLRaw() string
+	LastSQL(querySQL string, args ...interface{})
 }
 
-// Sql sql语句
-type Sql struct {
-	Sql      string
+// SQL sql语句
+type SQL struct {
+	SQL      string
 	Args     []interface{}
 	CostTime time.Duration
 }
 
-// QueryDb mysql 配置
-type QueryDb struct {
-	DB         *sql.DB
-	lastsql    Sql
-	DriverName string
-	Trace      bool
-	Prepare    bool
+// Query 构造查询
+type Query struct {
+	DB            *sql.DB
+	SQL           SQL
+	DriverName    string
+	DisableMetric bool // 关闭指标采集
+	DisableTrace  bool // 关闭链路追踪
+	Prepare       bool
+	DBName        string
+	Addr          string
+	Func          string // 上个函数调用的函数名称
+	Path          string // 上个函数调用的函数位置
 }
 
-//QueryTx 事务
-type QueryTx struct {
-	TX         *sql.Tx
-	lastsql    Sql
-	DriverName string
-	Trace      bool
-	Prepare    bool
+// Transaction 事务
+type Transaction struct {
+	Transaction   *sql.Tx
+	SQL           SQL
+	DriverName    string
+	DisableMetric bool // 关闭指标采集
+	DisableTrace  bool // 关闭链路追踪
+	Prepare       bool
+	DBName        string
+	Addr          string
+	Func          string // 上个函数调用的函数名称
+	Path          string // 上个函数调用的函数位置
 }
 
-func (querydb *QueryDb) SetTrace(t bool) {
-	querydb.Trace = t
-}
-
-//NewQuery 生成一个新的查询构造器
-func (querydb *QueryDb) NewQuery(ctx context.Context) *QueryBuilder {
+// NewBuilder 生成一个新的查询构造器
+func (query *Query) NewBuilder(ctx context.Context) *Builder {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	return &QueryBuilder{connection: querydb, ctx: ctx}
+	if !query.DisableTrace {
+		pc, file, lineNo, _ := runtime.Caller(1)
+		name := runtime.FuncForPC(pc).Name()
+		query.Path = file + ":" + cast.ToString(lineNo)
+		query.Func = name
+	}
+	return &Builder{connection: query, ctx: ctx}
 }
 
-//Begin 开启一个事务
-func (querydb *QueryDb) Begin() (*QueryTx, error) {
-	tx, err := querydb.DB.Begin()
+// Begin 开启一个事务
+func (query *Query) Begin() (*Transaction, error) {
+	transaction, err := query.DB.Begin()
 	if err != nil {
 		return nil, err
 	}
-	return &QueryTx{TX: tx, DriverName: querydb.DriverName, Trace: querydb.Trace, Prepare: querydb.Prepare}, nil
+	return &Transaction{Transaction: transaction, DriverName: query.DriverName, DisableTrace: query.DisableTrace, DisableMetric: query.DisableMetric, Prepare: query.Prepare, DBName: query.DBName, Addr: query.Addr, Func: query.Func, Path: query.Path}, nil
 }
 
-//Exec 复用执行语句
-func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	if querydb.DB == nil {
+// Exec 复用执行语句
+func (query *Query) Exec(ctx context.Context, querySQL string, args ...interface{}) (sql.Result, error) {
+	if query.DB == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
-	querydb.lastsql.Sql = query
-	querydb.lastsql.Args = args
+	query.SQL.SQL = querySQL
+	query.SQL.Args = args
 	start := time.Now()
 	defer func() {
-		querydb.lastsql.CostTime = time.Since(start)
+		query.SQL.CostTime = time.Since(start)
 	}()
-
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if querydb.Trace {
 
-		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
+	if !query.DisableTrace {
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
-			span := opentracing.StartSpan(querydb.DriverName, opentracing.ChildOf(parentCtx))
+			span := opentracing.StartSpan(query.DriverName, opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
-			ext.PeerService.Set(span, querydb.DriverName)
-			span.LogFields(log.String("sql", query))
-			span.LogFields(log.Object("param", args))
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerAddress.Set(span, query.Addr)
+			ext.PeerHostname.Set(span, hostName)
+			ext.DBInstance.Set(span, query.DBName)
+			ext.DBStatement.Set(span, query.DriverName)
+			span.SetTag("call.func", query.Func)
+			span.SetTag("call.path", query.Path)
+			span.LogFields(log.String("sql", query.SQLRaw()))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -102,48 +128,66 @@ func (querydb *QueryDb) Exec(ctx context.Context, query string, args ...interfac
 	var res sql.Result
 	var err error
 	var stmt *sql.Stmt
-	if querydb.Prepare {
+	if query.Prepare {
 		//添加预处理
-		stmt, err = querydb.DB.PrepareContext(ctx, query)
+		stmt, err = query.DB.PrepareContext(ctx, querySQL)
 		if err != nil {
-			querydb.DB.PingContext(ctx)
 			return nil, err
 		}
-		defer stmt.Close()
+		defer func() {
+			if err := stmt.Close(); err != nil {
+				logger.Logger.Error("Error closing stmt: ", err)
+			}
+		}()
 		res, err = stmt.ExecContext(ctx, args...)
-		querydb.DB.PingContext(ctx)
 	} else {
-		res, err = querydb.DB.ExecContext(ctx, query, args...)
-		querydb.DB.PingContext(ctx)
+		res, err = query.DB.ExecContext(ctx, querySQL, args...)
+	}
+
+	if !query.DisableMetric {
+		cost := time.Since(start)
+		if err != nil {
+			metric.LibHandleCounter.WithLabelValues(query.DriverName, query.DBName, query.Addr, "ERR").Inc()
+		} else {
+			metric.LibHandleCounter.Inc(query.DriverName, query.DBName, query.Addr, "OK")
+		}
+		metric.LibHandleHistogram.WithLabelValues(query.DriverName, query.DBName, query.Addr).Observe(cost.Seconds())
 	}
 
 	return res, err
 }
 
-//Query 复用查询语句
-func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	if querydb.DB == nil {
+// Query 复用查询语句
+func (query *Query) Query(ctx context.Context, querySQL string, args ...interface{}) (*sql.Rows, error) {
+	if query.DB == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
-	querydb.lastsql.Sql = query
-	querydb.lastsql.Args = args
+	query.SQL.SQL = querySQL
+	query.SQL.Args = args
 	start := time.Now()
 	defer func() {
-		querydb.lastsql.CostTime = time.Since(start)
+		query.SQL.CostTime = time.Since(start)
 	}()
 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if querydb.Trace {
-
-		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
+	if !query.DisableTrace {
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
-			span := opentracing.StartSpan(querydb.DriverName, opentracing.ChildOf(parentCtx))
+			span := opentracing.StartSpan(query.DriverName, opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
-			ext.PeerService.Set(span, querydb.DriverName)
-			span.LogFields(log.String("sql", query))
-			span.LogFields(log.Object("param", args))
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerAddress.Set(span, query.Addr)
+			ext.PeerHostname.Set(span, hostName)
+			ext.DBInstance.Set(span, query.DBName)
+			ext.DBStatement.Set(span, query.DriverName)
+			span.SetTag("call.func", query.Func)
+			span.SetTag("call.path", query.Path)
+			span.LogFields(log.String("sql", query.SQLRaw()))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
@@ -152,176 +196,263 @@ func (querydb *QueryDb) Query(ctx context.Context, query string, args ...interfa
 	var err error
 	var stmt *sql.Stmt
 
-	if querydb.Prepare {
+	if query.Prepare {
 		//添加预处理
-		stmt, err = querydb.DB.PrepareContext(ctx, query)
+		stmt, err = query.DB.PrepareContext(ctx, querySQL)
 		if err != nil {
-			querydb.DB.PingContext(ctx)
 			return nil, err
 		}
-		defer stmt.Close()
+		defer func() {
+			if err := stmt.Close(); err != nil {
+				logger.Logger.Error("Error closing stmt: ", err)
+			}
+		}()
 		res, err = stmt.QueryContext(ctx, args...)
-		querydb.DB.PingContext(ctx)
 	} else {
-		res, err = querydb.DB.QueryContext(ctx, query, args...)
-		querydb.DB.PingContext(ctx)
+		res, err = query.DB.QueryContext(ctx, querySQL, args...)
 	}
-	return res, err
-}
 
-//GetLastSql 获取sql语句
-func (querydb *QueryDb) GetLastSql() Sql {
-	return querydb.lastsql
+	if !query.DisableMetric {
+		cost := time.Since(start)
+		if err != nil {
+			metric.LibHandleCounter.WithLabelValues(query.DriverName, query.DBName, query.Addr, "ERR").Inc()
+		} else {
+			metric.LibHandleCounter.Inc(query.DriverName, query.DBName, query.Addr, "OK")
+		}
+		metric.LibHandleHistogram.WithLabelValues(query.DriverName, query.DBName, query.Addr).Observe(cost.Seconds())
+	}
+
+	return res, err
 }
 
 // Commit 事务提交
-func (querytx *QueryTx) Commit() error {
-	return querytx.TX.Commit()
+func (query *Transaction) Commit() error {
+	return query.Transaction.Commit()
 }
 
 // Rollback 事务回滚
-func (querytx *QueryTx) Rollback() error {
-	return querytx.TX.Rollback()
+func (query *Transaction) Rollback() error {
+	return query.Transaction.Rollback()
 }
 
-// NewQuery 生成一个新的查询构造器
-func (querytx *QueryTx) NewQuery(ctx context.Context) *QueryBuilder {
+// NewBuilder 生成一个新的查询构造器
+func (query *Transaction) NewBuilder(ctx context.Context) *Builder {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	return &QueryBuilder{connection: querytx, ctx: ctx}
+	return &Builder{connection: query, ctx: ctx}
 }
 
-//Exec 复用执行语句
-func (querytx *QueryTx) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	if querytx.TX == nil {
+// Exec 复用执行语句
+func (query *Transaction) Exec(ctx context.Context, querySQL string, args ...interface{}) (sql.Result, error) {
+	if query.Transaction == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
-	querytx.lastsql.Sql = query
-	querytx.lastsql.Args = args
+	query.SQL.SQL = querySQL
+	query.SQL.Args = args
 	start := time.Now()
 	defer func() {
-		querytx.lastsql.CostTime = time.Since(start)
+		query.SQL.CostTime = time.Since(start)
 
 	}()
 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-
-	if querytx.Trace {
-
-		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
+	if !query.DisableTrace {
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
-			span := opentracing.StartSpan(querytx.DriverName, opentracing.ChildOf(parentCtx))
+			span := opentracing.StartSpan(query.DriverName, opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
-			ext.PeerService.Set(span, querytx.DriverName)
-			span.LogFields(log.String("sql", query))
-			span.LogFields(log.Object("param", args))
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerAddress.Set(span, query.Addr)
+			ext.PeerHostname.Set(span, hostName)
+			ext.DBInstance.Set(span, query.DBName)
+			ext.DBStatement.Set(span, query.DriverName)
+			span.SetTag("call.func", query.Func)
+			span.SetTag("call.path", query.Path)
+			span.LogFields(log.String("sql", query.SQLRaw()))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
-
 	}
+
 	var res sql.Result
 	var err error
 	var stmt *sql.Stmt
-	if querytx.Prepare {
+	if query.Prepare {
 		//添加预处理
-		stmt, err = querytx.TX.PrepareContext(ctx, query)
+		stmt, err = query.Transaction.PrepareContext(ctx, querySQL)
 		if err != nil {
 			return nil, err
 		}
-		defer stmt.Close()
+		defer func() {
+			if err := stmt.Close(); err != nil {
+				logger.Logger.Error("Error closing stmt: ", err)
+			}
+		}()
 		res, err = stmt.ExecContext(ctx, args...)
 	} else {
-		res, err = querytx.TX.ExecContext(ctx, query, args...)
+		res, err = query.Transaction.ExecContext(ctx, querySQL, args...)
 	}
+
+	if !query.DisableMetric {
+		cost := time.Since(start)
+		if err != nil {
+			metric.LibHandleCounter.WithLabelValues(query.DriverName, query.DBName, query.Addr, "ERR").Inc()
+		} else {
+			metric.LibHandleCounter.Inc(query.DriverName, query.DBName, query.Addr, "OK")
+		}
+		metric.LibHandleHistogram.WithLabelValues(query.DriverName, query.DBName, query.Addr).Observe(cost.Seconds())
+	}
+
 	return res, err
 
 }
 
-//Query 复用查询语句
-func (querytx *QueryTx) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	if querytx.TX == nil {
+// Query 复用查询语句
+func (query *Transaction) Query(ctx context.Context, querySQL string, args ...interface{}) (*sql.Rows, error) {
+	if query.Transaction == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
-	querytx.lastsql.Sql = query
-	querytx.lastsql.Args = args
+	query.SQL.SQL = querySQL
+	query.SQL.Args = args
 	start := time.Now()
 	defer func() {
-		querytx.lastsql.CostTime = time.Since(start)
+		query.SQL.CostTime = time.Since(start)
 	}()
 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	if querytx.Trace {
-		if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
+	if !query.DisableTrace {
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
-			span := opentracing.StartSpan(querytx.DriverName, opentracing.ChildOf(parentCtx))
+			span := opentracing.StartSpan(query.DriverName, opentracing.ChildOf(parentCtx))
 			ext.SpanKindRPCClient.Set(span)
-			ext.PeerService.Set(span, querytx.DriverName)
-			span.LogFields(log.String("sql", query))
-			span.LogFields(log.Object("param", args))
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerAddress.Set(span, query.Addr)
+			ext.PeerHostname.Set(span, hostName)
+			ext.DBInstance.Set(span, query.DBName)
+			ext.DBStatement.Set(span, query.DriverName)
+			span.LogFields(log.String("sql", query.SQLRaw()))
+			span.SetTag("call.func", query.Func)
+			span.SetTag("call.path", query.Path)
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
+
 	var res *sql.Rows
 	var err error
 	var stmt *sql.Stmt
-	if querytx.Prepare {
+	if query.Prepare {
 		//添加预处理
-		stmt, err = querytx.TX.PrepareContext(ctx, query)
+		stmt, err = query.Transaction.PrepareContext(ctx, querySQL)
 		if err != nil {
 			return nil, err
 		}
-		defer stmt.Close()
+		defer func() {
+			if err := stmt.Close(); err != nil {
+				logger.Logger.Error("Error closing stmt: ", err)
+			}
+		}()
 		res, err = stmt.QueryContext(ctx, args...)
 	} else {
-		res, err = querytx.TX.QueryContext(ctx, query, args...)
+		res, err = query.Transaction.QueryContext(ctx, querySQL, args...)
+	}
+	if !query.DisableMetric {
+		cost := time.Since(start)
+		if err != nil {
+			metric.LibHandleCounter.WithLabelValues(query.DriverName, query.DBName, query.Addr, "ERR").Inc()
+		} else {
+			metric.LibHandleCounter.Inc(query.DriverName, query.DBName, query.Addr, "OK")
+		}
+		metric.LibHandleHistogram.WithLabelValues(query.DriverName, query.DBName, query.Addr).Observe(cost.Seconds())
 	}
 	return res, err
 }
 
-//GetLastSql 获取sql语句
-func (querytx *QueryTx) GetLastSql() Sql {
-	return querytx.lastsql
+// SQLRaw ...
+func (query *Transaction) SQLRaw() string {
+	return query.SQL.ToString()
 }
 
-func (querytx *QueryTx) LastSql(query string, args ...interface{}) {
-	querytx.lastsql.Sql = query
-	querytx.lastsql.Args = args
+// SQLRaw ...
+func (query *Query) SQLRaw() string {
+	return query.SQL.ToString()
 }
 
-func (querydb *QueryDb) LastSql(query string, args ...interface{}) {
-	querydb.lastsql.Sql = query
-	querydb.lastsql.Args = args
+// LastSQL ...
+func (query *Transaction) LastSQL(querySQL string, args ...interface{}) {
+	query.SQL.SQL = querySQL
+	query.SQL.Args = args
+}
+
+// LastSQL ...
+func (query *Query) LastSQL(querySQL string, args ...interface{}) {
+	query.SQL.SQL = querySQL
+	query.SQL.Args = args
 }
 
 // ToString sql语句转出string
-func (sqlRaw Sql) ToString() string {
-	s := sqlRaw.Sql
-	for _, v := range sqlRaw.Args {
+func (SQLRaw SQL) ToString() string {
+	s := SQLRaw.SQL
+	for _, v := range SQLRaw.Args {
 		if isNilFixed(v) {
 			v = "NULL"
 		} else {
 			switch reflect.ValueOf(v).Interface().(type) {
-			case NullString:
-				v = v.(NullString).Result()
-			case NullInt64:
-				v = v.(NullInt64).Result()
-			case NullInt32:
-				v = v.(NullInt32).Result()
-			case NullFloat64:
-				v = v.(NullFloat64).Result()
-			case NullBool:
-				v = v.(NullBool).Result()
-			case NullDateTime:
-				v = v.(NullDateTime).Result()
-			case NullDate:
-				v = v.(NullDate).Result()
+			case null.Bool:
+				v = v.(null.Bool).Result()
+			case null.Byte:
+				v = v.(null.Byte).Result()
+			case null.Bytes:
+				v = v.(null.Bytes).Result()
+			case null.CTime:
+				v = v.(null.CTime).Result()
+			case null.Date:
+				v = v.(null.Date).Result()
+			case null.DateTime:
+				v = v.(null.DateTime).Result()
+			case null.Float32:
+				v = v.(null.Float32).Result()
+			case null.Float64:
+				v = v.(null.Float64).Result()
+			case null.Int:
+				v = v.(null.Int).Result()
+			case null.Int8:
+				v = v.(null.Int8).Result()
+			case null.Int16:
+				v = v.(null.Int16).Result()
+			case null.Int32:
+				v = v.(null.Int32).Result()
+			case null.Int64:
+				v = v.(null.Int64).Result()
+			case null.JSON:
+				v = v.(null.JSON).Result()
+			case null.String:
+				v = v.(null.String).Result()
+			case null.Time:
+				v = v.(null.Time).Result()
+			case null.TimeStamp:
+				v = v.(null.TimeStamp).Result()
+			case null.Uint:
+				v = v.(null.Uint).Result()
+			case null.Uint8:
+				v = v.(null.Uint8).Result()
+			case null.Uint16:
+				v = v.(null.Uint16).Result()
+			case null.Uint32:
+				v = v.(null.Uint32).Result()
+			case null.Uint64:
+				v = v.(null.Uint64).Result()
 			}
 		}
 		s = convert(s, v)
@@ -345,14 +476,13 @@ func convert(s string, v interface{}) string {
 	case string:
 		if val := fmt.Sprintf("%v", v); val == "NULL" {
 			return strings.Replace(s, "?", fmt.Sprintf("%v", v), 1)
-		} else {
-			return strings.Replace(s, "?", strconv.Quote(fmt.Sprintf("%v", v)), 1)
 		}
+		return strings.Replace(s, "?", strconv.Quote(fmt.Sprintf("%v", v)), 1)
 	}
 	return strings.Replace(s, "?", fmt.Sprintf("%v", v), 1)
 }
 
-// ToJson sql语句转出json
-func (sql Sql) ToJson() string {
+// ToJSON sql语句转出json
+func (sql SQL) ToJSON() string {
 	return fmt.Sprintf(`{"sql":%s,"costtime":"%s"}`, strconv.Quote(sql.ToString()), sql.CostTime)
 }

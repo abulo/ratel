@@ -1,120 +1,94 @@
 package util
 
 import (
+	"encoding/base64"
 	"net/url"
-	"time"
+	"strings"
 )
 
-// URL wrap url.URL.
-type URL struct {
-	Scheme     string
-	Opaque     string        // encoded opaque data
-	User       *url.Userinfo // username and password information
-	Host       string        // host or host:port
-	Path       string        // path (relative paths may omit leading slash)
-	RawPath    string        // encoded path hint (see EscapedPath method)
-	ForceQuery bool          // append a query ('?') even if RawQuery is empty
-	RawQuery   string        // encoded query values, without '?'
-	Fragment   string        // fragment for references, without '#'
-	HostName   string
-	Port       string
-	params     url.Values
-}
+//////////// URL Functions ////////////
 
-// ParseURLRaw parses raw into URL.
-func ParseURLRaw(raw string) (*URL, error) {
-	u, e := url.Parse(raw)
-	if e != nil {
-		return nil, e
-	}
-
-	return &URL{
-		Scheme:     u.Scheme,
-		Opaque:     u.Opaque,
-		User:       u.User,
-		Host:       u.Host,
-		Path:       u.Path,
-		RawPath:    u.RawPath,
-		ForceQuery: u.ForceQuery,
-		RawQuery:   u.RawQuery,
-		Fragment:   u.Fragment,
-		HostName:   u.Hostname(),
-		Port:       u.Port(),
-		params:     u.Query(),
-	}, nil
-}
-
-// Password gets password from URL.
-func (u *URL) Password() (string, bool) {
-	if u.User != nil {
-		return u.User.Password()
-	}
-	return "", false
-}
-
-// Username gets username from URL.
-func (u *URL) Username() string {
-	return u.User.Username()
-}
-
-// QueryInt returns provided field's value in int type.
-// if value is empty, expect returns
-func (u *URL) QueryInt(field string, expect int) (ret int) {
-	ret, err := ToIntE(u.Query().Get(field))
+// ParseURL parse_url()
+// Parse a URL and return its components
+// -1: all; 1: scheme; 2: host; 4: port; 8: user; 16: pass; 32: path; 64: query; 128: fragment
+func ParseURL(str string, component int) (map[string]string, error) {
+	u, err := url.Parse(str)
 	if err != nil {
-		return expect
+		return nil, err
 	}
-
-	return ret
+	if component == -1 {
+		component = 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128
+	}
+	var components = make(map[string]string)
+	if (component & 1) == 1 {
+		components["scheme"] = u.Scheme
+	}
+	if (component & 2) == 2 {
+		components["host"] = u.Hostname()
+	}
+	if (component & 4) == 4 {
+		components["port"] = u.Port()
+	}
+	if (component & 8) == 8 {
+		components["user"] = u.User.Username()
+	}
+	if (component & 16) == 16 {
+		components["pass"], _ = u.User.Password()
+	}
+	if (component & 32) == 32 {
+		components["path"] = u.Path
+	}
+	if (component & 64) == 64 {
+		components["query"] = u.RawQuery
+	}
+	if (component & 128) == 128 {
+		components["fragment"] = u.Fragment
+	}
+	return components, nil
 }
 
-// QueryInt64 returns provided field's value in int64 type.
-// if value is empty, expect returns
-func (u *URL) QueryInt64(field string, expect int64) (ret int64) {
-	ret, err := ToInt64E(u.Query().Get(field))
+// URLEncode urlencode()
+func URLEncode(str string) string {
+	return url.QueryEscape(str)
+}
+
+// URLDecode urldecode()
+func URLDecode(str string) (string, error) {
+	return url.QueryUnescape(str)
+}
+
+// RawURLEncode Rawurlencode rawurlencode()
+func RawURLEncode(str string) string {
+	return strings.Replace(url.QueryEscape(str), "+", "%20", -1)
+}
+
+// RawURLDecode Rawurldecode rawurldecode()
+func RawURLDecode(str string) (string, error) {
+	return url.QueryUnescape(strings.Replace(str, "%20", "+", -1))
+}
+
+// HTTPBuildQuery http_build_query()
+func HTTPBuildQuery(queryData url.Values) string {
+	return queryData.Encode()
+}
+
+// Base64Encode base64_encode()
+func Base64Encode(str string) string {
+	return base64.StdEncoding.EncodeToString([]byte(str))
+}
+
+// Base64Decode base64_decode()
+func Base64Decode(str string) (string, error) {
+	switch len(str) % 4 {
+	case 2:
+		str += "=="
+	case 3:
+		str += "="
+	}
+
+	data, err := base64.StdEncoding.DecodeString(str)
 	if err != nil {
-		return expect
+		return "", err
 	}
-
-	return ret
-}
-
-// QueryString returns provided field's value in string type.
-// if value is empty, expect returns
-func (u *URL) QueryString(field string, expect string) (ret string) {
-	ret = expect
-	if mi := u.Query().Get(field); mi != "" {
-		ret = mi
-	}
-
-	return
-}
-
-// QueryDuration returns provided field's value in duration type.
-// if value is empty, expect returns
-func (u *URL) QueryDuration(field string, expect time.Duration) (ret time.Duration) {
-	ret, err := ToDurationE(u.Query().Get(field))
-	if err != nil {
-		return expect
-	}
-
-	return ret
-}
-
-// QueryBool returns provided field's value in bool
-// if value is empty, expect returns
-func (u *URL) QueryBool(field string, expect bool) (ret bool) {
-	ret, err := ToBoolE(u.Query().Get(field))
-	if err != nil {
-		return expect
-	}
-	return ret
-}
-
-// Query parses RawQuery and returns the corresponding values.
-// It silently discards malformed value pairs.
-// To check errors use ParseQuery.
-func (u *URL) Query() url.Values {
-	v, _ := url.ParseQuery(u.RawQuery)
-	return v
+	return string(data), nil
 }

@@ -6,9 +6,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/abulo/ratel/v2/store/null"
 )
 
-//转换成string
+// 转换成string
 func toString(src interface{}) (dst string, err error) {
 	inf := reflect.Indirect(reflect.ValueOf(src)).Interface()
 	if inf == nil {
@@ -53,7 +55,7 @@ func toString(src interface{}) (dst string, err error) {
 	return
 }
 
-//提取tag信息
+// 提取tag信息
 func extractTagInfo(st reflect.Value) (tagList map[string]reflect.Value, err error) {
 
 	stVal := reflect.Indirect(st)
@@ -104,19 +106,49 @@ func extractTagInfo(st reflect.Value) (tagList map[string]reflect.Value, err err
 			switch v.Interface().(type) {
 			case time.Time:
 				ignore = true
-			case NullDateTime:
+			case null.Bool:
 				ignore = true
-			case NullString:
+			case null.Byte:
 				ignore = true
-			case NullBool:
+			case null.Bytes:
 				ignore = true
-			case NullInt64:
+			case null.CTime:
 				ignore = true
-			case NullInt32:
+			case null.Date:
 				ignore = true
-			case NullFloat64:
+			case null.DateTime:
 				ignore = true
-			case NullDate:
+			case null.Float32:
+				ignore = true
+			case null.Float64:
+				ignore = true
+			case null.Int:
+				ignore = true
+			case null.Int8:
+				ignore = true
+			case null.Int16:
+				ignore = true
+			case null.Int32:
+				ignore = true
+			case null.Int64:
+				ignore = true
+			case null.JSON:
+				ignore = true
+			case null.String:
+				ignore = true
+			case null.Time:
+				ignore = true
+			case null.TimeStamp:
+				ignore = true
+			case null.Uint:
+				ignore = true
+			case null.Uint8:
+				ignore = true
+			case null.Uint16:
+				ignore = true
+			case null.Uint32:
+				ignore = true
+			case null.Uint64:
 				ignore = true
 			}
 

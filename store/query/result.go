@@ -4,17 +4,22 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+
+	"github.com/abulo/ratel/v2/logger"
 )
 
 // Row 获取记录
 type Row struct {
-	rs          *Rows
-	lastError   error
-	transaction bool
+	rs        *Rows
+	lastError error
 }
 
-//ToArray get Array
+// ToArray get Array
 func (r *Row) ToArray() (result []string, err error) {
+	if r.rs.lastError != nil {
+		err = r.rs.lastError
+		return
+	}
 	items, err := r.rs.ToArray()
 	if err != nil {
 		r.lastError = err
@@ -26,8 +31,12 @@ func (r *Row) ToArray() (result []string, err error) {
 	return nil, sql.ErrNoRows
 }
 
-//ToMap get Map
+// ToMap get Map
 func (r *Row) ToMap() (result map[string]string, err error) {
+	if r.rs.lastError != nil {
+		err = r.rs.lastError
+		return
+	}
 	items, err := r.rs.ToMap()
 	if err != nil {
 		r.lastError = err
@@ -39,7 +48,12 @@ func (r *Row) ToMap() (result map[string]string, err error) {
 	return nil, sql.ErrNoRows
 }
 
+// ToInterface ...
 func (r *Row) ToInterface() (result map[string]interface{}, err error) {
+	if r.rs.lastError != nil {
+		err = r.rs.lastError
+		return
+	}
 	items, err := r.rs.ToInterface()
 	if err != nil {
 		r.lastError = err
@@ -51,8 +65,11 @@ func (r *Row) ToInterface() (result map[string]interface{}, err error) {
 	return nil, sql.ErrNoRows
 }
 
-//ToStruct get Struct
+// ToStruct get Struct
 func (r *Row) ToStruct(st interface{}) error {
+	if r.rs.lastError != nil {
+		return r.rs.lastError
+	}
 	//获取变量的类型
 	stType := reflect.TypeOf(st)
 
@@ -61,22 +78,23 @@ func (r *Row) ToStruct(st interface{}) error {
 	if stType.Kind() != reflect.Ptr {
 		return fmt.Errorf("the variable type is %v, not a pointer", stType.Kind())
 	}
-
 	stTypeInd := stType.Elem()
-
 	if r.rs.rs == nil {
-		return r.lastError
+		return sql.ErrNoRows
 	}
-	defer r.rs.rs.Close()
+	defer func() {
+		if err := r.rs.rs.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
+
 	v := reflect.New(stTypeInd)
 	tagList, err := extractTagInfo(v)
 	if err != nil {
 		return err
 	}
 	fields, err := r.rs.rs.Columns()
-
 	if err != nil {
-		r.rs.lastError = err
 		return err
 	}
 	refs := make([]interface{}, len(fields))
@@ -87,6 +105,9 @@ func (r *Row) ToStruct(st interface{}) error {
 			refs[i] = new(interface{})
 		}
 	}
+	if !r.rs.rs.Next() {
+		return sql.ErrNoRows
+	}
 	if err := r.rs.rs.Scan(refs...); err != nil {
 		return err
 	}
@@ -94,19 +115,22 @@ func (r *Row) ToStruct(st interface{}) error {
 	return nil
 }
 
-//Rows get data
+// Rows get data
 type Rows struct {
-	rs          *sql.Rows
-	lastError   error
-	transaction bool
+	rs        *sql.Rows
+	lastError error
 }
 
-//ToArray get Array
+// ToArray get Array
 func (r *Rows) ToArray() (data [][]string, err error) {
 	if r.rs == nil {
 		return nil, r.lastError
 	}
-	defer r.rs.Close()
+	defer func() {
+		if err := r.rs.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
 	//获取查询的字段
 	fields, err := r.rs.Columns()
 	if err != nil {
@@ -157,7 +181,13 @@ func (r *Rows) ToInterface() (data []map[string]interface{}, err error) {
 	if r.rs == nil {
 		return nil, r.lastError
 	}
-	defer r.rs.Close()
+
+	defer func() {
+		if err := r.rs.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
+
 	fields, err := r.rs.Columns()
 	if err != nil {
 		r.lastError = err
@@ -191,12 +221,16 @@ func (r *Rows) ToInterface() (data []map[string]interface{}, err error) {
 
 }
 
-//ToMap get Map
+// ToMap get Map
 func (r *Rows) ToMap() (data []map[string]string, err error) {
 	if r.rs == nil {
 		return nil, r.lastError
 	}
-	defer r.rs.Close()
+	defer func() {
+		if err := r.rs.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
 	fields, err := r.rs.Columns()
 	if err != nil {
 		r.lastError = err
@@ -229,7 +263,7 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 	return data, nil
 }
 
-//ToStruct get Struct
+// ToStruct get Struct
 func (r *Rows) ToStruct(st interface{}) error {
 	//st->&[]user
 	//获取变量的类型,类型为指针
@@ -250,7 +284,11 @@ func (r *Rows) ToStruct(st interface{}) error {
 	if r.rs == nil {
 		return r.lastError
 	}
-	defer r.rs.Close()
+	defer func() {
+		if err := r.rs.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
 	//初始化struct
 	v := reflect.New(stTypeInd.Elem())
 	//提取结构体中的tag

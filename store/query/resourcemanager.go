@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// A ResourceManager is a manager that used to manage resources.
+// ResourceManager A ResourceManager is a manager that used to manage resources.
 type ResourceManager struct {
 	resources    map[string]io.Closer
 	singleFlight SingleFlight

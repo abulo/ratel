@@ -3,52 +3,101 @@ package redis
 import (
 	"context"
 	"fmt"
+	"os"
+	"runtime"
 	"strconv"
 	"time"
 	"unicode/utf8"
 	"unsafe"
 
+	"github.com/abulo/ratel/v2/metric"
+	"github.com/abulo/ratel/v2/trace"
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
+	"github.com/spf13/cast"
 )
 
-type OpenTelemetryHook struct{}
+// OpenTraceHook ...
+type OpenTraceHook struct {
+	redis.Hook
+	DisableMetric bool // 关闭指标采集
+	DisableTrace  bool // 关闭链路追踪
+	DB            int
+	Addr          string
+}
 
-var _ redis.Hook = OpenTelemetryHook{}
+// CmdStart ...
+type CmdStart string
 
-func (OpenTelemetryHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
+// RequestCmdStart ...
+const RequestCmdStart = CmdStart("start")
+
+// BeforeProcess ...
+func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
 	b := make([]byte, 32)
 	b = appendCmd(b, cmd)
 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-
-	if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
-		parentCtx := parentSpan.Context()
-		span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
-		ext.SpanKindRPCClient.Set(span)
-		ext.PeerService.Set(span, "redis")
-		span.LogFields(log.String("cmd", String(b)))
-		ctx = opentracing.ContextWithSpan(ctx, span)
+	if !op.DisableTrace {
+		pc, file, lineNo, _ := runtime.Caller(5)
+		name := runtime.FuncForPC(pc).Name()
+		Path := file + ":" + cast.ToString(lineNo)
+		Func := name
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerHostname.Set(span, hostName)
+			span.SetTag("call.func", Func)
+			span.SetTag("call.path", Path)
+			span.LogFields(log.String("cmd", String(b)))
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
 	}
+	if !op.DisableMetric {
+		start := time.Now()
+		ctx = context.WithValue(ctx, RequestCmdStart, start)
+	}
+
 	return ctx, nil
 }
 
-func (OpenTelemetryHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
+// AfterProcess ...
+func (op OpenTraceHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	span := opentracing.SpanFromContext(ctx)
-	if span != nil {
-		defer span.Finish()
+	if !op.DisableTrace {
+		span := trace.SpanFromContext(ctx)
+		if span != nil {
+			defer span.Finish()
+		}
 	}
+
+	if !op.DisableMetric {
+		start := ctx.Value(RequestCmdStart)
+		cost := time.Since(start.(time.Time))
+		if cmd.Err() != nil {
+			metric.LibHandleCounter.WithLabelValues("redis", cast.ToString(op.DB), op.Addr, "ERR").Inc()
+		} else {
+			metric.LibHandleCounter.Inc("redis", cast.ToString(op.DB), op.Addr, "OK")
+		}
+		metric.LibHandleHistogram.WithLabelValues("redis", cast.ToString(op.DB), op.Addr).Observe(cost.Seconds())
+	}
+
 	return nil
 }
 
-func (OpenTelemetryHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
+// BeforeProcessPipeline ...
+func (op OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
@@ -81,33 +130,62 @@ func (OpenTelemetryHook) BeforeProcessPipeline(ctx context.Context, cmds []redis
 			unqNames = append(unqNames, name)
 		}
 	}
+	if !op.DisableTrace {
+		pc, file, lineNo, _ := runtime.Caller(5)
+		name := runtime.FuncForPC(pc).Name()
+		Path := file + ":" + cast.ToString(lineNo)
+		Func := name
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerHostname.Set(span, hostName)
+			span.SetTag("call.func", Func)
+			span.SetTag("call.path", Path)
+			span.LogFields(log.String("cmds", String(b)))
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
+	}
 
-	if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
-		parentCtx := parentSpan.Context()
-		span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
-		ext.SpanKindRPCClient.Set(span)
-		ext.PeerService.Set(span, "redis")
-		// span.SetTag("redis.cmds", String(b))
-		span.LogFields(log.String("cmds", String(b)))
-		ctx = opentracing.ContextWithSpan(ctx, span)
+	if !op.DisableMetric {
+		start := time.Now()
+		ctx = context.WithValue(ctx, RequestCmdStart, start)
 	}
 
 	return ctx, nil
 }
 
-func String(b []byte) string {
-	return *(*string)(unsafe.Pointer(&b))
-}
-
-func (OpenTelemetryHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
+// AfterProcessPipeline ...
+func (op OpenTraceHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	span := opentracing.SpanFromContext(ctx)
-	if span != nil {
-		defer span.Finish()
+	if !op.DisableTrace {
+		span := trace.SpanFromContext(ctx)
+		if span != nil {
+			defer span.Finish()
+		}
+	}
+	if !op.DisableMetric {
+		start := ctx.Value(RequestCmdStart)
+		cost := time.Since(start.(time.Time))
+		// if cmds != nil {
+		// metric.LibHandleCounter.WithLabelValues("redis", util.ToString(op.DB), op.Addr, "ERR").Inc()
+		// } else {
+		metric.LibHandleCounter.Inc("redis", cast.ToString(op.DB), op.Addr, "OK")
+		// }
+		metric.LibHandleHistogram.WithLabelValues("redis", cast.ToString(op.DB), op.Addr).Observe(cost.Seconds())
 	}
 	return nil
+}
+
+// String ...
+func String(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
 }
 
 func appendCmd(b []byte, cmd redis.Cmder) []byte {
@@ -133,6 +211,7 @@ func appendCmd(b []byte, cmd redis.Cmder) []byte {
 	return b
 }
 
+// AppendArg ...
 func AppendArg(b []byte, v interface{}) []byte {
 	switch v := v.(type) {
 	case nil:
