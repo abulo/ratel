@@ -4,8 +4,12 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/spf13/cast"
 )
 
 //////////// Network Functions ////////////
@@ -157,8 +161,6 @@ func isPrivateIP(ipAddr string) bool {
 	return false
 }
 
-
-
 // URL wrap url.URL.
 type URL struct {
 	Scheme     string
@@ -214,7 +216,7 @@ func (u *URL) Username() string {
 // QueryInt returns provided field's value in int type.
 // if value is empty, expect returns
 func (u *URL) QueryInt(field string, expect int) (ret int) {
-	ret, err := ToIntE(u.Query().Get(field))
+	ret, err := cast.ToIntE(u.Query().Get(field))
 	if err != nil {
 		return expect
 	}
@@ -225,7 +227,7 @@ func (u *URL) QueryInt(field string, expect int) (ret int) {
 // QueryInt64 returns provided field's value in int64 type.
 // if value is empty, expect returns
 func (u *URL) QueryInt64(field string, expect int64) (ret int64) {
-	ret, err := ToInt64E(u.Query().Get(field))
+	ret, err := cast.ToInt64E(u.Query().Get(field))
 	if err != nil {
 		return expect
 	}
@@ -247,7 +249,7 @@ func (u *URL) QueryString(field string, expect string) (ret string) {
 // QueryDuration returns provided field's value in duration type.
 // if value is empty, expect returns
 func (u *URL) QueryDuration(field string, expect time.Duration) (ret time.Duration) {
-	ret, err := ToDurationE(u.Query().Get(field))
+	ret, err := cast.ToDurationE(u.Query().Get(field))
 	if err != nil {
 		return expect
 	}
@@ -258,7 +260,7 @@ func (u *URL) QueryDuration(field string, expect time.Duration) (ret time.Durati
 // QueryBool returns provided field's value in bool
 // if value is empty, expect returns
 func (u *URL) QueryBool(field string, expect bool) (ret bool) {
-	ret, err := ToBoolE(u.Query().Get(field))
+	ret, err := cast.ToBoolE(u.Query().Get(field))
 	if err != nil {
 		return expect
 	}
