@@ -68,8 +68,8 @@ func (config *Config) URI() string {
 	} else {
 		param = append(param, "debug=false")
 	}
-	param = append(param, "loc="+config.Local)
-	param = append(param, "parseTime=true")
+	// param = append(param, "loc="+config.Local)
+	// param = append(param, "parseTime=true")
 	return link + "?" + util.Implode("&", param)
 }
 
