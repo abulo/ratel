@@ -55,7 +55,7 @@ func (s *Server) Info() *server.ServiceInfo {
 	return &info
 }
 
-// Healthz ...
-func (s *Server) Healthz() bool {
+// Health ...
+func (s *Server) Health() bool {
 	return true
 }

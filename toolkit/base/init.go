@@ -31,7 +31,7 @@ func InitPath() error {
 
 // InitConfig 初始化
 func InitConfig() error {
-	configPath := path.Join(Path, "mysql.toml")
+	configPath := path.Join(Path, "toolkit.toml")
 	if !util.FileExists(configPath) {
 		err := errors.New("数据库配置文件不存在")
 		// fmt.Println("初始化目录错误:", color.RedString(err.Error()))
@@ -66,8 +66,8 @@ func InitQuery() error {
 	if Database := cast.ToString(Config.String("mysql.Database")); Database != "" {
 		opt.Database = Database
 	}
-	if Local := cast.ToString(Config.String("mysql.Local")); Local != "" {
-		opt.Local = Local
+	if TimeZone := cast.ToString(Config.String("mysql.TimeZone")); TimeZone != "" {
+		opt.TimeZone = TimeZone
 	}
 	// # MaxOpenConns 连接池最多同时打开的连接数
 	// MaxOpenConns = 128

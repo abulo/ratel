@@ -15,7 +15,7 @@ type Config struct {
 	Password         string   //密码
 	Addr             []string //ip:port
 	Database         string   //连接数据库
-	Local            string   //数据库时区
+	TimeZone         string   //数据库时区
 	DialTimeout      string   //200ms
 	OpenStrategy     string   //random/in_order (default random)
 	Compress         bool     //enable lz4 compression
@@ -68,8 +68,8 @@ func (config *Config) URI() string {
 	} else {
 		param = append(param, "debug=false")
 	}
-	param = append(param, "loc="+config.Local)
-	param = append(param, "parseTime=true")
+	// param = append(param, "loc="+config.Local)
+	// param = append(param, "parseTime=true")
 	return link + "?" + util.Implode("&", param)
 }
 

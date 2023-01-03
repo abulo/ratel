@@ -53,9 +53,9 @@ func (s *Server) GracefulStop(ctx context.Context) error {
 	return s.Server.Shutdown(ctx)
 }
 
-// Healthz
+// Health
 // TODO(roamerlv):
-func (s *Server) Healthz() bool {
+func (s *Server) Health() bool {
 	return true
 }
 

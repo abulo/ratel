@@ -77,8 +77,8 @@ func newServer(config *Config) (*Server, error) {
 	}, nil
 }
 
-// Healthz ...
-func (s *Server) Healthz() bool {
+// Health ...
+func (s *Server) Health() bool {
 	conn, err := s.listener.Accept()
 	if err != nil {
 		return false
