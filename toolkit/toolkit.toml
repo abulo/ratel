@@ -19,3 +19,47 @@
     DisableMetric = false
     # 关闭链路追踪
     DisableTrace = false
+[[watch]]
+    # 在 go.mod 发生变化自动运行 go mod tidy
+    AutoTidy = false
+    # 为 go build 最后的文件参数，可以为空，表示当前目录。
+    # MainFiles = "./ratel/tookit"
+    MainFiles = "./"
+    # 指定可执行文件输出的文件路径
+	# 为空表示默认值，若不带路径信息，会附加在 Dirs 的第一个路径上；
+	# windows 系统无须指定 .exe 扩展名，会自行添加。
+	# 如果带路径信息，则会使用该文件所在目录作为工作目录。
+    # OutputName = "./ratel/tookit/tookit"
+    OutputName = "./tookit"
+    # 指定监视的文件扩展名
+    # 为空表示不监视任何文件，如果指定了 *，表示所有文件类型，包括没有扩展名的文件。
+    Exts = ["*"]
+    # 忽略的文件
+    # 采用 [path.Match] 作为匹配方式。
+    # glob 格式，高于 Exts 配置项
+    Excludes = []
+    # 传递给编译成功后的程序的参数
+    # ./server  --path=/var/run/aa.config
+    AppArgs = ""
+    # 是否监视子目录
+    Recursive = false
+    # 表示需要监视的目录
+	# 至少指定一个目录，第一个目录被当作主目录，将编译其下的文件作为执行主体。
+	# 如果你在 go.mod 中设置了 replace 或是更高级的 workspace 中有相关设置，
+	# 可以在此处指定这些需要跟踪的包。
+	# 如果 OutputName 中未指定目录的话，第一个目录会被当作工作目录使用。
+	# NOTE: 如果指定的目录下没有需要被监视的文件类型，那么该目录将被忽略。
+	Dirs=["./"]
+    # 监视器的更新频率
+    WatcherFrequency = "2s"
+    # 传递各个工具的参数
+	# 大致有以下几个，具体可参考 go build 的 xxflags 系列参数。
+	# - asm   --> asmflags
+	# - gccgo --> gccgoflags
+	# - gc    --> gcflags
+	# - ld    --> ldflags
+    [Flags]
+        Asm = ""
+        Gccgo = ""
+        Gc = ""
+        Ld = ""

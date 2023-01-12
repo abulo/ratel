@@ -33,7 +33,7 @@ func InitPath() error {
 func InitConfig() error {
 	configPath := path.Join(Path, "toolkit.toml")
 	if !util.FileExists(configPath) {
-		err := errors.New("数据库配置文件不存在")
+		err := errors.New("配置文件不存在")
 		// fmt.Println("初始化目录错误:", color.RedString(err.Error()))
 		return err
 	}

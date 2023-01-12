@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/abulo/ratel/v3/core/env"
+	"github.com/abulo/ratel/v3/toolkit/build"
 	"github.com/abulo/ratel/v3/toolkit/dao"
 	"github.com/abulo/ratel/v3/toolkit/module"
 	"github.com/abulo/ratel/v3/toolkit/project"
@@ -33,7 +34,7 @@ func init() {
 	rootCmd.AddCommand(project.CmdNew)
 	rootCmd.AddCommand(dao.CmdNew)
 	rootCmd.AddCommand(module.CmdNew)
-	// rootCmd.AddCommand(backstage.CmdNew)
+	rootCmd.AddCommand(build.CmdNew)
 	rootCmd.AddCommand(upgrade.CmdNew)
 }
 

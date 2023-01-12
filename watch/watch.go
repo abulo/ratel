@@ -1,501 +1,109 @@
 package watch
 
 import (
+	"bytes"
+	"context"
 	"fmt"
-	"io/fs"
-	"log"
-	"os"
 	"os/exec"
-	"path"
-	"path/filepath"
-	"runtime"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/abulo/ratel/v3/config"
-	"github.com/abulo/ratel/v3/config/toml"
 	"github.com/fsnotify/fsnotify"
 )
 
-var configFile string = "watch.toml"
+// GoVersion 返回本地 Go 的版本信息
+func GoVersion() (string, error) {
+	var buf bytes.Buffer
+	cmd := exec.Command("go", "version")
+	cmd.Stdout = &buf
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(strings.TrimPrefix(buf.String(), "go version ")), nil
+}
 
-// AppPath 运行路径
-func AppPath() string {
-
-	dir, err := os.Getwd()
+// Watch 执行热编译服务
+// 如果初始化参数有误，则反错误信息，如果是编译过程中出错，将直接将错误内容输出到 logs。
+func Watch(ctx context.Context, opt *Options) error {
+	if err := opt.sanitize(); err != nil {
+		return err
+	}
+	b := opt.newBuilder()
+	env, err := GoVersion()
 	if err != nil {
-		Fatalf("不能获取程序执行的目录: [ %s ]", err.Error())
+		return err
 	}
-	return strings.Replace(dir, "\\", "/", -1)
-
-}
-
-// ParseConfig 解析配置文件
-func ParseConfig() *config.Config {
-
-	AppConfig := config.New("watch")
-	AppConfig.AddDriver(toml.Driver)
-	configFile := AppPath() + "/" + configFile
-	configFile = strings.Replace(configFile, "\\", "/", -1)
-	if !FileExist(configFile) {
-		Fatalf("配置文件不存在[ %s ]\n", configFile)
+	b.logf(LogTypeInfo, fmt.Sprintf("当前环境参数如下：%s", env))
+	b.logf(LogTypeInfo, fmt.Sprintf("给程序传递了以下参数：%s", b.appArgs)) // 输出提示信息
+	switch {                                                     // 提示扩展名
+	case len(b.exts) == 0: // 允许不监视任意文件，但输出警告信息
+		b.logf(LogTypeWarn, "将 ext 设置为空值，意味着不监视任何文件的改变！")
+	case len(b.exts) > 0:
+		b.logf(LogTypeInfo, fmt.Sprintf("系统将监视以下类型的文件：%s", b.exts))
 	}
-	AppConfig.LoadFiles(configFile)
-	return AppConfig
+	b.logf(LogTypeInfo, fmt.Sprintf("输出文件为：%s", b.appName)) // 提示 appName
+	return b.watch(ctx, opt.paths)
 }
 
-// FileExist 判断文件是否存在
-func FileExist(filename string) bool {
-	_, err := os.Stat(filename)
-	return err == nil || os.IsExist(err)
-}
-
-// Level ...
-type (
-	Level int
-)
-
-// LevelFatal ...
-const (
-	LevelFatal = iota
-	LevelError
-	LevelWarning
-	LevelInfo
-	LevelDebug
-)
-
-var _log *logger = New()
-
-// Fatal ...
-func Fatal(s string) {
-	_log.Output(LevelFatal, s)
-	os.Exit(1)
-}
-
-// Fatalf ...
-func Fatalf(format string, v ...interface{}) {
-	_log.Output(LevelFatal, fmt.Sprintf(format, v...))
-	os.Exit(1)
-}
-
-// Error ...
-func Error(s string) {
-	_log.Output(LevelError, s)
-}
-
-// Errorf ...
-func Errorf(format string, v ...interface{}) {
-	_log.Output(LevelError, fmt.Sprintf(format, v...))
-}
-
-// Warn ...
-func Warn(s string) {
-	_log.Output(LevelWarning, s)
-}
-
-// Warnf ...
-func Warnf(format string, v ...interface{}) {
-	_log.Output(LevelWarning, fmt.Sprintf(format, v...))
-}
-
-// Info ...
-func Info(s string) {
-	_log.Output(LevelInfo, s)
-}
-
-// Infof ...
-func Infof(format string, v ...interface{}) {
-	_log.Output(LevelInfo, fmt.Sprintf(format, v...))
-}
-
-// Debug ...
-func Debug(s string) {
-	_log.Output(LevelDebug, s)
-}
-
-// Debugf ...
-func Debugf(format string, v ...interface{}) {
-	_log.Output(LevelDebug, fmt.Sprintf(format, v...))
-}
-
-// SetLogLevel ...
-func SetLogLevel(level Level) {
-	_log.SetLogLevel(level)
-}
-
-type logger struct {
-	_log *log.Logger
-	//小于等于该级别的level才会被记录
-	logLevel Level
-}
-
-// NewLogger 实例化，供自定义
-func NewLogger() *logger {
-	return &logger{_log: log.New(os.Stderr, "", log.Lshortfile|log.LstdFlags), logLevel: LevelDebug}
-}
-
-// New 实例化，供外部直接调用 log.XXXX
-func New() *logger {
-	return &logger{_log: log.New(os.Stderr, "", log.Lshortfile|log.LstdFlags), logLevel: LevelDebug}
-}
-
-// Output ...
-func (l *logger) Output(level Level, s string) error {
-	if l.logLevel < level {
-		return nil
-	}
-	formatStr := "[UNKNOWN] %s"
-	switch level {
-	case LevelFatal:
-		formatStr = "\033[35m[FATAL]\033[0m %s"
-	case LevelError:
-		formatStr = "\033[31m[ERROR]\033[0m %s"
-	case LevelWarning:
-		formatStr = "\033[33m[WARN]\033[0m %s"
-	case LevelInfo:
-		formatStr = "\033[32m[INFO]\033[0m %s"
-	case LevelDebug:
-		formatStr = "\033[36m[DEBUG]\033[0m %s"
-	}
-	s = fmt.Sprintf(formatStr, s)
-	return l._log.Output(3, s)
-}
-
-// Fatal ...
-func (l *logger) Fatal(s string) {
-	l.Output(LevelFatal, s)
-	os.Exit(1)
-}
-
-// Fatalf ...
-func (l *logger) Fatalf(format string, v ...interface{}) {
-	l.Output(LevelFatal, fmt.Sprintf(format, v...))
-	os.Exit(1)
-}
-
-// Error ...
-func (l *logger) Error(s string) {
-	l.Output(LevelError, s)
-}
-
-// Errorf ...
-func (l *logger) Errorf(format string, v ...interface{}) {
-	l.Output(LevelError, fmt.Sprintf(format, v...))
-}
-
-// Warn ...
-func (l *logger) Warn(s string) {
-	l.Output(LevelWarning, s)
-}
-
-// Warnf ...
-func (l *logger) Warnf(format string, v ...interface{}) {
-	l.Output(LevelWarning, fmt.Sprintf(format, v...))
-}
-
-// Info ...
-func (l *logger) Info(s string) {
-	l.Output(LevelInfo, s)
-}
-
-// Infof ...
-func (l *logger) Infof(format string, v ...interface{}) {
-	l.Output(LevelInfo, fmt.Sprintf(format, v...))
-}
-
-// Debug ...
-func (l *logger) Debug(s string) {
-	l.Output(LevelDebug, s)
-}
-
-// Debugf ...
-func (l *logger) Debugf(format string, v ...interface{}) {
-	l.Output(LevelDebug, fmt.Sprintf(format, v...))
-}
-
-// SetLogLevel ...
-func (l *logger) SetLogLevel(level Level) {
-	l.logLevel = level
-}
-
-var (
-	cmd          *exec.Cmd
-	state        sync.Mutex
-	eventTime    = make(map[string]int64)
-	scheduleTime time.Time
-)
-
-func readAppDirectories(directory string, paths *[]string) {
-	fileInfos, err := os.ReadDir(directory)
+// 开始监视 paths 中指定的目录或文件
+func (b *builder) watch(ctx context.Context, paths []string) error {
+	go b.build() // 第一次主动编译程序，后续的才是监视变化。
+	watcher, err := b.initWatcher(paths)
 	if err != nil {
-		return
+		return err
 	}
-
-	useDirectory := false
-	for _, fileInfo := range fileInfos {
-		// fmt.Println(fileInfo.Name())
-		if ok := ignoreDirFunc(fileInfo); ok {
-			continue
-		}
-		if fileInfo.IsDir() == true && fileInfo.Name()[0] != '.' {
-			readAppDirectories(directory+"/"+fileInfo.Name(), paths)
-			continue
-		}
-		if useDirectory == true {
-			continue
-		}
-		*paths = append(*paths, directory)
-		useDirectory = true
-	}
-	return
-}
-
-func ignoreDirFunc(f fs.DirEntry) bool {
-	ignoredir := cfg.Strings("ignoredir")
-	if len(ignoredir) == 0 {
-		return false
-	}
-	appPath := AppPath()
-	fullpath, _ := filepath.Abs(filepath.Dir(f.Name()))
-	fullpath = filepath.FromSlash(strings.Replace(fullpath+"/"+f.Name(), "\\", "/", -1))
-	for _, dir := range ignoredir {
-		runFile := filepath.FromSlash(strings.Replace(appPath+"/"+dir, "\\", "/", -1))
-		if ok := strings.HasPrefix(fullpath, runFile); ok {
-			return true
-		}
-	}
-	return false
-}
-
-func ignoreFileFun(file string) bool {
-	ignorefile := cfg.Strings("ignorefile")
-	if len(ignorefile) == 0 {
-		return false
-	}
-	//要判断文件的绝对路径
-	fullpath := file
-	for _, fileExtra := range ignorefile {
-		if ok := strings.HasSuffix(fullpath, fileExtra); ok {
-			return true
-		}
-	}
-	return false
-}
-
-// getFileModTime retuens unix timestamp of `os.File.ModTime` by given path.
-func getFileModTime(path string) int64 {
-	path = strings.Replace(path, "\\", "/", -1)
-	f, err := os.Open(path)
-	if err != nil {
-		Errorf("文件打开失败[ %s ]\n", err)
-		return time.Now().Unix()
-	}
-	defer f.Close()
-
-	fi, err := f.Stat()
-	if err != nil {
-		Errorf("文件信息获取失败[ %s ]\n", err)
-		return time.Now().Unix()
-	}
-
-	return fi.ModTime().Unix()
-}
-
-// NewWatcher new watcher
-func NewWatcher(paths []string, files []string) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		Errorf("创建监控失败[ %s ]\n", err)
-		os.Exit(2)
-	}
-	go func() {
-		for {
-			select {
-			case e := <-watcher.Events:
-				isbuild := true
-				// Skip ignored files
-				if ignoreFileFun(e.Name) {
-					continue
-				}
-				mt := getFileModTime(e.Name)
-				if t := eventTime[e.Name]; mt == t {
-					//log.Infof("[SKIP] # %s #\n", e.String())
-					isbuild = false
-				}
-				eventTime[e.Name] = mt
-				if isbuild {
-					go func() {
-						scheduleTime = time.Now().Add(1 * time.Second)
-						for {
-							time.Sleep(scheduleTime.Sub(time.Now()))
-							if time.Now().After(scheduleTime) {
-								break
-							}
-							return
-						}
-						Autobuild(files)
-					}()
-				}
-			case err := <-watcher.Errors:
-				Errorf("%v", err)
-				Warnf(" %s\n", err.Error()) // No need to exit here
-			}
-		}
-	}()
-	Infof("初始化监控\n")
-	for _, path := range paths {
-		Infof("文件夹( %s )\n", path)
-		err = watcher.Add(path)
-		if err != nil {
-			Errorf("讲课文件夹失败[ %s ]\n", err)
-			os.Exit(2)
-		}
-	}
-}
-
-// Autobuild auto build
-func Autobuild(files []string) {
-	state.Lock()
-	defer state.Unlock()
-	Infof("开始构建...\n")
-	if err := os.Chdir(currpath); err != nil {
-		Errorf("目录读取失败: %+v\n", err)
-		return
-	}
-
-	cmdName := "go"
-	var err error
-	var ostype = runtime.GOOS
-	var build string
-	buildPrifix := cfg.String("build")
-	if len(buildPrifix) < 1 {
-		build = currpath
-	} else {
-		build = currpath + "/" + buildPrifix
-	}
-	filenameWithSuffix := path.Base(runcmd)
-	fileSuffix := path.Ext(filenameWithSuffix)
-	filenameOnly := strings.TrimSuffix(filenameWithSuffix, fileSuffix) //获取文件名
-	args := []string{"build"}
-	if ostype == "windows" {
-		build = build + "/" + filenameOnly + ".exe"
-	} else {
-		build = build + "/" + filenameOnly
-	}
-	build = filepath.FromSlash(strings.Replace(build, "\\", "/", -1))
-	Output = build
-	args = append(args, "-o", Output, runcmd)
-	bcmd := exec.Command(cmdName, args...)
-	bcmd.Env = append(os.Environ(), "GOGC=off")
-	bcmd.Stdout = os.Stdout
-	bcmd.Stderr = os.Stderr
-
-	Infof("编译参数: %s %s", cmdName, strings.Join(args, " "))
-	err = bcmd.Run()
-	if err != nil {
-		Errorf("============== 编译失败 ===================\n")
-		Errorf("%+v\n", err)
-		return
-	}
-	Infof("编译成功\n")
-	Restart(Output)
-
-}
-
-// Kill kill process
-func Kill() {
-	defer func() {
-		if e := recover(); e != nil {
-			fmt.Println("Kill.recover -> ", e)
-		}
-	}()
-	if cmd != nil && cmd.Process != nil {
-		err := cmd.Process.Kill()
-		if err != nil {
-			fmt.Println("Kill -> ", err)
-		}
-	}
-}
-
-// Restart restart app
-func Restart(appname string) {
-	// Debugf("杀掉进程")
-	Kill()
-	go Start(appname)
-}
-
-// Start start app
-func Start(appname string) {
-	Infof("开始运行 %s ...\n", appname)
-
-	cmd = exec.Command(appname)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	cmd.Args = append([]string{appname}, cmdArgs...)
-
-	Infof("Run %s", strings.Join(cmd.Args, " "))
-	go cmd.Run()
-	Infof("%s 运行中...\n", appname)
-	started <- true
-}
-
-// end watch
-
-// /main starts
-var (
-	cfg      *config.Config
-	currpath string
-	exit     chan bool
-	runcmd   string
-	runArgs  string
-	cmdArgs  []string
-	Output   string
-	started  chan bool
-)
-
-func runApp() {
-	var paths []string
-	files := []string{}
-	readAppDirectories(currpath, &paths)
-	NewWatcher(paths, files)
-	Autobuild(files)
+	defer watcher.Close()
+	var buildTime time.Time
 	for {
 		select {
-		case <-exit:
-			runtime.Goexit()
-		}
+		case <-ctx.Done():
+			b.killApp()
+			b.killGo()
+			b.logf(LogTypeInfo, "用户取消")
+			return nil
+		case event := <-watcher.Events:
+			if event.Op&fsnotify.Chmod == fsnotify.Chmod {
+				b.logf(LogTypeIgnore, fmt.Sprintf("watcher.Events:忽略 %s 事件", event.String()))
+				continue
+			}
+			if b.isIgnore(event.Name) { // 不需要监视的扩展名
+				b.logf(LogTypeIgnore, fmt.Sprintf("watcher.Events:忽略不被监视的文件：%s", event.String()))
+				continue
+			}
+			if time.Since(buildTime) <= b.watcherFreq {
+				b.logf(LogTypeIgnore, fmt.Sprintf("watcher.Events:忽略短期内频繁修改的文件：%s", event.Name))
+				continue
+			}
+			buildTime = time.Now()
+			if event.Name == "go.mod" && b.goTidy {
+				b.logf(LogTypeInfo, fmt.Sprintf("watcher.Events:%s 事件触发了 go mod tidy", event.String()))
+				go b.tidy()
+			} else {
+				b.logf(LogTypeInfo, fmt.Sprintf("watcher.Events:%s 事件触发了编译", event.String()))
+				go b.build()
+			}
+		case err := <-watcher.Errors:
+			b.logf(LogTypeWarn, fmt.Sprintf("watcher.Errors：%s", err.Error()))
+			return nil
+		} // end select
 	}
 }
 
-// Run 运行
-func Run(cmd, args string) {
-	runcmd = cmd
-	runArgs = args
-	//config配置
-	cfg = ParseConfig()
-	//程序运行的当前目录
-	currpath = AppPath()
-
-	if len(runcmd) < 1 {
-		Fatalf("要运行的Go文件没有填写\n")
+func (b *builder) initWatcher(paths []string) (*fsnotify.Watcher, error) {
+	b.logf(LogTypeInfo, "初始化监视器...")
+	// 初始化监视器
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, err
 	}
-
-	if runArgs != "" {
-		cmdArgs = strings.Split(runArgs, ",")
+	paths = b.filterPaths(paths)
+	ps := strings.Join(paths, ",\n")
+	b.logf(LogTypeIgnore, fmt.Sprintf("以下路径或是文件将被监视：%s", ps))
+	for _, path := range paths {
+		if err := watcher.Add(path); err != nil {
+			watcher.Close()
+			return nil, err
+		}
 	}
-
-	runFile := currpath + "/" + runcmd
-	runFile = strings.Replace(runFile, "\\", "/", -1)
-	ok := strings.HasSuffix(runFile, ".go")
-	if !ok {
-		Fatalf("路径错误[ %s ]\n", runFile)
-	}
-	if !FileExist(runFile) {
-		Fatalf("文件不存在[ %s ]\n", runFile)
-	}
-	runcmd = runFile
-
-	runApp()
+	return watcher, nil
 }
