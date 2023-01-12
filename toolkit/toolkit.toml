@@ -51,7 +51,7 @@
 	# NOTE: 如果指定的目录下没有需要被监视的文件类型，那么该目录将被忽略。
 	Dirs=["./"]
     # 监视器的更新频率
-    WatcherFrequency = "2s"
+    WatcherFrequency = "5s"
     # 传递各个工具的参数
 	# 大致有以下几个，具体可参考 go build 的 xxflags 系列参数。
 	# - asm   --> asmflags

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"time"
 
 	"github.com/abulo/ratel/v3/toolkit/base"
 	"github.com/abulo/ratel/v3/util"
@@ -74,7 +73,7 @@ func Run(cmd *cobra.Command, args []string) {
 		option.AppArgs = optionConfig.AppArgs
 		option.Recursive = optionConfig.Recursive
 		option.Dirs = optionConfig.Dirs
-		option.WatcherFrequency = 10 * time.Second
+		option.WatcherFrequency = util.Duration(optionConfig.WatcherFrequency)
 		flags := optionConfig.Flags
 		optionFlags := watch.Flags{}
 		sVal := reflect.ValueOf(flags)
