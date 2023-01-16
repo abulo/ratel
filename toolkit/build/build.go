@@ -3,7 +3,6 @@ package build
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	"github.com/abulo/ratel/v3/toolkit/base"
 	"github.com/abulo/ratel/v3/util"
@@ -25,20 +24,18 @@ var (
 
 type buildOption struct {
 	AutoTidy         bool     `toml:"AutoTidy"`
-	MainFiles        string   `toml:"MainFiles"`
-	OutputName       string   `toml:"OutputName"`
+	MainFiles        []string `toml:"MainFiles"`
+	OutputName       []string `toml:"OutputName"`
 	Exts             []string `toml:"Exts"`
 	Excludes         []string `toml:"Excludes"`
 	AppArgs          string   `toml:"AppArgs"`
 	Recursive        bool     `toml:"Recursive"`
 	Dirs             []string `toml:"Dirs"`
 	WatcherFrequency string   `toml:"WatcherFrequency"`
-	Flags            struct {
-		Asm   string `toml:"Asm"`
-		Gccgo string `toml:"Gccgo"`
-		Gc    string `toml:"Gc"`
-		Ld    string `toml:"Ld"`
-	} `toml:"Flags"`
+	Asm              string   `toml:"Asm"`
+	Gccgo            string   `toml:"Gccgo"`
+	Gc               string   `toml:"Gc"`
+	Ld               string   `toml:"Ld"`
 }
 
 func Run(cmd *cobra.Command, args []string) {
@@ -53,50 +50,58 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	// 初始化
-	// ctx := context.Background()
-
-	optionList := []buildOption{}
-	if err := base.Config.BindStruct("watch", &optionList); err != nil {
+	optionInfo := buildOption{}
+	if err := base.Config.BindStruct("watch", &optionInfo); err != nil {
 		fmt.Println("初始化:", color.RedString(err.Error()))
 		return
 	}
 
+	if len(optionInfo.MainFiles) < 1 {
+		fmt.Println("初始化:", color.RedString("MainFiles"))
+		return
+	}
+
+	if len(optionInfo.OutputName) < 1 {
+		fmt.Println("初始化:", color.RedString("OutputName"))
+		return
+	}
+
+	if len(optionInfo.MainFiles) != len(optionInfo.OutputName) {
+		fmt.Println("初始化:", color.RedString("MainFiles&OutputName->len"))
+		return
+	}
+
+	builderNumber := len(optionInfo.MainFiles)
 	watchOptionList := make([]*watch.Options, 0)
-	for _, optionConfig := range optionList {
+	for i := 0; i < builderNumber; i++ {
 		// 获取配置文件
 		option := &watch.Options{}
-		option.AutoTidy = optionConfig.AutoTidy
-		option.MainFiles = optionConfig.MainFiles
-		option.OutputName = optionConfig.OutputName
-		option.Exts = optionConfig.Exts
-		option.Excludes = optionConfig.Excludes
-		option.AppArgs = optionConfig.AppArgs
-		option.Recursive = optionConfig.Recursive
-		option.Dirs = optionConfig.Dirs
-		option.WatcherFrequency = util.Duration(optionConfig.WatcherFrequency)
-		flags := optionConfig.Flags
+		option.AutoTidy = optionInfo.AutoTidy
+		option.MainFiles = optionInfo.MainFiles[i]
+		option.OutputName = optionInfo.OutputName[i]
+		option.Exts = optionInfo.Exts
+		option.Excludes = optionInfo.Excludes
+		option.AppArgs = optionInfo.AppArgs
+		option.Recursive = optionInfo.Recursive
+		option.Dirs = optionInfo.Dirs
+		option.WatcherFrequency = util.Duration(optionInfo.WatcherFrequency)
 		optionFlags := watch.Flags{}
-		sVal := reflect.ValueOf(flags)
-		sType := reflect.TypeOf(flags)
-		if sType.Kind() == reflect.Ptr {
-			//用Elem()获得实际的value
-			sVal = sVal.Elem()
-			sType = sType.Elem()
+		if !util.Empty(cast.ToString(optionInfo.Gc)) {
+			optionFlags["gc"] = cast.ToString(optionInfo.Gc)
 		}
-		num := sVal.NumField()
-		for i := 0; i < num; i++ {
-			f := sType.Field(i)
-			val := sVal.Field(i).Interface()
-			if !util.Empty(cast.ToString(val)) {
-				optionFlags[util.StrToLower(f.Name)] = cast.ToString(val)
-			}
+		if !util.Empty(cast.ToString(optionInfo.Asm)) {
+			optionFlags["asm"] = cast.ToString(optionInfo.Asm)
+		}
+		if !util.Empty(cast.ToString(optionInfo.Gccgo)) {
+			optionFlags["gccgo"] = cast.ToString(optionInfo.Gccgo)
+		}
+		if !util.Empty(cast.ToString(optionInfo.Ld)) {
+			optionFlags["ld"] = cast.ToString(optionInfo.Ld)
 		}
 		option.Flags = optionFlags
 		watchOptionList = append(watchOptionList, option)
 	}
-
 	ctx := context.Background()
-
 	var eg errgroup.Group
 	for _, s := range watchOptionList {
 		s := s
