@@ -25,8 +25,8 @@ func newServer(config *Config) *Server {
 
 // Serve implements server.Server interface.
 func (s *Server) Serve() error {
-	s.Spin()
-	return nil
+	return s.Run()
+	// return
 }
 
 // Stop implements server.Server interface
