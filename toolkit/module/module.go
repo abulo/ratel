@@ -195,7 +195,7 @@ func Run(cmd *cobra.Command, args []string) {
 	mod, err := base.ModulePath(path.Join(base.Path, "go.mod"))
 	if err != nil {
 		fmt.Println("go.mod文件不存在:", color.RedString(err.Error()))
-		mod = "test"
+		return
 	}
 	// 数字长度
 	strLen := strings.LastIndex(dir, "/")
