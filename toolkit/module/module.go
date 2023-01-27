@@ -312,7 +312,8 @@ func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,{{.Primary.Colu
 func {{CamelStr .Table.TableName}}Item(ctx context.Context,{{.Primary.ColumnName}} {{.Primary.DataTypeMap.Default}})(dao.{{CamelStr .Table.TableName}},error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	var res dao.{{CamelStr .Table.TableName}}
-	return db.NewBuilder(ctx).Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{.Primary.ColumnName}}).Row().ToStruct(&res)
+	err := db.NewBuilder(ctx).Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{.Primary.ColumnName}}).Row().ToStruct(&res)
+	return res, err
 }
 
 // {{CamelStr .Table.TableName}}ItemDelete 删除数据
