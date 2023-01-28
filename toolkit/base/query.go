@@ -60,7 +60,9 @@ type Method struct {
 	Table          Table    // 表信息
 	TableColumn    []Column // 表结构信息
 	Default        bool     // 默认
+	Pkg            string   // 包名
 	Primary        Column   // 主键信息
+	ModName        string   // go.mod 信息
 }
 
 func NewDataType() map[string]DataType {
