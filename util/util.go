@@ -69,8 +69,8 @@ func substr(s string, pos, length int) string {
 }
 
 // GetParentDirectory 获取上级目录
-func GetParentDirectory(dirctory string) string {
-	return substr(dirctory, 0, strings.LastIndex(dirctory, "/"))
+func GetParentDirectory(dir string) string {
+	return substr(dir, 0, strings.LastIndex(dir, "/"))
 }
 
 // GetCurrentDirectory 获取当前目录

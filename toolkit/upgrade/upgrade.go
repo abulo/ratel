@@ -15,6 +15,14 @@ var CmdNew = &cobra.Command{
 	Run:   Run,
 }
 
+// CmdUpgrade represents the upgrade command.
+var CmdInit = &cobra.Command{
+	Use:   "init",
+	Short: "脚手架初始化",
+	Long:  "脚手架初始化 : toolkit init",
+	Run:   Run,
+}
+
 // Run upgrade the ratel tools.
 func Run(cmd *cobra.Command, args []string) {
 	err := base.GoInstall(
@@ -23,6 +31,7 @@ func Run(cmd *cobra.Command, args []string) {
 		"google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest",
 		"github.com/google/gnostic/cmd/protoc-gen-openapi@latest",
 		"github.com/oligot/go-mod-upgrade@latest",
+		"github.com/syncore/protoc-go-inject-tag@latest",
 	)
 	if err != nil {
 		fmt.Println(err)

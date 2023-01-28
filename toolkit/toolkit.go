@@ -36,6 +36,7 @@ func init() {
 	rootCmd.AddCommand(module.CmdNew)
 	rootCmd.AddCommand(build.CmdNew)
 	rootCmd.AddCommand(upgrade.CmdNew)
+	rootCmd.AddCommand(upgrade.CmdInit)
 }
 
 func main() {
