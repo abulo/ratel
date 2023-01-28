@@ -114,6 +114,16 @@ func Run(cmd *cobra.Command, args []string) {
 		fmt.Println("表主键:", color.RedString(err.Error()))
 		return
 	}
+
+	//获取 go.mod
+	mod, err := base.ModulePath(path.Join(base.Path, "go.mod"))
+	if err != nil {
+		fmt.Println("go.mod文件不存在:", color.RedString(err.Error()))
+		return
+	}
+	// 数字长度
+	strLen := strings.LastIndex(dir, "/")
+
 	var methodList []base.Method
 
 	//获取的索引信息没有
@@ -127,6 +137,8 @@ func Run(cmd *cobra.Command, args []string) {
 			Condition:      nil,
 			ConditionTotal: 0,
 			Primary:        tablePrimary,
+			Pkg:            dir[strLen+1:],
+			ModName:        mod,
 		}
 		methodList = append(methodList, method)
 	} else {
@@ -168,6 +180,8 @@ func Run(cmd *cobra.Command, args []string) {
 				Condition:      condition,
 				ConditionTotal: len(condition),
 				Primary:        tablePrimary,
+				Pkg:            dir[strLen+1:],
+				ModName:        mod,
 			}
 			//添加到集合中
 			methodList = append(methodList, method)
@@ -190,28 +204,21 @@ func Run(cmd *cobra.Command, args []string) {
 			Condition:      condition,
 			ConditionTotal: len(condition),
 			Primary:        tablePrimary,
+			Pkg:            dir[strLen+1:],
+			ModName:        mod,
 		}
 		methodList = append(methodList, method)
 	}
-	//获取 go.mod
-	mod, err := base.ModulePath(path.Join(base.Path, "go.mod"))
-	if err != nil {
-		fmt.Println("go.mod文件不存在:", color.RedString(err.Error()))
-		return
-	}
-	// 数字长度
-	strLen := strings.LastIndex(dir, "/")
 	// 数据模型
 	moduleParam := base.ModuleParam{
 		Pkg:         dir[strLen+1:],
+		ModName:     mod,
 		Primary:     tablePrimary,
 		Table:       tableItem,
 		TableColumn: tableColumn,
 		Method:      methodList,
-		ModName:     mod,
 	}
 	GenerateModule(moduleParam, fullModuleDir, tableName)
 	GenerateProto(moduleParam, fullProtoDir, fullServiceDir, tableName)
 	GenerateService(moduleParam, fullServiceDir, tableName)
 }
-

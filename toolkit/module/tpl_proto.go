@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"text/template"
 
 	"github.com/abulo/ratel/v3/toolkit/base"
@@ -42,7 +43,11 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(outProtoFile))
 	//生成 grpc 代码
 	serviceParentDir := util.GetParentDirectory(fullServiceDir)
-	cmdImportGrpc := exec.Command("protoc", "--go-grpc_out="+serviceParentDir, "--go_out="+serviceParentDir, outProtoFile)
+	protoParentDir := util.GetParentDirectory(fullProtoDir)
+	_ = os.Chdir(protoParentDir)
+	strLen := strings.LastIndex(fullProtoDir, "/")
+	currentDir := fullProtoDir[strLen+1:]
+	cmdImportGrpc := exec.Command("protoc", "--go-grpc_out="+serviceParentDir, "--go_out="+serviceParentDir, currentDir+"/"+tableName+".proto")
 	cmdImportGrpc.CombinedOutput()
 	//修改自定义 tag
 	cmdImportTag := exec.Command("protoc-go-inject-tag", "-input="+fullServiceDir+"/"+tableName+".pb.go")
