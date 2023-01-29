@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	ratelVersion = "v3.2.27"
+	ratelVersion = "v3.2.28"
 )
 
 var (
@@ -191,6 +191,7 @@ func GoVersion() string {
 
 // PrintVersion print format version info
 func PrintVersion() {
+	fmt.Printf("\n")
 	fmt.Printf("%-8s]> %-30s => %s\n", "App", "GoVersion", GoVersion())
 	fmt.Printf("%-8s]> %-30s => %s\n", "App", "RatelVersion", RatelVersion())
 	fmt.Printf("%-8s]> %-30s => %s\n", "App", "Name", Name())
