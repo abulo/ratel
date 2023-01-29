@@ -10,6 +10,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -23,8 +24,8 @@ var (
 
 type buildOption struct {
 	AutoTidy         bool     `toml:"AutoTidy"`
-	MainFiles        string   `toml:"MainFiles"`
-	OutputName       string   `toml:"OutputName"`
+	MainFiles        []string `toml:"MainFiles"`
+	OutputName       []string `toml:"OutputName"`
 	Exts             []string `toml:"Exts"`
 	Excludes         []string `toml:"Excludes"`
 	AppArgs          string   `toml:"AppArgs"`
@@ -55,35 +56,59 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// 获取配置文件
-	option := &watch.Options{}
-	option.AutoTidy = optionInfo.AutoTidy
-	option.MainFiles = optionInfo.MainFiles
-	option.OutputName = optionInfo.OutputName
-	option.Exts = optionInfo.Exts
-	option.Excludes = optionInfo.Excludes
-	option.AppArgs = optionInfo.AppArgs
-	option.Recursive = optionInfo.Recursive
-	option.Dirs = optionInfo.Dirs
-	option.WatcherFrequency = util.Duration(optionInfo.WatcherFrequency)
-	optionFlags := watch.Flags{}
-	if !util.Empty(cast.ToString(optionInfo.Gc)) {
-		optionFlags["gc"] = cast.ToString(optionInfo.Gc)
-	}
-	if !util.Empty(cast.ToString(optionInfo.Asm)) {
-		optionFlags["asm"] = cast.ToString(optionInfo.Asm)
-	}
-	if !util.Empty(cast.ToString(optionInfo.Gccgo)) {
-		optionFlags["gccgo"] = cast.ToString(optionInfo.Gccgo)
-	}
-	if !util.Empty(cast.ToString(optionInfo.Ld)) {
-		optionFlags["ld"] = cast.ToString(optionInfo.Ld)
-	}
-	option.Flags = optionFlags
-	ctx := context.Background()
-
-	if err := watch.Watch(ctx, option); err != nil {
-		fmt.Println("失败:", color.RedString(err.Error()))
+	if len(optionInfo.MainFiles) < 1 {
+		fmt.Println("初始化:", color.RedString("MainFiles"))
 		return
 	}
+
+	if len(optionInfo.OutputName) < 1 {
+		fmt.Println("初始化:", color.RedString("OutputName"))
+		return
+	}
+
+	if len(optionInfo.MainFiles) != len(optionInfo.OutputName) {
+		fmt.Println("初始化:", color.RedString("MainFiles&OutputName->len"))
+		return
+	}
+
+	builderNumber := len(optionInfo.MainFiles)
+	watchOptionList := make([]*watch.Options, 0)
+	for i := 0; i < builderNumber; i++ {
+		// 获取配置文件
+		option := &watch.Options{}
+		option.AutoTidy = optionInfo.AutoTidy
+		option.MainFiles = optionInfo.MainFiles[i]
+		option.OutputName = optionInfo.OutputName[i]
+		option.Exts = optionInfo.Exts
+		option.Excludes = optionInfo.Excludes
+		option.AppArgs = optionInfo.AppArgs
+		option.Recursive = optionInfo.Recursive
+		option.Dirs = optionInfo.Dirs
+		option.WatcherFrequency = util.Duration(optionInfo.WatcherFrequency)
+		optionFlags := watch.Flags{}
+		if !util.Empty(cast.ToString(optionInfo.Gc)) {
+			optionFlags["gc"] = cast.ToString(optionInfo.Gc)
+		}
+		if !util.Empty(cast.ToString(optionInfo.Asm)) {
+			optionFlags["asm"] = cast.ToString(optionInfo.Asm)
+		}
+		if !util.Empty(cast.ToString(optionInfo.Gccgo)) {
+			optionFlags["gccgo"] = cast.ToString(optionInfo.Gccgo)
+		}
+		if !util.Empty(cast.ToString(optionInfo.Ld)) {
+			optionFlags["ld"] = cast.ToString(optionInfo.Ld)
+		}
+		option.Flags = optionFlags
+		watchOptionList = append(watchOptionList, option)
+	}
+	ctx := context.Background()
+	var eg errgroup.Group
+	for _, s := range watchOptionList {
+		s := s
+		eg.Go(func() (err error) {
+			err = watch.Watch(ctx, s)
+			return
+		})
+	}
+	eg.Wait()
 }
