@@ -83,7 +83,7 @@ func (config *Config) SetBasicAuth(auth bool) *Config {
 }
 
 // SetUserName ...
-func (config *Config) SetUserNam(userName string) *Config {
+func (config *Config) SetUserName(userName string) *Config {
 	config.UserName = userName
 	return config
 }
