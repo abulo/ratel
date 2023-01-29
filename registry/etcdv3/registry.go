@@ -121,7 +121,6 @@ func (reg *etcdv3Registry) WatchServices(ctx context.Context, name string, schem
 			}
 
 			// var snapshot registry.Endpoints
-			// xstruct.CopyStruct(al, &snapshot)
 			out := al.DeepCopy()
 			select {
 			// case addresses <- snapshot:
@@ -200,11 +199,11 @@ func (reg *etcdv3Registry) registerMetric(ctx context.Context, info *server.Serv
 
 	opOptions := make([]clientv3.OpOption, 0)
 	if ttl := reg.Config.ServiceTTL.Seconds(); ttl > 0 {
-		sess, err := reg.getSession(key, concurrency.WithTTL(int(ttl)))
+		session, err := reg.getSession(key, concurrency.WithTTL(int(ttl)))
 		if err != nil {
 			return err
 		}
-		opOptions = append(opOptions, clientv3.WithLease(sess.Lease()))
+		opOptions = append(opOptions, clientv3.WithLease(session.Lease()))
 	}
 	_, err := reg.client.Put(ctx, key, val, opOptions...)
 	if err != nil {
@@ -234,11 +233,11 @@ func (reg *etcdv3Registry) registerBiz(ctx context.Context, info *server.Service
 	opOptions := make([]clientv3.OpOption, 0)
 	if ttl := reg.Config.ServiceTTL.Seconds(); ttl > 0 {
 		//todo ctx without timeout for same as service life?
-		sess, err := reg.getSession(key, concurrency.WithTTL(int(ttl)))
+		session, err := reg.getSession(key, concurrency.WithTTL(int(ttl)))
 		if err != nil {
 			return err
 		}
-		opOptions = append(opOptions, clientv3.WithLease(sess.Lease()))
+		opOptions = append(opOptions, clientv3.WithLease(session.Lease()))
 	}
 	_, err := reg.client.Put(ctx, key, val, opOptions...)
 	if err != nil {
@@ -259,31 +258,31 @@ func (reg *etcdv3Registry) registerBiz(ctx context.Context, info *server.Service
 
 func (reg *etcdv3Registry) getSession(k string, opts ...concurrency.SessionOption) (*concurrency.Session, error) {
 	reg.rmu.RLock()
-	sess, ok := reg.sessions[k]
+	session, ok := reg.sessions[k]
 	reg.rmu.RUnlock()
 	if ok {
-		return sess, nil
+		return session, nil
 	}
-	sess, err := concurrency.NewSession(reg.client.Client, opts...)
+	session, err := concurrency.NewSession(reg.client.Client, opts...)
 	if err != nil {
-		return sess, err
+		return session, err
 	}
 	reg.rmu.Lock()
-	reg.sessions[k] = sess
+	reg.sessions[k] = session
 	reg.rmu.Unlock()
-	return sess, nil
+	return session, nil
 }
 
 func (reg *etcdv3Registry) delSession(k string) error {
 	if ttl := reg.Config.ServiceTTL.Seconds(); ttl > 0 {
 		reg.rmu.RLock()
-		sess, ok := reg.sessions[k]
+		session, ok := reg.sessions[k]
 		reg.rmu.RUnlock()
 		if ok {
 			reg.rmu.Lock()
 			delete(reg.sessions, k)
 			reg.rmu.Unlock()
-			if err := sess.Close(); err != nil {
+			if err := session.Close(); err != nil {
 				return err
 			}
 		}

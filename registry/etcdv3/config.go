@@ -27,13 +27,19 @@ func New() *Config {
 	}
 }
 
+// SetPrefix ...
+func (config *Config) SetPrefix(prefix string) *Config {
+	config.Prefix = prefix
+	return config
+}
+
 // Build ...
-func (config Config) Build() (registry.Registry, error) {
-	return newETCDRegistry(&config)
+func (config *Config) Build() (registry.Registry, error) {
+	return newETCDRegistry(config)
 }
 
 // MustBuild ...
-func (config Config) MustBuild() registry.Registry {
+func (config *Config) MustBuild() registry.Registry {
 	reg, err := config.Build()
 	if err != nil {
 		logger.Logger.Panicf("build registry failed: %v", err)
