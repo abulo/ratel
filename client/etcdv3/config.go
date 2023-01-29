@@ -47,3 +47,67 @@ func (config *Config) MustBuild() *Client {
 	}
 	return client
 }
+
+// SetEndpoints ...
+func (config *Config) SetEndpoints(endpoint []string) *Config {
+	for _, item := range endpoint {
+		if !util.InArray(item, config.Endpoints) {
+			config.Endpoints = append(config.Endpoints, item)
+		}
+	}
+	return config
+}
+
+// SetCertFile ...
+func (config *Config) SetCertFile(cert string) *Config {
+	config.CertFile = cert
+	return config
+}
+
+// SetKeyFile ...
+func (config *Config) SetKeyFile(key string) *Config {
+	config.KeyFile = key
+	return config
+}
+
+// SetCaCert ...
+func (config *Config) SetCaCert(ca string) *Config {
+	config.CaCert = ca
+	return config
+}
+
+// SetBasicAuth ...
+func (config *Config) SetBasicAuth(auth bool) *Config {
+	config.BasicAuth = auth
+	return config
+}
+
+// SetUserName ...
+func (config *Config) SetUserNam(userName string) *Config {
+	config.UserName = userName
+	return config
+}
+
+// SetPassword ...
+func (config *Config) SetPassword(pwd string) *Config {
+	config.Password = pwd
+	return config
+}
+
+// SetConnectTimeout ...
+func (config *Config) SetConnectTimeout(timeout time.Duration) *Config {
+	config.ConnectTimeout = timeout
+	return config
+}
+
+// SetSecure ...
+func (config *Config) SetSecure(secure bool) *Config {
+	config.Secure = secure
+	return config
+}
+
+// SetAutoSyncInterval ...
+func (config *Config) SetAutoSyncInterval(autoSyncInterval time.Duration) *Config {
+	config.AutoSyncInterval = autoSyncInterval
+	return config
+}

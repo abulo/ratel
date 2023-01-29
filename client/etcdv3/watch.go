@@ -16,8 +16,6 @@ type Watch struct {
 	revision  int64
 	cancel    context.CancelFunc
 	eventChan chan *clientv3.Event
-	// lock      *sync.RWMutex
-	// logger    *xlog.Logger
 
 	incipientKVs []*mvccpb.KeyValue
 }
