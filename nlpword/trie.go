@@ -34,7 +34,6 @@ func (tree *Trie) BuildFailureLinks() {
 		node.Failure = link
 
 	}
-	// fmt.Println("finish build failure link")
 }
 
 // bfs Breadth First Search

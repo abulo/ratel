@@ -3,6 +3,10 @@ package grpc
 import (
 	"time"
 
+	"github.com/abulo/ratel/v3/core/constant"
+	"github.com/abulo/ratel/v3/core/logger"
+	"github.com/abulo/ratel/v3/core/singleton"
+	"github.com/abulo/ratel/v3/registry/etcdv3"
 	"github.com/abulo/ratel/v3/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer/roundrobin"
@@ -19,7 +23,6 @@ type Config struct {
 	DialTimeout               time.Duration
 	ReadTimeout               time.Duration
 	Direct                    bool
-	OnDialError               string // panic | error
 	KeepAlive                 *keepalive.ClientParameters
 	dialOptions               []grpc.DialOption
 	SlowThreshold             time.Duration
@@ -30,6 +33,7 @@ type Config struct {
 	DisableMetricInterceptor  bool
 	DisableAccessInterceptor  bool
 	AccessInterceptorLevel    string
+	Etcd                      *etcdv3.Config
 }
 
 // New ...
@@ -42,10 +46,14 @@ func New() *Config {
 		DialTimeout:            time.Second * 3,
 		ReadTimeout:            util.Duration("1s"),
 		SlowThreshold:          util.Duration("600ms"),
-		OnDialError:            "panic",
 		AccessInterceptorLevel: "info",
 		Block:                  true,
 	}
+}
+
+func (config *Config) SetEtcd(option *etcdv3.Config) *Config {
+	config.Etcd = option
+	return config
 }
 
 // SetName ...
@@ -87,12 +95,6 @@ func (config *Config) SetReadTimeout(ReadTimeout time.Duration) *Config {
 // SetDirect ...
 func (config *Config) SetDirect(Direct bool) *Config {
 	config.Direct = Direct
-	return config
-}
-
-// SetOnDialError ...
-func (config *Config) SetOnDialError(OnDialError string) *Config {
-	config.OnDialError = OnDialError
 	return config
 }
 
@@ -154,7 +156,7 @@ func (config *Config) WithDialOption(opts ...grpc.DialOption) *Config {
 }
 
 // Build ...
-func (config *Config) Build() *grpc.ClientConn {
+func (config *Config) Build() (*grpc.ClientConn, error) {
 	if config.Debug {
 		config.dialOptions = append(config.dialOptions,
 			grpc.WithChainUnaryInterceptor(debugUnaryClientInterceptor(config.Address)),
@@ -190,6 +192,38 @@ func (config *Config) Build() *grpc.ClientConn {
 			grpc.WithChainUnaryInterceptor(metricUnaryClientInterceptor(config.Name)),
 		)
 	}
-
 	return newGRPCClient(config)
+}
+
+// Singleton returns a singleton client conn.
+func (config *Config) Singleton() (*grpc.ClientConn, error) {
+	if val, ok := singleton.Load(constant.ModuleClientGrpc, config.Name); ok && val != nil {
+		return val.(*grpc.ClientConn), nil
+	}
+	cc, err := config.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	singleton.Store(constant.ModuleClientGrpc, config.Name, cc)
+
+	return cc, nil
+}
+
+// MustSingleton panics when error found.
+func (config *Config) MustSingleton() *grpc.ClientConn {
+	cc, err := config.Singleton()
+	if err != nil {
+		logger.Logger.Panic("client grpc build client conn panic")
+	}
+	return cc
+}
+
+// MustBuild ...
+func (config *Config) MustBuild() *grpc.ClientConn {
+	reg, err := config.Build()
+	if err != nil {
+		logger.Logger.Panicf("client grpc build client failed: %v", err)
+	}
+	return reg
 }

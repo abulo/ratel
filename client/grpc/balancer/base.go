@@ -1,6 +1,8 @@
 package balancer
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/balancer"
@@ -79,13 +81,15 @@ func (b *baseBalancer) ResolverError(err error) {
 
 // UpdateClientConnState ...
 func (b *baseBalancer) UpdateClientConnState(s balancer.ClientConnState) error {
+	// TODO: handle s.ResolverState.Err (log if not nil) once implemented.
+	// TODO: handle s.ResolverState.ServiceConfig?
 	if grpclog.V(2) {
 		grpclog.Infoln("base.baseBalancer: got new ClientConn state: ", s)
 	}
 	// addrsSet is the set converted from addrs, it's used for quick lookup of an address.
 	addrsSet := make(map[resolver.Address]struct{})
-	// fmt.Printf("s.ResolverState.Addresses = %+v\n", s.ResolverState.Addresses)
-	// fmt.Printf("s.ResolverState.Attributes = %+v\n", s.ResolverState.Attributes)
+	fmt.Printf("s.ResolverState.Addresses = %+v\n", s.ResolverState.Addresses)
+	fmt.Printf("s.ResolverState.Attributes = %+v\n", s.ResolverState.Attributes)
 	for _, a := range s.ResolverState.Addresses {
 		addrsSet[a] = struct{}{}
 		if _, ok := b.subConns[a]; !ok {
@@ -125,13 +129,13 @@ func (b *baseBalancer) UpdateClientConnState(s balancer.ClientConnState) error {
 func (b *baseBalancer) regeneratePicker(err error) {
 	if b.state == connectivity.TransientFailure {
 		if err != nil {
-			b.v2Picker = NewErrPickerV2(err)
+			b.v2Picker = NewErrPickerV2(balancer.TransientFailureError(err))
 		} else {
 			// This means the last subchannel transition was not to
 			// TransientFailure (otherwise err must be set), but the
 			// aggregate state of the balancer is TransientFailure, meaning
 			// there are no other addresses.
-			b.v2Picker = NewErrPickerV2(errors.New("resolver returned no addresses"))
+			b.v2Picker = NewErrPickerV2(balancer.TransientFailureError(errors.New("resolver returned no addresses")))
 		}
 		return
 	}

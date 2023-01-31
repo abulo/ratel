@@ -86,7 +86,6 @@ func (filter *Filter) Load(rd io.Reader) error {
 
 func (filter *Filter) updateFailureLink() {
 	if filter.buildVer != filter.updatedVer {
-		// fmt.Println("update failure link")
 		filter.trie.BuildFailureLinks()
 		filter.buildVer = filter.updatedVer
 	}

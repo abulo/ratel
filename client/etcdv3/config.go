@@ -3,13 +3,15 @@ package etcdv3
 import (
 	"time"
 
+	"github.com/abulo/ratel/v3/core/constant"
 	"github.com/abulo/ratel/v3/core/logger"
+	"github.com/abulo/ratel/v3/core/singleton"
 	"github.com/abulo/ratel/v3/util"
-	"github.com/sirupsen/logrus"
 )
 
 // Config ...
 type Config struct {
+	Name             string        `json:"name"`
 	Endpoints        []string      `json:"endpoints"`
 	CertFile         string        `json:"certFile"`
 	KeyFile          string        `json:"keyFile"`
@@ -20,6 +22,7 @@ type Config struct {
 	ConnectTimeout   time.Duration `json:"connectTimeout"` // 连接超时时间
 	Secure           bool          `json:"secure"`
 	AutoSyncInterval time.Duration `json:"autoAsyncInterval"` // 自动同步member list的间隔
+	EnableTrace      bool          `json:"enableTrace" toml:"enableTrace"`
 	TTL              int           // 单位：s
 }
 
@@ -37,13 +40,34 @@ func (config *Config) Build() (*Client, error) {
 	return newClient(config)
 }
 
-// MustBuild ...
+func (config *Config) Singleton() (*Client, error) {
+	if client, ok := singleton.Load(constant.ModuleRegistryEtcd, config.Name); ok && client != nil {
+		return client.(*Client), nil
+	}
+
+	client, err := config.Build()
+	if err != nil {
+		logger.Logger.Error("build etcd client failed", err)
+		return nil, err
+	}
+
+	singleton.Store(constant.ModuleRegistryEtcd, config.Name, client)
+
+	return client, nil
+}
+
 func (config *Config) MustBuild() *Client {
 	client, err := config.Build()
 	if err != nil {
-		logger.Logger.WithFields(logrus.Fields{
-			"err": err,
-		}).Panic("build etcd client failed")
+		logger.Logger.Panic("build etcd client failed", err)
+	}
+	return client
+}
+
+func (config *Config) MustSingleton() *Client {
+	client, err := config.Singleton()
+	if err != nil {
+		logger.Logger.Panic("build etcd client failed", err)
 	}
 	return client
 }
@@ -106,8 +130,24 @@ func (config *Config) SetSecure(secure bool) *Config {
 	return config
 }
 
+// SetEnableTrace ...
+func (config *Config) SetEnableTrace(enableTrace bool) *Config {
+	config.EnableTrace = enableTrace
+	return config
+}
+
 // SetAutoSyncInterval ...
 func (config *Config) SetAutoSyncInterval(autoSyncInterval time.Duration) *Config {
 	config.AutoSyncInterval = autoSyncInterval
 	return config
+}
+
+// SetName ...
+func (config *Config) SetName(Name string) *Config {
+	config.Name = Name
+	return config
+}
+
+func (config *Config) GetName() string {
+	return config.Name
 }

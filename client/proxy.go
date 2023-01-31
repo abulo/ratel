@@ -8,7 +8,7 @@ type Proxy struct {
 }
 
 // NewProxy 代理池
-func NewProxy() *Proxy {
+func NewClientProxy() *Proxy {
 	return &Proxy{
 		m: sync.Map{},
 	}

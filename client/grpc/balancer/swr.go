@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc/balancer/base"
 )
 
-// NameSmoothWeightRoundRobin ...
 const (
 	// NameSmoothWeightRoundRobin ...
 	NameSmoothWeightRoundRobin = "swr"

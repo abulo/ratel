@@ -126,7 +126,6 @@ func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) gr
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		beg := time.Now()
 		err := invoker(ctx, method, req, reply, cc, opts...)
-
 		spbStatus := ecode.ExtractCodes(err)
 		if err != nil {
 			// 只记录系统级别错误

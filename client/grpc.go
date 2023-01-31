@@ -1,33 +1,53 @@
 package client
 
 import (
-	"google.golang.org/grpc"
+	"github.com/abulo/ratel/v3/client/grpc"
+	"github.com/abulo/ratel/v3/registry/etcdv3"
 )
 
 // Grpc ...
-type Grpc struct {
-	*grpc.ClientConn
+type GrpcConfig struct {
+	*grpc.Config
 }
 
-// NewGrpc 缓存
-func NewGrpc() *Grpc {
-	return &Grpc{}
+func NewGrpcConfig() *GrpcConfig {
+	return &GrpcConfig{}
 }
 
-// Store 设置写库
-func (proxy *Grpc) Store(client *grpc.ClientConn) {
-	proxy.ClientConn = client
+func (proxy *GrpcConfig) Store(client *grpc.Config) {
+	proxy.Config = client
 }
 
-// StoreGrpc Store 设置组
-func (proxypool *Proxy) StoreGrpc(group string, proxy *Grpc) {
+func (proxypool *Proxy) StoreGrpc(group string, proxy *GrpcConfig) {
 	proxypool.m.Store(group, proxy)
 }
 
-// LoadGrpc Load 获取分组
-func (proxypool *Proxy) LoadGrpc(group string) *grpc.ClientConn {
+func (proxypool *Proxy) LoadGrpc(group string) *grpc.Config {
 	if f, ok := proxypool.m.Load(group); ok {
-		return f.(*Grpc).ClientConn
+		return f.(*GrpcConfig).Config
+	}
+	return nil
+}
+
+type EtcdConfig struct {
+	*etcdv3.Config
+}
+
+func NewEtcdConfig() *EtcdConfig {
+	return &EtcdConfig{}
+}
+
+func (proxy *EtcdConfig) Store(client *etcdv3.Config) {
+	proxy.Config = client
+}
+
+func (proxypool *Proxy) StoreEtcd(group string, proxy *EtcdConfig) {
+	proxypool.m.Store(group, proxy)
+}
+
+func (proxypool *Proxy) LoadEtcd(group string) *etcdv3.Config {
+	if f, ok := proxypool.m.Load(group); ok {
+		return f.(*EtcdConfig).Config
 	}
 	return nil
 }

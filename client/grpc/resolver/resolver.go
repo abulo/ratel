@@ -2,20 +2,30 @@ package resolver
 
 import (
 	"context"
+	"strings"
 
 	"github.com/abulo/ratel/v3/core/constant"
 	"github.com/abulo/ratel/v3/core/goroutine"
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/registry"
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/resolver"
 )
 
 // Register ...
-func Register(name string, reg registry.Registry) {
-	resolver.Register(&baseBuilder{
+// func Register(name string, reg registry.Registry) {
+// 	resolver.Register(&baseBuilder{
+// 		name: name,
+// 		reg:  reg,
+// 	})
+// }
+
+// NewEtcdBuilder returns a new etcdv3 resolver builder.
+func NewEtcdBuilder(name string, registry registry.Registry) resolver.Builder {
+	return &baseBuilder{
 		name: name,
-		reg:  reg,
-	})
+		reg:  registry,
+	}
 }
 
 type baseBuilder struct {
@@ -25,12 +35,15 @@ type baseBuilder struct {
 
 // Build ...
 func (b *baseBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
-	uri := target.URL.Path
-	endpoints, err := b.reg.WatchServices(context.Background(), uri, "grpc")
+	reg := b.reg
+	if !strings.HasSuffix(target.Endpoint, "/") {
+		target.Endpoint += "/"
+	}
+	endpoints, err := reg.WatchServices(context.Background(), target.Endpoint)
 	if err != nil {
+		logger.Logger.Error("watch services failed:", err)
 		return nil, err
 	}
-
 	var stop = make(chan struct{})
 	goroutine.Go(func() {
 		for {
@@ -46,7 +59,7 @@ func (b *baseBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts
 				for _, node := range endpoint.Nodes {
 					var address resolver.Address
 					address.Addr = node.Address
-					address.ServerName = uri
+					address.ServerName = target.Endpoint
 					address.Attributes = attributes.New(constant.KeyServiceInfo, node)
 					state.Addresses = append(state.Addresses, address)
 				}

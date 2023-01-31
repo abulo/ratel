@@ -32,6 +32,9 @@ type ServiceInfo struct {
 	Deployment string               `json:"deployment"` // Deployment 部署组: 不同组的流量隔离  比如某些服务给内部调用和第三方调用，可以配置不同的deployment,进行流量隔离
 	Group      string               `json:"group"`      // Group 流量组: 流量在Group之间进行负载均衡
 	Services   map[string]*Service  `json:"services" toml:"services"`
+	Version    string               `json:"version"`
+	Mode       string               `json:"mode"`
+	Hostname   string               `json:"hostname"`
 }
 
 // Service ...
@@ -40,6 +43,14 @@ type Service struct {
 	Name      string            `json:"name" toml:"name"`
 	Labels    map[string]string `json:"labels" toml:"labels"`
 	Methods   []string          `json:"methods" toml:"methods"`
+}
+
+func (s *ServiceInfo) RegistryName() string {
+	return fmt.Sprintf("%s:%s:%s:%s/%s", s.Scheme, s.Name, "v1", env.AppMode(), s.Address)
+}
+
+func (s *ServiceInfo) ServicePrefix() string {
+	return fmt.Sprintf("%s:%s:%s:%s/", s.Scheme, s.Name, "v1", env.AppMode())
 }
 
 // Label ...
@@ -132,6 +143,9 @@ func defaultServiceInfo() ServiceInfo {
 		Kind:       0,
 		Deployment: "",
 		Group:      "",
+		Mode:       env.AppMode(),
+		Hostname:   env.AppHost(),
+		Version:    "v1",
 	}
 	si.Metadata["appMode"] = env.AppMode()
 	si.Metadata["appHost"] = env.AppHost()

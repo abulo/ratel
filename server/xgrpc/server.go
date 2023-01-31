@@ -114,7 +114,6 @@ func (s *Server) Info() *server.ServiceInfo {
 	if s.Config.ServiceAddress != "" {
 		serviceAddress = s.Config.ServiceAddress
 	}
-
 	info := server.ApplyOptions(
 		server.WithScheme("grpc"),
 		server.WithAddress(serviceAddress),

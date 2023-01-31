@@ -16,7 +16,6 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Client ...
@@ -27,17 +26,27 @@ type Client struct {
 
 // New ...
 func newClient(config *Config) (*Client, error) {
+
+	dialOptions := []grpc.DialOption{
+		grpc.WithBlock(),
+		grpc.WithChainUnaryInterceptor(grpcprom.UnaryClientInterceptor),
+		grpc.WithChainStreamInterceptor(grpcprom.StreamClientInterceptor),
+	}
+
+	if config.EnableTrace {
+		dialOptions = append(dialOptions,
+			grpc.WithChainUnaryInterceptor(traceUnaryClientInterceptor()),
+			grpc.WithChainStreamInterceptor(traceStreamClientInterceptor()),
+		)
+	}
+
 	conf := clientv3.Config{
 		Endpoints:            config.Endpoints,
 		DialTimeout:          config.ConnectTimeout,
-		DialKeepAliveTime:    10 * time.Second,
-		DialKeepAliveTimeout: 3 * time.Second,
-		DialOptions: []grpc.DialOption{
-			grpc.WithBlock(),
-			grpc.WithUnaryInterceptor(grpcprom.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(grpcprom.StreamClientInterceptor),
-		},
-		AutoSyncInterval: config.AutoSyncInterval,
+		DialKeepAliveTime:    5 * time.Minute,
+		DialKeepAliveTimeout: 20 * time.Second,
+		DialOptions:          dialOptions,
+		AutoSyncInterval:     config.AutoSyncInterval,
 	}
 
 	if config.Endpoints == nil {
@@ -45,7 +54,7 @@ func newClient(config *Config) (*Client, error) {
 	}
 
 	if !config.Secure {
-		conf.DialOptions = append(conf.DialOptions, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conf.DialOptions = append(conf.DialOptions, grpc.WithInsecure())
 	}
 
 	if config.BasicAuth {

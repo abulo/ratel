@@ -112,10 +112,6 @@ func (config *Config) Build(options ...jaegerConfig.Option) opentracing.Tracer {
 		Tags:        config.tags,
 	}
 
-	logger.Logger.WithFields(logrus.Fields{
-		"configuration": configuration,
-	}).Info("trace")
-
 	tracer, closer, err := configuration.NewTracer(config.options...)
 	if err != nil {
 		if config.PanicOnError {

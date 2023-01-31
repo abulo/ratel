@@ -4,7 +4,9 @@ import (
 	"time"
 
 	"github.com/abulo/ratel/v3/client/etcdv3"
+	"github.com/abulo/ratel/v3/core/constant"
 	"github.com/abulo/ratel/v3/core/logger"
+	"github.com/abulo/ratel/v3/core/singleton"
 	"github.com/abulo/ratel/v3/registry"
 )
 
@@ -12,9 +14,9 @@ import (
 type Config struct {
 	*etcdv3.Config
 	ReadTimeout time.Duration
-	// ConfigKey   string
-	Prefix     string
-	ServiceTTL time.Duration
+	Node        string
+	Prefix      string
+	ServiceTTL  time.Duration
 }
 
 // New ...
@@ -25,6 +27,16 @@ func New() *Config {
 		Prefix:      "ratel",
 		ServiceTTL:  0,
 	}
+}
+
+// SetNode ...
+func (config *Config) SetNode(prefix string) *Config {
+	config.Node = prefix
+	return config
+}
+
+func (config *Config) GetNode() string {
+	return config.Node
 }
 
 // SetPrefix ...
@@ -44,5 +56,29 @@ func (config *Config) MustBuild() registry.Registry {
 	if err != nil {
 		logger.Logger.Panicf("build registry failed: %v", err)
 	}
+	return reg
+}
+
+func (config *Config) Singleton() (registry.Registry, error) {
+	if val, ok := singleton.Load(constant.ModuleClientEtcd, config.Node); ok {
+		return val.(registry.Registry), nil
+	}
+
+	reg, err := config.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	singleton.Store(constant.ModuleClientEtcd, config.Node, reg)
+
+	return reg, nil
+}
+
+func (config *Config) MustSingleton() registry.Registry {
+	reg, err := config.Singleton()
+	if err != nil {
+		logger.Logger.Panicf("build registry failed: %v", err)
+	}
+
 	return reg
 }

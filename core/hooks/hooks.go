@@ -2,59 +2,61 @@ package hooks
 
 import (
 	"fmt"
-	"sync"
+
+	"github.com/fatih/color"
 )
 
 var (
-	globalHooks = make(map[Stage][]func())
-	mu          = sync.RWMutex{}
+	globalHooks = make([][]func(), StageMax)
 )
 
-// Stage ...
 type Stage int
 
-// String ...
 func (s Stage) String() string {
 	switch s {
-	case StageBeforeLoadConfig:
+	case Stage_BeforeLoadConfig:
 		return "BeforeLoadConfig"
-	case StageAfterLoadConfig:
-		return "AfterLoadStart"
-	case StageBeforeStop:
+	case Stage_AfterLoadConfig:
+		return "AfterLoadConfig"
+	case Stage_BeforeRun:
+		return "BeforeRun"
+	case Stage_BeforeStop:
 		return "BeforeStop"
-	case StageAfterStop:
+	case Stage_AfterStop:
 		return "AfterStop"
 	}
 
-	return "Unknown"
+	return "Unkown"
 }
 
-// Stage_BeforeLoadConfig ...
 const (
-	StageBeforeLoadConfig Stage = iota + 1
-	StageAfterLoadConfig
-	StageBeforeStop
-	StageAfterStop
+	Stage_BeforeLoadConfig Stage = iota
+	Stage_AfterLoadConfig
+	Stage_BeforeRun
+	Stage_BeforeStop
+	Stage_AfterStop
+	StageMax
 )
 
 // Register 注册一个defer函数
 func Register(stage Stage, fns ...func()) {
-	mu.Lock()
-	defer mu.Unlock()
-
 	globalHooks[stage] = append(globalHooks[stage], fns...)
 }
 
 // Do 执行
 func Do(stage Stage) {
-	mu.Lock()
-	defer mu.Unlock()
-	fmt.Printf("[ratel] %+v\n", fmt.Sprintf("hook stage (%s)...", stage))
+	fmt.Printf("[ratel] %+v\n", color.GreenString(fmt.Sprintf("hook stage (%s)...", stage)))
+
+	if stage >= StageMax {
+		return
+	}
+
 	for i := len(globalHooks[stage]) - 1; i >= 0; i-- {
 		fn := globalHooks[stage][i]
 		if fn != nil {
 			fn()
 		}
 	}
-	fmt.Printf("[ratel] %+v\n", fmt.Sprintf("hook stage (%s)... done", stage))
+
+	fmt.Printf("[ratel] %+v\n", color.GreenString(fmt.Sprintf("hook stage (%s)... done", stage)))
 }

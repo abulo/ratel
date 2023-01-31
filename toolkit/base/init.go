@@ -2,6 +2,7 @@ package base
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/abulo/ratel/v3/stores/mysql"
 	"github.com/abulo/ratel/v3/stores/query"
 	"github.com/abulo/ratel/v3/util"
+	"github.com/fatih/color"
 	"github.com/spf13/cast"
 )
 
@@ -22,7 +24,7 @@ var Path string
 func InitPath() error {
 	wd, err := os.Getwd()
 	if err != nil {
-		// fmt.Println("初始化目录错误:", color.RedString(err.Error()))
+		fmt.Println("初始化目录错误:", color.RedString(err.Error()))
 		return err
 	}
 	Path = wd
@@ -34,7 +36,7 @@ func InitConfig() error {
 	configPath := path.Join(Path, "toolkit.toml")
 	if !util.FileExists(configPath) {
 		err := errors.New("配置文件不存在")
-		// fmt.Println("初始化目录错误:", color.RedString(err.Error()))
+		fmt.Println("初始化目录错误:", color.RedString(err.Error()))
 		return err
 	}
 	//加载配置文件
