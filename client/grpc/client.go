@@ -55,7 +55,7 @@ func getDialOptions(config *Config) []grpc.DialOption {
 	dialOptions = append(dialOptions,
 		grpc.WithInsecure(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithResolvers(resolver.NewEtcdBuilder(config.Etcd.GetName(), config.Etcd.MustBuild())),
+		grpc.WithResolvers(resolver.NewEtcdBuilder(config.Etcd.GetNode(), config.Etcd.MustSingleton())),
 		grpc.WithDisableServiceConfig(),
 	)
 
