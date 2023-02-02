@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 // Options options to initiate your client
@@ -80,17 +80,17 @@ type Options struct {
 // GetClusterConfig translates current configuration into a *redis.ClusterOptions
 func (o Options) GetClusterConfig() *redis.ClusterOptions {
 	opts := &redis.ClusterOptions{
-		Addrs:              o.Hosts,
-		ReadOnly:           o.ReadOnly,
-		RouteByLatency:     o.RouteByLatency,
-		Password:           o.Password,
-		DialTimeout:        o.DialTimeout,
-		ReadTimeout:        o.ReadTimeout,
-		WriteTimeout:       o.WriteTimeout,
-		PoolSize:           o.PoolSize,
-		PoolTimeout:        o.PoolTimeout,
-		IdleTimeout:        o.IdleTimeout,
-		IdleCheckFrequency: o.IdleCheckFrequency,
+		Addrs:           o.Hosts,
+		ReadOnly:        o.ReadOnly,
+		RouteByLatency:  o.RouteByLatency,
+		Password:        o.Password,
+		DialTimeout:     o.DialTimeout,
+		ReadTimeout:     o.ReadTimeout,
+		WriteTimeout:    o.WriteTimeout,
+		PoolSize:        o.PoolSize,
+		PoolTimeout:     o.PoolTimeout,
+		ConnMaxIdleTime: o.IdleTimeout,
+		ConnMaxLifetime: o.IdleCheckFrequency,
 	}
 	if o.MaxRedirects > 0 {
 		opts.MaxRedirects = o.MaxRedirects
@@ -101,18 +101,18 @@ func (o Options) GetClusterConfig() *redis.ClusterOptions {
 // GetNormalConfig translates current configuration into a *redis.Options struct
 func (o Options) GetNormalConfig() *redis.Options {
 	opts := &redis.Options{
-		Addr:               o.Hosts[0],
-		Password:           o.Password,
-		DB:                 o.Database,
-		MaxRetries:         o.MaxRedirects,
-		DialTimeout:        o.DialTimeout,
-		ReadTimeout:        o.ReadTimeout,
-		WriteTimeout:       o.WriteTimeout,
-		PoolSize:           o.PoolSize,
-		PoolTimeout:        o.PoolTimeout,
-		IdleTimeout:        o.IdleTimeout,
-		IdleCheckFrequency: o.IdleCheckFrequency,
-		TLSConfig:          o.TLSConfig,
+		Addr:            o.Hosts[0],
+		Password:        o.Password,
+		DB:              o.Database,
+		MaxRetries:      o.MaxRedirects,
+		DialTimeout:     o.DialTimeout,
+		ReadTimeout:     o.ReadTimeout,
+		WriteTimeout:    o.WriteTimeout,
+		PoolSize:        o.PoolSize,
+		PoolTimeout:     o.PoolTimeout,
+		ConnMaxIdleTime: o.IdleTimeout,
+		ConnMaxLifetime: o.IdleCheckFrequency,
+		TLSConfig:       o.TLSConfig,
 	}
 	return opts
 }
