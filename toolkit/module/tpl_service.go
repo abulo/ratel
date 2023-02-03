@@ -99,9 +99,9 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.Table
 	{{.Primary.ColumnName}} := request.Get{{CamelStr .Primary.ColumnName}}()
 	if {{.Primary.ColumnName}} < 1 {
 		return &{{CamelStr .Table.TableName}}ItemUpdateResponse{
-			Code: code.ParamIsInvalid,
-			Msg:  code.StatusText(code.ParamIsInvalid),
-		}, errors.New(code.StatusText(code.ParamIsInvalid))
+			Code: code.ParamInvalid,
+			Msg:  code.StatusText(code.ParamInvalid),
+		}, errors.New(code.StatusText(code.ParamInvalid))
 	}
 	var res dao.{{CamelStr .Table.TableName}}
 	{{ProtoConvertDao .TableColumn "res" "request"}}
@@ -123,9 +123,9 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.Table
 	{{.Primary.ColumnName}} := request.Get{{CamelStr .Primary.ColumnName}}()
 	if {{.Primary.ColumnName}} < 1 {
 		return &{{CamelStr .Table.TableName}}ItemResponse{
-			Code: code.ParamIsInvalid,
-			Msg:  code.StatusText(code.ParamIsInvalid),
-		}, errors.New(code.StatusText(code.ParamIsInvalid))
+			Code: code.ParamInvalid,
+			Msg:  code.StatusText(code.ParamInvalid),
+		}, errors.New(code.StatusText(code.ParamInvalid))
 	}
 	res,err := {{.Pkg}}.{{CamelStr .Table.TableName}}Item(ctx ,{{.Primary.ColumnName}})
 	if err != nil {
@@ -149,9 +149,9 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 	{{.Primary.ColumnName}} := request.Get{{CamelStr .Primary.ColumnName}}()
 	if {{.Primary.ColumnName}} < 1 {
 		return &{{CamelStr .Table.TableName}}ItemDeleteResponse{
-			Code: code.ParamIsInvalid,
-			Msg:  code.StatusText(code.ParamIsInvalid),
-		}, errors.New(code.StatusText(code.ParamIsInvalid))
+			Code: code.ParamInvalid,
+			Msg:  code.StatusText(code.ParamInvalid),
+		}, errors.New(code.StatusText(code.ParamInvalid))
 	}
 
 	_, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ItemDelete(ctx, {{.Primary.ColumnName}})
