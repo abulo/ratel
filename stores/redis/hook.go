@@ -28,12 +28,6 @@ type OpenTraceHook struct {
 	Addr          string
 }
 
-// CmdStart ...
-type CmdStart string
-
-// RequestCmdStart ...
-const RequestCmdStart = CmdStart("start")
-
 func (op OpenTraceHook) DialHook(hook redis.DialHook) redis.DialHook {
 	return hook
 }
@@ -48,6 +42,23 @@ func (op OpenTraceHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
 		return op.AfterProcess(ctx, cmd)
 	}
 }
+
+func (op OpenTraceHook) ProcessPipelineHook(hook redis.ProcessPipelineHook) redis.ProcessPipelineHook {
+	return func(ctx context.Context, cmd []redis.Cmder) error {
+		ctx, err := op.BeforeProcessPipeline(ctx, cmd)
+		if err != nil {
+			return err
+		}
+		hook(ctx, cmd)
+		return op.AfterProcessPipeline(ctx, cmd)
+	}
+}
+
+// CmdStart ...
+type CmdStart string
+
+// RequestCmdStart ...
+const RequestCmdStart = CmdStart("start")
 
 // BeforeProcess ...
 func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
@@ -108,6 +119,93 @@ func (op OpenTraceHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error
 		metric.LibHandleHistogram.WithLabelValues("redis", cast.ToString(op.DB), op.Addr).Observe(cost.Seconds())
 	}
 
+	return nil
+}
+
+// BeforeProcessPipeline ...
+func (op OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+
+	const numCmdLimit = 100
+	const numNameLimit = 10
+
+	seen := make(map[string]struct{}, len(cmds))
+	unqNames := make([]string, 0, len(cmds))
+
+	b := make([]byte, 0, 32*len(cmds))
+
+	for i, cmd := range cmds {
+		if i > numCmdLimit {
+			break
+		}
+
+		if i > 0 {
+			b = append(b, '\n')
+		}
+		b = appendCmd(b, cmd)
+
+		if len(unqNames) >= numNameLimit {
+			continue
+		}
+
+		name := cmd.FullName()
+		if _, ok := seen[name]; !ok {
+			seen[name] = struct{}{}
+			unqNames = append(unqNames, name)
+		}
+	}
+	if !op.DisableTrace {
+		pc, file, lineNo, _ := runtime.Caller(5)
+		name := runtime.FuncForPC(pc).Name()
+		Path := file + ":" + cast.ToString(lineNo)
+		Func := name
+		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
+			parentCtx := parentSpan.Context()
+			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
+			ext.SpanKindRPCClient.Set(span)
+			hostName, err := os.Hostname()
+			if err != nil {
+				hostName = "unknown"
+			}
+			ext.PeerHostname.Set(span, hostName)
+			span.SetTag("call.func", Func)
+			span.SetTag("call.path", Path)
+			span.LogFields(log.String("cmds", String(b)))
+			ctx = opentracing.ContextWithSpan(ctx, span)
+		}
+	}
+
+	if !op.DisableMetric {
+		start := time.Now()
+		ctx = context.WithValue(ctx, RequestCmdStart, start)
+	}
+
+	return ctx, nil
+}
+
+// AfterProcessPipeline ...
+func (op OpenTraceHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
+	if !op.DisableTrace {
+		span := trace.SpanFromContext(ctx)
+		if span != nil {
+			defer span.Finish()
+		}
+	}
+	if !op.DisableMetric {
+		start := ctx.Value(RequestCmdStart)
+		cost := time.Since(start.(time.Time))
+		// if cmds != nil {
+		// metric.LibHandleCounter.WithLabelValues("redis", util.ToString(op.DB), op.Addr, "ERR").Inc()
+		// } else {
+		metric.LibHandleCounter.Inc("redis", cast.ToString(op.DB), op.Addr, "OK")
+		// }
+		metric.LibHandleHistogram.WithLabelValues("redis", cast.ToString(op.DB), op.Addr).Observe(cost.Seconds())
+	}
 	return nil
 }
 
