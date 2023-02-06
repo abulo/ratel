@@ -28,13 +28,14 @@ import (
 
 // {{CamelStr .Table.TableName}}DaoConver 数据转换
 func {{CamelStr .Table.TableName}}DaoConver(item *{{.Pkg}}.{{CamelStr .Table.TableName}}Object) dao.{{CamelStr .Table.TableName}} {
-	var daoItem dao.LoginLog
+	daoItem := dao.{{CamelStr .Table.TableName}}{}
 	{{ModuleProtoConvertDao .TableColumn "daoItem" "item"}}
 	return daoItem
 }
 
 // {{CamelStr .Table.TableName}}RpcConver 数据转换
-func {{CamelStr .Table.TableName}}RpcConver(request *{{.Pkg}}.{{CamelStr .Table.TableName}}Object, newCtx *gin.Context) *{{.Pkg}}.{{CamelStr .Table.TableName}}Object {
+func {{CamelStr .Table.TableName}}RpcConver(newCtx *app.RequestContext) *{{.Pkg}}.{{CamelStr .Table.TableName}}Object {
+	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}Object{}
 	{{ApiToProto .TableColumn "request" "newCtx.PostForm"}}
 	return request
 }
@@ -54,7 +55,7 @@ func {{CamelStr .Table.TableName}}ItemCreate(newCtx *gin.Context) {
 	//链接服务
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
 	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}ItemCreateRequest{}
-	request.Data = {{CamelStr .Table.TableName}}RpcConver(request.GetData(),newCtx)
+	request.Data = {{CamelStr .Table.TableName}}RpcConver(newCtx)
 	// 执行服务
 	ctx := newCtx.Request.Context()
 	res, err := client.{{CamelStr .Table.TableName}}ItemCreate(ctx, request)
@@ -87,7 +88,7 @@ func {{CamelStr .Table.TableName}}ItemUpdate(newCtx *gin.Context) {
 	{{Helper .Primary.AlisaColumnName }} := cast.ToInt64(newCtx.Param("{{Helper .Primary.AlisaColumnName }}"))
 	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}ItemUpdateRequest{}
 	request.{{CamelStr .Primary.AlisaColumnName }} = {{Helper .Primary.AlisaColumnName }}
-	request.Data = {{CamelStr .Table.TableName}}RpcConver(request.GetData(),newCtx)
+	request.Data = {{CamelStr .Table.TableName}}RpcConver(newCtx)
 	// 执行服务
 	ctx := newCtx.Request.Context()
 	res, err := client.{{CamelStr .Table.TableName}}ItemUpdate(ctx, request)
