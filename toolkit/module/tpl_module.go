@@ -15,11 +15,16 @@ import (
 func GenerateModule(moduleParam base.ModuleParam, fullModuleDir, tableName string) {
 	// 模板变量
 	tpl := template.Must(template.New("module").Funcs(template.FuncMap{
-		"Convert":    base.Convert,
-		"SymbolChar": base.SymbolChar,
-		"Char":       base.Char,
-		"Helper":     base.Helper,
-		"CamelStr":   base.CamelStr,
+		"Convert":               base.Convert,
+		"SymbolChar":            base.SymbolChar,
+		"Char":                  base.Char,
+		"Helper":                base.Helper,
+		"CamelStr":              base.CamelStr,
+		"Add":                   base.Add,
+		"ModuleProtoConvertDao": base.ModuleProtoConvertDao,
+		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
+		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
+		"ApiToProto":            base.ApiToProto,
 	}).Parse(ModuleTemplate()))
 	// 文件夹路径
 	outModuleFile := path.Join(fullModuleDir, tableName+".go")
@@ -72,23 +77,23 @@ func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,data dao.{{Came
 }
 
 // {{CamelStr .Table.TableName}}ItemUpdate 更新数据
-func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,{{.Primary.ColumnName}} {{.Primary.DataTypeMap.Default}},data dao.{{CamelStr .Table.TableName}})(int64,error){
+func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}},data dao.{{CamelStr .Table.TableName}})(int64,error){
 	db := initial.Core.Store.LoadSQL("mysql").Write()
-	return db.NewBuilder(ctx).Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{.Primary.ColumnName}}).Update(data)
+	return db.NewBuilder(ctx).Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{Helper .Primary.AlisaColumnName}}).Update(data)
 }
 
 // {{CamelStr .Table.TableName}}Item 获取数据
-func {{CamelStr .Table.TableName}}Item(ctx context.Context,{{.Primary.ColumnName}} {{.Primary.DataTypeMap.Default}})(dao.{{CamelStr .Table.TableName}},error){
+func {{CamelStr .Table.TableName}}Item(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}})(dao.{{CamelStr .Table.TableName}},error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	var res dao.{{CamelStr .Table.TableName}}
-	err := db.NewBuilder(ctx).Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{.Primary.ColumnName}}).Row().ToStruct(&res)
+	err := db.NewBuilder(ctx).Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{Helper .Primary.AlisaColumnName}}).Row().ToStruct(&res)
 	return res, err
 }
 
 // {{CamelStr .Table.TableName}}ItemDelete 删除数据
-func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,{{.Primary.ColumnName}} {{.Primary.DataTypeMap.Default}})(int64,error){
+func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}})(int64,error){
 	db := initial.Core.Store.LoadSQL("mysql").Write()
-	return db.NewBuilder(ctx).Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{.Primary.ColumnName}}).Delete()
+	return db.NewBuilder(ctx).Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{Helper .Primary.AlisaColumnName}}).Delete()
 }
 {{- range .Method}}
 {{- if eq .Type "List"}}

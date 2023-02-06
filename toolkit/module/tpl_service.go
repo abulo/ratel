@@ -14,15 +14,16 @@ import (
 
 func GenerateService(moduleParam base.ModuleParam, fullServiceDir, tableName string) {
 	tpl := template.Must(template.New("service").Funcs(template.FuncMap{
-		"Convert":         base.Convert,
-		"SymbolChar":      base.SymbolChar,
-		"Char":            base.Char,
-		"Helper":          base.Helper,
-		"CamelStr":        base.CamelStr,
-		"Add":             base.Add,
-		"ProtoConvertDao": base.ProtoConvertDao,
-		"DaoConvertProto": base.DaoConvertProto,
-		"ProtoConvertMap": base.ProtoConvertMap,
+		"Convert":               base.Convert,
+		"SymbolChar":            base.SymbolChar,
+		"Char":                  base.Char,
+		"Helper":                base.Helper,
+		"CamelStr":              base.CamelStr,
+		"Add":                   base.Add,
+		"ModuleProtoConvertDao": base.ModuleProtoConvertDao,
+		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
+		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
+		"ApiToProto":            base.ApiToProto,
 	}).Parse(ServiceTemplate()))
 
 	// 文件夹路径
@@ -77,10 +78,24 @@ type Srv{{CamelStr .Table.TableName}}ServiceServer struct {
 	Server *xgrpc.Server
 }
 
+
+
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}ItemConver(request *{{CamelStr .Table.TableName}}Object) dao.{{CamelStr .Table.TableName}} {
+	var res dao.{{CamelStr .Table.TableName}}
+	{{ModuleProtoConvertDao .TableColumn "res" "request"}}
+	return res
+}
+
+
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}ItemResult(item dao.{{CamelStr .Table.TableName}}) *{{CamelStr .Table.TableName}}Object {
+	return  &{{CamelStr .Table.TableName}}Object{
+		{{ModuleDaoConvertProto .TableColumn "item"}}
+	}
+}
+
 // {{CamelStr .Table.TableName}}ItemCreate 创建数据
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,request *{{CamelStr .Table.TableName}}ItemCreateRequest) (*{{CamelStr .Table.TableName}}ItemCreateResponse,error){
-	var res dao.{{CamelStr .Table.TableName}}
-	{{ProtoConvertDao .TableColumn "res" "request"}}
+	res := srv.{{CamelStr .Table.TableName}}ItemConver(request.GetData())
 	_, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ItemCreate(ctx, res)
 	if err != nil {
 		return &{{CamelStr .Table.TableName}}ItemCreateResponse{
@@ -96,16 +111,15 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.Table
 
 // {{CamelStr .Table.TableName}}ItemUpdate 更新数据
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,request *{{CamelStr .Table.TableName}}ItemUpdateRequest) (*{{CamelStr .Table.TableName}}ItemUpdateResponse,error){
-	{{.Primary.ColumnName}} := request.Get{{CamelStr .Primary.ColumnName}}()
-	if {{.Primary.ColumnName}} < 1 {
+	{{Helper .Primary.AlisaColumnName}} := request.Get{{CamelStr .Primary.AlisaColumnName}}()
+	if {{Helper .Primary.AlisaColumnName}} < 1 {
 		return &{{CamelStr .Table.TableName}}ItemUpdateResponse{
 			Code: code.ParamInvalid,
 			Msg:  code.StatusText(code.ParamInvalid),
 		}, errors.New(code.StatusText(code.ParamInvalid))
 	}
-	var res dao.{{CamelStr .Table.TableName}}
-	{{ProtoConvertDao .TableColumn "res" "request"}}
-	_, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ItemUpdate(ctx, {{.Primary.ColumnName}}, res)
+	res := srv.{{CamelStr .Table.TableName}}ItemConver(request.GetData())
+	_, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ItemUpdate(ctx, {{Helper .Primary.AlisaColumnName}}, res)
 	if err != nil {
 		return &{{CamelStr .Table.TableName}}ItemUpdateResponse{
 			Code: code.Fail,
@@ -120,14 +134,14 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.Table
 
 // {{CamelStr .Table.TableName}}Item 获取数据
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}Item(ctx context.Context,request *{{CamelStr .Table.TableName}}ItemRequest)(*{{CamelStr .Table.TableName}}ItemResponse,error){
-	{{.Primary.ColumnName}} := request.Get{{CamelStr .Primary.ColumnName}}()
-	if {{.Primary.ColumnName}} < 1 {
+	{{Helper .Primary.AlisaColumnName}} := request.Get{{CamelStr .Primary.AlisaColumnName}}()
+	if {{Helper .Primary.AlisaColumnName}} < 1 {
 		return &{{CamelStr .Table.TableName}}ItemResponse{
 			Code: code.ParamInvalid,
 			Msg:  code.StatusText(code.ParamInvalid),
 		}, errors.New(code.StatusText(code.ParamInvalid))
 	}
-	res,err := {{.Pkg}}.{{CamelStr .Table.TableName}}Item(ctx ,{{.Primary.ColumnName}})
+	res,err := {{.Pkg}}.{{CamelStr .Table.TableName}}Item(ctx ,{{Helper .Primary.AlisaColumnName}})
 	if err != nil {
 		return &{{CamelStr .Table.TableName}}ItemResponse{
 			Code: code.Fail,
@@ -138,23 +152,21 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.Table
 	return &{{CamelStr .Table.TableName}}ItemResponse{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
-		Data:  &{{CamelStr .Table.TableName}}Object{
-			{{DaoConvertProto .TableColumn "res"}}
-		},
+		Data: srv.{{CamelStr .Table.TableName}}ItemResult(res),
 	}, err
 }
 
 // {{CamelStr .Table.TableName}}ItemDelete 删除数据
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,request *{{CamelStr .Table.TableName}}ItemDeleteRequest)(*{{CamelStr .Table.TableName}}ItemDeleteResponse,error){
-	{{.Primary.ColumnName}} := request.Get{{CamelStr .Primary.ColumnName}}()
-	if {{.Primary.ColumnName}} < 1 {
+	{{Helper .Primary.AlisaColumnName}} := request.Get{{CamelStr .Primary.AlisaColumnName}}()
+	if {{Helper .Primary.AlisaColumnName}} < 1 {
 		return &{{CamelStr .Table.TableName}}ItemDeleteResponse{
 			Code: code.ParamInvalid,
 			Msg:  code.StatusText(code.ParamInvalid),
 		}, errors.New(code.StatusText(code.ParamInvalid))
 	}
 
-	_, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ItemDelete(ctx, {{.Primary.ColumnName}})
+	_, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ItemDelete(ctx, {{Helper .Primary.AlisaColumnName}})
 	if err != nil {
 		return &{{CamelStr .Table.TableName}}ItemDeleteResponse{
 			Code: code.Fail,
@@ -189,7 +201,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 	condition["pageOffset"] = offset
 	condition["pageSize"] = resultPerPage
 	// 构造查询条件
-	{{ProtoConvertMap .Condition "request"}}
+	{{ModuleProtoConvertMap .Condition "request"}}
 	// 获取数据量
 	total, err := {{.Pkg}}.{{CamelStr .Table.TableName}}{{CamelStr .Name}}Total(ctx, condition)
 	if err != nil {
@@ -208,9 +220,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 	}
 	var res []*{{CamelStr .Table.TableName}}Object
 	for _, item := range list {
-		res = append(res, &{{CamelStr .Table.TableName}}Object{
-			{{DaoConvertProto .TableColumn "item"}}
-		})
+		res = append(res, srv.{{CamelStr .Table.TableName}}ItemResult(item))
 	}
 	return &{{CamelStr .Table.TableName}}{{CamelStr .Name}}Response{
 		Code: code.Success,
@@ -241,7 +251,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 	condition["pageOffset"] = offset
 	condition["pageSize"] = resultPerPage
 	// 构造查询条件
-	{{ProtoConvertMap .Condition "request"}}
+	{{ModuleProtoConvertMap .Condition "request"}}
 	// 获取数据量
 	total, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total(ctx, condition)
 	if err != nil {
@@ -260,9 +270,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 	}
 	var res []*{{CamelStr .Table.TableName}}Object
 	for _, item := range list {
-		res = append(res, &{{CamelStr .Table.TableName}}Object{
-			{{DaoConvertProto .TableColumn "item"}}
-		})
+		res = append(res, srv.{{CamelStr .Table.TableName}}ItemResult(item))
 	}
 	return &{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response{
 		Code: code.Success,
@@ -280,7 +288,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.Table
 	// 数据库查询条件
 	condition := make(map[string]interface{})
 	// 构造查询条件
-	{{ProtoConvertMap .Condition "request"}}
+	{{ModuleProtoConvertMap .Condition "request"}}
 	res,err := {{.Pkg}}.{{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}(ctx ,condition)
 	if err != nil {
 		return &{{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Response{
@@ -292,9 +300,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.Table
 	return &{{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
-		Data:  &{{CamelStr .Table.TableName}}Object{
-			{{DaoConvertProto .TableColumn "res"}}
-		},
+		Data:  srv.{{CamelStr .Table.TableName}}ItemResult(res),
 	}, err
 }
 {{- end}}

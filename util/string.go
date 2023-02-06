@@ -17,6 +17,7 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+	"unsafe"
 
 	"github.com/spf13/cast"
 	"golang.org/x/text/cases"
@@ -926,4 +927,13 @@ func Tag(i interface{}) string {
 	replacer := strings.NewReplacer(tagPatterns...)
 	format := cast.ToString(i)
 	return replacer.Replace(format)
+}
+
+func StringToBytes(s string) []byte {
+	return *(*[]byte)(unsafe.Pointer(
+		&struct {
+			string
+			Cap int
+		}{s, len(s)},
+	))
 }

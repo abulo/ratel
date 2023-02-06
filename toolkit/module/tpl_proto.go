@@ -17,12 +17,16 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 	//protoc --go-grpc_out=../../api/v1 --go_out=../../api/v1 *proto
 	// 模板变量
 	tpl := template.Must(template.New("proto").Funcs(template.FuncMap{
-		"Convert":    base.Convert,
-		"SymbolChar": base.SymbolChar,
-		"Char":       base.Char,
-		"Helper":     base.Helper,
-		"CamelStr":   base.CamelStr,
-		"Add":        base.Add,
+		"Convert":               base.Convert,
+		"SymbolChar":            base.SymbolChar,
+		"Char":                  base.Char,
+		"Helper":                base.Helper,
+		"CamelStr":              base.CamelStr,
+		"Add":                   base.Add,
+		"ModuleProtoConvertDao": base.ModuleProtoConvertDao,
+		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
+		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
+		"ApiToProto":            base.ApiToProto,
 	}).Parse(ProtoTemplate()))
 	// 文件夹路径
 	outProtoFile := path.Join(fullProtoDir, tableName+".proto")
@@ -89,7 +93,7 @@ message {{CamelStr .Table.TableName}}ItemCreateResponse {
 
 // {{CamelStr .Table.TableName}}ItemUpdateRequest 更新数据
 message {{CamelStr .Table.TableName}}ItemUpdateRequest {
-	{{.Primary.DataTypeMap.Proto}} {{.Primary.ColumnName}} = 1; //{{.Primary.ColumnComment}}
+	{{.Primary.DataTypeMap.Proto}} {{ .Primary.AlisaColumnName}} = 1; //{{.Primary.ColumnComment}}
 	{{CamelStr .Table.TableName}}Object data = 2;
 }
 
@@ -101,7 +105,7 @@ message {{CamelStr .Table.TableName}}ItemUpdateResponse {
 
 // {{CamelStr .Table.TableName}}ItemDeleteRequest 删除数据
 message {{CamelStr .Table.TableName}}ItemDeleteRequest {
-	{{.Primary.DataTypeMap.Proto}} {{.Primary.ColumnName}} = 1; //{{.Primary.ColumnComment}}
+	{{.Primary.DataTypeMap.Proto}} {{ .Primary.AlisaColumnName}} = 1; //{{.Primary.ColumnComment}}
 }
 
 // {{CamelStr .Table.TableName}}ItemDeleteResponse 删除数据响应
@@ -113,7 +117,7 @@ message {{CamelStr .Table.TableName}}ItemDeleteResponse {
 
 // {{CamelStr .Table.TableName}}ItemRequest 数据
 message {{CamelStr .Table.TableName}}ItemRequest {
-	{{.Primary.DataTypeMap.Proto}} {{.Primary.ColumnName}} = 1; //{{.Primary.ColumnComment}}
+	{{.Primary.DataTypeMap.Proto}} {{ .Primary.AlisaColumnName}} = 1; //{{.Primary.ColumnComment}}
 }
 
 // {{CamelStr .Table.TableName}}ItemResponse 数据响应

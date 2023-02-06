@@ -66,7 +66,7 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 	// 文件夹的路径
-	fullApiDir := path.Join(base.Path, dir)
+	fullApiDir := path.Join(base.Path, "api", dir)
 	_ = os.MkdirAll(fullApiDir, os.ModePerm)
 
 	// 初始化上下文
@@ -107,8 +107,17 @@ func Run(cmd *cobra.Command, args []string) {
 		fmt.Println("表主键:", color.RedString(err.Error()))
 		return
 	}
-
 	var methodList []base.Method
+
+	//获取 go.mod
+	mod, err := base.ModulePath(path.Join(base.Path, "go.mod"))
+	if err != nil {
+		fmt.Println("go.mod文件不存在:", color.RedString(err.Error()))
+		return
+	}
+
+	// 数字长度
+	strLen := strings.LastIndex(dir, "/")
 
 	//获取的索引信息没有
 	if err != nil {
@@ -121,6 +130,8 @@ func Run(cmd *cobra.Command, args []string) {
 			Condition:      nil,
 			ConditionTotal: 0,
 			Primary:        tablePrimary,
+			Pkg:            dir[strLen+1:],
+			ModName:        mod,
 		}
 		methodList = append(methodList, method)
 	} else {
@@ -162,6 +173,8 @@ func Run(cmd *cobra.Command, args []string) {
 				Condition:      condition,
 				ConditionTotal: len(condition),
 				Primary:        tablePrimary,
+				Pkg:            dir[strLen+1:],
+				ModName:        mod,
 			}
 			//添加到集合中
 			methodList = append(methodList, method)
@@ -184,17 +197,11 @@ func Run(cmd *cobra.Command, args []string) {
 			Condition:      condition,
 			ConditionTotal: len(condition),
 			Primary:        tablePrimary,
+			Pkg:            dir[strLen+1:],
+			ModName:        mod,
 		}
 		methodList = append(methodList, method)
 	}
-	//获取 go.mod
-	mod, err := base.ModulePath(path.Join(base.Path, "go.mod"))
-	if err != nil {
-		fmt.Println("go.mod文件不存在:", color.RedString(err.Error()))
-		return
-	}
-	// 数字长度
-	strLen := strings.LastIndex(dir, "/")
 	// 数据模型
 	moduleParam := base.ModuleParam{
 		Pkg:         dir[strLen+1:],
@@ -204,18 +211,22 @@ func Run(cmd *cobra.Command, args []string) {
 		Method:      methodList,
 		ModName:     mod,
 	}
-	Generate(moduleParam, fullApiDir, tableName, apiType)
+	Generate(moduleParam, fullApiDir, tableName, dir[strLen+1:], apiType)
 }
 
-func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, apiType string) {
+func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, apiType string) {
 	tpl := template.Must(template.New("api").Funcs(template.FuncMap{
-		"Convert":    base.Convert,
-		"SymbolChar": base.SymbolChar,
-		"Char":       base.Char,
-		"Helper":     base.Helper,
-		"CamelStr":   base.CamelStr,
-		"Add":        base.Add,
-	}).Parse(""))
+		"Convert":               base.Convert,
+		"SymbolChar":            base.SymbolChar,
+		"Char":                  base.Char,
+		"Helper":                base.Helper,
+		"CamelStr":              base.CamelStr,
+		"Add":                   base.Add,
+		"ModuleProtoConvertDao": base.ModuleProtoConvertDao,
+		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
+		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
+		"ApiToProto":            base.ApiToProto,
+	}).Parse(HertzTemplate()))
 	// 文件夹路径
 	outApiFile := path.Join(fullApiDir, tableName+".go")
 	if util.FileExists(outApiFile) {
@@ -242,4 +253,40 @@ func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, apiType strin
 	cmdImport := exec.Command("goimports", "-w", path.Join(fullApiDir, "*.go"))
 	cmdImport.CombinedOutput()
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(outApiFile))
+
+	builder := strings.Builder{}
+	builder.WriteString("\n")
+	builder.WriteString("route")
+	builder.WriteString("\n")
+	//路由
+	// if apiType == "hertz" {
+	//创建
+	builder.WriteString(fmt.Sprintf("xxx.POST(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName)), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemCreate"))
+	builder.WriteString("\n")
+	//更新
+	builder.WriteString(fmt.Sprintf("xxx.PUT(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/:"+util.StrToLower(base.CamelStr(moduleParam.Primary.AlisaColumnName)), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemUpdate"))
+	builder.WriteString("\n")
+	//单条数据信息查看
+	builder.WriteString(fmt.Sprintf("xxx.GET(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/:"+util.StrToLower(base.CamelStr(moduleParam.Primary.AlisaColumnName)), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"Item"))
+	builder.WriteString("\n")
+	//单条数据信息删除
+	builder.WriteString(fmt.Sprintf("xxx.DELETE(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/:"+util.StrToLower(base.CamelStr(moduleParam.Primary.AlisaColumnName)), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemDelete"))
+	builder.WriteString("\n")
+	for _, item := range moduleParam.Method {
+		if item.Type == "List" {
+			if item.Default {
+				builder.WriteString(fmt.Sprintf("xxx.GET(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName)), pkg+"."+base.CamelStr(item.Table.TableName)+base.CamelStr(item.Name)))
+				builder.WriteString("\n")
+			} else {
+				// builder.WriteString(fmt.Sprintf("xxx.GET(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/list/"+util.StrToLower(base.CamelStr(item.Name)), pkg+"."+base.CamelStr(item.Table.TableName)+"ListBy"+base.CamelStr(item.Name)))
+				// builder.WriteString("\n")
+			}
+		} else {
+			// builder.WriteString(fmt.Sprintf("xxx.GET(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/item/"+util.StrToLower(base.CamelStr(item.Name)), pkg+"."+base.CamelStr(item.Table.TableName)+"ItemBy"+base.CamelStr(item.Name)))
+			// builder.WriteString("\n")
+		}
+	}
+	// }
+
+	fmt.Println(builder.String())
 }

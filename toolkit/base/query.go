@@ -20,13 +20,14 @@ type Table struct {
 
 // Column 字段新
 type Column struct {
-	ColumnName    string   `db:"COLUMN_NAME"`    // 字段名
-	IsNullable    string   `db:"IS_NULLABLE"`    // 是否为空
-	DataType      string   `db:"DATA_TYPE"`      // 字段类型
-	ColumnKey     string   `db:"COLUMN_KEY"`     // 是否索引
-	ColumnComment string   `db:"COLUMN_COMMENT"` // 字段描述
-	PosiTion      int64    // 排序信息
-	DataTypeMap   DataType // 字段类型信息
+	ColumnName      string   `db:"COLUMN_NAME"`    // 字段名
+	IsNullable      string   `db:"IS_NULLABLE"`    // 是否为空
+	DataType        string   `db:"DATA_TYPE"`      // 字段类型
+	ColumnKey       string   `db:"COLUMN_KEY"`     // 是否索引
+	ColumnComment   string   `db:"COLUMN_COMMENT"` // 字段描述
+	PosiTion        int64    // 排序信息
+	DataTypeMap     DataType // 字段类型信息
+	AlisaColumnName string   // 字段名
 }
 
 // DataType 字段类型信息
@@ -156,6 +157,7 @@ func TablePrimary(ctx context.Context, DbName, TableName string) (Column, error)
 		dataType := NewDataType()
 		res.DataTypeMap = dataType[res.DataType]
 		res.PosiTion = 1
+		res.AlisaColumnName = TableName + "_id"
 	}
 	return res, err
 }
