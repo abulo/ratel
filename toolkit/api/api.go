@@ -215,6 +215,16 @@ func Run(cmd *cobra.Command, args []string) {
 }
 
 func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, apiType string) {
+
+	var tplString string
+
+	//"gin", "hertz"
+
+	if apiType == "hertz" {
+		tplString = HertzTemplate()
+	} else {
+		tplString = GinTemplate()
+	}
 	tpl := template.Must(template.New("api").Funcs(template.FuncMap{
 		"Convert":               base.Convert,
 		"SymbolChar":            base.SymbolChar,
@@ -226,7 +236,7 @@ func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, apiType 
 		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
 		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
 		"ApiToProto":            base.ApiToProto,
-	}).Parse(HertzTemplate()))
+	}).Parse(tplString))
 	// 文件夹路径
 	outApiFile := path.Join(fullApiDir, tableName+".go")
 	if util.FileExists(outApiFile) {
@@ -256,37 +266,31 @@ func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, apiType 
 
 	builder := strings.Builder{}
 	builder.WriteString("\n")
-	builder.WriteString("route")
+	builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "创建"))
 	builder.WriteString("\n")
-	//路由
-	// if apiType == "hertz" {
-	//创建
-	builder.WriteString(fmt.Sprintf("xxx.POST(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName)), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemCreate"))
+	builder.WriteString(fmt.Sprintf("xxx.POST(\"%s\",%s)", "/"+pkg+"/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName)), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemCreate"))
 	builder.WriteString("\n")
-	//更新
-	builder.WriteString(fmt.Sprintf("xxx.PUT(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/:"+util.StrToLower(base.CamelStr(moduleParam.Primary.AlisaColumnName)), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemUpdate"))
+	builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "更新"))
 	builder.WriteString("\n")
-	//单条数据信息查看
-	builder.WriteString(fmt.Sprintf("xxx.GET(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/:"+util.StrToLower(base.CamelStr(moduleParam.Primary.AlisaColumnName)), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"Item"))
+	builder.WriteString(fmt.Sprintf("xxx.PUT(\"%s\",%s)", "/"+pkg+"/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/:"+util.StrToLower(base.CamelStr(moduleParam.Primary.AlisaColumnName)), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemUpdate"))
 	builder.WriteString("\n")
-	//单条数据信息删除
-	builder.WriteString(fmt.Sprintf("xxx.DELETE(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/:"+util.StrToLower(base.CamelStr(moduleParam.Primary.AlisaColumnName)), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemDelete"))
+	builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "单条数据信息查看"))
+	builder.WriteString("\n")
+	builder.WriteString(fmt.Sprintf("xxx.GET(\"%s\",%s)", "/"+pkg+"/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/:"+util.StrToLower(base.CamelStr(moduleParam.Primary.AlisaColumnName)), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"Item"))
+	builder.WriteString("\n")
+	builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "单条数据信息删除"))
+	builder.WriteString("\n")
+	builder.WriteString(fmt.Sprintf("xxx.DELETE(\"%s\",%s)", "/"+pkg+"/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/:"+util.StrToLower(base.CamelStr(moduleParam.Primary.AlisaColumnName)), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemDelete"))
 	builder.WriteString("\n")
 	for _, item := range moduleParam.Method {
 		if item.Type == "List" {
 			if item.Default {
-				builder.WriteString(fmt.Sprintf("xxx.GET(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName)), pkg+"."+base.CamelStr(item.Table.TableName)+base.CamelStr(item.Name)))
+				builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "列表"))
 				builder.WriteString("\n")
-			} else {
-				// builder.WriteString(fmt.Sprintf("xxx.GET(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/list/"+util.StrToLower(base.CamelStr(item.Name)), pkg+"."+base.CamelStr(item.Table.TableName)+"ListBy"+base.CamelStr(item.Name)))
-				// builder.WriteString("\n")
+				builder.WriteString(fmt.Sprintf("xxx.GET(\"%s\",%s)", "/"+pkg+"/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName)), pkg+"."+base.CamelStr(item.Table.TableName)+base.CamelStr(item.Name)))
+				builder.WriteString("\n")
 			}
-		} else {
-			// builder.WriteString(fmt.Sprintf("xxx.GET(\"%s\",\"%s\")", "/logger/"+util.StrToLower(base.CamelStr(moduleParam.Table.TableName))+"/item/"+util.StrToLower(base.CamelStr(item.Name)), pkg+"."+base.CamelStr(item.Table.TableName)+"ItemBy"+base.CamelStr(item.Name)))
-			// builder.WriteString("\n")
 		}
 	}
-	// }
-
 	fmt.Println(builder.String())
 }
