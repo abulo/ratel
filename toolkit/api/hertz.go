@@ -24,18 +24,18 @@ import (
 
 // {{.Table.TableName}} {{.Table.TableComment}}
 
-// {{CamelStr .Table.TableName}}DaoConver 数据转换
-func {{CamelStr .Table.TableName}}DaoConver(item *{{.Pkg}}.{{CamelStr .Table.TableName}}Object) dao.{{CamelStr .Table.TableName}} {
+// {{CamelStr .Table.TableName}}Dao 数据转换
+func {{CamelStr .Table.TableName}}Dao(item *{{.Pkg}}.{{CamelStr .Table.TableName}}Object) dao.{{CamelStr .Table.TableName}} {
 	daoItem := dao.{{CamelStr .Table.TableName}}{}
 	{{ModuleProtoConvertDao .TableColumn "daoItem" "item"}}
 	return daoItem
 }
 
-// {{CamelStr .Table.TableName}}RpcConver 数据转换
-func {{CamelStr .Table.TableName}}RpcConver(newCtx *app.RequestContext) *{{.Pkg}}.{{CamelStr .Table.TableName}}Object {
-	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}Object{}
-	{{ApiToProto .TableColumn "request" "newCtx.PostForm"}}
-	return request
+// {{CamelStr .Table.TableName}}Proto 数据绑定
+func {{CamelStr .Table.TableName}}Proto(item dao.{{CamelStr .Table.TableName}}) *{{.Pkg}}.{{CamelStr .Table.TableName}}Object {
+	return  &{{.Pkg}}.{{CamelStr .Table.TableName}}Object{
+		{{ModuleDaoConvertProto .TableColumn "item"}}
+	}
 }
 
 // {{CamelStr .Table.TableName}}ItemCreate 创建数据
@@ -53,7 +53,16 @@ func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,newCtx *app.Req
 	//链接服务
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
 	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}ItemCreateRequest{}
-	request.Data = {{CamelStr .Table.TableName}}RpcConver(newCtx)
+	// 数据绑定
+	var reqInfo dao.{{CamelStr .Table.TableName}}
+	if err := newCtx.BindAndValidate(&reqInfo); err != nil {
+		newCtx.JSON(consts.StatusOK, utils.H{
+			"code": code.ParamInvalid,
+			"msg":  err.Error(),
+		})
+		return
+	}
+	request.Data = {{CamelStr .Table.TableName}}Proto(reqInfo)
 	// 执行服务
 	res, err := client.{{CamelStr .Table.TableName}}ItemCreate(ctx, request)
 	if err != nil {
@@ -85,7 +94,18 @@ func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,newCtx *app.Req
 	{{Helper .Primary.AlisaColumnName }} := cast.ToInt64(newCtx.Param("{{Helper .Primary.AlisaColumnName }}"))
 	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}ItemUpdateRequest{}
 	request.{{CamelStr .Primary.AlisaColumnName }} = {{Helper .Primary.AlisaColumnName }}
-	request.Data = {{CamelStr .Table.TableName}}RpcConver(newCtx)
+
+	// 数据绑定
+	var reqInfo dao.{{CamelStr .Table.TableName}}
+	if err := newCtx.BindAndValidate(&reqInfo); err != nil {
+		newCtx.JSON(consts.StatusOK, utils.H{
+			"code": code.ParamInvalid,
+			"msg":  err.Error(),
+		})
+		return
+	}
+	request.Data = {{CamelStr .Table.TableName}}Proto(reqInfo)
+
 	// 执行服务
 	res, err := client.{{CamelStr .Table.TableName}}ItemUpdate(ctx, request)
 	if err != nil {
@@ -200,7 +220,7 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx 
 		total = res.GetData().GetTotal()
 		rpcList := res.GetData().GetList()
 		for _, item := range rpcList {
-			list = append(list, {{CamelStr .Table.TableName}}DaoConver(item))
+			list = append(list, {{CamelStr .Table.TableName}}Dao(item))
 		}
 	}
 	newCtx.JSON(consts.StatusOK, utils.H{
