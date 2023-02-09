@@ -36,10 +36,13 @@ type baseBuilder struct {
 // Build ...
 func (b *baseBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	reg := b.reg
-	if !strings.HasSuffix(target.Endpoint, "/") {
-		target.Endpoint += "/"
+
+	serviceName := target.Endpoint()
+	if !strings.HasSuffix(serviceName, "/") {
+		serviceName += "/"
 	}
-	endpoints, err := reg.WatchServices(context.Background(), target.Endpoint)
+
+	endpoints, err := reg.WatchServices(context.Background(), serviceName)
 	if err != nil {
 		logger.Logger.Error("watch services failed:", err)
 		return nil, err
@@ -59,7 +62,7 @@ func (b *baseBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts
 				for _, node := range endpoint.Nodes {
 					var address resolver.Address
 					address.Addr = node.Address
-					address.ServerName = target.Endpoint
+					address.ServerName = serviceName
 					address.Attributes = attributes.New(constant.KeyServiceInfo, node)
 					state.Addresses = append(state.Addresses, address)
 				}
