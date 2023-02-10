@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	ratelVersion = "v3.2.42"
+	ratelVersion = "v3.3.0"
 )
 
 var (
