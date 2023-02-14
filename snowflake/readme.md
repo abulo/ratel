@@ -4,7 +4,7 @@ Generate an ID
 
 import (
   "fmt"
-  "github.com/abulo/ratel/v3/snowflake"
+  "github.com/abulo/ratel/snowflake"
 )
 
 func ExampleGenInt64ID() {

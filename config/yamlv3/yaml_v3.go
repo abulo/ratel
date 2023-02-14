@@ -2,7 +2,7 @@ package yamlv3
 
 // see https://pkg.go.dev/gopkg.in/yaml.v3
 import (
-	"github.com/abulo/ratel/v3/config"
+	"github.com/abulo/ratel/config"
 	"gopkg.in/yaml.v3"
 )
 

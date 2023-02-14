@@ -1,8 +1,8 @@
 package client
 
 import (
-	"github.com/abulo/ratel/v3/client/grpc"
-	"github.com/abulo/ratel/v3/registry/etcdv3"
+	"github.com/abulo/ratel/client/grpc"
+	"github.com/abulo/ratel/registry/etcdv3"
 )
 
 // Grpc ...

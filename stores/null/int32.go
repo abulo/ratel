@@ -8,7 +8,7 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/abulo/ratel/v3/stores/null/convert"
+	"github.com/abulo/ratel/stores/null/convert"
 )
 
 // Int32 is an nullable int32.

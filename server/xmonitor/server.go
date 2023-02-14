@@ -5,9 +5,9 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/abulo/ratel/v3/core/constant"
-	"github.com/abulo/ratel/v3/core/logger"
-	"github.com/abulo/ratel/v3/server"
+	"github.com/abulo/ratel/core/constant"
+	"github.com/abulo/ratel/core/logger"
+	"github.com/abulo/ratel/server"
 )
 
 // Server ...

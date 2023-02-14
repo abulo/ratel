@@ -3,8 +3,8 @@ package xhertz
 import (
 	"context"
 
-	"github.com/abulo/ratel/v3/core/constant"
-	"github.com/abulo/ratel/v3/server"
+	"github.com/abulo/ratel/core/constant"
+	"github.com/abulo/ratel/server"
 	hserver "github.com/cloudwego/hertz/pkg/app/server"
 )
 

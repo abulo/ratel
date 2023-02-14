@@ -1,7 +1,7 @@
 package metric
 
 import (
-	"github.com/abulo/ratel/v3/core/constant"
+	"github.com/abulo/ratel/core/constant"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

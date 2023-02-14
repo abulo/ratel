@@ -10,7 +10,7 @@ import (
 	"bytes"
 
 	"github.com/BurntSushi/toml"
-	"github.com/abulo/ratel/v3/config"
+	"github.com/abulo/ratel/config"
 )
 
 // Decoder the toml content decoder

@@ -3,7 +3,7 @@ package etcdv3
 import (
 	"context"
 
-	"github.com/abulo/ratel/v3/core/trace"
+	"github.com/abulo/ratel/core/trace"
 	"google.golang.org/grpc"
 )
 

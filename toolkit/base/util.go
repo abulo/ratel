@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/abulo/ratel/v3/util"
+	"github.com/abulo/ratel/util"
 	"github.com/spf13/cast"
 )
 

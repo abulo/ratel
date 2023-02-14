@@ -3,7 +3,7 @@ package singleton
 import (
 	"sync"
 
-	"github.com/abulo/ratel/v3/core/constant"
+	"github.com/abulo/ratel/core/constant"
 	"github.com/spf13/cast"
 )
 

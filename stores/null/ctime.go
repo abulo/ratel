@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/abulo/ratel/v3/util"
+	"github.com/abulo/ratel/util"
 )
 
 // CTime (Customize Time) is a nullable time.Time that accept only hour,minutes,seconds and ignore elses.

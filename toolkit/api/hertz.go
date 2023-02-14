@@ -13,8 +13,8 @@ import (
 	"{{.ModName}}/initial"
 	"{{.ModName}}/service/logger"
 
-	"github.com/abulo/ratel/v3/stores/null"
-	"github.com/abulo/ratel/v3/util"
+	"github.com/abulo/ratel/stores/null"
+	"github.com/abulo/ratel/util"
 	"github.com/spf13/cast"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/utils"

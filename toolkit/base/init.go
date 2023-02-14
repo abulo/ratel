@@ -7,11 +7,11 @@ import (
 	"path"
 	"time"
 
-	"github.com/abulo/ratel/v3/config"
-	"github.com/abulo/ratel/v3/config/toml"
-	"github.com/abulo/ratel/v3/stores/mysql"
-	"github.com/abulo/ratel/v3/stores/query"
-	"github.com/abulo/ratel/v3/util"
+	"github.com/abulo/ratel/config"
+	"github.com/abulo/ratel/config/toml"
+	"github.com/abulo/ratel/stores/mysql"
+	"github.com/abulo/ratel/stores/query"
+	"github.com/abulo/ratel/util"
 	"github.com/fatih/color"
 	"github.com/spf13/cast"
 )

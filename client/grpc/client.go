@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/abulo/ratel/v3/client/grpc/resolver"
-	"github.com/abulo/ratel/v3/core/ecode"
-	"github.com/abulo/ratel/v3/core/logger"
+	"github.com/abulo/ratel/client/grpc/resolver"
+	"github.com/abulo/ratel/core/ecode"
+	"github.com/abulo/ratel/core/logger"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

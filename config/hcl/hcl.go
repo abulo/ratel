@@ -8,7 +8,7 @@ package hcl
 import (
 	"github.com/pkg/errors"
 
-	"github.com/abulo/ratel/v3/config"
+	"github.com/abulo/ratel/config"
 	"github.com/hashicorp/hcl"
 )
 

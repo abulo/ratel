@@ -9,8 +9,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/abulo/ratel/v3/toolkit/base"
-	"github.com/abulo/ratel/v3/util"
+	"github.com/abulo/ratel/toolkit/base"
+	"github.com/abulo/ratel/util"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -107,7 +107,7 @@ func DaoTemplate() string {
 	outString := `
 package dao
 
-import "github.com/abulo/ratel/v3/stores/null"
+import "github.com/abulo/ratel/stores/null"
 
 // {{CamelStr .Table.TableName}} {{.Table.TableComment}} {{.Table.TableName}}
 type {{CamelStr .Table.TableName}} struct {

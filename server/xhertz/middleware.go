@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/v3/core/logger"
-	"github.com/abulo/ratel/v3/core/metric"
-	"github.com/abulo/ratel/v3/core/trace"
+	"github.com/abulo/ratel/core/logger"
+	"github.com/abulo/ratel/core/metric"
+	"github.com/abulo/ratel/core/trace"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/errors"
 	"github.com/sirupsen/logrus"
