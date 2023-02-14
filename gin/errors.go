@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/abulo/ratel/gin/internal/json"
+	"github.com/abulo/ratel/v2/gin/internal/json"
 )
 
 // ErrorType is an unsigned 64-bit error code as defined in the gin spec.
@@ -124,11 +124,10 @@ func (a errorMsgs) Last() *Error {
 
 // Errors returns an array with all the error messages.
 // Example:
-//
-//	c.Error(errors.New("first"))
-//	c.Error(errors.New("second"))
-//	c.Error(errors.New("third"))
-//	c.Errors.Errors() // == []string{"first", "second", "third"}
+// 		c.Error(errors.New("first"))
+// 		c.Error(errors.New("second"))
+// 		c.Error(errors.New("third"))
+// 		c.Errors.Errors() // == []string{"first", "second", "third"}
 func (a errorMsgs) Errors() []string {
 	if len(a) == 0 {
 		return nil

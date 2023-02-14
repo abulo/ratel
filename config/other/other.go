@@ -4,8 +4,8 @@ Package other is an example of a custom driver
 package other
 
 import (
-	"github.com/abulo/ratel/config"
-	"github.com/abulo/ratel/config/ini"
+	"github.com/abulo/ratel/v2/config"
+	"github.com/abulo/ratel/v2/config/ini"
 )
 
 const driverName = "other"

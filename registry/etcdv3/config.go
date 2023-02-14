@@ -3,9 +3,9 @@ package etcdv3
 import (
 	"time"
 
-	"github.com/abulo/ratel/client/etcdv3"
-	"github.com/abulo/ratel/core/logger"
-	"github.com/abulo/ratel/registry"
+	"github.com/abulo/ratel/v2/client/etcdv3"
+	"github.com/abulo/ratel/v2/core/logger"
+	"github.com/abulo/ratel/v2/registry"
 )
 
 // Config ...

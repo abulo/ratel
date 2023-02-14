@@ -6,11 +6,11 @@ import (
 	"path"
 	"time"
 
-	"github.com/abulo/ratel/config"
-	"github.com/abulo/ratel/config/toml"
-	"github.com/abulo/ratel/stores/mysql"
-	"github.com/abulo/ratel/stores/query"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v2/config"
+	"github.com/abulo/ratel/v2/config/toml"
+	"github.com/abulo/ratel/v2/stores/mysql"
+	"github.com/abulo/ratel/v2/stores/query"
+	"github.com/abulo/ratel/v2/util"
 	"github.com/spf13/cast"
 )
 

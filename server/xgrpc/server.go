@@ -7,8 +7,8 @@ import (
 	"net"
 	"os"
 
-	"github.com/abulo/ratel/core/constant"
-	"github.com/abulo/ratel/server"
+	"github.com/abulo/ratel/v2/core/constant"
+	"github.com/abulo/ratel/v2/server"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

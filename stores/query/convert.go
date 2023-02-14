@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/stores/null"
+	"github.com/abulo/ratel/v2/stores/null"
 )
 
 // 转换成string

@@ -3,8 +3,8 @@ package postgres
 import (
 	"time"
 
-	"github.com/abulo/ratel/core/logger"
-	"github.com/abulo/ratel/stores/query"
+	"github.com/abulo/ratel/v2/core/logger"
+	"github.com/abulo/ratel/v2/stores/query"
 	_ "github.com/lib/pq"
 )
 

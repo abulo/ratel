@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 
-	"github.com/abulo/ratel/core/env"
-	"github.com/abulo/ratel/toolkit/dao"
-	"github.com/abulo/ratel/toolkit/module"
-	"github.com/abulo/ratel/toolkit/project"
-	"github.com/abulo/ratel/toolkit/upgrade"
+	"github.com/abulo/ratel/v2/core/env"
+	"github.com/abulo/ratel/v2/toolkit/dao"
+	"github.com/abulo/ratel/v2/toolkit/module"
+	"github.com/abulo/ratel/v2/toolkit/project"
+	"github.com/abulo/ratel/v2/toolkit/upgrade"
 	"github.com/spf13/cobra"
 )
 

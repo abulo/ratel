@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/abulo/ratel/core/goroutine"
-	"github.com/abulo/ratel/core/logger"
+	"github.com/abulo/ratel/v2/core/goroutine"
+	"github.com/abulo/ratel/v2/core/logger"
 )
 
 // 全局执行器存储

@@ -8,7 +8,7 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/abulo/ratel/stores/null/convert"
+	"github.com/abulo/ratel/v2/stores/null/convert"
 )
 
 // Int16 is an nullable int16.

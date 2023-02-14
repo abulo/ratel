@@ -1,6 +1,6 @@
 package proxy
 
-import "github.com/abulo/ratel/stores/elasticsearch"
+import "github.com/abulo/ratel/v2/stores/elasticsearch"
 
 // ElasticSearch ...
 type ElasticSearch struct {

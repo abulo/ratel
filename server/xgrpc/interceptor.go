@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/core/ecode"
-	"github.com/abulo/ratel/core/metric"
-	"github.com/abulo/ratel/core/trace"
+	"github.com/abulo/ratel/v2/core/ecode"
+	"github.com/abulo/ratel/v2/core/metric"
+	"github.com/abulo/ratel/v2/core/trace"
 	"github.com/opentracing/opentracing-go/ext"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/core/logger"
-	"github.com/abulo/ratel/core/metric"
-	"github.com/abulo/ratel/core/trace"
-	"github.com/abulo/ratel/gin"
+	"github.com/abulo/ratel/v2/core/logger"
+	"github.com/abulo/ratel/v2/core/metric"
+	"github.com/abulo/ratel/v2/core/trace"
+	"github.com/abulo/ratel/v2/gin"
 	"github.com/sirupsen/logrus"
 )
 

@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/abulo/ratel/toolkit/base"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v2/toolkit/base"
+	"github.com/abulo/ratel/v2/util"
 	"github.com/fatih/color"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -289,8 +289,8 @@ import (
 	"{{.ModName}}/dao"
 	"{{.ModName}}/initial"
 
-	"github.com/abulo/ratel/stores/query"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v2/stores/query"
+	"github.com/abulo/ratel/v2/util"
 	"github.com/spf13/cast"
 )
 // {{.Table.TableName}} {{.Table.TableComment}}

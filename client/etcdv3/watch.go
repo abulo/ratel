@@ -3,9 +3,9 @@ package etcdv3
 import (
 	"context"
 
-	"github.com/abulo/ratel/core/ecode"
-	"github.com/abulo/ratel/core/goroutine"
-	"github.com/abulo/ratel/core/logger"
+	"github.com/abulo/ratel/v2/core/ecode"
+	"github.com/abulo/ratel/v2/core/goroutine"
+	"github.com/abulo/ratel/v2/core/logger"
 	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"

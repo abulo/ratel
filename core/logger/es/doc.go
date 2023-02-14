@@ -3,7 +3,7 @@ package es
 import (
 	"context"
 
-	"github.com/abulo/ratel/stores/elasticsearch"
+	"github.com/abulo/ratel/v2/stores/elasticsearch"
 	"github.com/pkg/errors"
 )
 

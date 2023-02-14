@@ -6,9 +6,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/abulo/ratel/core/constant"
-	"github.com/abulo/ratel/registry"
-	"github.com/abulo/ratel/server"
+	"github.com/abulo/ratel/v2/core/constant"
+	"github.com/abulo/ratel/v2/registry"
+	"github.com/abulo/ratel/v2/server"
 	"github.com/smallnest/weighted"
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/balancer"

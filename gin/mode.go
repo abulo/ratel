@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/abulo/ratel/gin/binding"
+	"github.com/abulo/ratel/v2/gin/binding"
 )
 
 // EnvGinMode indicates environment name for gin mode.
@@ -34,9 +34,8 @@ const (
 // Note that both Logger and Recovery provides custom ways to configure their
 // output io.Writer.
 // To support coloring in Windows use:
-//
-//	import "github.com/mattn/go-colorable"
-//	gin.DefaultWriter = colorable.NewColorableStdout()
+// 		import "github.com/mattn/go-colorable"
+// 		gin.DefaultWriter = colorable.NewColorableStdout()
 var DefaultWriter io.Writer = os.Stdout
 
 // DefaultErrorWriter is the default io.Writer used by Gin to debug errors

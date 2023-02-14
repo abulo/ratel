@@ -5,10 +5,10 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/abulo/ratel/core/constant"
-	"github.com/abulo/ratel/core/logger"
-	"github.com/abulo/ratel/gin"
-	"github.com/abulo/ratel/server"
+	"github.com/abulo/ratel/v2/core/constant"
+	"github.com/abulo/ratel/v2/core/logger"
+	"github.com/abulo/ratel/v2/gin"
+	"github.com/abulo/ratel/v2/server"
 )
 
 // Server ...

@@ -3,7 +3,7 @@ package xgin
 import (
 	"fmt"
 
-	"github.com/abulo/ratel/gin"
+	"github.com/abulo/ratel/v2/gin"
 )
 
 // ModName ..

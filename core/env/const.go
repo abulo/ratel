@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/abulo/ratel/core/constant"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v2/core/constant"
+	"github.com/abulo/ratel/v2/util"
 )
 
 const (
-	ratelVersion = "v2.9.4"
+	ratelVersion = "v2.9.3"
 )
 
 var (

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/core/logger"
+	"github.com/abulo/ratel/v2/core/logger"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/api/v3/mvccpb"

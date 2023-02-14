@@ -6,7 +6,7 @@ about ini parse, please see https://github.com/gookit/ini/parser
 package ini
 
 import (
-	"github.com/abulo/ratel/config"
+	"github.com/abulo/ratel/v2/config"
 	"github.com/gookit/ini/v2/parser"
 )
 

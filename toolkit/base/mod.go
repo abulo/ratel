@@ -52,7 +52,7 @@ func RatelMod() string {
 	if cachePath == "" {
 		cachePath = filepath.Join(gopath, "pkg", "mod")
 	}
-	if path, err := ModuleVersion("github.com/abulo/ratel"); err == nil {
+	if path, err := ModuleVersion("github.com/abulo/ratel/v2"); err == nil {
 		return filepath.Join(cachePath, path)
 	}
 	return filepath.Join(gopath, "src", "github.com", "abulo", "ratel")

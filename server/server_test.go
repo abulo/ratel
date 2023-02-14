@@ -3,7 +3,7 @@ package server
 import (
 	"testing"
 
-	"github.com/abulo/ratel/core/constant"
+	"github.com/abulo/ratel/v2/core/constant"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/resolver"

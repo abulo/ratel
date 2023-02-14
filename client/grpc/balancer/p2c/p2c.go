@@ -1,8 +1,8 @@
 package p2c
 
 import (
-	"github.com/abulo/ratel/client/grpc/balancer/p2c/basep2c"
-	"github.com/abulo/ratel/client/grpc/balancer/p2c/leastloaded"
+	"github.com/abulo/ratel/v2/client/grpc/balancer/p2c/basep2c"
+	"github.com/abulo/ratel/v2/client/grpc/balancer/p2c/leastloaded"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
 	"google.golang.org/grpc/grpclog"
