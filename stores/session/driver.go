@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/stores/redis"
+	"github.com/abulo/ratel/v3/stores/redis"
 )
 
 // Session ...

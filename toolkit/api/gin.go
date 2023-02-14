@@ -17,8 +17,8 @@ import (
 	"{{.ModName}}/initial"
 	"{{.ModName}}/service/logger"
 
-	"github.com/abulo/ratel/stores/null"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v3/stores/null"
+	"github.com/abulo/ratel/v3/util"
 	"github.com/spf13/cast"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/protobuf/types/known/timestamppb"

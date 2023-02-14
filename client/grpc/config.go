@@ -3,11 +3,11 @@ package grpc
 import (
 	"time"
 
-	"github.com/abulo/ratel/core/constant"
-	"github.com/abulo/ratel/core/logger"
-	"github.com/abulo/ratel/core/singleton"
-	"github.com/abulo/ratel/registry/etcdv3"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v3/core/constant"
+	"github.com/abulo/ratel/v3/core/logger"
+	"github.com/abulo/ratel/v3/core/singleton"
+	"github.com/abulo/ratel/v3/registry/etcdv3"
+	"github.com/abulo/ratel/v3/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer/roundrobin"
 	"google.golang.org/grpc/credentials/insecure"

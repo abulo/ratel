@@ -3,11 +3,11 @@ package etcdv3
 import (
 	"time"
 
-	"github.com/abulo/ratel/client/etcdv3"
-	"github.com/abulo/ratel/core/constant"
-	"github.com/abulo/ratel/core/logger"
-	"github.com/abulo/ratel/core/singleton"
-	"github.com/abulo/ratel/registry"
+	"github.com/abulo/ratel/v3/client/etcdv3"
+	"github.com/abulo/ratel/v3/core/constant"
+	"github.com/abulo/ratel/v3/core/logger"
+	"github.com/abulo/ratel/v3/core/singleton"
+	"github.com/abulo/ratel/v3/registry"
 )
 
 // Config ...

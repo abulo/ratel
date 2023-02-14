@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/abulo/ratel/core/logger"
+	"github.com/abulo/ratel/v3/core/logger"
 )
 
 // Filter 敏感词过滤器

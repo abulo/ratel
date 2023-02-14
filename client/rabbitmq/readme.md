@@ -36,7 +36,7 @@ package main
 import (
   "log"
   "time"
-  "github.com/abulo/ratel/client/rabbitmq"
+  "github.com/abulo/ratel/v3/client/rabbitmq"
   "github.com/streadway/amqp"
 )
 

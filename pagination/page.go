@@ -5,7 +5,7 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v3/util"
 )
 
 // Pager ...

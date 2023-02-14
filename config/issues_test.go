@@ -3,10 +3,10 @@ package config_test
 import (
 	"testing"
 
-	"github.com/abulo/ratel/config"
-	"github.com/abulo/ratel/config/ini"
-	"github.com/abulo/ratel/config/yaml"
-	"github.com/abulo/ratel/config/yamlv3"
+	"github.com/abulo/ratel/v3/config"
+	"github.com/abulo/ratel/v3/config/ini"
+	"github.com/abulo/ratel/v3/config/yaml"
+	"github.com/abulo/ratel/v3/config/yamlv3"
 	"github.com/gookit/goutil/dump"
 	"github.com/gookit/goutil/fsutil"
 	"github.com/gookit/goutil/testutil"

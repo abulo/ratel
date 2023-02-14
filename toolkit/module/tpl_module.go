@@ -7,8 +7,8 @@ import (
 	"path"
 	"text/template"
 
-	"github.com/abulo/ratel/toolkit/base"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v3/toolkit/base"
+	"github.com/abulo/ratel/v3/util"
 	"github.com/fatih/color"
 )
 
@@ -63,8 +63,8 @@ import (
 	"{{.ModName}}/dao"
 	"{{.ModName}}/initial"
 
-	"github.com/abulo/ratel/stores/query"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v3/stores/query"
+	"github.com/abulo/ratel/v3/util"
 	"github.com/spf13/cast"
 )
 // {{.Table.TableName}} {{.Table.TableComment}}

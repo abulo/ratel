@@ -1,6 +1,6 @@
 package component
 
-import "github.com/abulo/ratel/core/metric"
+import "github.com/abulo/ratel/v3/core/metric"
 
 type Component interface {
 	// Start blocks until the channel is closed or an error occurs.

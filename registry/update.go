@@ -1,6 +1,6 @@
 package registry
 
-import "github.com/abulo/ratel/server"
+import "github.com/abulo/ratel/v3/server"
 
 type Operation uint8
 

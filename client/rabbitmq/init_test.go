@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/abulo/ratel/core/logger"
+	"github.com/abulo/ratel/v3/core/logger"
 )
 
 var defaultURL = "amqp://guest:guest@localhost:5672/"

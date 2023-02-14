@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/abulo/ratel/core/constant"
-	"github.com/abulo/ratel/core/env"
+	"github.com/abulo/ratel/v3/core/constant"
+	"github.com/abulo/ratel/v3/core/env"
 )
 
 // Option ...

@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/abulo/ratel/core/constant"
-	"github.com/abulo/ratel/core/goroutine"
-	"github.com/abulo/ratel/core/logger"
-	"github.com/abulo/ratel/registry"
+	"github.com/abulo/ratel/v3/core/constant"
+	"github.com/abulo/ratel/v3/core/goroutine"
+	"github.com/abulo/ratel/v3/core/logger"
+	"github.com/abulo/ratel/v3/registry"
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/resolver"
 )

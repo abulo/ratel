@@ -7,8 +7,8 @@ import (
 	"path"
 	"text/template"
 
-	"github.com/abulo/ratel/toolkit/base"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v3/toolkit/base"
+	"github.com/abulo/ratel/v3/util"
 	"github.com/fatih/color"
 )
 
@@ -64,9 +64,9 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"github.com/abulo/ratel/server/xgrpc"
-	"github.com/abulo/ratel/stores/null"
-	"github.com/abulo/ratel/util"
+	"github.com/abulo/ratel/v3/server/xgrpc"
+	"github.com/abulo/ratel/v3/stores/null"
+	"github.com/abulo/ratel/v3/util"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 // {{.Table.TableName}} {{.Table.TableComment}}

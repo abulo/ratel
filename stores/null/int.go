@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/abulo/ratel/stores/null/convert"
+	"github.com/abulo/ratel/v3/stores/null/convert"
 )
 
 // Int is an nullable int.
