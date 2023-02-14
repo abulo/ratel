@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/abulo/ratel/v2/core/constant"
-	"github.com/abulo/ratel/v2/util"
+	"github.com/abulo/ratel/core/constant"
+	"github.com/abulo/ratel/util"
 )
 
 const (

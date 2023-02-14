@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/abulo/ratel/v2/client/grpc/balancer/p2c/basep2c"
+	"github.com/abulo/ratel/client/grpc/balancer/p2c/basep2c"
 	"google.golang.org/grpc/balancer"
 )
 

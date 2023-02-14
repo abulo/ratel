@@ -1,5 +1,5 @@
 PROJECT_NAME := "ratel"
-PKG := "github.com/abulo/ratel/v2"
+PKG := "github.com/abulo/ratel"
 PKG_LIST := $(shell go list ${PKG}/... | grep -v 'history')
 GO_FILES := $(shell find . -name '*.go' | grep -v 'vendor' | grep -v 'history'| grep -v _test.go)
 DIRS := $(shell ls -d */ | grep -v 'vendor/')

@@ -3,7 +3,7 @@ package base
 import (
 	"context"
 
-	"github.com/abulo/ratel/v2/stores/query"
+	"github.com/abulo/ratel/stores/query"
 	"github.com/spf13/cast"
 )
 

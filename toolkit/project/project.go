@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/abulo/ratel/v2/toolkit/base"
+	"github.com/abulo/ratel/toolkit/base"
 	"github.com/spf13/cobra"
 )
 

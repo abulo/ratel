@@ -1,6 +1,6 @@
 package registry
 
-import "github.com/abulo/ratel/v2/server"
+import "github.com/abulo/ratel/server"
 
 type service struct {
 	server.Server

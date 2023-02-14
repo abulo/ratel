@@ -3,7 +3,7 @@ package registry
 import (
 	"encoding/json"
 
-	"github.com/abulo/ratel/v2/server"
+	"github.com/abulo/ratel/server"
 )
 
 // Endpoints ...

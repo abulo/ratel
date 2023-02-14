@@ -3,7 +3,7 @@ package grpc
 import (
 	"time"
 
-	"github.com/abulo/ratel/v2/util"
+	"github.com/abulo/ratel/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer/roundrobin"
 	"google.golang.org/grpc/credentials/insecure"

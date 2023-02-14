@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/abulo/ratel/v2/core/logger"
+	"github.com/abulo/ratel/core/logger"
 	"github.com/streadway/amqp"
 )
 

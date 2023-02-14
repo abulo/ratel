@@ -1,6 +1,6 @@
 package proxy
 
-import "github.com/abulo/ratel/v2/stores/redis"
+import "github.com/abulo/ratel/stores/redis"
 
 // Redis ...
 type Redis struct {

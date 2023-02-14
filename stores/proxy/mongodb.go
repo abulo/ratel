@@ -1,6 +1,6 @@
 package proxy
 
-import "github.com/abulo/ratel/v2/stores/mongodb"
+import "github.com/abulo/ratel/stores/mongodb"
 
 // MongoDB ...
 type MongoDB struct {

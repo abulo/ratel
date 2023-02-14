@@ -3,7 +3,7 @@ package registry
 import (
 	"log"
 
-	"github.com/abulo/ratel/v2/core/logger"
+	"github.com/abulo/ratel/core/logger"
 )
 
 var registryBuilder = make(map[string]Builder)

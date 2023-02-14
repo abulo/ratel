@@ -3,7 +3,7 @@ package hcl
 import (
 	"testing"
 
-	"github.com/abulo/ratel/v2/config"
+	"github.com/abulo/ratel/config"
 	"github.com/gookit/goutil/dump"
 	"github.com/stretchr/testify/assert"
 )

@@ -3,7 +3,7 @@ package trace
 import (
 	"context"
 
-	"github.com/abulo/ratel/v2/gin"
+	"github.com/abulo/ratel/gin"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"

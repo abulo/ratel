@@ -8,7 +8,7 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/abulo/ratel/v2/stores/null/convert"
+	"github.com/abulo/ratel/stores/null/convert"
 	"github.com/spf13/cast"
 )
 

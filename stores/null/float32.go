@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/abulo/ratel/v2/stores/null/convert"
+	"github.com/abulo/ratel/stores/null/convert"
 )
 
 // Float32 is a nullable float32.

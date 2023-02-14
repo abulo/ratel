@@ -4,9 +4,9 @@ import (
 	"time"
 
 	_ "github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/abulo/ratel/v2/core/logger"
-	"github.com/abulo/ratel/v2/stores/query"
-	"github.com/abulo/ratel/v2/util"
+	"github.com/abulo/ratel/core/logger"
+	"github.com/abulo/ratel/stores/query"
+	"github.com/abulo/ratel/util"
 )
 
 // Config 数据库配置

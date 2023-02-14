@@ -10,8 +10,8 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
-	"github.com/abulo/ratel/v2/core/metric"
-	"github.com/abulo/ratel/v2/core/trace"
+	"github.com/abulo/ratel/core/metric"
+	"github.com/abulo/ratel/core/trace"
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"

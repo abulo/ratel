@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/abulo/ratel/v2/server"
+	"github.com/abulo/ratel/server"
 )
 
 // Event ...

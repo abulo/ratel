@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/abulo/ratel/v2/core/logger"
+	"github.com/abulo/ratel/core/logger"
 )
 
 // Row 获取记录

@@ -3,9 +3,9 @@ package resolver
 import (
 	"context"
 
-	"github.com/abulo/ratel/v2/core/constant"
-	"github.com/abulo/ratel/v2/core/goroutine"
-	"github.com/abulo/ratel/v2/registry"
+	"github.com/abulo/ratel/core/constant"
+	"github.com/abulo/ratel/core/goroutine"
+	"github.com/abulo/ratel/registry"
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/resolver"
 )

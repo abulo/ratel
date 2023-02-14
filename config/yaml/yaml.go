@@ -7,7 +7,7 @@ package yaml
 
 // see https://pkg.go.dev/gopkg.in/yaml.v2
 import (
-	"github.com/abulo/ratel/v2/config"
+	"github.com/abulo/ratel/config"
 	"gopkg.in/yaml.v2"
 )
 

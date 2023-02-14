@@ -9,9 +9,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/abulo/ratel/v2/core/logger"
-	"github.com/abulo/ratel/v2/img/fontx"
-	"github.com/abulo/ratel/v2/util"
+	"github.com/abulo/ratel/core/logger"
+	"github.com/abulo/ratel/img/fontx"
+	"github.com/abulo/ratel/util"
 	"github.com/disintegration/imaging"
 	"github.com/golang/freetype"
 	"github.com/h2non/bimg"

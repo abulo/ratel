@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/abulo/ratel/v2/core/ecode"
-	"github.com/abulo/ratel/v2/core/logger"
+	"github.com/abulo/ratel/core/ecode"
+	"github.com/abulo/ratel/core/logger"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
