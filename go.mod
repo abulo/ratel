@@ -15,15 +15,15 @@ require (
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.3.0
-	github.com/gookit/goutil v0.6.2
-	github.com/gookit/ini/v2 v2.2.0
+	github.com/gookit/goutil v0.6.4
+	github.com/gookit/ini/v2 v2.2.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.9
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/hcl/v2 v2.16.0
 	github.com/imdario/mergo v0.3.13
-	github.com/issue9/term/v3 v3.1.0
+	github.com/issue9/term/v3 v3.1.1
 	github.com/jlaffaye/ftp v0.1.0
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.7
@@ -53,7 +53,7 @@ require (
 	golang.org/x/mod v0.8.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/text v0.7.0
-	google.golang.org/genproto v0.0.0-20230202175211-008b39050e57
+	google.golang.org/genproto v0.0.0-20230209215440-0dfe4f8abfcc
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0
