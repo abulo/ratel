@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/BurntSushi/toml v1.2.1
-	github.com/ClickHouse/clickhouse-go/v2 v2.6.0
+	github.com/ClickHouse/clickhouse-go/v2 v2.6.1
 	github.com/cloudwego/hertz v0.5.2
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
@@ -21,7 +21,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.9
 	github.com/hashicorp/hcl v1.0.0
-	github.com/hashicorp/hcl/v2 v2.16.0
+	github.com/hashicorp/hcl/v2 v2.16.1
 	github.com/imdario/mergo v0.3.13
 	github.com/issue9/term/v3 v3.1.1
 	github.com/jlaffaye/ftp v0.1.0
@@ -46,14 +46,14 @@ require (
 	github.com/yosuke-furukawa/json5 v0.1.1
 	go.etcd.io/etcd/api/v3 v3.5.7
 	go.etcd.io/etcd/client/v3 v3.5.7
-	go.mongodb.org/mongo-driver v1.11.1
+	go.mongodb.org/mongo-driver v1.11.2
 	go.uber.org/multierr v1.9.0
 	golang.org/x/crypto v0.6.0
-	golang.org/x/image v0.4.0
+	golang.org/x/image v0.5.0
 	golang.org/x/mod v0.8.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/text v0.7.0
-	google.golang.org/genproto v0.0.0-20230209215440-0dfe4f8abfcc
+	google.golang.org/genproto v0.0.0-20230216225411-c8e22ba71e44
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0
