@@ -9,9 +9,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/abulo/ratel/v2/core/logger"
-	"github.com/sirupsen/logrus"
 )
 
 // bounds provides a range of acceptable values (plus a map of name to value).
@@ -166,9 +163,10 @@ func (t *Task) Run(ctx context.Context) error {
 
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Logger.WithFields(logrus.Fields{
-				"err": err,
-			}).Error("recover")
+			// _ = err
+			// logger.Logger.WithFields(logrus.Fields{
+			// 	"err": err,
+			// }).Error("recover")
 		}
 	}()
 	err := t.DoFunc(ctx)
