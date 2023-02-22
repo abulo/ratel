@@ -144,5 +144,3 @@ require (
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/term v0.5.0 // indirect
 )
-
-replace github.com/bytedance/sonic => github.com/bytedance/sonic v1.8.0
