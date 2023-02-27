@@ -6,7 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/BurntSushi/toml v1.2.1
 	github.com/ClickHouse/clickhouse-go/v2 v2.6.4
-	github.com/cloudwego/hertz v0.5.2
+	github.com/cloudwego/hertz v0.6.0
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
 	github.com/fatih/color v1.14.1
@@ -15,7 +15,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.3.0
-	github.com/gookit/goutil v0.6.5
+	github.com/gookit/goutil v0.6.6
 	github.com/gookit/ini/v2 v2.2.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -40,7 +40,7 @@ require (
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/cobra v1.6.1
 	github.com/streadway/amqp v1.0.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/tdewolff/parse/v2 v2.6.5
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/yosuke-furukawa/json5 v0.1.1
@@ -69,7 +69,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/go-tagexpr/v2 v2.9.2 // indirect
 	github.com/bytedance/gopkg v0.0.0-20220413063733-65bf48ffb3a7 // indirect
-	github.com/bytedance/sonic v1.8.0 // indirect
+	github.com/bytedance/sonic v1.8.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/cloudwego/netpoll v0.3.1 // indirect
