@@ -25,8 +25,7 @@ type Client struct {
 }
 
 // New ...
-func newClient(config *Config) (*Client, error) {
-
+func NewClient(config *Config) (*Client, error) {
 	dialOptions := []grpc.DialOption{
 		grpc.WithBlock(),
 		grpc.WithChainUnaryInterceptor(grpcprom.UnaryClientInterceptor),

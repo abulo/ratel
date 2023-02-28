@@ -2,11 +2,11 @@ package goroutine
 
 import (
 	"fmt"
+	"reflect"
 	"sync/atomic"
 	"testing"
 
 	"github.com/pkg/errors"
-
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/multierr"
 )
@@ -166,6 +166,26 @@ func TestSerialWhenError(t *testing.T) {
 				assert.Equal(t, atomic.LoadInt64(&value), int64(1))
 			default:
 				t.Fail()
+			}
+		})
+	}
+}
+
+func TestSerialWithError(t *testing.T) {
+	type args struct {
+		fns []func() error
+	}
+	tests := []struct {
+		name string
+		args args
+		want func() error
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SerialWithError(tt.args.fns...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SerialWithError() = %v, want %v", got, tt.want)
 			}
 		})
 	}

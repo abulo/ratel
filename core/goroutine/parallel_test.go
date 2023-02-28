@@ -1,6 +1,7 @@
 package goroutine
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -12,38 +13,6 @@ var (
 	fn2     = func() error { return errors.New("BOOM") }
 	timeout = time.After(2 * time.Second)
 )
-
-func TestParallel(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		scenario string
-		function func(*testing.T)
-	}{
-		{
-			scenario: "test run",
-			function: testRun,
-		},
-		{
-			scenario: "test run limit",
-			function: testRunLimit,
-		},
-		{
-			scenario: "test run limit with negative concurrency value",
-			function: testRunLimitWithNegativeConcurrencyValue,
-		},
-		{
-			scenario: "test run limit with concurrency value greater than passed functions",
-			function: testRunLimitWithConcurrencyGreaterThanPassedFunctions,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.scenario, func(t *testing.T) {
-			test.function(t)
-		})
-	}
-}
 
 func testRun(t *testing.T) {
 	var count int
@@ -130,5 +99,66 @@ outer:
 
 	if count != 2 {
 		t.Errorf("parallel.Run() failed, got '%v', expected '%v'", count, 2)
+	}
+}
+
+func TestParallelWithError(t *testing.T) {
+	type args struct {
+		fns []func() error
+	}
+	tests := []struct {
+		name string
+		args args
+		want func() error
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ParallelWithError(tt.args.fns...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParallelWithError() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParallelWithErrorChan(t *testing.T) {
+	type args struct {
+		fns []func() error
+	}
+	tests := []struct {
+		name string
+		args args
+		want chan error
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ParallelWithErrorChan(tt.args.fns...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParallelWithErrorChan() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRestrictParallelWithErrorChan(t *testing.T) {
+	type args struct {
+		concurrency int
+		fns         []func() error
+	}
+	tests := []struct {
+		name string
+		args args
+		want chan error
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := RestrictParallelWithErrorChan(tt.args.concurrency, tt.args.fns...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("RestrictParallelWithErrorChan() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

@@ -37,7 +37,7 @@ func New() *Config {
 
 // Build ...
 func (config *Config) Build() (*Client, error) {
-	return newClient(config)
+	return NewClient(config)
 }
 
 func (config *Config) Singleton() (*Client, error) {
