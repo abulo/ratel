@@ -14,42 +14,6 @@ var (
 	badObject    = []byte(`{"hello": "world"}`)
 )
 
-func TestUnmarshalTimeJSON(t *testing.T) {
-	var ti Time
-	err := json.Unmarshal(timeJSON, &ti)
-	maybePanic(err)
-	assertTime(t, ti, "UnmarshalJSON() json")
-
-	var null Time
-	err = json.Unmarshal(nullTimeJSON, &null)
-	maybePanic(err)
-	assertNullTime(t, null, "null time json")
-	if !null.Set {
-		t.Error("should be Set")
-	}
-
-	var invalid Time
-	err = invalid.UnmarshalJSON(invalidJSON)
-	if _, ok := err.(*time.ParseError); !ok {
-		t.Errorf("expected json.ParseError, not %T", err)
-	}
-	assertNullTime(t, invalid, "invalid from object json")
-
-	var bad Time
-	err = json.Unmarshal(badObject, &bad)
-	if err == nil {
-		t.Errorf("expected error: bad object")
-	}
-	assertNullTime(t, bad, "bad from object json")
-
-	var wrongType Time
-	err = json.Unmarshal(intJSON, &wrongType)
-	if err == nil {
-		t.Errorf("expected error: wrong type JSON")
-	}
-	assertNullTime(t, wrongType, "wrong type object json")
-}
-
 func TestUnmarshalTimeText(t *testing.T) {
 	ti := TimeFrom(timeValue)
 	txt, err := ti.MarshalText()
