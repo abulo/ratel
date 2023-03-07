@@ -57,8 +57,8 @@ func NewRedisClient(opts ...Option) (*Client, error) {
 	return c, nil
 }
 
-// WithType customizes the given Redis with given Type.
-func WithType(ClientType string) Option {
+// WithClientType customizes the given Redis with given Type.
+func WithClientType(ClientType string) Option {
 	return func(r *Client) {
 		r.ClientType = ClientType
 	}
