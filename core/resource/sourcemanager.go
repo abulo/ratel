@@ -1,11 +1,11 @@
-package query
+package resource
 
 import (
 	"io"
 	"sync"
 )
 
-// ResourceManager A ResourceManager is a manager that used to manage resources.
+// A ResourceManager is a manager that used to manage resources.
 type ResourceManager struct {
 	resources    map[string]io.Closer
 	singleFlight SingleFlight
@@ -41,7 +41,7 @@ func (manager *ResourceManager) Close() error {
 
 // GetResource returns the resource associated with given key.
 func (manager *ResourceManager) GetResource(key string, create func() (io.Closer, error)) (io.Closer, error) {
-	val, err := manager.singleFlight.Do(key, func() (interface{}, error) {
+	val, err := manager.singleFlight.Do(key, func() (any, error) {
 		manager.lock.RLock()
 		resource, ok := manager.resources[key]
 		manager.lock.RUnlock()
@@ -55,8 +55,8 @@ func (manager *ResourceManager) GetResource(key string, create func() (io.Closer
 		}
 
 		manager.lock.Lock()
+		defer manager.lock.Unlock()
 		manager.resources[key] = resource
-		manager.lock.Unlock()
 
 		return resource, nil
 	})
@@ -65,4 +65,11 @@ func (manager *ResourceManager) GetResource(key string, create func() (io.Closer
 	}
 
 	return val.(io.Closer), nil
+}
+
+// Inject injects the resource associated with given key.
+func (manager *ResourceManager) Inject(key string, resource io.Closer) {
+	manager.lock.Lock()
+	manager.resources[key] = resource
+	manager.lock.Unlock()
 }

@@ -126,6 +126,10 @@ const (
 	ClientNormal ClientType = "normal"
 	// ClientCluster for official redis cluster
 	ClientCluster ClientType = "cluster"
+	// FailoverClient for official redis failover
+	FailoverClient ClientType = "failover"
+	// RingClient for official redis ring
+	RingClient ClientType = "ring"
 )
 
 // RWType Client Reader and Writer

@@ -10,12 +10,14 @@ import (
 
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
+	"github.com/abulo/ratel/v3/core/resource"
 	"github.com/abulo/ratel/v3/core/trace"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/olivere/elastic/v7"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
+	"github.com/pkg/errors"
 )
 
 // MaxContentLength ...
@@ -36,11 +38,35 @@ type Client struct {
 	*Config
 }
 
+// Close disconnects
+func (client *Client) Close() error {
+	return nil
+}
+
+var clientManager = resource.NewResourceManager()
+
 // NewClient ...
 func NewClient(config *Config) *Client {
+	url := util.Implode(";", config.URL)
+	val, err := clientManager.GetResource(url, func() (io.Closer, error) {
+		client, err := getClient(config)
+		if err != nil {
+			return nil, err
+		}
+		return client, nil
+	})
+	if err != nil {
+		logger.Logger.Panic(err)
+		return nil
+	}
+	return val.(*Client)
+}
+
+func getClient(config *Config) (*Client, error) {
 	var options []elastic.ClientOptionFunc
 	if len(config.URL) < 1 {
 		logger.Logger.Panic("url not set")
+		return nil, errors.New("url not set")
 	}
 	options = append(options, elastic.SetURL(config.URL...))
 	if config.Username != "" && config.Password != "" {
@@ -53,11 +79,13 @@ func NewClient(config *Config) *Client {
 	client, err := elastic.NewClient(options...)
 	if err != nil {
 		logger.Logger.Panic(err)
+		return nil, err
 	}
+
 	newClient := &Client{}
 	newClient.Client = client
 	newClient.Config = config
-	return newClient
+	return newClient, nil
 }
 
 // ESTraceServerInterceptor ...

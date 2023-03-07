@@ -1,8 +1,7 @@
-package query
+package resource
 
 import "bytes"
 
-// BatchError ...
 type (
 	// A BatchError is an error that can hold multiple errors.
 	BatchError struct {
@@ -12,10 +11,12 @@ type (
 	errorArray []error
 )
 
-// Add adds err to be.
-func (be *BatchError) Add(err error) {
-	if err != nil {
-		be.errs = append(be.errs, err)
+// Add adds errs to be, nil errors are ignored.
+func (be *BatchError) Add(errs ...error) {
+	for _, err := range errs {
+		if err != nil {
+			be.errs = append(be.errs, err)
+		}
 	}
 }
 

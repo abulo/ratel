@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"io"
 	"net/url"
 	"os"
 	"reflect"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
+	"github.com/abulo/ratel/v3/core/resource"
 	"github.com/abulo/ratel/v3/core/trace"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/opentracing/opentracing-go"
@@ -57,8 +59,31 @@ type index struct {
 	Name string
 }
 
+// Close disconnects
+func (client *MongoDB) Close() error {
+	return client.Client.Disconnect(context.Background())
+}
+
+var clientManager = resource.NewResourceManager()
+
 // NewClient New 数据库连接
 func NewClient(config *Config) *MongoDB {
+	val, err := clientManager.GetResource(config.URI, func() (io.Closer, error) {
+		client, err := getClient(config)
+		if err != nil {
+			return nil, err
+		}
+		return client, nil
+	})
+	if err != nil {
+		logger.Logger.Panic(err)
+		return nil
+	}
+	return val.(*MongoDB)
+}
+
+// getClient New 数据库连接
+func getClient(config *Config) (*MongoDB, error) {
 	//数据库连接
 	mongoOptions := options.Client()
 	mongoOptions.SetMaxConnIdleTime(config.MaxConnIdleTime)
@@ -67,17 +92,17 @@ func NewClient(config *Config) *MongoDB {
 	client, err := mongo.NewClient(mongoOptions.ApplyURI(config.URI))
 	if err != nil {
 		logger.Logger.Panic(err)
-		return nil
+		return nil, err
 	}
 	//解析URL
 	u, err := url.Parse(config.URI)
 	if err != nil {
 		logger.Logger.Panic(err)
-		return nil
+		return nil, err
 	}
 	if util.Empty(u.Path) || util.Empty(u.Path[1:]) {
 		logger.Logger.Panic(errors.New("no database"))
-		return nil
+		return nil, err
 	}
 	name := u.Path[1:]
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
@@ -85,9 +110,14 @@ func NewClient(config *Config) *MongoDB {
 	err = client.Connect(ctx)
 	if err != nil {
 		logger.Logger.Panic("MongoDB连接失败->", err)
-		return nil
+		return nil, err
 	}
-	return &MongoDB{Client: client, Name: name, DisableMetric: config.DisableMetric, DisableTrace: config.DisableTrace}
+
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &MongoDB{Client: client, Name: name, DisableMetric: config.DisableMetric, DisableTrace: config.DisableTrace}, nil
 }
 
 func (collection *collection) reset() {

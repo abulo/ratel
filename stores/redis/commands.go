@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -1307,6 +1308,9 @@ func (r *Client) HSet(ctx context.Context, key string, value ...interface{}) (re
 	case ClientNormal:
 		res = r.client.HSet(ctx, r.k(key), value...)
 	}
+	fmt.Println(r.k(key), value, r.clientType)
+	fmt.Println(res)
+	// res = r.GetClient().HSet(ctx, r.k(key), value...)
 	return res
 }
 

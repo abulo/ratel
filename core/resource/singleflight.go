@@ -1,13 +1,8 @@
-package query
+package resource
 
 import "sync"
 
-// SharedCalls ...
 type (
-	// SharedCalls is an alias of SingleFlight.
-	// Deprecated: use SingleFlight.
-	SharedCalls = SingleFlight
-
 	// SingleFlight lets the concurrent calls with the same key to share the call result.
 	// For example, A called F, before it's done, B called F. Then B would not execute F,
 	// and shared the result returned by F which called by A.
@@ -15,13 +10,13 @@ type (
 	// A ------->calls F with key<------------------->returns val
 	// B --------------------->calls F with key------>returns val
 	SingleFlight interface {
-		Do(key string, fn func() (interface{}, error)) (interface{}, error)
-		DoEx(key string, fn func() (interface{}, error)) (interface{}, bool, error)
+		Do(key string, fn func() (any, error)) (any, error)
+		DoEx(key string, fn func() (any, error)) (any, bool, error)
 	}
 
 	call struct {
 		wg  sync.WaitGroup
-		val interface{}
+		val any
 		err error
 	}
 
@@ -38,14 +33,7 @@ func NewSingleFlight() SingleFlight {
 	}
 }
 
-// NewSharedCalls returns a SingleFlight.
-// Deprecated: use NewSingleFlight.
-func NewSharedCalls() SingleFlight {
-	return NewSingleFlight()
-}
-
-// Do ...
-func (g *flightGroup) Do(key string, fn func() (interface{}, error)) (interface{}, error) {
+func (g *flightGroup) Do(key string, fn func() (any, error)) (any, error) {
 	c, done := g.createCall(key)
 	if done {
 		return c.val, c.err
@@ -55,8 +43,7 @@ func (g *flightGroup) Do(key string, fn func() (interface{}, error)) (interface{
 	return c.val, c.err
 }
 
-// DoEx ...
-func (g *flightGroup) DoEx(key string, fn func() (interface{}, error)) (val interface{}, fresh bool, err error) {
+func (g *flightGroup) DoEx(key string, fn func() (any, error)) (val any, fresh bool, err error) {
 	c, done := g.createCall(key)
 	if done {
 		return c.val, false, c.err
@@ -82,7 +69,7 @@ func (g *flightGroup) createCall(key string) (c *call, done bool) {
 	return c, false
 }
 
-func (g *flightGroup) makeCall(c *call, key string, fn func() (interface{}, error)) {
+func (g *flightGroup) makeCall(c *call, key string, fn func() (any, error)) {
 	defer func() {
 		g.lock.Lock()
 		delete(g.calls, key)

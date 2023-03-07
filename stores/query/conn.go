@@ -1,52 +1,41 @@
 package query
 
 import (
-	"context"
 	"database/sql"
 	"io"
-	"sync"
+
+	"github.com/abulo/ratel/v3/core/resource"
 )
 
-var connManager = NewResourceManager()
+var connManager = resource.NewResourceManager()
 
-type pingedDB struct {
-	*sql.DB
-	once sync.Once
-}
-
-func getCachedSQLConn(driverName, server string, opt *Opt) (*pingedDB, error) {
+func getCachedSQLConn(driverName, server string, opt *Opt) (*sql.DB, error) {
 	val, err := connManager.GetResource(server, func() (io.Closer, error) {
 		conn, err := newDBConnection(driverName, server, opt)
 		if err != nil {
 			return nil, err
 		}
 
-		return &pingedDB{
-			DB: conn,
-		}, nil
+		return conn, nil
 	})
 	if err != nil {
 		return nil, err
 	}
-
-	return val.(*pingedDB), nil
+	return val.(*sql.DB), nil
 }
 
 // NewSQLConn ...
 func NewSQLConn(driverName, server string, opt *Opt) (*sql.DB, error) {
-	pdb, err := getCachedSQLConn(driverName, server, opt)
+	conn, err := getCachedSQLConn(driverName, server, opt)
 	if err != nil {
 		return nil, err
 	}
 
-	pdb.once.Do(func() {
-		err = pdb.PingContext(context.TODO())
-	})
 	if err != nil {
 		return nil, err
 	}
 
-	return pdb.DB, nil
+	return conn, nil
 }
 
 func newDBConnection(driverName, datasource string, opt *Opt) (*sql.DB, error) {
