@@ -7,39 +7,41 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+type Option func(r *Client)
+
 // Options options to initiate your client
-type Options struct {
-	Type ClientType
+type Client struct {
+	ClientType string // 模式(normal => 单节点,cluster =>  集群,failover => 哨兵,ring => 分片)
 	// Host address with port number
 	// For normal client will only used the first value
-	Hosts []string
-
+	// A seed list of host:port addresses of sentinel nodes.
+	Hosts []string // 集群 哨兵 需要填写
+	// host:port address.
+	Addr string // 单节点客户端
+	// Map of name => host:port addresses of ring shards.
+	Addrs map[string]string // 分片客户端  shardName => host:port
+	// The master name.
+	MasterName string
 	// The network type, either tcp or unix.
 	// Default is tcp.
 	// Only for normal client
 	Network string
-
 	// Database to be selected after connecting to the server.
-	Database int
+	Database int // 数据库
 	// Automatically adds a prefix to all keys
-	KeyPrefix string
-
+	KeyPrefix string // 前缀标识
 	// The maximum number of retries before giving up. Command is retried
 	// on network errors and MOVED/ASK redirects.
 	// Default is 16.
 	// In normal client this is the MaxRetries option
 	MaxRedirects int
-
 	// Enables read queries for a connection to a Redis Cluster slave node.
-	ReadOnly bool
-
+	IsReadOnly bool
 	// Enables routing read-only queries to the closest master or slave node.
 	// If set will change this client to read-only mode
 	RouteByLatency bool
-
 	// Following options are copied from Options struct.
-	Password string
-
+	Password string // 密码
 	// Dial timeout for establishing new connections.
 	// Default is 5 seconds.
 	DialTimeout time.Duration
@@ -51,11 +53,10 @@ type Options struct {
 	// with a timeout instead of blocking.
 	// Default is 3 seconds.
 	WriteTimeout time.Duration
-
 	// PoolSize applies per cluster node and not for the whole cluster.
 	// Maximum number of socket connections.
 	// Default is 10 connections.
-	PoolSize int
+	PoolSize int // 连接池大小
 	// Amount of time client waits for connection if all connections
 	// are busy before returning an error.
 	// Default is ReadTimeout + 1 second.
@@ -68,20 +69,52 @@ type Options struct {
 	// Default is 1 minute.
 	// When minus value is set, then idle check is disabled.
 	IdleCheckFrequency time.Duration
-
 	// TLS Config to use. When set TLS will be negotiated.
 	// Only for normal client
-	TLSConfig *tls.Config
-
+	TLSConfig     *tls.Config
 	DisableMetric bool // 关闭指标采集
 	DisableTrace  bool // 关闭链路追踪
 }
 
-// GetClusterConfig translates current configuration into a *redis.ClusterOptions
-func (o Options) GetClusterConfig() *redis.ClusterOptions {
+// GetRingClientConfig 获取分片配置
+func (o *Client) GetRingClientConfig() *redis.RingOptions {
+	opts := &redis.RingOptions{
+		Addrs:           o.Addrs,
+		Password:        o.Password,
+		DialTimeout:     o.DialTimeout,
+		ReadTimeout:     o.ReadTimeout,
+		WriteTimeout:    o.WriteTimeout,
+		PoolSize:        o.PoolSize,
+		PoolTimeout:     o.PoolTimeout,
+		ConnMaxIdleTime: o.IdleTimeout,
+		ConnMaxLifetime: o.IdleCheckFrequency,
+	}
+	return opts
+}
+
+// GetFailoverClient 获取哨兵配置
+func (o *Client) GetFailoverClientConfig() *redis.FailoverOptions {
+	opts := &redis.FailoverOptions{
+		MasterName:      o.MasterName,
+		SentinelAddrs:   o.Hosts,
+		RouteByLatency:  o.RouteByLatency,
+		Password:        o.Password,
+		DialTimeout:     o.DialTimeout,
+		ReadTimeout:     o.ReadTimeout,
+		WriteTimeout:    o.WriteTimeout,
+		PoolSize:        o.PoolSize,
+		PoolTimeout:     o.PoolTimeout,
+		ConnMaxIdleTime: o.IdleTimeout,
+		ConnMaxLifetime: o.IdleCheckFrequency,
+	}
+	return opts
+}
+
+// GetClusterClientConfig 获取集群配置
+func (o *Client) GetClusterClientConfig() *redis.ClusterOptions {
 	opts := &redis.ClusterOptions{
 		Addrs:           o.Hosts,
-		ReadOnly:        o.ReadOnly,
+		ReadOnly:        o.IsReadOnly,
 		RouteByLatency:  o.RouteByLatency,
 		Password:        o.Password,
 		DialTimeout:     o.DialTimeout,
@@ -98,10 +131,10 @@ func (o Options) GetClusterConfig() *redis.ClusterOptions {
 	return opts
 }
 
-// GetNormalConfig translates current configuration into a *redis.Options struct
-func (o Options) GetNormalConfig() *redis.Options {
+// GetClientConfig 获取单节点配置
+func (o *Client) GetClientConfig() *redis.Options {
 	opts := &redis.Options{
-		Addr:            o.Hosts[0],
+		Addr:            o.Addr,
 		Password:        o.Password,
 		DB:              o.Database,
 		MaxRetries:      o.MaxRedirects,
@@ -118,18 +151,17 @@ func (o Options) GetNormalConfig() *redis.Options {
 }
 
 // ClientType type to define a redis client connector
-type ClientType string
 
 // ClientNormal ...
 const (
 	// ClientNormal for standard instance client
-	ClientNormal ClientType = "normal"
+	ClientNormal = "normal"
 	// ClientCluster for official redis cluster
-	ClientCluster ClientType = "cluster"
+	ClientCluster = "cluster"
 	// FailoverClient for official redis failover
-	FailoverClient ClientType = "failover"
+	ClientFailover = "failover"
 	// RingClient for official redis ring
-	RingClient ClientType = "ring"
+	ClientRing = "ring"
 )
 
 // RWType Client Reader and Writer
