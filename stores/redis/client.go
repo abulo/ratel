@@ -48,12 +48,12 @@ func New(config *Config) *Client {
 	if config.Password != "" {
 		opts.Password = config.Password
 	}
-	if !config.DisableMetric {
-		opts.DisableMetric = config.DisableMetric
-	}
-	if !config.DisableTrace {
-		opts.DisableTrace = config.DisableTrace
-	}
+	// if !config.DisableMetric {
+	opts.DisableMetric = config.DisableMetric
+	// }
+	// if !config.DisableTrace {
+	opts.DisableTrace = config.DisableTrace
+	// }
 	client := NewClient(opts)
 	ctx := context.TODO()
 	if err := client.Ping(ctx).Err(); err != nil {
