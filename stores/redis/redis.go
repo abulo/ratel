@@ -27,6 +27,7 @@ import (
 
 func NewRedisClient(opts ...Option) (*Client, error) {
 	c := &Client{}
+	c.brk = resource.NewBreaker()
 	for _, o := range opts {
 		o(c)
 	}
@@ -140,36 +141,20 @@ type RedisNode interface {
 }
 
 // getRedis new redis client
-func getRedis(r *Client) RedisNode {
+func getRedis(r *Client) (RedisNode, error) {
 	switch r.ClientType {
 	case ClientNormal:
-		res, err := getClient(r)
-		if err != nil {
-			logger.Logger.Panic(err)
-		}
-		return res
+		return getClient(r)
 	case ClientCluster:
-		res, err := getCluster(r)
-		if err != nil {
-			logger.Logger.Panic(err)
-		}
-		return res
+		return getCluster(r)
 	case ClientFailover:
-		res, err := getFailover(r)
-		if err != nil {
-			logger.Logger.Panic(err)
-		}
-		return res
+		return getFailover(r)
 	case ClientRing:
-		res, err := getRing(r)
-		if err != nil {
-			logger.Logger.Panic(err)
-		}
-		return res
+		return getRing(r)
 	default:
 		err := fmt.Errorf("redis type '%s' is not supported", r.ClientType)
 		logger.Logger.Panic(err)
-		return nil
+		return nil, err
 	}
 }
 

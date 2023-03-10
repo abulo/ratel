@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"time"
 
+	"github.com/abulo/ratel/v3/core/resource"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -74,6 +75,7 @@ type Client struct {
 	TLSConfig     *tls.Config
 	DisableMetric bool // 关闭指标采集
 	DisableTrace  bool // 关闭链路追踪
+	brk           resource.Breaker
 }
 
 // GetRingClientConfig 获取分片配置
