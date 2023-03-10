@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/pkg/errors"
 )
 
@@ -197,12 +200,23 @@ func (lt loggedThrottle) doReq(req func() error, fallback func(err error) error,
 func (lt loggedThrottle) logError(err error) error {
 	if err == ErrServiceUnavailable {
 		// if circuit open, not possible to have empty error window
-		// stat.Report(fmt.Sprintf(
-		// "proc(%s/%d), callee: %s, breaker is open and requests dropped\nlast errors:\n%s",
-		// proc.ProcessName(), proc.Pid(), lt.name, lt.errWin))
+		errString := fmt.Sprintf(
+			"proc(%s/%d), callee: %s, breaker is open and requests dropped\nlast errors:\n%s",
+			ProcessName(), Pid(), lt.name, lt.errWin)
+		logger.Logger.Warn(errString)
 	}
 
 	return err
+}
+
+// Pid returns pid of current process.
+func Pid() int {
+	return os.Getpid()
+}
+
+// ProcessName returns the processname, same as the command name.
+func ProcessName() string {
+	return filepath.Base(os.Args[0])
 }
 
 // Rand returns a random string.

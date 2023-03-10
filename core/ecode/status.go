@@ -10,7 +10,7 @@ import (
 
 	spb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/protobuf/proto"
-	any "google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 // Status ...
@@ -97,7 +97,7 @@ func (s *spbStatus) MustWithDetails(details ...interface{}) *spbStatus {
 }
 
 // WithDetails returns a new status with the provided details messages appended to the status.
-// If any errors are encountered, it returns nil and the first error encountered.
+// If anypb errors are encountered, it returns nil and the first error encountered.
 func (s *spbStatus) WithDetails(details ...interface{}) (*spbStatus, error) {
 	if s.CauseCode() == 0 {
 		return nil, errors.New("no error details for status with code OK")
@@ -105,33 +105,33 @@ func (s *spbStatus) WithDetails(details ...interface{}) (*spbStatus, error) {
 	p := s.Proto()
 	for _, detail := range details {
 		if pmsg, ok := detail.(proto.Message); ok {
-			any, err := marshalAnyProtoMessage(pmsg)
+			anypb, err := marshalAnyProtoMessage(pmsg)
 			if err != nil {
 				return nil, err
 			}
-			p.Details = append(p.Details, any)
+			p.Details = append(p.Details, anypb)
 		} else {
-			any, err := marshalAny(detail)
+			anypb, err := marshalAny(detail)
 			if err != nil {
 				return nil, err
 			}
-			p.Details = append(p.Details, any)
+			p.Details = append(p.Details, anypb)
 		}
 	}
 	return &spbStatus{Status: p}, nil
 }
 
-func marshalAny(obj interface{}) (*any.Any, error) {
+func marshalAny(obj interface{}) (*anypb.Any, error) {
 	typ := reflect.TypeOf(obj)
 	val := fmt.Sprintf("%+v", obj)
 
-	return &any.Any{TypeUrl: typ.Name(), Value: []byte(val)}, nil
+	return &anypb.Any{TypeUrl: typ.Name(), Value: []byte(val)}, nil
 }
 
-func marshalAnyProtoMessage(pb proto.Message) (*any.Any, error) {
+func marshalAnyProtoMessage(pb proto.Message) (*anypb.Any, error) {
 	value, err := proto.Marshal(pb)
 	if err != nil {
 		return nil, err
 	}
-	return &any.Any{TypeUrl: string(pb.ProtoReflect().Descriptor().FullName()), Value: value}, nil
+	return &anypb.Any{TypeUrl: string(pb.ProtoReflect().Descriptor().FullName()), Value: value}, nil
 }

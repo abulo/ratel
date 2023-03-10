@@ -30,8 +30,8 @@ func (session *Session) Put(ctx context.Context, key string, value interface{}) 
 	m := make(map[string]interface{})
 
 	// fmt.Printf("Exists %s?\n", session.Name)
-	if h.Exists(ctx, session.Name).Val() == 1 {
-		content = h.Get(ctx, session.Name).Val()
+	if val, err := h.Exists(ctx, session.Name); err == nil && val {
+		content, _ = h.Get(ctx, session.Name)
 	} else {
 		content = "{}"
 	}
@@ -66,7 +66,7 @@ func (session *Session) Get(ctx context.Context, key string) interface{} {
 		ctx = context.TODO()
 	}
 
-	content = h.Get(ctx, session.Name).Val()
+	content, _ = h.Get(ctx, session.Name)
 	_ = json.Unmarshal([]byte(content), &m)
 
 	var keys = strings.Split(key, ".")
@@ -88,7 +88,7 @@ func (session *Session) Remove(ctx context.Context, key string) {
 		ctx = context.TODO()
 	}
 
-	content = h.Get(ctx, session.Name).Val()
+	content, _ = h.Get(ctx, session.Name)
 	_ = json.Unmarshal([]byte(content), &m)
 
 	var keys = strings.Split(key, ".")
@@ -183,7 +183,8 @@ func (session *Session) Destroy(ctx context.Context) int64 {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	return h.Del(ctx, session.Name).Val()
+	val, _ := h.Del(ctx, session.Name)
+	return val
 }
 
 // func TestSession_Put(t *testing.T) {
