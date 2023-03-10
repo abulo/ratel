@@ -16,12 +16,12 @@ var (
 )
 
 // SetData for override the Config.Data
-func SetData(data map[string]interface{}) {
+func SetData(data map[string]any) {
 	dc.SetData(data)
 }
 
 // SetData for override the Config.Data
-func (c *Config) SetData(data map[string]interface{}) {
+func (c *Config) SetData(data map[string]any) {
 	c.lock.Lock()
 	c.data = data
 	c.lock.Unlock()
@@ -30,12 +30,12 @@ func (c *Config) SetData(data map[string]interface{}) {
 }
 
 // Set val by key
-func Set(key string, val interface{}, setByPath ...bool) error {
+func Set(key string, val any, setByPath ...bool) error {
 	return dc.Set(key, val, setByPath...)
 }
 
 // Set a value by key string.
-func (c *Config) Set(key string, val interface{}, setByPath ...bool) (err error) {
+func (c *Config) Set(key string, val any, setByPath ...bool) (err error) {
 	if c.opts.Readonly {
 		return errReadonly
 	}
@@ -65,7 +65,7 @@ func (c *Config) Set(key string, val interface{}, setByPath ...bool) (err error)
 	paths := keys[1:]
 
 	var ok bool
-	var item interface{}
+	var item any
 
 	// find top item data based on top key
 	if item, ok = c.data[topK]; !ok {
@@ -75,8 +75,8 @@ func (c *Config) Set(key string, val interface{}, setByPath ...bool) (err error)
 	}
 
 	switch typeData := item.(type) {
-	case map[interface{}]interface{}: // from yaml
-		dstItem := make(map[string]interface{})
+	case map[any]any: // from yaml
+		dstItem := make(map[string]any)
 		for k, v := range typeData {
 			sk := fmt.Sprintf("%v", k)
 			dstItem[sk] = v
@@ -91,7 +91,7 @@ func (c *Config) Set(key string, val interface{}, setByPath ...bool) (err error)
 		}
 
 		c.data[topK] = dstItem
-	case map[string]interface{}: // from json,toml
+	case map[string]any: // from json,toml
 		// create a new item for the topK
 		newItem := buildValueByPath(paths, val)
 		// merge new item to old item
@@ -101,7 +101,7 @@ func (c *Config) Set(key string, val interface{}, setByPath ...bool) (err error)
 		}
 
 		c.data[topK] = typeData
-	case []interface{}: // is array
+	case []any: // is array
 		index, err := strconv.Atoi(keys[1])
 		if len(keys) == 2 && err == nil {
 			if index <= len(typeData) {
@@ -127,9 +127,9 @@ more setter: SetIntArr, SetIntMap, SetString, SetStringArr, SetStringMap
 
 // build new value by key paths
 // "site.info" -> map[string]map[string]val
-func buildValueByPath(paths []string, val interface{}) (newItem map[string]interface{}) {
+func buildValueByPath(paths []string, val any) (newItem map[string]any) {
 	if len(paths) == 1 {
-		return map[string]interface{}{paths[0]: val}
+		return map[string]any{paths[0]: val}
 	}
 
 	sliceReverse(paths)
@@ -137,9 +137,9 @@ func buildValueByPath(paths []string, val interface{}) (newItem map[string]inter
 	// multi nodes
 	for _, p := range paths {
 		if newItem == nil {
-			newItem = map[string]interface{}{p: val}
+			newItem = map[string]any{p: val}
 		} else {
-			newItem = map[string]interface{}{p: newItem}
+			newItem = map[string]any{p: newItem}
 		}
 	}
 	return

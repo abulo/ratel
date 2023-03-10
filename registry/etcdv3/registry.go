@@ -185,9 +185,9 @@ func (reg *etcdv3Registry) Close() error {
 		reg.cancel()
 	}
 	var wg sync.WaitGroup
-	reg.kvs.Range(func(k, v interface{}) bool {
+	reg.kvs.Range(func(k, v any) bool {
 		wg.Add(1)
-		go func(k interface{}) {
+		go func(k any) {
 			defer wg.Done()
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			err := reg.unregister(ctx, k.(string))

@@ -16,13 +16,13 @@ func TestSetData(t *testing.T) {
 	assert.Equal(t, "app", c.String("name"))
 	assert.True(t, c.Exists("age"))
 
-	SetData(map[string]interface{}{
+	SetData(map[string]any{
 		"name": "new app",
 	})
 	assert.Equal(t, "new app", c.String("name"))
 	assert.False(t, c.Exists("age"))
 
-	c.SetData(map[string]interface{}{
+	c.SetData(map[string]any{
 		"age": 222,
 	})
 	assert.Equal(t, "", c.String("name"))
@@ -71,7 +71,7 @@ func TestSet(t *testing.T) {
 	}
 
 	// like yml decoded data
-	err = Set("ymlLike", map[interface{}]interface{}{"k": "v"})
+	err = Set("ymlLike", map[any]any{"k": "v"})
 	st.Nil(err)
 	str := c.String("ymlLike.k")
 	st.Equal("v", str)
@@ -182,7 +182,7 @@ func TestSet_fireEvent(t *testing.T) {
 	}
 
 	c := NewWithOptions("test", WithHookFunc(hookFn))
-	err := c.LoadData(map[string]interface{}{
+	err := c.LoadData(map[string]any{
 		"key": "value",
 	})
 	assert.NoError(t, err)

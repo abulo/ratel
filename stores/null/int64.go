@@ -116,7 +116,7 @@ func (i Int64) IsZero() bool {
 }
 
 // Scan implements the Scanner interface.
-func (i *Int64) Scan(value interface{}) error {
+func (i *Int64) Scan(value any) error {
 	if value == nil {
 		i.Int64, i.Valid, i.Set = 0, false, false
 		return nil

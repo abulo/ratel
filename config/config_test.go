@@ -247,7 +247,7 @@ func TestJSONDriver(t *testing.T) {
 	is.Equal(1, c.Int("key"))
 
 	c = NewWith("test", func(c *Config) {
-		err = c.LoadData(map[string]interface{}{"key1": 2})
+		err = c.LoadData(map[string]any{"key1": 2})
 		is.NoError(err)
 	})
 	is.Equal(2, c.Int("key1"))
@@ -335,7 +335,7 @@ func TestDelimiter(t *testing.T) {
 	c.WithOptions(Delimiter(':'))
 	is.Equal(byte(':'), c.Options().Delimiter)
 
-	err := c.LoadData(map[string]interface{}{
+	err := c.LoadData(map[string]any{
 		"top0": 1,
 		"top1": map[string]int{"sub0": 2},
 	})
@@ -347,7 +347,7 @@ func TestDelimiter(t *testing.T) {
 	c = NewWithOptions("test", Delimiter(0))
 	is.Equal(byte(0), c.Options().Delimiter)
 
-	err = c.LoadData(map[string]interface{}{
+	err = c.LoadData(map[string]any{
 		"top0": 1,
 		"top1": map[string]int{"sub0": 2},
 	})

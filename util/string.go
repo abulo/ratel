@@ -188,11 +188,11 @@ func StrRev(str string) string {
 // f[][]=m&f[][]=n -> map[f:[map[]]] // Currently does not support nested slice.
 // f=m&f[a]=n -> error // This is not the same as PHP.
 // a .[[b=c -> map[a___[b:c]
-func ParseStr(encodedString string, result map[string]interface{}) error {
+func ParseStr(encodedString string, result map[string]any) error {
 	// build nested map.
-	var build func(map[string]interface{}, []string, interface{}) error
+	var build func(map[string]any, []string, any) error
 
-	build = func(result map[string]interface{}, keys []string, value interface{}) error {
+	build = func(result map[string]any, keys []string, value any) error {
 		length := len(keys)
 		// trim ',"
 		key := strings.Trim(keys[0], "'\"")
@@ -209,12 +209,12 @@ func ParseStr(encodedString string, result map[string]interface{}) error {
 			}
 			val, ok := result[key]
 			if !ok {
-				result[key] = []interface{}{value}
+				result[key] = []any{value}
 				return nil
 			}
-			children, ok := val.([]interface{})
+			children, ok := val.([]any)
 			if !ok {
-				return fmt.Errorf("expected type '[]interface{}' for key '%s', but got '%T'", key, val)
+				return fmt.Errorf("expected type '[]any' for key '%s', but got '%T'", key, val)
 			}
 			result[key] = append(children, value)
 			return nil
@@ -224,22 +224,22 @@ func ParseStr(encodedString string, result map[string]interface{}) error {
 		if keys[1] == "" && length > 2 && keys[2] != "" {
 			val, ok := result[key]
 			if !ok {
-				result[key] = []interface{}{}
+				result[key] = []any{}
 				val = result[key]
 			}
-			children, ok := val.([]interface{})
+			children, ok := val.([]any)
 			if !ok {
-				return fmt.Errorf("expected type '[]interface{}' for key '%s', but got '%T'", key, val)
+				return fmt.Errorf("expected type '[]any' for key '%s', but got '%T'", key, val)
 			}
 			if l := len(children); l > 0 {
-				if child, ok := children[l-1].(map[string]interface{}); ok {
+				if child, ok := children[l-1].(map[string]any); ok {
 					if _, ok := child[keys[2]]; !ok {
 						_ = build(child, keys[2:], value)
 						return nil
 					}
 				}
 			}
-			child := map[string]interface{}{}
+			child := map[string]any{}
 			_ = build(child, keys[2:], value)
 			result[key] = append(children, child)
 
@@ -249,12 +249,12 @@ func ParseStr(encodedString string, result map[string]interface{}) error {
 		// map. like f[a], f[a][b]
 		val, ok := result[key]
 		if !ok {
-			result[key] = map[string]interface{}{}
+			result[key] = map[string]any{}
 			val = result[key]
 		}
-		children, ok := val.(map[string]interface{})
+		children, ok := val.(map[string]any)
 		if !ok {
-			return fmt.Errorf("expected type 'map[string]interface{}' for key '%s', but got '%T'", key, val)
+			return fmt.Errorf("expected type 'map[string]any' for key '%s', but got '%T'", key, val)
 		}
 
 		return build(children, keys[1:], value)
@@ -485,7 +485,7 @@ func StrStr(haystack string, needle string) string {
 // Strtr("baab", map[string]string{"ab": "01"}) will return "ba01"
 // If the parameter length is 2, type is: string, string
 // Strtr("baab", "ab", "01") will return "1001", a => 0; b => 1.
-func StrTr(haystack string, params ...interface{}) string {
+func StrTr(haystack string, params ...any) string {
 	ac := len(params)
 	if ac == 1 {
 		pairs := params[0].(map[string]string)
@@ -630,17 +630,17 @@ func Nl2br(str string, isXhtml bool) string {
 }
 
 // JSONDecode json_decode()
-func JSONDecode(data []byte, val interface{}) error {
+func JSONDecode(data []byte, val any) error {
 	return json.Unmarshal(data, val)
 }
 
 // JSONEncode json_encode()
-func JSONEncode(val interface{}) ([]byte, error) {
+func JSONEncode(val any) ([]byte, error) {
 	return json.Marshal(val)
 }
 
 // JSONString ...
-func JSONString(obj interface{}) string {
+func JSONString(obj any) string {
 	aa, _ := json.Marshal(obj)
 	return string(aa)
 }
@@ -923,7 +923,7 @@ func Soundex(str string) string {
 }
 
 // Tag 数据标签
-func Tag(i interface{}) string {
+func Tag(i any) string {
 	replacer := strings.NewReplacer(tagPatterns...)
 	format := cast.ToString(i)
 	return replacer.Replace(format)

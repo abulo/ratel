@@ -406,7 +406,7 @@ func (img *Image) DrawText(content string, fc *fontx.FontConfig, m font.Metrics,
 	ctx.SetClip(img.src.Bounds())
 	//overPaintImage := image.NewRGBA(img.src.Bounds())
 	//draw.Draw(overPaintImage, img.src.Bounds(), img.src, image.ZP, draw.Over)
-	ctx.SetDst((img.src.(interface{})).(draw.Image))
+	ctx.SetDst((img.src.(any)).(draw.Image))
 	ctx.SetSrc(image.NewUniform(fc.Color))
 	ctx.SetHinting(font.HintingNone)
 

@@ -400,8 +400,8 @@ func TestIsNan(t *testing.T) {
 
 func TestDivide(t *testing.T) {
 	type args struct {
-		m interface{}
-		n interface{}
+		m any
+		n any
 	}
 	tests := []struct {
 		name string
@@ -421,8 +421,8 @@ func TestDivide(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	type args struct {
-		m interface{}
-		n interface{}
+		m any
+		n any
 	}
 	tests := []struct {
 		name string

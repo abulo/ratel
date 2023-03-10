@@ -24,17 +24,17 @@ import (
 
 // Connection 链接
 type Connection interface {
-	Exec(ctx context.Context, querySQL string, args ...interface{}) (sql.Result, error)
-	Query(ctx context.Context, querySQL string, args ...interface{}) (*sql.Rows, error)
+	Exec(ctx context.Context, querySQL string, args ...any) (sql.Result, error)
+	Query(ctx context.Context, querySQL string, args ...any) (*sql.Rows, error)
 	NewBuilder(ctx context.Context) *Builder
 	SQLRaw() string
-	LastSQL(querySQL string, args ...interface{})
+	LastSQL(querySQL string, args ...any)
 }
 
 // SQL sql语句
 type SQL struct {
 	SQL      string
-	Args     []interface{}
+	Args     []any
 	CostTime time.Duration
 }
 
@@ -90,7 +90,7 @@ func (query *Query) Begin() (*Transaction, error) {
 }
 
 // Exec 复用执行语句
-func (query *Query) Exec(ctx context.Context, querySQL string, args ...interface{}) (sql.Result, error) {
+func (query *Query) Exec(ctx context.Context, querySQL string, args ...any) (sql.Result, error) {
 	if query.DB == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
@@ -158,7 +158,7 @@ func (query *Query) Exec(ctx context.Context, querySQL string, args ...interface
 }
 
 // Query 复用查询语句
-func (query *Query) Query(ctx context.Context, querySQL string, args ...interface{}) (*sql.Rows, error) {
+func (query *Query) Query(ctx context.Context, querySQL string, args ...any) (*sql.Rows, error) {
 	if query.DB == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
@@ -244,7 +244,7 @@ func (query *Transaction) NewBuilder(ctx context.Context) *Builder {
 }
 
 // Exec 复用执行语句
-func (query *Transaction) Exec(ctx context.Context, querySQL string, args ...interface{}) (sql.Result, error) {
+func (query *Transaction) Exec(ctx context.Context, querySQL string, args ...any) (sql.Result, error) {
 	if query.Transaction == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
@@ -314,7 +314,7 @@ func (query *Transaction) Exec(ctx context.Context, querySQL string, args ...int
 }
 
 // Query 复用查询语句
-func (query *Transaction) Query(ctx context.Context, querySQL string, args ...interface{}) (*sql.Rows, error) {
+func (query *Transaction) Query(ctx context.Context, querySQL string, args ...any) (*sql.Rows, error) {
 	if query.Transaction == nil {
 		return nil, errors.New("invalid memory address or nil pointer dereference")
 	}
@@ -390,13 +390,13 @@ func (query *Query) SQLRaw() string {
 }
 
 // LastSQL ...
-func (query *Transaction) LastSQL(querySQL string, args ...interface{}) {
+func (query *Transaction) LastSQL(querySQL string, args ...any) {
 	query.SQL.SQL = querySQL
 	query.SQL.Args = args
 }
 
 // LastSQL ...
-func (query *Query) LastSQL(querySQL string, args ...interface{}) {
+func (query *Query) LastSQL(querySQL string, args ...any) {
 	query.SQL.SQL = querySQL
 	query.SQL.Args = args
 }
@@ -460,7 +460,7 @@ func (SQLRaw SQL) ToString() string {
 	return s
 }
 
-func isNilFixed(i interface{}) bool {
+func isNilFixed(i any) bool {
 	if i == nil {
 		return true
 	}
@@ -471,7 +471,7 @@ func isNilFixed(i interface{}) bool {
 	return false
 }
 
-func convert(s string, v interface{}) string {
+func convert(s string, v any) string {
 	switch reflect.ValueOf(v).Interface().(type) {
 	case string:
 		if val := fmt.Sprintf("%v", v); val == "NULL" {

@@ -16,28 +16,28 @@ import (
 //
 //	dbInfo := &Db{}
 //	config.MapStruct("db", dbInfo)
-func MapStruct(key string, dst interface{}) error { return dc.MapStruct(key, dst) }
+func MapStruct(key string, dst any) error { return dc.MapStruct(key, dst) }
 
 // MapStruct alias method of the 'Structure'
-func (c *Config) MapStruct(key string, dst interface{}) error {
+func (c *Config) MapStruct(key string, dst any) error {
 	return c.Structure(key, dst)
 }
 
 // BindStruct alias method of the 'Structure'
-func BindStruct(key string, dst interface{}) error { return dc.BindStruct(key, dst) }
+func BindStruct(key string, dst any) error { return dc.BindStruct(key, dst) }
 
 // BindStruct alias method of the 'Structure'
-func (c *Config) BindStruct(key string, dst interface{}) error {
+func (c *Config) BindStruct(key string, dst any) error {
 	return c.Structure(key, dst)
 }
 
 // MapOnExists mapping data to the dst structure only on key exists.
-func MapOnExists(key string, dst interface{}) error {
+func MapOnExists(key string, dst any) error {
 	return dc.MapOnExists(key, dst)
 }
 
 // MapOnExists mapping data to the dst structure only on key exists.
-func (c *Config) MapOnExists(key string, dst interface{}) error {
+func (c *Config) MapOnExists(key string, dst any) error {
 	err := c.Structure(key, dst)
 	if err != nil && err == errNotFound {
 		return nil
@@ -52,8 +52,8 @@ func (c *Config) MapOnExists(key string, dst interface{}) error {
 //
 //	dbInfo := Db{}
 //	config.Structure("db", &dbInfo)
-func (c *Config) Structure(key string, dst interface{}) error {
-	var data interface{}
+func (c *Config) Structure(key string, dst any) error {
+	var data any
 	if key == "" { // binding all data
 		data = c.data
 	} else { // some data of the config

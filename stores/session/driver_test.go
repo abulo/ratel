@@ -10,7 +10,7 @@ func TestSession_Put(t *testing.T) {
 	type args struct {
 		ctx   context.Context
 		key   string
-		value interface{}
+		value any
 	}
 	tests := []struct {
 		name    string
@@ -38,7 +38,7 @@ func TestSession_Get(t *testing.T) {
 		name    string
 		session *Session
 		args    args
-		want    interface{}
+		want    any
 	}{
 		// TODO: Add test cases.
 	}
@@ -72,14 +72,14 @@ func TestSession_Remove(t *testing.T) {
 
 func Test_setSliceMap(t *testing.T) {
 	type args struct {
-		m     map[string]interface{}
+		m     map[string]any
 		keys  []string
-		value interface{}
+		value any
 	}
 	tests := []struct {
 		name string
 		args args
-		want map[string]interface{}
+		want map[string]any
 	}{
 		// TODO: Add test cases.
 	}
@@ -94,13 +94,13 @@ func Test_setSliceMap(t *testing.T) {
 
 func Test_getSliceMap(t *testing.T) {
 	type args struct {
-		m    map[string]interface{}
+		m    map[string]any
 		keys []string
 	}
 	tests := []struct {
 		name string
 		args args
-		want interface{}
+		want any
 	}{
 		// TODO: Add test cases.
 	}
@@ -115,7 +115,7 @@ func Test_getSliceMap(t *testing.T) {
 
 func Test_delSliceMap(t *testing.T) {
 	type args struct {
-		m    map[string]interface{}
+		m    map[string]any
 		keys []string
 	}
 	tests := []struct {

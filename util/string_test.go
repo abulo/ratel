@@ -281,7 +281,7 @@ func TestStrRev(t *testing.T) {
 func TestParseStr(t *testing.T) {
 	type args struct {
 		encodedString string
-		result        map[string]interface{}
+		result        map[string]any
 	}
 	tests := []struct {
 		name    string
@@ -472,7 +472,7 @@ func TestStrStr(t *testing.T) {
 func TestStrTr(t *testing.T) {
 	type args struct {
 		haystack string
-		params   []interface{}
+		params   []any
 	}
 	tests := []struct {
 		name string
@@ -658,7 +658,7 @@ func TestNl2br(t *testing.T) {
 func TestJSONDecode(t *testing.T) {
 	type args struct {
 		data []byte
-		val  interface{}
+		val  any
 	}
 	tests := []struct {
 		name    string
@@ -678,7 +678,7 @@ func TestJSONDecode(t *testing.T) {
 
 func TestJSONEncode(t *testing.T) {
 	type args struct {
-		val interface{}
+		val any
 	}
 	tests := []struct {
 		name    string
@@ -704,7 +704,7 @@ func TestJSONEncode(t *testing.T) {
 
 func TestJSONString(t *testing.T) {
 	type args struct {
-		obj interface{}
+		obj any
 	}
 	tests := []struct {
 		name string
@@ -1002,7 +1002,7 @@ func TestSoundex(t *testing.T) {
 
 func TestTag(t *testing.T) {
 	type args struct {
-		i interface{}
+		i any
 	}
 	tests := []struct {
 		name string

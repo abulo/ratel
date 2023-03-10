@@ -49,7 +49,7 @@ func (r *Row) ToMap() (result map[string]string, err error) {
 }
 
 // ToInterface ...
-func (r *Row) ToInterface() (result map[string]interface{}, err error) {
+func (r *Row) ToInterface() (result map[string]any, err error) {
 	if r.rs.lastError != nil {
 		err = r.rs.lastError
 		return
@@ -66,7 +66,7 @@ func (r *Row) ToInterface() (result map[string]interface{}, err error) {
 }
 
 // ToStruct get Struct
-func (r *Row) ToStruct(st interface{}) error {
+func (r *Row) ToStruct(st any) error {
 	if r.rs.lastError != nil {
 		return r.rs.lastError
 	}
@@ -97,12 +97,12 @@ func (r *Row) ToStruct(st interface{}) error {
 	if err != nil {
 		return err
 	}
-	refs := make([]interface{}, len(fields))
+	refs := make([]any, len(fields))
 	for i, field := range fields {
 		if f, ok := tagList[field]; ok {
 			refs[i] = f.Addr().Interface()
 		} else {
-			refs[i] = new(interface{})
+			refs[i] = new(any)
 		}
 	}
 	if !r.rs.rs.Next() {
@@ -139,10 +139,10 @@ func (r *Rows) ToArray() (data [][]string, err error) {
 	}
 	data = make([][]string, 0)
 	num := len(fields)
-	//根据查询字段的数量，生成[num]interface{}用于存储Scan的结果
-	refs := make([]interface{}, num)
+	//根据查询字段的数量，生成[num]any用于存储Scan的结果
+	refs := make([]any, num)
 	for i := 0; i < num; i++ {
-		var ref interface{}
+		var ref any
 		refs[i] = &ref
 	}
 	if !r.rs.Next() {
@@ -157,7 +157,7 @@ func (r *Rows) ToArray() (data [][]string, err error) {
 			return nil, err
 		}
 		for i := range fields {
-			//把*interface{}转换成strings返回
+			//把*any转换成strings返回
 			if val, err := toString(refs[i]); err == nil {
 				result[i] = val
 			} else {
@@ -176,8 +176,8 @@ func (r *Rows) ToArray() (data [][]string, err error) {
 	return data, nil
 }
 
-// ToInterface []map[interface{}]interface{}
-func (r *Rows) ToInterface() (data []map[string]interface{}, err error) {
+// ToInterface []map[any]any
+func (r *Rows) ToInterface() (data []map[string]any, err error) {
 	if r.rs == nil {
 		return nil, r.lastError
 	}
@@ -193,21 +193,21 @@ func (r *Rows) ToInterface() (data []map[string]interface{}, err error) {
 		r.lastError = err
 		return nil, err
 	}
-	data = make([]map[string]interface{}, 0)
+	data = make([]map[string]any, 0)
 	num := len(fields)
-	refs := make([]interface{}, num)
+	refs := make([]any, num)
 	for i := 0; i < num; i++ {
-		var ref interface{}
+		var ref any
 		refs[i] = &ref
 	}
 	for r.rs.Next() {
-		result := make(map[string]interface{})
+		result := make(map[string]any)
 		if err := r.rs.Scan(refs...); err != nil {
 			return nil, err
 		}
 		for i, field := range fields {
 			if val, err := toString(refs[i]); err == nil {
-				result[field] = interface{}(val)
+				result[field] = any(val)
 			} else {
 				return nil, err
 			}
@@ -238,9 +238,9 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 	}
 	data = make([]map[string]string, 0)
 	num := len(fields)
-	refs := make([]interface{}, num)
+	refs := make([]any, num)
 	for i := 0; i < num; i++ {
-		var ref interface{}
+		var ref any
 		refs[i] = &ref
 	}
 	for r.rs.Next() {
@@ -264,7 +264,7 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 }
 
 // ToStruct get Struct
-func (r *Rows) ToStruct(st interface{}) error {
+func (r *Rows) ToStruct(st any) error {
 	//st->&[]user
 	//获取变量的类型,类型为指针
 	stType := reflect.TypeOf(st)
@@ -301,13 +301,13 @@ func (r *Rows) ToStruct(st interface{}) error {
 		r.lastError = err
 		return err
 	}
-	refs := make([]interface{}, len(fields))
+	refs := make([]any, len(fields))
 	for i, field := range fields {
 		//如果对应的字段在结构体中有映射，则使用结构体成员变量的地址
 		if f, ok := tagList[field]; ok {
 			refs[i] = f.Addr().Interface()
 		} else {
-			refs[i] = new(interface{})
+			refs[i] = new(any)
 		}
 	}
 	for r.rs.Next() {

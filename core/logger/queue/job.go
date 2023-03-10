@@ -8,17 +8,17 @@ type Jober interface {
 // SyncJober 可以执行的同步任务
 type SyncJober interface {
 	Jober
-	Wait() <-chan interface{}
+	Wait() <-chan any
 	Error() error
 }
 
 type job struct {
-	v        interface{}
-	callback func(interface{})
+	v        any
+	callback func(any)
 }
 
 // NewJob 创建一个异步任务
-func NewJob(v interface{}, fn func(interface{})) Jober {
+func NewJob(v any, fn func(any)) Jober {
 	return &job{
 		v:        v,
 		callback: fn,
@@ -32,15 +32,15 @@ func (j *job) Job() {
 
 type syncJob struct {
 	err      error
-	result   chan interface{}
-	v        interface{}
-	callback func(interface{}) (interface{}, error)
+	result   chan any
+	v        any
+	callback func(any) (any, error)
 }
 
 // NewSyncJob 创建同步任务
-func NewSyncJob(v interface{}, fn func(interface{}) (interface{}, error)) SyncJober {
+func NewSyncJob(v any, fn func(any) (any, error)) SyncJober {
 	return &syncJob{
-		result:   make(chan interface{}, 1),
+		result:   make(chan any, 1),
 		v:        v,
 		callback: fn,
 	}
@@ -61,7 +61,7 @@ func (j *syncJob) Job() {
 }
 
 // Wait ...
-func (j *syncJob) Wait() <-chan interface{} {
+func (j *syncJob) Wait() <-chan any {
 	return j.result
 }
 

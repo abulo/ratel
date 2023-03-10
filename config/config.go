@@ -81,7 +81,7 @@ type Config struct {
 	// config options
 	opts *Options
 	// all config data
-	data map[string]interface{}
+	data map[string]any
 
 	// loaded config files records
 	loadedFiles []string
@@ -90,8 +90,8 @@ type Config struct {
 	// TODO Deprecated decoder and encoder, use driver instead
 	// drivers map[string]Driver
 
-	// decoders["toml"] = func(blob []byte, v interface{}) (err error){}
-	// decoders["yaml"] = func(blob []byte, v interface{}) (err error){}
+	// decoders["toml"] = func(blob []byte, v any) (err error){}
+	// decoders["yaml"] = func(blob []byte, v any) (err error){}
 	decoders map[string]Decoder
 	encoders map[string]Encoder
 
@@ -111,7 +111,7 @@ func New(name string) *Config {
 	return &Config{
 		name: name,
 		opts: newDefaultOption(),
-		data: make(map[string]interface{}),
+		data: make(map[string]any),
 
 		// default add JSON driver
 		encoders: map[string]Encoder{JSON: JSONEncoder},
@@ -124,7 +124,7 @@ func NewEmpty(name string) *Config {
 	return &Config{
 		name: name,
 		opts: newDefaultOption(),
-		data: make(map[string]interface{}),
+		data: make(map[string]any),
 
 		// don't add any drivers
 		encoders: map[string]Encoder{},
@@ -231,7 +231,7 @@ func (c *Config) ClearAll() {
 func (c *Config) ClearData() {
 	c.fireHook(OnCleanData)
 
-	c.data = make(map[string]interface{})
+	c.data = make(map[string]any)
 	c.loadedFiles = []string{}
 }
 
@@ -262,6 +262,6 @@ func (c *Config) addError(err error) {
 }
 
 // format and record error
-func (c *Config) addErrorf(format string, a ...interface{}) {
+func (c *Config) addErrorf(format string, a ...any) {
 	c.err = fmt.Errorf(format, a...)
 }

@@ -7,7 +7,7 @@ import (
 
 func TestLinkList_Push(t *testing.T) {
 	type args struct {
-		v interface{}
+		v any
 	}
 	tests := []struct {
 		name string
@@ -27,7 +27,7 @@ func TestLinkList_Pop(t *testing.T) {
 	tests := []struct {
 		name string
 		list *LinkList
-		want interface{}
+		want any
 	}{
 		// TODO: Add test cases.
 	}

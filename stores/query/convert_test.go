@@ -7,7 +7,7 @@ import (
 
 func Test_toString(t *testing.T) {
 	type args struct {
-		src interface{}
+		src any
 	}
 	tests := []struct {
 		name    string

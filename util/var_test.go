@@ -4,7 +4,7 @@ import "testing"
 
 func TestEmpty(t *testing.T) {
 	type args struct {
-		val interface{}
+		val any
 	}
 	tests := []struct {
 		name string
@@ -24,7 +24,7 @@ func TestEmpty(t *testing.T) {
 
 func TestIsNumeric(t *testing.T) {
 	type args struct {
-		val interface{}
+		val any
 	}
 	tests := []struct {
 		name string

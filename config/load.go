@@ -142,7 +142,7 @@ func LoadFlags(keys []string) error { return dc.LoadFlags(keys) }
 //	// debug flag is bool type
 //	c.LoadFlags([]string{"env", "debug:bool"})
 func (c *Config) LoadFlags(keys []string) (err error) {
-	hash := map[string]interface{}{}
+	hash := map[string]any{}
 
 	// bind vars
 	for _, key := range keys {
@@ -187,13 +187,13 @@ func (c *Config) LoadFlags(keys []string) (err error) {
 }
 
 // LoadData load one or multi data
-func LoadData(dataSource ...interface{}) error { return dc.LoadData(dataSource...) }
+func LoadData(dataSource ...any) error { return dc.LoadData(dataSource...) }
 
 // LoadData load data from map OR struct
 //
 // The dataSources can be:
-//   - map[string]interface{}
-func (c *Config) LoadData(dataSources ...interface{}) (err error) {
+//   - map[string]any
+func (c *Config) LoadData(dataSources ...any) (err error) {
 	if c.opts.Delimiter == 0 {
 		c.opts.Delimiter = defaultDelimiter
 	}
@@ -338,7 +338,7 @@ func (c *Config) parseSourceCode(format string, blob []byte) (err error) {
 		c.opts.Delimiter = defaultDelimiter
 	}
 
-	data := make(map[string]interface{})
+	data := make(map[string]any)
 
 	// decode content to data
 	if err = decode(blob, &data); err != nil {

@@ -56,9 +56,9 @@ type Builder struct {
 	unLimit    int64
 	unOffset   int64
 	unOrders   []string
-	args       []interface{}
-	whereArgs  []interface{}
-	data       []map[string]interface{}
+	args       []any
+	whereArgs  []any
+	data       []map[string]any
 }
 type join struct {
 	table    string
@@ -89,7 +89,7 @@ func (builder *Builder) Select(columns ...string) *Builder {
 }
 
 // Where 构造条件语句
-func (builder *Builder) Where(column string, value ...interface{}) *Builder {
+func (builder *Builder) Where(column string, value ...any) *Builder {
 	if len(value) == 0 { //一个参数直接where
 		builder.toWhere(column, "", 0, AND)
 	} else if len(value) == 1 { //2个参数直接where =
@@ -106,7 +106,7 @@ func (builder *Builder) Where(column string, value ...interface{}) *Builder {
 }
 
 // OrWhere 构造OR条件
-func (builder *Builder) OrWhere(column string, value ...interface{}) *Builder {
+func (builder *Builder) OrWhere(column string, value ...any) *Builder {
 	if len(value) == 0 { //一个参数直接where
 		builder.toWhere(column, "", 0, OR)
 	} else if len(value) == 1 { //2个参数直接where =
@@ -123,112 +123,112 @@ func (builder *Builder) OrWhere(column string, value ...interface{}) *Builder {
 }
 
 // Equal 构造等于
-func (builder *Builder) Equal(column string, value interface{}) *Builder {
+func (builder *Builder) Equal(column string, value any) *Builder {
 	builder.toWhere(column, EQUAL, 1, AND)
 	builder.addArg(value)
 	return builder
 }
 
 // OrEqual 构造或者等于
-func (builder *Builder) OrEqual(column string, value interface{}) *Builder {
+func (builder *Builder) OrEqual(column string, value any) *Builder {
 	builder.toWhere(column, EQUAL, 1, OR)
 	builder.addArg(value)
 	return builder
 }
 
 // NotEqual 构造不等于
-func (builder *Builder) NotEqual(column string, value interface{}) *Builder {
+func (builder *Builder) NotEqual(column string, value any) *Builder {
 	builder.toWhere(column, NOTEQUAL, 1, AND)
 	builder.addArg(value)
 	return builder
 }
 
 // Greater 构造大于
-func (builder *Builder) Greater(column string, value interface{}) *Builder {
+func (builder *Builder) Greater(column string, value any) *Builder {
 	builder.toWhere(column, GREATER, 1, AND)
 	builder.addArg(value)
 	return builder
 }
 
 // Greater 构造大于等于
-func (builder *Builder) GreaterEqual(column string, value interface{}) *Builder {
+func (builder *Builder) GreaterEqual(column string, value any) *Builder {
 	builder.toWhere(column, GREATEREQUAL, 1, AND)
 	builder.addArg(value)
 	return builder
 }
 
 // Greater 构造小于
-func (builder *Builder) Less(column string, value interface{}) *Builder {
+func (builder *Builder) Less(column string, value any) *Builder {
 	builder.toWhere(column, LESS, 1, AND)
 	builder.addArg(value)
 	return builder
 }
 
 // Greater 构造小于等于
-func (builder *Builder) LessEqual(column string, value interface{}) *Builder {
+func (builder *Builder) LessEqual(column string, value any) *Builder {
 	builder.toWhere(column, LESSEQUAL, 1, AND)
 	builder.addArg(value)
 	return builder
 }
 
 // OrNotEqual 构造或者不等于
-func (builder *Builder) OrNotEqual(column string, value interface{}) *Builder {
+func (builder *Builder) OrNotEqual(column string, value any) *Builder {
 	builder.toWhere(column, NOTEQUAL, 1, OR)
 	builder.addArg(value)
 	return builder
 }
 
 // Between 构造Between
-func (builder *Builder) Between(column string, value1 interface{}, value2 interface{}) *Builder {
+func (builder *Builder) Between(column string, value1 any, value2 any) *Builder {
 	builder.toWhere(column, BETWEEN, 2, AND)
 	builder.addArg(value1, value2)
 	return builder
 }
 
 // OrBetween 构造 或者 Between
-func (builder *Builder) OrBetween(column string, value1 interface{}, value2 interface{}) *Builder {
+func (builder *Builder) OrBetween(column string, value1 any, value2 any) *Builder {
 	builder.toWhere(column, BETWEEN, 2, OR)
 	builder.addArg(value1, value2)
 	return builder
 }
 
 // NotBetween 构造不Not Between
-func (builder *Builder) NotBetween(column string, value1 interface{}, value2 interface{}) *Builder {
+func (builder *Builder) NotBetween(column string, value1 any, value2 any) *Builder {
 	builder.toWhere(column, NOTBETWEEN, 2, AND)
 	builder.addArg(value1, value2)
 	return builder
 }
 
 // NotOrBetween 构造 Not Between  OR Not Between
-func (builder *Builder) NotOrBetween(column string, value1 interface{}, value2 interface{}) *Builder {
+func (builder *Builder) NotOrBetween(column string, value1 any, value2 any) *Builder {
 	builder.toWhere(column, NOTBETWEEN, 2, OR)
 	builder.addArg(value1, value2)
 	return builder
 }
 
 // In 构造 in语句
-func (builder *Builder) In(column string, value ...interface{}) *Builder {
+func (builder *Builder) In(column string, value ...any) *Builder {
 	builder.toWhere(column, IN, int64(len(value)), AND)
 	builder.addArg(value...)
 	return builder
 }
 
 // OrIn orin语句
-func (builder *Builder) OrIn(column string, value ...interface{}) *Builder {
+func (builder *Builder) OrIn(column string, value ...any) *Builder {
 	builder.toWhere(column, IN, int64(len(value)), OR)
 	builder.addArg(value...)
 	return builder
 }
 
 // NotIn .
-func (builder *Builder) NotIn(column string, value ...interface{}) *Builder {
+func (builder *Builder) NotIn(column string, value ...any) *Builder {
 	builder.toWhere(column, NOTIN, int64(len(value)), AND)
 	builder.addArg(value...)
 	return builder
 }
 
 // OrNotIn .
-func (builder *Builder) OrNotIn(column string, value ...interface{}) *Builder {
+func (builder *Builder) OrNotIn(column string, value ...any) *Builder {
 	builder.toWhere(column, NOTIN, int64(len(value)), OR)
 	builder.addArg(value...)
 	return builder
@@ -259,14 +259,14 @@ func (builder *Builder) OrIsNotNULL(column string) *Builder {
 }
 
 // Like .
-func (builder *Builder) Like(column string, value interface{}) *Builder {
+func (builder *Builder) Like(column string, value any) *Builder {
 	builder.toWhere(column, LIKE, 1, AND)
 	builder.addArg(value)
 	return builder
 }
 
 // OrLike .
-func (builder *Builder) OrLike(column string, value interface{}) *Builder {
+func (builder *Builder) OrLike(column string, value any) *Builder {
 	builder.toWhere(column, LIKE, 1, OR)
 	builder.addArg(value)
 	return builder
@@ -389,22 +389,22 @@ func (builder *Builder) toWhere(column string, operator string, valueNum int64, 
 		w{column: column, operator: operator, valueNum: valueNum, do: do})
 	return builder
 }
-func (builder *Builder) addArg(value ...interface{}) {
+func (builder *Builder) addArg(value ...any) {
 	builder.args = append(builder.args, value...)
 }
 
-func (builder *Builder) beforeArg(value ...interface{}) {
+func (builder *Builder) beforeArg(value ...any) {
 	builder.whereArgs = append(builder.whereArgs, value...)
 }
 
-func (builder *Builder) setData(data ...map[string]interface{}) {
+func (builder *Builder) setData(data ...map[string]any) {
 	builder.data = data
 }
 
-func (builder *Builder) getInsertMap(data interface{}) (columns []string, values map[string][]interface{}, err error) {
+func (builder *Builder) getInsertMap(data any) (columns []string, values map[string][]any, err error) {
 	stValue := reflect.Indirect(reflect.ValueOf(data))
 
-	values = make(map[string][]interface{}, 0)
+	values = make(map[string][]any, 0)
 	switch stValue.Kind() {
 	case reflect.Struct:
 		var ignore bool
@@ -511,7 +511,7 @@ func (builder *Builder) getInsertMap(data interface{}) (columns []string, values
 					values[column] = append(values[column], v.Interface())
 				} else {
 					columns = append(columns, column)
-					values[column] = []interface{}{v.Interface()}
+					values[column] = []any{v.Interface()}
 				}
 			}
 		}
@@ -523,7 +523,7 @@ func (builder *Builder) getInsertMap(data interface{}) (columns []string, values
 				values[column] = append(values[column], stValue.MapIndex(k).Interface())
 			} else {
 				columns = append(columns, column)
-				values[column] = []interface{}{stValue.MapIndex(k).Interface()}
+				values[column] = []any{stValue.MapIndex(k).Interface()}
 			}
 		}
 	case reflect.Slice:
@@ -598,11 +598,11 @@ func (builder *Builder) IsZero(v reflect.Value) bool {
 }
 
 // MultiInsert 批量插入
-func (builder *Builder) MultiInsert(datas ...interface{}) (int64, error) {
+func (builder *Builder) MultiInsert(datas ...any) (int64, error) {
 
 	stVal := reflect.ValueOf(datas)
 	if stVal.Kind() != reflect.Slice {
-		return 0, errors.New("data is not []interface{} type")
+		return 0, errors.New("data is not []any type")
 	}
 	n := stVal.Len()
 	if n > 0 {
@@ -610,9 +610,9 @@ func (builder *Builder) MultiInsert(datas ...interface{}) (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		bindingsArr := make([]map[string]interface{}, n)
+		bindingsArr := make([]map[string]any, n)
 		for i := 0; i < n; i++ {
-			bindings := make(map[string]interface{}, 0)
+			bindings := make(map[string]any, 0)
 			for _, column := range columns {
 				bindings[column] = values[column][i]
 			}
@@ -635,7 +635,7 @@ func (builder *Builder) MultiInsert(datas ...interface{}) (int64, error) {
 }
 
 // MultiInsertSQL 批量插入
-func (builder *Builder) MultiInsertSQL(datas ...interface{}) string {
+func (builder *Builder) MultiInsertSQL(datas ...any) string {
 	stVal := reflect.ValueOf(datas)
 	if stVal.Kind() != reflect.Slice {
 		return ""
@@ -646,9 +646,9 @@ func (builder *Builder) MultiInsertSQL(datas ...interface{}) string {
 		if err != nil {
 			return ""
 		}
-		bindingsArr := make([]map[string]interface{}, n)
+		bindingsArr := make([]map[string]any, n)
 		for i := 0; i < n; i++ {
-			bindings := make(map[string]interface{}, 0)
+			bindings := make(map[string]any, 0)
 			for _, column := range columns {
 				bindings[column] = values[column][i]
 			}
@@ -667,11 +667,11 @@ func (builder *Builder) MultiInsertSQL(datas ...interface{}) string {
 }
 
 // Replace 替换
-func (builder *Builder) Replace(datas ...interface{}) (int64, error) {
+func (builder *Builder) Replace(datas ...any) (int64, error) {
 
 	stVal := reflect.ValueOf(datas)
 	if stVal.Kind() != reflect.Slice {
-		return 0, errors.New("data is not []interface{} type")
+		return 0, errors.New("data is not []any type")
 	}
 	n := stVal.Len()
 	if n > 0 {
@@ -679,9 +679,9 @@ func (builder *Builder) Replace(datas ...interface{}) (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		bindingsArr := make([]map[string]interface{}, n)
+		bindingsArr := make([]map[string]any, n)
 		for i := 0; i < n; i++ {
-			bindings := make(map[string]interface{}, 0)
+			bindings := make(map[string]any, 0)
 			for _, column := range columns {
 				bindings[column] = values[column][i]
 			}
@@ -703,7 +703,7 @@ func (builder *Builder) Replace(datas ...interface{}) (int64, error) {
 }
 
 // ReplaceSQL 替换
-func (builder *Builder) ReplaceSQL(datas ...interface{}) string {
+func (builder *Builder) ReplaceSQL(datas ...any) string {
 
 	stVal := reflect.ValueOf(datas)
 	if stVal.Kind() != reflect.Slice {
@@ -715,9 +715,9 @@ func (builder *Builder) ReplaceSQL(datas ...interface{}) string {
 		if err != nil {
 			return ""
 		}
-		bindingsArr := make([]map[string]interface{}, n)
+		bindingsArr := make([]map[string]any, n)
 		for i := 0; i < n; i++ {
-			bindings := make(map[string]interface{}, 0)
+			bindings := make(map[string]any, 0)
 			for _, column := range columns {
 				bindings[column] = values[column][i]
 			}
@@ -736,13 +736,13 @@ func (builder *Builder) ReplaceSQL(datas ...interface{}) string {
 }
 
 // InsertUpdate ...
-func (builder *Builder) InsertUpdate(insert interface{}, update interface{}) (int64, error) {
+func (builder *Builder) InsertUpdate(insert any, update any) (int64, error) {
 
 	columns, values, err := builder.getInsertMap(insert)
 	if err != nil {
 		return 0, err
 	}
-	bindingsInsert := map[string]interface{}{}
+	bindingsInsert := map[string]any{}
 	for _, column := range columns {
 		bindingsInsert[column] = values[column][0]
 	}
@@ -751,7 +751,7 @@ func (builder *Builder) InsertUpdate(insert interface{}, update interface{}) (in
 	if errup != nil {
 		return 0, errup
 	}
-	bindingsUpdate := map[string]interface{}{}
+	bindingsUpdate := map[string]any{}
 	for _, column := range columnsup {
 		bindingsUpdate[column] = valuesup[column][0]
 	}
@@ -767,13 +767,13 @@ func (builder *Builder) InsertUpdate(insert interface{}, update interface{}) (in
 }
 
 // InsertUpdateSQL ...
-func (builder *Builder) InsertUpdateSQL(insert interface{}, update interface{}) string {
+func (builder *Builder) InsertUpdateSQL(insert any, update any) string {
 
 	columns, values, err := builder.getInsertMap(insert)
 	if err != nil {
 		return err.Error()
 	}
-	bindingsInsert := map[string]interface{}{}
+	bindingsInsert := map[string]any{}
 	for _, column := range columns {
 		bindingsInsert[column] = values[column][0]
 	}
@@ -782,7 +782,7 @@ func (builder *Builder) InsertUpdateSQL(insert interface{}, update interface{}) 
 	if errup != nil {
 		return errup.Error()
 	}
-	bindingsUpdate := map[string]interface{}{}
+	bindingsUpdate := map[string]any{}
 	for _, column := range columnsup {
 		bindingsUpdate[column] = valuesup[column][0]
 	}
@@ -795,12 +795,12 @@ func (builder *Builder) InsertUpdateSQL(insert interface{}, update interface{}) 
 }
 
 // Insert 插入数据
-func (builder *Builder) Insert(data interface{}) (int64, error) {
+func (builder *Builder) Insert(data any) (int64, error) {
 	columns, values, err := builder.getInsertMap(data)
 	if err != nil {
 		return 0, err
 	}
-	bindings := map[string]interface{}{}
+	bindings := map[string]any{}
 	for _, column := range columns {
 		bindings[column] = values[column][0]
 	}
@@ -815,12 +815,12 @@ func (builder *Builder) Insert(data interface{}) (int64, error) {
 }
 
 // InsertSQL 获取SQL语句
-func (builder *Builder) InsertSQL(data interface{}) string {
+func (builder *Builder) InsertSQL(data any) string {
 	columns, values, err := builder.getInsertMap(data)
 	if err != nil {
 		return ""
 	}
-	bindings := map[string]interface{}{}
+	bindings := map[string]any{}
 	for _, column := range columns {
 		bindings[column] = values[column][0]
 	}
@@ -832,12 +832,12 @@ func (builder *Builder) InsertSQL(data interface{}) string {
 }
 
 // Update 更新
-func (builder *Builder) Update(data interface{}) (int64, error) {
+func (builder *Builder) Update(data any) (int64, error) {
 	columns, values, err := builder.getInsertMap(data)
 	if err != nil {
 		return 0, err
 	}
-	bindings := map[string]interface{}{}
+	bindings := map[string]any{}
 	for _, column := range columns {
 		bindings[column] = values[column][0]
 	}
@@ -854,12 +854,12 @@ func (builder *Builder) Update(data interface{}) (int64, error) {
 }
 
 // UpdateSQL 更新
-func (builder *Builder) UpdateSQL(data interface{}) string {
+func (builder *Builder) UpdateSQL(data any) string {
 	columns, values, err := builder.getInsertMap(data)
 	if err != nil {
 		return ""
 	}
-	bindings := map[string]interface{}{}
+	bindings := map[string]any{}
 	for _, column := range columns {
 		bindings[column] = values[column][0]
 	}
@@ -905,7 +905,7 @@ func (builder *Builder) Count() (int64, error) {
 }
 
 // Exec 原始SQl语句执行
-func (builder *Builder) Exec(sql string, args ...interface{}) (int64, error) {
+func (builder *Builder) Exec(sql string, args ...any) (int64, error) {
 	result, err := builder.connection.Exec(builder.ctx, sql, args...)
 	if err != nil {
 		return 0, err
@@ -914,13 +914,13 @@ func (builder *Builder) Exec(sql string, args ...interface{}) (int64, error) {
 }
 
 // ExecSQL 原始SQl语句执行
-func (builder *Builder) ExecSQL(sql string, args ...interface{}) string {
+func (builder *Builder) ExecSQL(sql string, args ...any) string {
 	builder.connection.LastSQL(sql, args...)
 	return builder.connection.SQLRaw()
 }
 
 // QueryRows ...
-func (builder *Builder) QueryRows(sql string, args ...interface{}) *Rows {
+func (builder *Builder) QueryRows(sql string, args ...any) *Rows {
 	rows, err := builder.connection.Query(builder.ctx, sql, args...)
 	if err != nil {
 		return &Rows{rs: nil, lastError: err}
@@ -929,19 +929,19 @@ func (builder *Builder) QueryRows(sql string, args ...interface{}) *Rows {
 }
 
 // QueryRowsSQL ...
-func (builder *Builder) QueryRowsSQL(sql string, args ...interface{}) string {
+func (builder *Builder) QueryRowsSQL(sql string, args ...any) string {
 	builder.connection.LastSQL(sql, args...)
 	return builder.connection.SQLRaw()
 }
 
 // QueryRowSQL ...
-func (builder *Builder) QueryRowSQL(sql string, args ...interface{}) string {
+func (builder *Builder) QueryRowSQL(sql string, args ...any) string {
 	builder.connection.LastSQL(sql, args...)
 	return builder.connection.SQLRaw()
 }
 
 // QueryRow ...
-func (builder *Builder) QueryRow(sql string, args ...interface{}) *Row {
+func (builder *Builder) QueryRow(sql string, args ...any) *Row {
 	rs := builder.QueryRows(sql, args...)
 	r := new(Row)
 	r.rs = rs

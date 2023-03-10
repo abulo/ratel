@@ -17,8 +17,8 @@ import (
 //////////// Array(Slice/Map) Functions ////////////
 
 // ArrayFill array_fill()
-func ArrayFill(startIndex int, num uint, value interface{}) map[int]interface{} {
-	m := make(map[int]interface{})
+func ArrayFill(startIndex int, num uint, value any) map[int]any {
+	m := make(map[int]any)
 	var i uint
 	for i = 0; i < num; i++ {
 		m[startIndex] = value
@@ -28,8 +28,8 @@ func ArrayFill(startIndex int, num uint, value interface{}) map[int]interface{} 
 }
 
 // ArrayFlip array_flip()
-func ArrayFlip(m map[interface{}]interface{}) map[interface{}]interface{} {
-	n := make(map[interface{}]interface{})
+func ArrayFlip(m map[any]any) map[any]any {
+	n := make(map[any]any)
 	for i, v := range m {
 		n[v] = i
 	}
@@ -37,8 +37,8 @@ func ArrayFlip(m map[interface{}]interface{}) map[interface{}]interface{} {
 }
 
 // ArrayKeys array_keys()
-func ArrayKeys(elements map[interface{}]interface{}) []interface{} {
-	i, keys := 0, make([]interface{}, len(elements))
+func ArrayKeys(elements map[any]any) []any {
+	i, keys := 0, make([]any, len(elements))
 	for key := range elements {
 		keys[i] = key
 		i++
@@ -47,8 +47,8 @@ func ArrayKeys(elements map[interface{}]interface{}) []interface{} {
 }
 
 // ArrayValues array_values()
-func ArrayValues(elements map[interface{}]interface{}) []interface{} {
-	i, vals := 0, make([]interface{}, len(elements))
+func ArrayValues(elements map[any]any) []any {
+	i, vals := 0, make([]any, len(elements))
 	for _, val := range elements {
 		vals[i] = val
 		i++
@@ -57,12 +57,12 @@ func ArrayValues(elements map[interface{}]interface{}) []interface{} {
 }
 
 // ArrayMerge array_merge()
-func ArrayMerge(ss ...[]interface{}) []interface{} {
+func ArrayMerge(ss ...[]any) []any {
 	n := 0
 	for _, v := range ss {
 		n += len(v)
 	}
-	s := make([]interface{}, 0, n)
+	s := make([]any, 0, n)
 	for _, v := range ss {
 		s = append(s, v...)
 	}
@@ -70,13 +70,13 @@ func ArrayMerge(ss ...[]interface{}) []interface{} {
 }
 
 // ArrayChunk array_chunk()
-func ArrayChunk(s []interface{}, size int) [][]interface{} {
+func ArrayChunk(s []any, size int) [][]any {
 	if size < 1 {
 		panic("size: cannot be less than 1")
 	}
 	length := len(s)
 	chunks := int(math.Ceil(float64(length) / float64(size)))
-	var n [][]interface{}
+	var n [][]any
 	for i, end := 0, 0; chunks > 0; chunks-- {
 		end = (i + 1) * size
 		if end > length {
@@ -89,7 +89,7 @@ func ArrayChunk(s []interface{}, size int) [][]interface{} {
 }
 
 // ArrayPad array_pad()
-func ArrayPad(s []interface{}, size int, val interface{}) []interface{} {
+func ArrayPad(s []any, size int, val any) []any {
 	if size == 0 || (size > 0 && size < len(s)) || (size < 0 && size > -len(s)) {
 		return s
 	}
@@ -98,7 +98,7 @@ func ArrayPad(s []interface{}, size int, val interface{}) []interface{} {
 		n = -size
 	}
 	n -= len(s)
-	tmp := make([]interface{}, n)
+	tmp := make([]any, n)
 	for i := 0; i < n; i++ {
 		tmp[i] = val
 	}
@@ -109,7 +109,7 @@ func ArrayPad(s []interface{}, size int, val interface{}) []interface{} {
 }
 
 // ArraySlice array_slice()
-func ArraySlice(s []interface{}, offset, length uint) []interface{} {
+func ArraySlice(s []any, offset, length uint) []any {
 	if offset > uint(len(s)) {
 		panic("offset: the offset is less than the length of s")
 	}
@@ -121,9 +121,9 @@ func ArraySlice(s []interface{}, offset, length uint) []interface{} {
 }
 
 // ArrayRand array_rand()
-func ArrayRand(elements []interface{}) []interface{} {
+func ArrayRand(elements []any) []any {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	n := make([]interface{}, len(elements))
+	n := make([]any, len(elements))
 	for i, v := range r.Perm(len(elements)) {
 		n[i] = elements[v]
 	}
@@ -131,8 +131,8 @@ func ArrayRand(elements []interface{}) []interface{} {
 }
 
 // ArrayColumn array_column()
-func ArrayColumn(input map[string]map[string]interface{}, columnKey string) []interface{} {
-	columns := make([]interface{}, 0, len(input))
+func ArrayColumn(input map[string]map[string]any, columnKey string) []any {
+	columns := make([]any, 0, len(input))
 	for _, val := range input {
 		if v, ok := val[columnKey]; ok {
 			columns = append(columns, v)
@@ -143,14 +143,14 @@ func ArrayColumn(input map[string]map[string]interface{}, columnKey string) []in
 
 // ArrayPush array_push()
 // Push one or more elements onto the end of slice
-func ArrayPush(s *[]interface{}, elements ...interface{}) int {
+func ArrayPush(s *[]any, elements ...any) int {
 	*s = append(*s, elements...)
 	return len(*s)
 }
 
 // ArrayPop array_pop()
 // Pop the element off the end of slice
-func ArrayPop(s *[]interface{}) interface{} {
+func ArrayPop(s *[]any) any {
 	if len(*s) == 0 {
 		return nil
 	}
@@ -162,14 +162,14 @@ func ArrayPop(s *[]interface{}) interface{} {
 
 // ArrayUnshift array_unshift()
 // Prepend one or more elements to the beginning of a slice
-func ArrayUnshift(s *[]interface{}, elements ...interface{}) int {
+func ArrayUnshift(s *[]any, elements ...any) int {
 	*s = append(elements, *s...)
 	return len(*s)
 }
 
 // ArrayShift array_shift()
 // Shift an element off the beginning of slice
-func ArrayShift(s *[]interface{}) interface{} {
+func ArrayShift(s *[]any) any {
 	if len(*s) == 0 {
 		return nil
 	}
@@ -179,17 +179,17 @@ func ArrayShift(s *[]interface{}) interface{} {
 }
 
 // ArrayKeyExists array_key_exists()
-func ArrayKeyExists(key interface{}, m map[interface{}]interface{}) bool {
+func ArrayKeyExists(key any, m map[any]any) bool {
 	_, ok := m[key]
 	return ok
 }
 
 // ArrayCombine array_combine()
-func ArrayCombine(s1, s2 []interface{}) map[interface{}]interface{} {
+func ArrayCombine(s1, s2 []any) map[any]any {
 	if len(s1) != len(s2) {
 		panic("the number of elements for each slice isn't equal")
 	}
-	m := make(map[interface{}]interface{}, len(s1))
+	m := make(map[any]any, len(s1))
 	for i, v := range s1 {
 		m[v] = s2[i]
 	}
@@ -197,7 +197,7 @@ func ArrayCombine(s1, s2 []interface{}) map[interface{}]interface{} {
 }
 
 // ArrayReverse array_reverse()
-func ArrayReverse(s []interface{}) []interface{} {
+func ArrayReverse(s []any) []any {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
 	}
@@ -219,7 +219,7 @@ func Implode(glue string, pieces []string) string {
 
 // InArray in_array()
 // haystack supported types: slice, array or map
-func InArray(needle interface{}, haystack interface{}) bool {
+func InArray(needle any, haystack any) bool {
 	val := reflect.ValueOf(haystack)
 	switch val.Kind() {
 	case reflect.Slice, reflect.Array:
@@ -253,7 +253,7 @@ func ArrayRandMap(elements []map[string]string) []map[string]string {
 
 // InMultiArray in_array()
 // haystack supported types: slice, array or map
-func InMultiArray(haystack interface{}, needle ...interface{}) bool {
+func InMultiArray(haystack any, needle ...any) bool {
 	val := reflect.ValueOf(haystack)
 	vals := reflect.ValueOf(needle)
 	switch val.Kind() {
@@ -280,7 +280,7 @@ func InMultiArray(haystack interface{}, needle ...interface{}) bool {
 }
 
 // MultiArray 判断二维数组里面是不是只有一条数据
-func MultiArray(haystack interface{}) bool {
+func MultiArray(haystack any) bool {
 	val := reflect.ValueOf(haystack)
 	switch val.Kind() {
 	case reflect.Slice, reflect.Array:
@@ -294,7 +294,7 @@ func MultiArray(haystack interface{}) bool {
 }
 
 // InterfaceToString ...
-func InterfaceToString(data []interface{}) (s []string) {
+func InterfaceToString(data []any) (s []string) {
 	for _, v := range data {
 		s = append(s, fmt.Sprintf("%v", v))
 	}
@@ -324,7 +324,7 @@ func SplitString(p, split string, space bool) string {
 	res = reg.ReplaceAllString(res, split)
 	args := Explode(split, res)
 	newAry := make(map[string]string, 0)
-	newArys := make(map[interface{}]interface{}, 0)
+	newArys := make(map[any]any, 0)
 	for _, v := range args {
 		if len(StrTrim(v)) > 0 {
 			newAry[StrTrim(v)] = StrTrim(v)
@@ -384,14 +384,14 @@ func ArrayMultiPluck(data []map[string]string, key string) map[string]map[string
 
 // jsonStringToObject attempts to unmarshall a string as JSON into
 // the object passed as pointer.
-func jsonStringToObject(s string, v interface{}) error {
+func jsonStringToObject(s string, v any) error {
 	data := []byte(s)
 	return json.Unmarshal(data, v)
 }
 
 // AryMapStringToAryMapInterface ...
-func AryMapStringToAryMapInterface(d []map[string]string) []map[string]interface{} {
-	data := make([]map[string]interface{}, 0)
+func AryMapStringToAryMapInterface(d []map[string]string) []map[string]any {
+	data := make([]map[string]any, 0)
 	for _, v := range d {
 		data = append(data, MapStringToMapInterface(v))
 	}
@@ -399,17 +399,17 @@ func AryMapStringToAryMapInterface(d []map[string]string) []map[string]interface
 }
 
 // MapStringToMapInterface ...
-func MapStringToMapInterface(d map[string]string) map[string]interface{} {
-	data := make(map[string]interface{}, 0)
+func MapStringToMapInterface(d map[string]string) map[string]any {
+	data := make(map[string]any, 0)
 
 	for k, v := range d {
-		data[k] = interface{}(v)
+		data[k] = any(v)
 	}
 	return data
 }
 
 // AryMapInterfaceToAryMapString ...
-func AryMapInterfaceToAryMapString(d []map[string]interface{}) []map[string]string {
+func AryMapInterfaceToAryMapString(d []map[string]any) []map[string]string {
 	data := make([]map[string]string, 0)
 	for _, v := range d {
 		data = append(data, MapInterfaceToMapString(v))
@@ -418,7 +418,7 @@ func AryMapInterfaceToAryMapString(d []map[string]interface{}) []map[string]stri
 }
 
 // MapInterfaceToMapString ...
-func MapInterfaceToMapString(d map[string]interface{}) map[string]string {
+func MapInterfaceToMapString(d map[string]any) map[string]string {
 	data := make(map[string]string, 0)
 
 	for k, v := range d {
@@ -428,16 +428,16 @@ func MapInterfaceToMapString(d map[string]interface{}) map[string]string {
 }
 
 // ArgStringToAryInterface ...
-func ArgStringToAryInterface(d []string) []interface{} {
-	data := make([]interface{}, 0)
+func ArgStringToAryInterface(d []string) []any {
+	data := make([]any, 0)
 	for _, v := range d {
-		data = append(data, interface{}(v))
+		data = append(data, any(v))
 	}
 	return data
 }
 
 // AryInterfaceToArgString ...
-func AryInterfaceToArgString(d []interface{}) []string {
+func AryInterfaceToArgString(d []any) []string {
 	data := make([]string, 0)
 	for _, v := range d {
 		data = append(data, cast.ToString(v))
@@ -446,9 +446,9 @@ func AryInterfaceToArgString(d []interface{}) []string {
 }
 
 // InterfaceToAryMapStringInterface ...
-func InterfaceToAryMapStringInterface(in interface{}) []map[string]interface{} {
-	data := make([]map[string]interface{}, 0)
-	newData := in.([]interface{})
+func InterfaceToAryMapStringInterface(in any) []map[string]any {
+	data := make([]map[string]any, 0)
+	newData := in.([]any)
 	for _, v := range newData {
 		data = append(data, cast.ToStringMap(v))
 	}
@@ -456,9 +456,9 @@ func InterfaceToAryMapStringInterface(in interface{}) []map[string]interface{} {
 }
 
 // InterfaceToAryMapStringString ...
-func InterfaceToAryMapStringString(in interface{}) []map[string]string {
+func InterfaceToAryMapStringString(in any) []map[string]string {
 	data := make([]map[string]string, 0)
-	newData := in.([]interface{})
+	newData := in.([]any)
 	for _, v := range newData {
 		data = append(data, cast.ToStringMapString(v))
 	}

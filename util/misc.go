@@ -15,7 +15,7 @@ import (
 //////////// Misc. Functions ////////////
 
 // Echo echo
-func Echo(args ...interface{}) {
+func Echo(args ...any) {
 	fmt.Print(args...)
 }
 
@@ -277,7 +277,7 @@ func ZipOpen(filename string) (*zip.ReadCloser, error) {
 }
 
 // Pack pack()
-func Pack(order binary.ByteOrder, data interface{}) (string, error) {
+func Pack(order binary.ByteOrder, data any) (string, error) {
 	buf := new(bytes.Buffer)
 	err := binary.Write(buf, order, data)
 	if err != nil {
@@ -288,7 +288,7 @@ func Pack(order binary.ByteOrder, data interface{}) (string, error) {
 }
 
 // Unpack unpack()
-func Unpack(order binary.ByteOrder, data string) (interface{}, error) {
+func Unpack(order binary.ByteOrder, data string) (any, error) {
 	var result []byte
 	r := bytes.NewReader([]byte(data))
 	err := binary.Read(r, order, &result)
@@ -301,7 +301,7 @@ func Unpack(order binary.ByteOrder, data string) (interface{}, error) {
 
 // Ternary Ternary expression
 // max := Ternary(a > b, a, b).(int)
-func Ternary(condition bool, trueVal, falseVal interface{}) interface{} {
+func Ternary(condition bool, trueVal, falseVal any) any {
 	if condition {
 		return trueVal
 	}

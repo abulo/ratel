@@ -80,7 +80,7 @@ type EventMessage struct {
 	Name    string
 	Scheme  string
 	Address string
-	Message interface{}
+	Message any
 }
 
 // Registry register/unregister service

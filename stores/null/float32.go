@@ -121,7 +121,7 @@ func (f Float32) IsZero() bool {
 }
 
 // Scan implements the Scanner interface.
-func (f *Float32) Scan(value interface{}) error {
+func (f *Float32) Scan(value any) error {
 	if value == nil {
 		f.Float32, f.Valid, f.Set = 0, false, false
 		return nil

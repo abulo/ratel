@@ -61,7 +61,7 @@ func (si ServiceInfo) Label() string {
 // Equal allows the values to be compared by Attributes.Equal, this change is in order
 // to fit the change in grpc-go:
 // attributes: add Equal method; resolver: add AddressMap and State.BalancerAttributes (#4855)
-func (si ServiceInfo) Equal(o interface{}) bool {
+func (si ServiceInfo) Equal(o any) bool {
 	oa, ok := o.(ServiceInfo)
 	return ok &&
 		oa.Name == si.Name &&

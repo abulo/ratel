@@ -55,7 +55,7 @@ func TestRow_ToInterface(t *testing.T) {
 	tests := []struct {
 		name       string
 		r          *Row
-		wantResult map[string]interface{}
+		wantResult map[string]any
 		wantErr    bool
 	}{
 		// TODO: Add test cases.
@@ -76,7 +76,7 @@ func TestRow_ToInterface(t *testing.T) {
 
 func TestRow_ToStruct(t *testing.T) {
 	type args struct {
-		st interface{}
+		st any
 	}
 	tests := []struct {
 		name    string
@@ -122,7 +122,7 @@ func TestRows_ToInterface(t *testing.T) {
 	tests := []struct {
 		name     string
 		r        *Rows
-		wantData []map[string]interface{}
+		wantData []map[string]any
 		wantErr  bool
 	}{
 		// TODO: Add test cases.
@@ -166,7 +166,7 @@ func TestRows_ToMap(t *testing.T) {
 
 func TestRows_ToStruct(t *testing.T) {
 	type args struct {
-		st interface{}
+		st any
 	}
 	tests := []struct {
 		name    string

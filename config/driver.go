@@ -16,10 +16,10 @@ type Driver interface {
 }
 
 // Decoder for decode yml,json,toml format content
-type Decoder func(blob []byte, v interface{}) (err error)
+type Decoder func(blob []byte, v any) (err error)
 
 // Encoder for decode yml,json,toml format content
-type Encoder func(v interface{}) (out []byte, err error)
+type Encoder func(v any) (out []byte, err error)
 
 // StdDriver struct
 type StdDriver struct {
@@ -39,12 +39,12 @@ func (d *StdDriver) Name() string {
 }
 
 // Decode of driver
-func (d *StdDriver) Decode(blob []byte, v interface{}) (err error) {
+func (d *StdDriver) Decode(blob []byte, v any) (err error) {
 	return d.decoder(blob, v)
 }
 
 // Encode of driver
-func (d *StdDriver) Encode(v interface{}) ([]byte, error) {
+func (d *StdDriver) Encode(v any) ([]byte, error) {
 	return d.encoder(v)
 }
 
@@ -68,7 +68,7 @@ var (
 )
 
 // JSONDecoder for json decode
-var JSONDecoder Decoder = func(data []byte, v interface{}) (err error) {
+var JSONDecoder Decoder = func(data []byte, v any) (err error) {
 	if JSONAllowComments {
 		str := jsonutil.StripComments(string(data))
 		return json.Unmarshal([]byte(str), v)
@@ -78,7 +78,7 @@ var JSONDecoder Decoder = func(data []byte, v interface{}) (err error) {
 }
 
 // JSONEncoder for json encode
-var JSONEncoder Encoder = func(v interface{}) (out []byte, err error) {
+var JSONEncoder Encoder = func(v any) (out []byte, err error) {
 	if len(JSONMarshalIndent) > 0 {
 		return json.MarshalIndent(v, "", JSONMarshalIndent)
 	}

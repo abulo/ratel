@@ -51,14 +51,14 @@ func TestUnaryInterceptorChain(t *testing.T) {
 func Test_prometheusUnaryServerInterceptor(t *testing.T) {
 	type args struct {
 		ctx     context.Context
-		req     interface{}
+		req     any
 		info    *grpc.UnaryServerInfo
 		handler grpc.UnaryHandler
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    interface{}
+		want    any
 		wantErr bool
 	}{
 		// TODO: Add test cases.
@@ -79,7 +79,7 @@ func Test_prometheusUnaryServerInterceptor(t *testing.T) {
 
 func Test_prometheusStreamServerInterceptor(t *testing.T) {
 	type args struct {
-		srv     interface{}
+		srv     any
 		ss      grpc.ServerStream
 		info    *grpc.StreamServerInfo
 		handler grpc.StreamHandler
@@ -103,14 +103,14 @@ func Test_prometheusStreamServerInterceptor(t *testing.T) {
 func Test_traceUnaryServerInterceptor(t *testing.T) {
 	type args struct {
 		ctx     context.Context
-		req     interface{}
+		req     any
 		info    *grpc.UnaryServerInfo
 		handler grpc.UnaryHandler
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    interface{}
+		want    any
 		wantErr bool
 	}{
 		// TODO: Add test cases.
@@ -148,7 +148,7 @@ func Test_contextedServerStream_Context(t *testing.T) {
 
 func Test_traceStreamServerInterceptor(t *testing.T) {
 	type args struct {
-		srv     interface{}
+		srv     any
 		ss      grpc.ServerStream
 		info    *grpc.StreamServerInfo
 		handler grpc.StreamHandler

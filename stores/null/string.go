@@ -116,7 +116,7 @@ func (s String) IsZero() bool {
 }
 
 // Scan implements the Scanner interface.
-func (s *String) Scan(value interface{}) error {
+func (s *String) Scan(value any) error {
 	if value == nil {
 		s.String, s.Valid, s.Set = "", false, false
 		return nil

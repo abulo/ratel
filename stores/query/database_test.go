@@ -55,7 +55,7 @@ func TestQuery_Exec(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		querySQL string
-		args     []interface{}
+		args     []any
 	}
 	tests := []struct {
 		name    string
@@ -84,7 +84,7 @@ func TestQuery_Query(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		querySQL string
-		args     []interface{}
+		args     []any
 	}
 	tests := []struct {
 		name    string
@@ -168,7 +168,7 @@ func TestTransaction_Exec(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		querySQL string
-		args     []interface{}
+		args     []any
 	}
 	tests := []struct {
 		name    string
@@ -197,7 +197,7 @@ func TestTransaction_Query(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		querySQL string
-		args     []interface{}
+		args     []any
 	}
 	tests := []struct {
 		name    string
@@ -259,7 +259,7 @@ func TestQuery_SQLRaw(t *testing.T) {
 func TestTransaction_LastSQL(t *testing.T) {
 	type args struct {
 		querySQL string
-		args     []interface{}
+		args     []any
 	}
 	tests := []struct {
 		name  string
@@ -278,7 +278,7 @@ func TestTransaction_LastSQL(t *testing.T) {
 func TestQuery_LastSQL(t *testing.T) {
 	type args struct {
 		querySQL string
-		args     []interface{}
+		args     []any
 	}
 	tests := []struct {
 		name  string
@@ -313,7 +313,7 @@ func TestSQL_ToString(t *testing.T) {
 
 func Test_isNilFixed(t *testing.T) {
 	type args struct {
-		i interface{}
+		i any
 	}
 	tests := []struct {
 		name string
@@ -334,7 +334,7 @@ func Test_isNilFixed(t *testing.T) {
 func Test_convert(t *testing.T) {
 	type args struct {
 		s string
-		v interface{}
+		v any
 	}
 	tests := []struct {
 		name string

@@ -208,7 +208,7 @@ func Test_collection_ListIndexes(t *testing.T) {
 		name       string
 		collection *collection
 		args       args
-		want       interface{}
+		want       any
 		wantErr    bool
 	}{
 		// TODO: Add test cases.
@@ -253,7 +253,7 @@ func Test_collection_DropIndex(t *testing.T) {
 func Test_collection_InsertOne(t *testing.T) {
 	type args struct {
 		ctx      context.Context
-		document interface{}
+		document any
 	}
 	tests := []struct {
 		name       string
@@ -281,7 +281,7 @@ func Test_collection_InsertOne(t *testing.T) {
 func Test_collection_InsertMany(t *testing.T) {
 	type args struct {
 		ctx       context.Context
-		documents interface{}
+		documents any
 	}
 	tests := []struct {
 		name       string
@@ -309,8 +309,8 @@ func Test_collection_InsertMany(t *testing.T) {
 func Test_collection_Aggregate(t *testing.T) {
 	type args struct {
 		ctx      context.Context
-		pipeline interface{}
-		result   interface{}
+		pipeline any
+		result   any
 	}
 	tests := []struct {
 		name       string
@@ -332,7 +332,7 @@ func Test_collection_Aggregate(t *testing.T) {
 func Test_collection_UpdateOrInsert(t *testing.T) {
 	type args struct {
 		ctx       context.Context
-		documents []interface{}
+		documents []any
 	}
 	tests := []struct {
 		name       string
@@ -360,7 +360,7 @@ func Test_collection_UpdateOrInsert(t *testing.T) {
 func Test_collection_UpdateOne(t *testing.T) {
 	type args struct {
 		ctx      context.Context
-		document interface{}
+		document any
 	}
 	tests := []struct {
 		name       string
@@ -388,7 +388,7 @@ func Test_collection_UpdateOne(t *testing.T) {
 func Test_collection_UpdateOneRaw(t *testing.T) {
 	type args struct {
 		ctx      context.Context
-		document interface{}
+		document any
 		opt      []*options.UpdateOptions
 	}
 	tests := []struct {
@@ -417,7 +417,7 @@ func Test_collection_UpdateOneRaw(t *testing.T) {
 func Test_collection_UpdateMany(t *testing.T) {
 	type args struct {
 		ctx      context.Context
-		document interface{}
+		document any
 	}
 	tests := []struct {
 		name       string
@@ -445,7 +445,7 @@ func Test_collection_UpdateMany(t *testing.T) {
 func Test_collection_FindOne(t *testing.T) {
 	type args struct {
 		ctx      context.Context
-		document interface{}
+		document any
 	}
 	tests := []struct {
 		name       string
@@ -467,7 +467,7 @@ func Test_collection_FindOne(t *testing.T) {
 func Test_collection_FindMany(t *testing.T) {
 	type args struct {
 		ctx       context.Context
-		documents interface{}
+		documents any
 	}
 	tests := []struct {
 		name       string
@@ -563,12 +563,12 @@ func Test_collection_Count(t *testing.T) {
 
 func TestBeforeCreate(t *testing.T) {
 	type args struct {
-		document interface{}
+		document any
 	}
 	tests := []struct {
 		name string
 		args args
-		want interface{}
+		want any
 	}{
 		// TODO: Add test cases.
 	}
@@ -583,12 +583,12 @@ func TestBeforeCreate(t *testing.T) {
 
 func TestBeforeUpdate(t *testing.T) {
 	type args struct {
-		document interface{}
+		document any
 	}
 	tests := []struct {
 		name string
 		args args
-		want interface{}
+		want any
 	}{
 		// TODO: Add test cases.
 	}

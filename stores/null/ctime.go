@@ -144,7 +144,7 @@ func (t CTime) IsZero() bool {
 }
 
 // Scan implements the Scanner interface. that accept only hour,minutes,seconds and ignore elses.
-func (t *CTime) Scan(value interface{}) error {
+func (t *CTime) Scan(value any) error {
 	var err error
 	switch x := value.(type) {
 	case []byte:

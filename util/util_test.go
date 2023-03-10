@@ -9,7 +9,7 @@ import (
 
 func TestMarshalHTML(t *testing.T) {
 	type args struct {
-		v interface{}
+		v any
 	}
 	tests := []struct {
 		name string
@@ -29,7 +29,7 @@ func TestMarshalHTML(t *testing.T) {
 
 func TestMarshalJS(t *testing.T) {
 	type args struct {
-		v interface{}
+		v any
 	}
 	tests := []struct {
 		name string
@@ -111,7 +111,7 @@ func TestDomainStatic(t *testing.T) {
 
 func TestUnescapeString(t *testing.T) {
 	type args struct {
-		v interface{}
+		v any
 	}
 	tests := []struct {
 		name string
@@ -301,7 +301,7 @@ func TestVerifyIPv6(t *testing.T) {
 
 func TestFunctionName(t *testing.T) {
 	type args struct {
-		i interface{}
+		i any
 	}
 	tests := []struct {
 		name string
@@ -421,7 +421,7 @@ func TestGetMissingElement(t *testing.T) {
 func TestNewReplacer(t *testing.T) {
 	type args struct {
 		endpoint string
-		values   []interface{}
+		values   []any
 	}
 	tests := []struct {
 		name string

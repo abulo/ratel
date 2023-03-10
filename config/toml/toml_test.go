@@ -99,14 +99,14 @@ func TestDriver(t *testing.T) {
 	st.True(c.HasDecoder(config.Toml))
 	st.True(c.HasEncoder(config.Toml))
 
-	tg := new(map[string]interface{})
+	tg := new(map[string]any)
 	err := Decoder([]byte("invalid"), tg)
 	st.Error(err)
 
 	_, err = Encoder("invalid")
 	st.Error(err)
 
-	out, err := Encoder(map[string]interface{}{"k": "v"})
+	out, err := Encoder(map[string]any{"k": "v"})
 	st.Nil(err)
 	st.Contains(string(out), `k = "v"`)
 }

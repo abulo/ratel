@@ -20,7 +20,7 @@ func SpanHertzHttpStartName(ctx *app.RequestContext) string {
 }
 
 // CustomTag ...
-func CustomTag(key string, val interface{}) opentracing.Tag {
+func CustomTag(key string, val any) opentracing.Tag {
 	return opentracing.Tag{
 		Key:   key,
 		Value: val,

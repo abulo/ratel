@@ -3,9 +3,10 @@ package null
 import (
 	"bytes"
 	"database/sql/driver"
-	"errors"
 	"fmt"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // TimeStamp is a nullable time.Time that accept only fullyear,month,date,hour,minute,second, and microsecond .
@@ -152,7 +153,7 @@ func (t TimeStamp) IsZero() bool {
 }
 
 // Scan implements the Scanner interface. that accept only fullyear,month,date,hour,minute,second and microsecond.
-func (t *TimeStamp) Scan(value interface{}) error {
+func (t *TimeStamp) Scan(value any) error {
 	var err error
 	switch x := value.(type) {
 	case time.Time:

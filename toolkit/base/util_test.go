@@ -80,8 +80,8 @@ func TestSymbolChar(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	type args struct {
-		numberOne interface{}
-		numberTwo interface{}
+		numberOne any
+		numberTwo any
 	}
 	tests := []struct {
 		name string

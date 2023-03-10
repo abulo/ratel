@@ -11,12 +11,12 @@ import (
 
 func TestJob(t *testing.T) {
 	var (
-		result interface{}
+		result any
 		wg     sync.WaitGroup
 	)
 
 	wg.Add(1)
-	job := NewJob("foo", func(v interface{}) {
+	job := NewJob("foo", func(v any) {
 		result = fmt.Sprintf("%s_bar", v)
 		wg.Done()
 	})
@@ -30,7 +30,7 @@ func TestJob(t *testing.T) {
 }
 
 func TestSyncJob(t *testing.T) {
-	sjob := NewSyncJob("foo", func(v interface{}) (interface{}, error) {
+	sjob := NewSyncJob("foo", func(v any) (any, error) {
 		return fmt.Sprintf("%s_bar", v), nil
 	})
 
@@ -48,7 +48,7 @@ func TestSyncJob(t *testing.T) {
 }
 
 func TestSyncJobError(t *testing.T) {
-	sjob := NewSyncJob("foo", func(v interface{}) (interface{}, error) {
+	sjob := NewSyncJob("foo", func(v any) (any, error) {
 		return nil, errors.New("mock error")
 	})
 

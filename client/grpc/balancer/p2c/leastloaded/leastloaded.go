@@ -11,7 +11,7 @@ import (
 )
 
 type leastLoadedNode struct {
-	item     interface{}
+	item     any
 	inflight int64
 }
 
@@ -30,12 +30,12 @@ func New() basep2c.P2c {
 }
 
 // Add ...
-func (p *leastLoaded) Add(item interface{}) {
+func (p *leastLoaded) Add(item any) {
 	p.items = append(p.items, &leastLoadedNode{item: item})
 }
 
 // Next ...
-func (p *leastLoaded) Next() (interface{}, func(balancer.DoneInfo)) {
+func (p *leastLoaded) Next() (any, func(balancer.DoneInfo)) {
 	var sc, backsc *leastLoadedNode
 
 	switch len(p.items) {

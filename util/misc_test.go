@@ -9,7 +9,7 @@ import (
 
 func TestEcho(t *testing.T) {
 	type args struct {
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -209,7 +209,7 @@ func TestZipOpen(t *testing.T) {
 func TestPack(t *testing.T) {
 	type args struct {
 		order binary.ByteOrder
-		data  interface{}
+		data  any
 	}
 	tests := []struct {
 		name    string
@@ -241,7 +241,7 @@ func TestUnpack(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    interface{}
+		want    any
 		wantErr bool
 	}{
 		// TODO: Add test cases.
@@ -263,13 +263,13 @@ func TestUnpack(t *testing.T) {
 func TestTernary(t *testing.T) {
 	type args struct {
 		condition bool
-		trueVal   interface{}
-		falseVal  interface{}
+		trueVal   any
+		falseVal  any
 	}
 	tests := []struct {
 		name string
 		args args
-		want interface{}
+		want any
 	}{
 		// TODO: Add test cases.
 	}

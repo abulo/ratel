@@ -90,7 +90,7 @@ func FormatDuring(t time.Time) string {
 }
 
 // GetHourDiffer 获取相差时间
-func GetHourDiffer(startTime, endTime interface{}) int64 {
+func GetHourDiffer(startTime, endTime any) int64 {
 	var s int64
 	t1 := cast.ToTime(startTime)
 	t2 := cast.ToTime(endTime)
@@ -220,12 +220,12 @@ func USleep(t int64) {
 }
 
 // UnixTimeFormatDate ...
-func UnixTimeFormatDate(str interface{}) string {
+func UnixTimeFormatDate(str any) string {
 	return Date("Y-m-d H:i:s", cast.ToTimeInDefaultLocation(cast.ToInt64(str), TimeZone()))
 }
 
 // FormatDateTime ...
-func FormatDateTime(str interface{}) string {
+func FormatDateTime(str any) string {
 	if Empty(str) {
 		return ""
 	}
@@ -233,7 +233,7 @@ func FormatDateTime(str interface{}) string {
 }
 
 // FormatDate ...
-func FormatDate(str interface{}) string {
+func FormatDate(str any) string {
 	return Date("Y-m-d", cast.ToTimeInDefaultLocation(str, TimeZone()))
 }
 
@@ -434,7 +434,7 @@ func Hour(s string, e string) ([]string, []int64) {
 }
 
 // ToWeekDay ...
-func ToWeekDay(t interface{}) string {
+func ToWeekDay(t any) string {
 	weekday := [7]string{"周日", "周一", "周二", "周三", "周四", "周五", "周六"}
 	now := cast.ToTimeInDefaultLocation(t, TimeZone())
 	var y, m, c, year, month, day uint16

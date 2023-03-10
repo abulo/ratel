@@ -22,13 +22,13 @@ import (
 )
 
 // MarshalHTML ...
-func MarshalHTML(v interface{}) template.HTML {
+func MarshalHTML(v any) template.HTML {
 	a, _ := json.Marshal(v)
 	return template.HTML(a)
 }
 
 // MarshalJS ...
-func MarshalJS(v interface{}) template.JS {
+func MarshalJS(v any) template.JS {
 	a, _ := json.Marshal(v)
 	return template.JS(a)
 }
@@ -49,7 +49,7 @@ func DomainStatic(p, v string) string {
 }
 
 // UnescapeString ...
-func UnescapeString(v interface{}) string {
+func UnescapeString(v any) string {
 	a, _ := json.Marshal(v)
 	return html.EscapeString(string(a))
 }
@@ -117,7 +117,7 @@ func VerifyIPv6(address string) bool {
 }
 
 // FunctionName ...
-func FunctionName(i interface{}) string {
+func FunctionName(i any) string {
 	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
 }
 
@@ -167,7 +167,7 @@ func GetMissingElement(arr []int) int {
 }
 
 // NewReplacer ...
-func NewReplacer(endpoint string, values ...interface{}) string {
+func NewReplacer(endpoint string, values ...any) string {
 	if len(endpoint) < 1 {
 		return endpoint
 	}

@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
+	"github.com/pkg/errors"
 )
 
 // Bool is a nullable bool.
@@ -133,7 +133,7 @@ func (b Bool) IsZero() bool {
 }
 
 // Scan implements the Scanner interface.
-func (b *Bool) Scan(value interface{}) error {
+func (b *Bool) Scan(value any) error {
 	if value == nil {
 		b.Bool, b.Valid, b.Set = false, false, false
 		return nil

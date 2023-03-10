@@ -9,12 +9,12 @@ func TestArrayFill(t *testing.T) {
 	type args struct {
 		startIndex int
 		num        uint
-		value      interface{}
+		value      any
 	}
 	tests := []struct {
 		name string
 		args args
-		want map[int]interface{}
+		want map[int]any
 	}{
 		// TODO: Add test cases.
 	}
@@ -29,12 +29,12 @@ func TestArrayFill(t *testing.T) {
 
 func TestArrayFlip(t *testing.T) {
 	type args struct {
-		m map[interface{}]interface{}
+		m map[any]any
 	}
 	tests := []struct {
 		name string
 		args args
-		want map[interface{}]interface{}
+		want map[any]any
 	}{
 		// TODO: Add test cases.
 	}
@@ -49,12 +49,12 @@ func TestArrayFlip(t *testing.T) {
 
 func TestArrayKeys(t *testing.T) {
 	type args struct {
-		elements map[interface{}]interface{}
+		elements map[any]any
 	}
 	tests := []struct {
 		name string
 		args args
-		want []interface{}
+		want []any
 	}{
 		// TODO: Add test cases.
 	}
@@ -69,12 +69,12 @@ func TestArrayKeys(t *testing.T) {
 
 func TestArrayValues(t *testing.T) {
 	type args struct {
-		elements map[interface{}]interface{}
+		elements map[any]any
 	}
 	tests := []struct {
 		name string
 		args args
-		want []interface{}
+		want []any
 	}{
 		// TODO: Add test cases.
 	}
@@ -89,12 +89,12 @@ func TestArrayValues(t *testing.T) {
 
 func TestArrayMerge(t *testing.T) {
 	type args struct {
-		ss [][]interface{}
+		ss [][]any
 	}
 	tests := []struct {
 		name string
 		args args
-		want []interface{}
+		want []any
 	}{
 		// TODO: Add test cases.
 	}
@@ -109,13 +109,13 @@ func TestArrayMerge(t *testing.T) {
 
 func TestArrayChunk(t *testing.T) {
 	type args struct {
-		s    []interface{}
+		s    []any
 		size int
 	}
 	tests := []struct {
 		name string
 		args args
-		want [][]interface{}
+		want [][]any
 	}{
 		// TODO: Add test cases.
 	}
@@ -130,14 +130,14 @@ func TestArrayChunk(t *testing.T) {
 
 func TestArrayPad(t *testing.T) {
 	type args struct {
-		s    []interface{}
+		s    []any
 		size int
-		val  interface{}
+		val  any
 	}
 	tests := []struct {
 		name string
 		args args
-		want []interface{}
+		want []any
 	}{
 		// TODO: Add test cases.
 	}
@@ -152,14 +152,14 @@ func TestArrayPad(t *testing.T) {
 
 func TestArraySlice(t *testing.T) {
 	type args struct {
-		s      []interface{}
+		s      []any
 		offset uint
 		length uint
 	}
 	tests := []struct {
 		name string
 		args args
-		want []interface{}
+		want []any
 	}{
 		// TODO: Add test cases.
 	}
@@ -174,12 +174,12 @@ func TestArraySlice(t *testing.T) {
 
 func TestArrayRand(t *testing.T) {
 	type args struct {
-		elements []interface{}
+		elements []any
 	}
 	tests := []struct {
 		name string
 		args args
-		want []interface{}
+		want []any
 	}{
 		// TODO: Add test cases.
 	}
@@ -194,13 +194,13 @@ func TestArrayRand(t *testing.T) {
 
 func TestArrayColumn(t *testing.T) {
 	type args struct {
-		input     map[string]map[string]interface{}
+		input     map[string]map[string]any
 		columnKey string
 	}
 	tests := []struct {
 		name string
 		args args
-		want []interface{}
+		want []any
 	}{
 		// TODO: Add test cases.
 	}
@@ -215,8 +215,8 @@ func TestArrayColumn(t *testing.T) {
 
 func TestArrayPush(t *testing.T) {
 	type args struct {
-		s        *[]interface{}
-		elements []interface{}
+		s        *[]any
+		elements []any
 	}
 	tests := []struct {
 		name string
@@ -236,12 +236,12 @@ func TestArrayPush(t *testing.T) {
 
 func TestArrayPop(t *testing.T) {
 	type args struct {
-		s *[]interface{}
+		s *[]any
 	}
 	tests := []struct {
 		name string
 		args args
-		want interface{}
+		want any
 	}{
 		// TODO: Add test cases.
 	}
@@ -256,8 +256,8 @@ func TestArrayPop(t *testing.T) {
 
 func TestArrayUnshift(t *testing.T) {
 	type args struct {
-		s        *[]interface{}
-		elements []interface{}
+		s        *[]any
+		elements []any
 	}
 	tests := []struct {
 		name string
@@ -277,12 +277,12 @@ func TestArrayUnshift(t *testing.T) {
 
 func TestArrayShift(t *testing.T) {
 	type args struct {
-		s *[]interface{}
+		s *[]any
 	}
 	tests := []struct {
 		name string
 		args args
-		want interface{}
+		want any
 	}{
 		// TODO: Add test cases.
 	}
@@ -297,8 +297,8 @@ func TestArrayShift(t *testing.T) {
 
 func TestArrayKeyExists(t *testing.T) {
 	type args struct {
-		key interface{}
-		m   map[interface{}]interface{}
+		key any
+		m   map[any]any
 	}
 	tests := []struct {
 		name string
@@ -318,13 +318,13 @@ func TestArrayKeyExists(t *testing.T) {
 
 func TestArrayCombine(t *testing.T) {
 	type args struct {
-		s1 []interface{}
-		s2 []interface{}
+		s1 []any
+		s2 []any
 	}
 	tests := []struct {
 		name string
 		args args
-		want map[interface{}]interface{}
+		want map[any]any
 	}{
 		// TODO: Add test cases.
 	}
@@ -339,12 +339,12 @@ func TestArrayCombine(t *testing.T) {
 
 func TestArrayReverse(t *testing.T) {
 	type args struct {
-		s []interface{}
+		s []any
 	}
 	tests := []struct {
 		name string
 		args args
-		want []interface{}
+		want []any
 	}{
 		// TODO: Add test cases.
 	}
@@ -380,8 +380,8 @@ func TestImplode(t *testing.T) {
 
 func TestInArray(t *testing.T) {
 	type args struct {
-		needle   interface{}
-		haystack interface{}
+		needle   any
+		haystack any
 	}
 	tests := []struct {
 		name string
@@ -421,8 +421,8 @@ func TestArrayRandMap(t *testing.T) {
 
 func TestInMultiArray(t *testing.T) {
 	type args struct {
-		haystack interface{}
-		needle   []interface{}
+		haystack any
+		needle   []any
 	}
 	tests := []struct {
 		name string
@@ -442,7 +442,7 @@ func TestInMultiArray(t *testing.T) {
 
 func TestMultiArray(t *testing.T) {
 	type args struct {
-		haystack interface{}
+		haystack any
 	}
 	tests := []struct {
 		name string
@@ -462,7 +462,7 @@ func TestMultiArray(t *testing.T) {
 
 func TestInterfaceToString(t *testing.T) {
 	type args struct {
-		data []interface{}
+		data []any
 	}
 	tests := []struct {
 		name  string
@@ -589,7 +589,7 @@ func TestArrayMultiPluck(t *testing.T) {
 func Test_jsonStringToObject(t *testing.T) {
 	type args struct {
 		s string
-		v interface{}
+		v any
 	}
 	tests := []struct {
 		name    string
@@ -614,7 +614,7 @@ func TestAryMapStringToAryMapInterface(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want []map[string]interface{}
+		want []map[string]any
 	}{
 		// TODO: Add test cases.
 	}
@@ -634,7 +634,7 @@ func TestMapStringToMapInterface(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want map[string]interface{}
+		want map[string]any
 	}{
 		// TODO: Add test cases.
 	}
@@ -649,7 +649,7 @@ func TestMapStringToMapInterface(t *testing.T) {
 
 func TestAryMapInterfaceToAryMapString(t *testing.T) {
 	type args struct {
-		d []map[string]interface{}
+		d []map[string]any
 	}
 	tests := []struct {
 		name string
@@ -669,7 +669,7 @@ func TestAryMapInterfaceToAryMapString(t *testing.T) {
 
 func TestMapInterfaceToMapString(t *testing.T) {
 	type args struct {
-		d map[string]interface{}
+		d map[string]any
 	}
 	tests := []struct {
 		name string
@@ -694,7 +694,7 @@ func TestArgStringToAryInterface(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want []interface{}
+		want []any
 	}{
 		// TODO: Add test cases.
 	}
@@ -709,7 +709,7 @@ func TestArgStringToAryInterface(t *testing.T) {
 
 func TestAryInterfaceToArgString(t *testing.T) {
 	type args struct {
-		d []interface{}
+		d []any
 	}
 	tests := []struct {
 		name string
@@ -729,12 +729,12 @@ func TestAryInterfaceToArgString(t *testing.T) {
 
 func TestInterfaceToAryMapStringInterface(t *testing.T) {
 	type args struct {
-		in interface{}
+		in any
 	}
 	tests := []struct {
 		name string
 		args args
-		want []map[string]interface{}
+		want []map[string]any
 	}{
 		// TODO: Add test cases.
 	}
@@ -749,7 +749,7 @@ func TestInterfaceToAryMapStringInterface(t *testing.T) {
 
 func TestInterfaceToAryMapStringString(t *testing.T) {
 	type args struct {
-		in interface{}
+		in any
 	}
 	tests := []struct {
 		name string

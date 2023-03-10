@@ -20,7 +20,7 @@ func TestOtherDriver(t *testing.T) {
 	st.True(c.HasDecoder("other"))
 	st.True(c.HasEncoder("other"))
 
-	_, err := Encoder(map[string]interface{}{"k": "v"})
+	_, err := Encoder(map[string]any{"k": "v"})
 	st.Nil(err)
 
 	_, err = Encoder("invalid")

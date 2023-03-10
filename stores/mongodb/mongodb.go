@@ -215,7 +215,7 @@ func (collection *collection) CreateIndex(ctx context.Context, key bson.D, op *o
 }
 
 // ListIndexes 获取所有所有
-func (collection *collection) ListIndexes(ctx context.Context, opts *options.ListIndexesOptions) (interface{}, error) {
+func (collection *collection) ListIndexes(ctx context.Context, opts *options.ListIndexesOptions) (any, error) {
 	start := time.Now()
 	var results []string
 	if ctx == nil || ctx.Err() != nil {
@@ -312,9 +312,9 @@ func (collection *collection) DropIndex(ctx context.Context, name string, opts *
 }
 
 // InsertOne 写入单条数据
-func (collection *collection) InsertOne(ctx context.Context, document interface{}) (*mongo.InsertOneResult, error) {
+func (collection *collection) InsertOne(ctx context.Context, document any) (*mongo.InsertOneResult, error) {
 	start := time.Now()
-	var data interface{}
+	var data any
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
@@ -354,13 +354,13 @@ func (collection *collection) InsertOne(ctx context.Context, document interface{
 }
 
 // InsertMany 写入多条数据
-func (collection *collection) InsertMany(ctx context.Context, documents interface{}) (*mongo.InsertManyResult, error) {
+func (collection *collection) InsertMany(ctx context.Context, documents any) (*mongo.InsertManyResult, error) {
 	start := time.Now()
-	var data []interface{}
+	var data []any
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	data = BeforeCreate(documents).([]interface{})
+	data = BeforeCreate(documents).([]any)
 	if !collection.DisableTrace {
 		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
@@ -396,7 +396,7 @@ func (collection *collection) InsertMany(ctx context.Context, documents interfac
 }
 
 // Aggregate ...
-func (collection *collection) Aggregate(ctx context.Context, pipeline interface{}, result interface{}) (err error) {
+func (collection *collection) Aggregate(ctx context.Context, pipeline any, result any) (err error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -445,7 +445,7 @@ func (collection *collection) Aggregate(ctx context.Context, pipeline interface{
 }
 
 // UpdateOrInsert 存在更新,不存在写入, documents 里边的文档需要有 _id 的存在
-func (collection *collection) UpdateOrInsert(ctx context.Context, documents []interface{}) (*mongo.UpdateResult, error) {
+func (collection *collection) UpdateOrInsert(ctx context.Context, documents []any) (*mongo.UpdateResult, error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -486,7 +486,7 @@ func (collection *collection) UpdateOrInsert(ctx context.Context, documents []in
 }
 
 // UpdateOne ...
-func (collection *collection) UpdateOne(ctx context.Context, document interface{}) (*mongo.UpdateResult, error) {
+func (collection *collection) UpdateOne(ctx context.Context, document any) (*mongo.UpdateResult, error) {
 	start := time.Now()
 	// var update bson.M
 	update := bson.M{"$set": BeforeUpdate(document)}
@@ -529,7 +529,7 @@ func (collection *collection) UpdateOne(ctx context.Context, document interface{
 }
 
 // UpdateOneRaw 原生update
-func (collection *collection) UpdateOneRaw(ctx context.Context, document interface{}, opt ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
+func (collection *collection) UpdateOneRaw(ctx context.Context, document any, opt ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -569,7 +569,7 @@ func (collection *collection) UpdateOneRaw(ctx context.Context, document interfa
 }
 
 // UpdateMany ...
-func (collection *collection) UpdateMany(ctx context.Context, document interface{}) (*mongo.UpdateResult, error) {
+func (collection *collection) UpdateMany(ctx context.Context, document any) (*mongo.UpdateResult, error) {
 	start := time.Now()
 	// var update bson.M
 	update := bson.M{"$set": BeforeUpdate(document)}
@@ -611,7 +611,7 @@ func (collection *collection) UpdateMany(ctx context.Context, document interface
 }
 
 // FindOne 查询一条数据
-func (collection *collection) FindOne(ctx context.Context, document interface{}) error {
+func (collection *collection) FindOne(ctx context.Context, document any) error {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -664,7 +664,7 @@ func (collection *collection) FindOne(ctx context.Context, document interface{})
 }
 
 // FindMany 查询多条数据
-func (collection *collection) FindMany(ctx context.Context, documents interface{}) (err error) {
+func (collection *collection) FindMany(ctx context.Context, documents any) (err error) {
 	start := time.Now()
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
@@ -884,7 +884,7 @@ func (collection *collection) Count(ctx context.Context) (result int64, err erro
 }
 
 // BeforeCreate ...
-func BeforeCreate(document interface{}) interface{} {
+func BeforeCreate(document any) any {
 	val := reflect.ValueOf(document)
 	typ := reflect.TypeOf(document)
 
@@ -893,7 +893,7 @@ func BeforeCreate(document interface{}) interface{} {
 		return BeforeCreate(val.Elem().Interface())
 
 	case reflect.Array, reflect.Slice:
-		var sliceData = make([]interface{}, val.Len(), val.Cap())
+		var sliceData = make([]any, val.Len(), val.Cap())
 		for i := 0; i < val.Len(); i++ {
 			sliceData[i] = BeforeCreate(val.Index(i).Interface()).(bson.M)
 		}
@@ -925,7 +925,7 @@ func BeforeCreate(document interface{}) interface{} {
 }
 
 // BeforeUpdate ...
-func BeforeUpdate(document interface{}) interface{} {
+func BeforeUpdate(document any) any {
 	val := reflect.ValueOf(document)
 	typ := reflect.TypeOf(document)
 
@@ -934,7 +934,7 @@ func BeforeUpdate(document interface{}) interface{} {
 		return BeforeUpdate(val.Elem().Interface())
 
 	case reflect.Array, reflect.Slice:
-		var sliceData = make([]interface{}, val.Len(), val.Cap())
+		var sliceData = make([]any, val.Len(), val.Cap())
 		for i := 0; i < val.Len(); i++ {
 			sliceData[i] = BeforeCreate(val.Index(i).Interface()).(bson.M)
 		}

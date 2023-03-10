@@ -185,7 +185,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 // {{CamelStr .Table.TableName}}{{CamelStr .Name}} 列表数据
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,request *{{CamelStr .Table.TableName}}{{CamelStr .Name}}Request)(*{{CamelStr .Table.TableName}}{{CamelStr .Name}}Response,error){
 	// 数据库查询条件
-	condition := make(map[string]interface{})
+	condition := make(map[string]any)
 	// 当前页面
 	pageNumber := request.GetPageNumber()
 	// 每页多少数据
@@ -235,7 +235,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 // {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}} 列表数据
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx context.Context,request *{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Request)(*{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response,error){
 	// 数据库查询条件
-	condition := make(map[string]interface{})
+	condition := make(map[string]any)
 	// 当前页面
 	pageNumber := request.GetPageNumber()
 	// 每页多少数据
@@ -286,7 +286,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 // {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}} 单列数据
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}(ctx context.Context,request *{{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Request)(*{{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Response,error){
 	// 数据库查询条件
-	condition := make(map[string]interface{})
+	condition := make(map[string]any)
 	// 构造查询条件
 	{{ModuleProtoConvertMap .Condition "request"}}
 	res,err := {{.Pkg}}.{{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}(ctx ,condition)

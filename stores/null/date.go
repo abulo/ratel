@@ -3,9 +3,10 @@ package null
 import (
 	"bytes"
 	"database/sql/driver"
-	"errors"
 	"fmt"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Date is a nullable time.Time that accept only fullyear,month,date and ignore elses.
@@ -151,7 +152,7 @@ func (t Date) IsZero() bool {
 }
 
 // Scan implements the Scanner interface. that accept only fullyear,month,date and ignore elses.
-func (t *Date) Scan(value interface{}) error {
+func (t *Date) Scan(value any) error {
 	var err error
 	switch x := value.(type) {
 	case time.Time:

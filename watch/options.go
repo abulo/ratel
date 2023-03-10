@@ -1,12 +1,13 @@
 package watch
 
 import (
-	"errors"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // MinWatcherFrequency 监视器更新频率的最小值

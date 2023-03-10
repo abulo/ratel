@@ -69,22 +69,22 @@ func Default() *I18n {
 }
 
 // T translate language key to value string
-func T(lang string, key string, args ...interface{}) string {
+func T(lang string, key string, args ...any) string {
 	return defI18n.T(lang, key, args...)
 }
 
 // Tr translate language key to value string
-func Tr(lang string, key string, args ...interface{}) string {
+func Tr(lang string, key string, args ...any) string {
 	return defI18n.Tr(lang, key, args...)
 }
 
 // Dt translate language key from default language
-func Dt(key string, args ...interface{}) string {
+func Dt(key string, args ...any) string {
 	return defI18n.DefTr(key, args...)
 }
 
 // DefTr translate language key from default language
-func DefTr(key string, args ...interface{}) string {
+func DefTr(key string, args ...any) string {
 	return defI18n.DefTr(key, args...)
 }
 
@@ -134,17 +134,17 @@ func NewWithInit(langDir string, defLang string, languages map[string]string) *I
  ************************************************************/
 
 // Dt translate from default lang
-func (l *I18n) Dt(key string, args ...interface{}) string {
+func (l *I18n) Dt(key string, args ...any) string {
 	return l.Tr(l.DefaultLang, key, args...)
 }
 
 // DefTr translate from default lang
-func (l *I18n) DefTr(key string, args ...interface{}) string {
+func (l *I18n) DefTr(key string, args ...any) string {
 	return l.Tr(l.DefaultLang, key, args...)
 }
 
 // T translate from a lang by key
-func (l *I18n) T(lang, key string, args ...interface{}) string {
+func (l *I18n) T(lang, key string, args ...any) string {
 	return l.Tr(lang, key, args...)
 }
 
@@ -152,7 +152,7 @@ func (l *I18n) T(lang, key string, args ...interface{}) string {
 // site.name => [site]
 //
 //	name = my blog
-func (l *I18n) Tr(lang, key string, args ...interface{}) string {
+func (l *I18n) Tr(lang, key string, args ...any) string {
 	if !l.HasLang(lang) {
 		// find from fallback lang
 		msg := l.transFromFallback(key)
@@ -206,7 +206,7 @@ func (l *I18n) transFromFallback(key string) string {
 	return l.data[fl].String(key)
 }
 
-func (l *I18n) renderMessage(msg string, args ...interface{}) string {
+func (l *I18n) renderMessage(msg string, args ...any) string {
 	if l.TransMode == SprintfMode {
 		return fmt.Sprintf(msg, args...)
 	}
@@ -218,8 +218,8 @@ func (l *I18n) renderMessage(msg string, args ...interface{}) string {
 
 	var ss []string
 
-	// if args is map[string]interface{}
-	if mp, ok := args[0].(map[string]interface{}); ok {
+	// if args is map[string]any
+	if mp, ok := args[0].(map[string]any); ok {
 		for k, v := range mp {
 			ss = append(ss, "{"+k+"}")
 			ss = append(ss, toString(v))
@@ -240,7 +240,7 @@ func (l *I18n) renderMessage(msg string, args ...interface{}) string {
 }
 
 // convert value to string
-func toString(val interface{}) (str string) {
+func toString(val any) (str string) {
 	switch tVal := val.(type) {
 	case int:
 		str = strconv.Itoa(tVal)

@@ -14,7 +14,7 @@ func TestQueue(t *testing.T) {
 	var count int64
 
 	for i := 0; i < 10; i++ {
-		job := NewJob("foo", func(v interface{}) {
+		job := NewJob("foo", func(v any) {
 			atomic.AddInt64(&count, 1)
 		})
 		q.Push(job)
@@ -32,7 +32,7 @@ func TestSyncQueue(t *testing.T) {
 	q.Run()
 	defer q.Terminate()
 
-	sjob := NewSyncJob("foo", func(v interface{}) (interface{}, error) {
+	sjob := NewSyncJob("foo", func(v any) (any, error) {
 		return fmt.Sprintf("%s_bar", v), nil
 	})
 	q.Push(sjob)
@@ -54,7 +54,7 @@ func ExampleQueue() {
 	var count int64
 
 	for i := 0; i < 10; i++ {
-		job := NewJob("foo", func(v interface{}) {
+		job := NewJob("foo", func(v any) {
 			atomic.AddInt64(&count, 1)
 		})
 		q.Push(job)
@@ -72,7 +72,7 @@ func BenchmarkQueue(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			job := NewJob("", func(v interface{}) {
+			job := NewJob("", func(v any) {
 				_ = v
 			})
 			q.Push(job)

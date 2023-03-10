@@ -44,7 +44,7 @@ func (c *Config) Exists(key string, findByPath ...bool) (ok bool) {
 	topK := keys[0]
 
 	// find top item data based on top key
-	var item interface{}
+	var item any
 	if item, ok = c.data[topK]; !ok {
 		return
 	}
@@ -58,11 +58,11 @@ func (c *Config) Exists(key string, findByPath ...bool) (ok bool) {
 			if item, ok = typeData[k]; !ok {
 				return
 			}
-		case map[string]interface{}: // is map(decode from toml/json)
+		case map[string]any: // is map(decode from toml/json)
 			if item, ok = typeData[k]; !ok {
 				return
 			}
-		case map[interface{}]interface{}: // is map(decode from yaml)
+		case map[any]any: // is map(decode from yaml)
 			if item, ok = typeData[k]; !ok {
 				return
 			}
@@ -78,7 +78,7 @@ func (c *Config) Exists(key string, findByPath ...bool) (ok bool) {
 			if err != nil || len(typeData) < i {
 				return false
 			}
-		case []interface{}: // is array(load from file)
+		case []any: // is array(load from file)
 			i, err := strconv.Atoi(k)
 			if err != nil || len(typeData) < i {
 				return false
@@ -95,31 +95,31 @@ func (c *Config) Exists(key string, findByPath ...bool) (ok bool) {
  *************************************************************/
 
 // Data return all config data
-func Data() map[string]interface{} { return dc.Data() }
+func Data() map[string]any { return dc.Data() }
 
 // Data get all config data
-func (c *Config) Data() map[string]interface{} {
+func (c *Config) Data() map[string]any {
 	return c.data
 }
 
 // Get config value by key string, support get sub-value by key path(eg. 'map.key'),
 // ok is true, find value from config
 // ok is false, not found or error
-func Get(key string, findByPath ...bool) interface{} { return dc.Get(key, findByPath...) }
+func Get(key string, findByPath ...bool) any { return dc.Get(key, findByPath...) }
 
 // Get config value by key
-func (c *Config) Get(key string, findByPath ...bool) interface{} {
+func (c *Config) Get(key string, findByPath ...bool) any {
 	val, _ := c.GetValue(key, findByPath...)
 	return val
 }
 
 // GetValue get value by given key string.
-func GetValue(key string, findByPath ...bool) (interface{}, bool) {
+func GetValue(key string, findByPath ...bool) (any, bool) {
 	return dc.GetValue(key, findByPath...)
 }
 
 // GetValue get value by given key string.
-func (c *Config) GetValue(key string, findByPath ...bool) (value interface{}, ok bool) {
+func (c *Config) GetValue(key string, findByPath ...bool) (value any, ok bool) {
 	sep := c.opts.Delimiter
 	if key = formatKey(key, string(sep)); key == "" {
 		c.addError(errInvalidKey)
@@ -153,7 +153,7 @@ func (c *Config) GetValue(key string, findByPath ...bool) (value interface{}, ok
 	topK := keys[0]
 
 	// find top item data based on top key
-	var item interface{}
+	var item any
 	if item, ok = c.data[topK]; !ok {
 		// c.addError(errNotFound)
 		return
@@ -175,11 +175,11 @@ func (c *Config) GetValue(key string, findByPath ...bool) (value interface{}, ok
 			if item, ok = typeData[k]; !ok {
 				return
 			}
-		case map[string]interface{}: // is map(decode from toml/json)
+		case map[string]any: // is map(decode from toml/json)
 			if item, ok = typeData[k]; !ok {
 				return
 			}
-		case map[interface{}]interface{}: // is map(decode from yaml)
+		case map[any]any: // is map(decode from yaml)
 			if item, ok = typeData[k]; !ok {
 				return
 			}
@@ -203,7 +203,7 @@ func (c *Config) GetValue(key string, findByPath ...bool) (value interface{}, ok
 			}
 
 			item = typeData[i]
-		case []interface{}: // is array(load from file)
+		case []any: // is array(load from file)
 			i, err := strconv.Atoi(k)
 			if err != nil || len(typeData) < i {
 				ok = false
@@ -404,7 +404,7 @@ func (c *Config) Ints(key string) (arr []int) {
 	switch typeData := rawVal.(type) {
 	case []int:
 		arr = typeData
-	case []interface{}:
+	case []any:
 		for _, v := range typeData {
 			iv, err := mathutil.ToInt(v)
 			// iv, err := strconv.Atoi(fmt.Sprintf("%v", v))
@@ -435,7 +435,7 @@ func (c *Config) IntMap(key string) (mp map[string]int) {
 	switch typeData := rawVal.(type) {
 	case map[string]int: // from Set
 		mp = typeData
-	case map[string]interface{}: // decode from json,toml
+	case map[string]any: // decode from json,toml
 		mp = make(map[string]int)
 		for k, v := range typeData {
 			// iv, err := strconv.Atoi(fmt.Sprintf("%v", v))
@@ -447,7 +447,7 @@ func (c *Config) IntMap(key string) (mp map[string]int) {
 			}
 			mp[k] = iv
 		}
-	case map[interface{}]interface{}: // if decode from yaml
+	case map[any]any: // if decode from yaml
 		mp = make(map[string]int)
 		for k, v := range typeData {
 			// iv, err := strconv.Atoi(fmt.Sprintf( "%v", v))
@@ -490,7 +490,7 @@ func (c *Config) Strings(key string) (arr []string) {
 	switch typeData := rawVal.(type) {
 	case []string:
 		arr = typeData
-	case []interface{}:
+	case []any:
 		for _, v := range typeData {
 			// arr = append(arr, fmt.Sprintf("%v", v))
 			arr = append(arr, strutil.MustString(v))
@@ -533,7 +533,7 @@ func (c *Config) StringMap(key string) (mp map[string]string) {
 	switch typeData := rawVal.(type) {
 	case map[string]string: // from Set
 		mp = typeData
-	case map[string]interface{}: // decode from json,toml
+	case map[string]any: // decode from json,toml
 		mp = make(map[string]string)
 
 		for k, v := range typeData {
@@ -548,7 +548,7 @@ func (c *Config) StringMap(key string) (mp map[string]string) {
 				mp[k], _ = strutil.AnyToString(v, false)
 			}
 		}
-	case map[interface{}]interface{}: // decode from yaml
+	case map[any]any: // decode from yaml
 		mp = make(map[string]string)
 
 		for k, v := range typeData {

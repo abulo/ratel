@@ -51,7 +51,7 @@ func TestConfig_GetValue(t *testing.T) {
 	is.False(Exists("arr1.notExist"))
 
 	// load data for tests
-	err = c.LoadData(map[string]interface{}{
+	err = c.LoadData(map[string]any{
 		"setStrMap": map[string]string{
 			"k": "v",
 		},
@@ -173,31 +173,31 @@ func TestGet(t *testing.T) {
 
 	// like load from yaml content
 	// c = New("test")
-	err = c.LoadData(map[string]interface{}{
+	err = c.LoadData(map[string]any{
 		"newIArr":    []int{2, 3},
 		"newSArr":    []string{"a", "b"},
-		"newIArr1":   []interface{}{12, 23},
-		"newIArr2":   []interface{}{12, "abc"},
+		"newIArr1":   []any{12, 23},
+		"newIArr2":   []any{12, "abc"},
 		"invalidMap": map[string]int{"k": 1},
-		"yMap": map[interface{}]interface{}{
+		"yMap": map[any]any{
 			"k0": "v0",
 			"k1": 23,
 		},
-		"yMap1": map[interface{}]interface{}{
+		"yMap1": map[any]any{
 			"k":  "v",
 			"k1": 23,
-			"k2": []interface{}{23, 45},
+			"k2": []any{23, 45},
 		},
-		"yMap10": map[string]interface{}{
+		"yMap10": map[string]any{
 			"k":  "v",
 			"k1": 23,
-			"k2": []interface{}{23, 45},
+			"k2": []any{23, 45},
 		},
-		"yMap2": map[interface{}]interface{}{
+		"yMap2": map[any]any{
 			"k":  2,
 			"k1": 23,
 		},
-		"yArr": []interface{}{23, 45, "val", map[string]interface{}{"k4": "v4"}},
+		"yArr": []any{23, 45, "val", map[string]any{"k4": "v4"}},
 	})
 	is.Nil(err)
 

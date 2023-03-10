@@ -37,7 +37,7 @@ func (s *spbStatus) GetCodeAsBool() bool {
 }
 
 // GetMessage ...
-func (s *spbStatus) GetMessage(exts ...interface{}) string {
+func (s *spbStatus) GetMessage(exts ...any) string {
 	if len(exts)%2 != 0 {
 		panic("parameter must be odd")
 	}
@@ -58,7 +58,7 @@ func (s *spbStatus) GetMessage(exts ...interface{}) string {
 }
 
 // GetDetailMessage ...
-func (s *spbStatus) GetDetailMessage(exts ...interface{}) string {
+func (s *spbStatus) GetDetailMessage(exts ...any) string {
 	var buf bytes.Buffer
 	buf.WriteString(s.GetMessage(exts...))
 	for _, detail := range s.Details {
@@ -88,7 +88,7 @@ func (s *spbStatus) Proto() *spb.Status {
 }
 
 // MustWithDetails ...
-func (s *spbStatus) MustWithDetails(details ...interface{}) *spbStatus {
+func (s *spbStatus) MustWithDetails(details ...any) *spbStatus {
 	status, err := s.WithDetails(details...)
 	if err != nil {
 		panic(err)
@@ -98,7 +98,7 @@ func (s *spbStatus) MustWithDetails(details ...interface{}) *spbStatus {
 
 // WithDetails returns a new status with the provided details messages appended to the status.
 // If anypb errors are encountered, it returns nil and the first error encountered.
-func (s *spbStatus) WithDetails(details ...interface{}) (*spbStatus, error) {
+func (s *spbStatus) WithDetails(details ...any) (*spbStatus, error) {
 	if s.CauseCode() == 0 {
 		return nil, errors.New("no error details for status with code OK")
 	}
@@ -121,7 +121,7 @@ func (s *spbStatus) WithDetails(details ...interface{}) (*spbStatus, error) {
 	return &spbStatus{Status: p}, nil
 }
 
-func marshalAny(obj interface{}) (*anypb.Any, error) {
+func marshalAny(obj any) (*anypb.Any, error) {
 	typ := reflect.TypeOf(obj)
 	val := fmt.Sprintf("%+v", obj)
 

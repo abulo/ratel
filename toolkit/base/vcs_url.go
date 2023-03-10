@@ -1,10 +1,11 @@
 package base
 
 import (
-	"errors"
 	"net/url"
 	"regexp"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 var (

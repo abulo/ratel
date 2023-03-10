@@ -1,11 +1,12 @@
 package base
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/abulo/ratel/v3/config"
 	"github.com/abulo/ratel/v3/config/toml"

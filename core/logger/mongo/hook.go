@@ -29,7 +29,7 @@ var defaultOptions = options{
 type options struct {
 	maxQueues  int
 	maxWorkers int
-	extra      map[string]interface{}
+	extra      map[string]any
 	exec       ExecCloser
 	levels     []logrus.Level
 	out        io.Writer
@@ -50,7 +50,7 @@ func SetMaxWorkers(maxWorkers int) Option {
 }
 
 // SetExtra 设置扩展参数
-func SetExtra(extra map[string]interface{}) Option {
+func SetExtra(extra map[string]any) Option {
 	return func(o *options) {
 		o.extra = extra
 	}
@@ -153,7 +153,7 @@ func (h *Hook) Fire(entryLogrus *logrus.Entry) error {
 		Level:     strings.ToUpper(level),
 		Data:      entryLogrus.Data,
 	}
-	h.q.Push(queue.NewJob(newEntry, func(v interface{}) {
+	h.q.Push(queue.NewJob(newEntry, func(v any) {
 		h.exec(v.(*entry.Entry))
 	}))
 	return nil

@@ -115,7 +115,7 @@ func (t Time) IsZero() bool {
 }
 
 // Scan implements the Scanner interface.
-func (t *Time) Scan(value interface{}) error {
+func (t *Time) Scan(value any) error {
 	var err error
 	switch x := value.(type) {
 	case time.Time:

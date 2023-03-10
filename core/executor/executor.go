@@ -54,7 +54,7 @@ func Register(address string, e Executor) {
 // Run ...
 func Run() error {
 	var executors = make([]func(), 0)
-	_instances.Range(func(key, val interface{}) bool {
+	_instances.Range(func(key, val any) bool {
 		address := key.(string)
 		if executor, ok := val.(Executor); ok {
 			executors = append(executors, func() {
@@ -73,7 +73,7 @@ func Run() error {
 // Stop ...
 func Stop() error {
 	var executors = make([]func(), 0)
-	_instances.Range(func(key, val interface{}) bool {
+	_instances.Range(func(key, val any) bool {
 		address := key.(string)
 		if stopper, ok := val.(interface{ Stop() }); ok {
 			executors = append(executors, func() {
@@ -92,7 +92,7 @@ func Stop() error {
 // GracefulStop ...
 func GracefulStop() error {
 	var executors = make([]func(), 0)
-	_instances.Range(func(key, val interface{}) bool {
+	_instances.Range(func(key, val any) bool {
 		address := key.(string)
 		if stopper, ok := val.(interface{ GracefulStop() }); ok {
 			executors = append(executors, func() {

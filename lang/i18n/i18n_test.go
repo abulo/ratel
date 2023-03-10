@@ -27,7 +27,7 @@ func TestT(t *testing.T) {
 	type args struct {
 		lang string
 		key  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -49,7 +49,7 @@ func TestTr(t *testing.T) {
 	type args struct {
 		lang string
 		key  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -70,7 +70,7 @@ func TestTr(t *testing.T) {
 func TestDt(t *testing.T) {
 	type args struct {
 		key  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -91,7 +91,7 @@ func TestDt(t *testing.T) {
 func TestDefTr(t *testing.T) {
 	type args struct {
 		key  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -194,7 +194,7 @@ func TestNewWithInit(t *testing.T) {
 func TestI18n_Dt(t *testing.T) {
 	type args struct {
 		key  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -216,7 +216,7 @@ func TestI18n_Dt(t *testing.T) {
 func TestI18n_DefTr(t *testing.T) {
 	type args struct {
 		key  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -239,7 +239,7 @@ func TestI18n_T(t *testing.T) {
 	type args struct {
 		lang string
 		key  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -262,7 +262,7 @@ func TestI18n_Tr(t *testing.T) {
 	type args struct {
 		lang string
 		key  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -327,7 +327,7 @@ func TestI18n_transFromFallback(t *testing.T) {
 func TestI18n_renderMessage(t *testing.T) {
 	type args struct {
 		msg  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -348,7 +348,7 @@ func TestI18n_renderMessage(t *testing.T) {
 
 func Test_toString(t *testing.T) {
 	type args struct {
-		val interface{}
+		val any
 	}
 	tests := []struct {
 		name    string

@@ -31,7 +31,7 @@ func SymbolChar() string {
 	return "`"
 }
 
-func Add(numberOne, numberTwo interface{}) int {
+func Add(numberOne, numberTwo any) int {
 	return cast.ToInt(numberOne) + cast.ToInt(numberTwo)
 }
 

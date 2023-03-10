@@ -8,7 +8,7 @@ import (
 //////////// Variable handling Functions ////////////
 
 // Empty empty()
-func Empty(val interface{}) bool {
+func Empty(val any) bool {
 	if val == nil {
 		return true
 	}
@@ -37,7 +37,7 @@ func Empty(val interface{}) bool {
 // Numeric strings consist of optional sign, any number of digits, optional decimal part and optional exponential part.
 // Thus +0123.45e6 is a valid numeric value.
 // In PHP hexadecimal (e.g. 0xf4c3b00c) is not supported, but IsNumeric is supported.
-func IsNumeric(val interface{}) bool {
+func IsNumeric(val any) bool {
 	switch val.(type) {
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		return true

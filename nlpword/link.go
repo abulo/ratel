@@ -8,7 +8,7 @@ type LinkList struct {
 }
 
 // Push appends a node
-func (list *LinkList) Push(v interface{}) {
+func (list *LinkList) Push(v any) {
 	node := &listNode{
 		Value: v,
 	}
@@ -23,7 +23,7 @@ func (list *LinkList) Push(v interface{}) {
 }
 
 // Pop returns the value of the first node
-func (list *LinkList) Pop() interface{} {
+func (list *LinkList) Pop() any {
 	if list.Empty() {
 		return nil
 	}
@@ -40,6 +40,6 @@ func (list *LinkList) Empty() bool {
 }
 
 type listNode struct {
-	Value interface{}
+	Value any
 	Next  *listNode
 }

@@ -11,7 +11,7 @@ import (
 )
 
 // 转换成string
-func toString(src interface{}) (dst string, err error) {
+func toString(src any) (dst string, err error) {
 	inf := reflect.Indirect(reflect.ValueOf(src)).Interface()
 	if inf == nil {
 		return "", nil

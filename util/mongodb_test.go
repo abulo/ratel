@@ -51,12 +51,12 @@ func TestConvertBson(t *testing.T) {
 
 func Test_indirect(t *testing.T) {
 	type args struct {
-		a interface{}
+		a any
 	}
 	tests := []struct {
 		name string
 		args args
-		want interface{}
+		want any
 	}{
 		// TODO: Add test cases.
 	}

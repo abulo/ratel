@@ -55,8 +55,8 @@ func TestFormatDuring(t *testing.T) {
 
 func TestGetHourDiffer(t *testing.T) {
 	type args struct {
-		startTime interface{}
-		endTime   interface{}
+		startTime any
+		endTime   any
 	}
 	tests := []struct {
 		name string
@@ -264,7 +264,7 @@ func TestUSleep(t *testing.T) {
 
 func TestUnixTimeFormatDate(t *testing.T) {
 	type args struct {
-		str interface{}
+		str any
 	}
 	tests := []struct {
 		name string
@@ -284,7 +284,7 @@ func TestUnixTimeFormatDate(t *testing.T) {
 
 func TestFormatDateTime(t *testing.T) {
 	type args struct {
-		str interface{}
+		str any
 	}
 	tests := []struct {
 		name string
@@ -304,7 +304,7 @@ func TestFormatDateTime(t *testing.T) {
 
 func TestFormatDate(t *testing.T) {
 	type args struct {
-		str interface{}
+		str any
 	}
 	tests := []struct {
 		name string
@@ -676,7 +676,7 @@ func TestHour(t *testing.T) {
 
 func TestToWeekDay(t *testing.T) {
 	type args struct {
-		t interface{}
+		t any
 	}
 	tests := []struct {
 		name string

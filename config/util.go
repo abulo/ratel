@@ -11,7 +11,7 @@ import (
 
 // ParseEnvVarStringHookFunc returns a DecodeHookFunc that parse ENV var
 func ParseEnvVarStringHookFunc() mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	return func(f reflect.Type, t reflect.Type, data any) (any, error) {
 		if f.Kind() != reflect.String {
 			return data, nil
 		}

@@ -14,7 +14,7 @@ import (
 var Decoder config.Decoder = parser.Decode
 
 // Encoder encode data to ini content
-var Encoder config.Encoder = func(ptr interface{}) (out []byte, err error) {
+var Encoder config.Encoder = func(ptr any) (out []byte, err error) {
 	return parser.Encode(ptr)
 }
 

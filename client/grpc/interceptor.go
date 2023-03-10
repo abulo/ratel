@@ -27,7 +27,7 @@ var (
 )
 
 func debugUnaryClientInterceptor(addr string) grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		var p peer.Peer
 		prefix := fmt.Sprintf("[%s]", addr)
 		if remote, ok := peer.FromContext(ctx); ok && remote.Addr != nil {
@@ -45,7 +45,7 @@ func debugUnaryClientInterceptor(addr string) grpc.UnaryClientInterceptor {
 }
 
 func aidUnaryClientInterceptor() grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		md, ok := metadata.FromOutgoingContext(ctx)
 		clientAidMD := metadata.Pairs("aid", env.AppID())
 		if ok {
@@ -61,7 +61,7 @@ func aidUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 
 // timeoutUnaryClientInterceptor gRPC客户端超时拦截器
 func timeoutUnaryClientInterceptor(timeout time.Duration, slowThreshold time.Duration) grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		now := time.Now()
 		// 若无自定义超时设置，默认设置超时
 		_, ok := ctx.Deadline()
@@ -90,7 +90,7 @@ func timeoutUnaryClientInterceptor(timeout time.Duration, slowThreshold time.Dur
 }
 
 func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if !ok {
 			md = metadata.New(nil)
@@ -123,7 +123,7 @@ func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 
 // loggerUnaryClientInterceptor gRPC客户端日志中间件
 func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		beg := time.Now()
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		spbStatus := ecode.ExtractCodes(err)
@@ -171,8 +171,8 @@ func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) gr
 }
 
 // metric统计
-func metricUnaryClientInterceptor(name string) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+func metricUnaryClientInterceptor(name string) func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		beg := time.Now()
 		err := invoker(ctx, method, req, reply, cc, opts...)
 

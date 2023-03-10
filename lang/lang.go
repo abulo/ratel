@@ -6,7 +6,7 @@ var Placeholder PlaceholderType
 // AnyType ...
 type (
 	// AnyType can be used to hold any type.
-	AnyType = interface{}
+	AnyType = any
 	// PlaceholderType represents a placeholder type.
 	PlaceholderType = struct{}
 )

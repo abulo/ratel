@@ -88,7 +88,7 @@ func TestIssues_46(t *testing.T) {
 	dump.Println(c.Data())
 
 	val, _ := c.GetValue("http")
-	mp := val.(map[string]interface{})
+	mp := val.(map[string]any)
 	dump.Println(mp)
 	is.Equal("${HTTP_PORT|8080}", mp["port"])
 

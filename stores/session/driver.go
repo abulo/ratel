@@ -19,7 +19,7 @@ type Session struct {
 // Put https://laravel.com/docs/5.8/session
 // Pushing To Array Session Values
 // session.Put('user.teams', 'developers');  => {user: {teams: "developer"}}
-func (session *Session) Put(ctx context.Context, key string, value interface{}) error {
+func (session *Session) Put(ctx context.Context, key string, value any) error {
 	var h = session.Driver
 	var bytes []byte
 	var err error
@@ -27,7 +27,7 @@ func (session *Session) Put(ctx context.Context, key string, value interface{}) 
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
-	m := make(map[string]interface{})
+	m := make(map[string]any)
 
 	// fmt.Printf("Exists %s?\n", session.Name)
 	if val, err := h.Exists(ctx, session.Name); err == nil && val {
@@ -57,9 +57,9 @@ func (session *Session) Put(ctx context.Context, key string, value interface{}) 
 }
 
 // Get s.Get
-func (session *Session) Get(ctx context.Context, key string) interface{} {
+func (session *Session) Get(ctx context.Context, key string) any {
 	var h = session.Driver
-	var m map[string]interface{}
+	var m map[string]any
 	var content string
 
 	if ctx == nil || ctx.Err() != nil {
@@ -80,7 +80,7 @@ func (session *Session) Get(ctx context.Context, key string) interface{} {
 // Remove ...
 func (session *Session) Remove(ctx context.Context, key string) {
 	var h = session.Driver
-	var m map[string]interface{}
+	var m map[string]any
 	var content string
 	var bytes []byte
 
@@ -105,7 +105,7 @@ func (session *Session) Remove(ctx context.Context, key string) {
 }
 
 // sess.Put("info.age", "28")
-func setSliceMap(m map[string]interface{}, keys []string, value interface{}) map[string]interface{} {
+func setSliceMap(m map[string]any, keys []string, value any) map[string]any {
 	var itMap = m
 	var i int
 	var limit = len(keys) - 1
@@ -114,20 +114,20 @@ func setSliceMap(m map[string]interface{}, keys []string, value interface{}) map
 		_, ok := itMap[keys[i]]
 		if !ok {
 			// } else {
-			itMap[keys[i]] = make(map[string]interface{})
+			itMap[keys[i]] = make(map[string]any)
 		}
-		itMap = itMap[keys[i]].(map[string]interface{})
+		itMap = itMap[keys[i]].(map[string]any)
 	}
 	itMap[keys[limit]] = value
 
 	return m
 }
 
-func getSliceMap(m map[string]interface{}, keys []string) interface{} {
+func getSliceMap(m map[string]any, keys []string) any {
 	var itMap = m
 	var i int
 	var limit = len(keys) - 1
-	var v interface{}
+	var v any
 	var ok bool
 
 	for i = 0; i < limit; i++ {
@@ -135,7 +135,7 @@ func getSliceMap(m map[string]interface{}, keys []string) interface{} {
 		if !ok {
 			break
 		}
-		itMap = v.(map[string]interface{})
+		itMap = v.(map[string]any)
 	}
 	v, ok = itMap[keys[i]]
 	if !ok {
@@ -144,11 +144,11 @@ func getSliceMap(m map[string]interface{}, keys []string) interface{} {
 	return v
 }
 
-func delSliceMap(m map[string]interface{}, keys []string) {
+func delSliceMap(m map[string]any, keys []string) {
 	var itMap = m
 	var i int
 	var limit = len(keys) - 1
-	var v interface{}
+	var v any
 	var ok bool
 
 	for i = 0; i < limit; i++ {
@@ -156,7 +156,7 @@ func delSliceMap(m map[string]interface{}, keys []string) {
 		if !ok {
 			break
 		}
-		itMap = v.(map[string]interface{})
+		itMap = v.(map[string]any)
 	}
 	_, ok = itMap[keys[i]]
 	if !ok {
@@ -172,7 +172,7 @@ func (session *Session) Has(key string) bool {
 	return h.Exists(session.Name).Val() == 1
 }
 // TO BE DONE
-func (session *Session) Push(key string, e interface{}) {
+func (session *Session) Push(key string, e any) {
 }
 */
 

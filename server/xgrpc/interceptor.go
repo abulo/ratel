@@ -18,11 +18,11 @@ import (
 // StreamInterceptorChain returns stream interceptors chain.
 func StreamInterceptorChain(interceptors ...grpc.StreamServerInterceptor) grpc.StreamServerInterceptor {
 	build := func(c grpc.StreamServerInterceptor, n grpc.StreamHandler, info *grpc.StreamServerInfo) grpc.StreamHandler {
-		return func(srv interface{}, stream grpc.ServerStream) error {
+		return func(srv any, stream grpc.ServerStream) error {
 			return c(srv, stream, info, n)
 		}
 	}
-	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
+	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
 		chain := handler
 		for i := len(interceptors) - 1; i >= 0; i-- {
 			chain = build(interceptors[i], chain, info)
@@ -34,12 +34,12 @@ func StreamInterceptorChain(interceptors ...grpc.StreamServerInterceptor) grpc.S
 // UnaryInterceptorChain returns interceptors chain.
 func UnaryInterceptorChain(interceptors ...grpc.UnaryServerInterceptor) grpc.UnaryServerInterceptor {
 	build := func(c grpc.UnaryServerInterceptor, n grpc.UnaryHandler, info *grpc.UnaryServerInfo) grpc.UnaryHandler {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			return c(ctx, req, info, n)
 		}
 	}
 
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 		chain := handler
 		for i := len(interceptors) - 1; i >= 0; i-- {
 			chain = build(interceptors[i], chain, info)
@@ -48,7 +48,7 @@ func UnaryInterceptorChain(interceptors ...grpc.UnaryServerInterceptor) grpc.Una
 	}
 }
 
-func prometheusUnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func prometheusUnaryServerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	startTime := time.Now()
 	resp, err := handler(ctx, req)
 	code := ecode.ExtractCodes(err)
@@ -57,7 +57,7 @@ func prometheusUnaryServerInterceptor(ctx context.Context, req interface{}, info
 	return resp, err
 }
 
-func prometheusStreamServerInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+func prometheusStreamServerInterceptor(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	startTime := time.Now()
 	err := handler(srv, ss)
 	code := ecode.ExtractCodes(err)
@@ -66,7 +66,7 @@ func prometheusStreamServerInterceptor(srv interface{}, ss grpc.ServerStream, in
 	return err
 }
 
-func traceUnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func traceUnaryServerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	span, ctx := trace.StartSpanFromContext(
 		ctx,
 		info.FullMethod,
@@ -101,7 +101,7 @@ func (css contextedServerStream) Context() context.Context {
 	return css.ctx
 }
 
-func traceStreamServerInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+func traceStreamServerInterceptor(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	span, ctx := trace.StartSpanFromContext(
 		ss.Context(),
 		info.FullMethod,

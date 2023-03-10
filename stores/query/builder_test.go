@@ -50,7 +50,7 @@ func TestBuilder_Select(t *testing.T) {
 func TestBuilder_Where(t *testing.T) {
 	type args struct {
 		column string
-		value  []interface{}
+		value  []any
 	}
 	tests := []struct {
 		name    string
@@ -72,7 +72,7 @@ func TestBuilder_Where(t *testing.T) {
 func TestBuilder_OrWhere(t *testing.T) {
 	type args struct {
 		column string
-		value  []interface{}
+		value  []any
 	}
 	tests := []struct {
 		name    string
@@ -94,7 +94,7 @@ func TestBuilder_OrWhere(t *testing.T) {
 func TestBuilder_Equal(t *testing.T) {
 	type args struct {
 		column string
-		value  interface{}
+		value  any
 	}
 	tests := []struct {
 		name    string
@@ -116,7 +116,7 @@ func TestBuilder_Equal(t *testing.T) {
 func TestBuilder_OrEqual(t *testing.T) {
 	type args struct {
 		column string
-		value  interface{}
+		value  any
 	}
 	tests := []struct {
 		name    string
@@ -138,7 +138,7 @@ func TestBuilder_OrEqual(t *testing.T) {
 func TestBuilder_NotEqual(t *testing.T) {
 	type args struct {
 		column string
-		value  interface{}
+		value  any
 	}
 	tests := []struct {
 		name    string
@@ -160,7 +160,7 @@ func TestBuilder_NotEqual(t *testing.T) {
 func TestBuilder_Greater(t *testing.T) {
 	type args struct {
 		column string
-		value  interface{}
+		value  any
 	}
 	tests := []struct {
 		name    string
@@ -182,7 +182,7 @@ func TestBuilder_Greater(t *testing.T) {
 func TestBuilder_GreaterEqual(t *testing.T) {
 	type args struct {
 		column string
-		value  interface{}
+		value  any
 	}
 	tests := []struct {
 		name    string
@@ -204,7 +204,7 @@ func TestBuilder_GreaterEqual(t *testing.T) {
 func TestBuilder_Less(t *testing.T) {
 	type args struct {
 		column string
-		value  interface{}
+		value  any
 	}
 	tests := []struct {
 		name    string
@@ -226,7 +226,7 @@ func TestBuilder_Less(t *testing.T) {
 func TestBuilder_LessEqual(t *testing.T) {
 	type args struct {
 		column string
-		value  interface{}
+		value  any
 	}
 	tests := []struct {
 		name    string
@@ -248,7 +248,7 @@ func TestBuilder_LessEqual(t *testing.T) {
 func TestBuilder_OrNotEqual(t *testing.T) {
 	type args struct {
 		column string
-		value  interface{}
+		value  any
 	}
 	tests := []struct {
 		name    string
@@ -270,8 +270,8 @@ func TestBuilder_OrNotEqual(t *testing.T) {
 func TestBuilder_Between(t *testing.T) {
 	type args struct {
 		column string
-		value1 interface{}
-		value2 interface{}
+		value1 any
+		value2 any
 	}
 	tests := []struct {
 		name    string
@@ -293,8 +293,8 @@ func TestBuilder_Between(t *testing.T) {
 func TestBuilder_OrBetween(t *testing.T) {
 	type args struct {
 		column string
-		value1 interface{}
-		value2 interface{}
+		value1 any
+		value2 any
 	}
 	tests := []struct {
 		name    string
@@ -316,8 +316,8 @@ func TestBuilder_OrBetween(t *testing.T) {
 func TestBuilder_NotBetween(t *testing.T) {
 	type args struct {
 		column string
-		value1 interface{}
-		value2 interface{}
+		value1 any
+		value2 any
 	}
 	tests := []struct {
 		name    string
@@ -339,8 +339,8 @@ func TestBuilder_NotBetween(t *testing.T) {
 func TestBuilder_NotOrBetween(t *testing.T) {
 	type args struct {
 		column string
-		value1 interface{}
-		value2 interface{}
+		value1 any
+		value2 any
 	}
 	tests := []struct {
 		name    string
@@ -362,7 +362,7 @@ func TestBuilder_NotOrBetween(t *testing.T) {
 func TestBuilder_In(t *testing.T) {
 	type args struct {
 		column string
-		value  []interface{}
+		value  []any
 	}
 	tests := []struct {
 		name    string
@@ -384,7 +384,7 @@ func TestBuilder_In(t *testing.T) {
 func TestBuilder_OrIn(t *testing.T) {
 	type args struct {
 		column string
-		value  []interface{}
+		value  []any
 	}
 	tests := []struct {
 		name    string
@@ -406,7 +406,7 @@ func TestBuilder_OrIn(t *testing.T) {
 func TestBuilder_NotIn(t *testing.T) {
 	type args struct {
 		column string
-		value  []interface{}
+		value  []any
 	}
 	tests := []struct {
 		name    string
@@ -428,7 +428,7 @@ func TestBuilder_NotIn(t *testing.T) {
 func TestBuilder_OrNotIn(t *testing.T) {
 	type args struct {
 		column string
-		value  []interface{}
+		value  []any
 	}
 	tests := []struct {
 		name    string
@@ -534,7 +534,7 @@ func TestBuilder_OrIsNotNULL(t *testing.T) {
 func TestBuilder_Like(t *testing.T) {
 	type args struct {
 		column string
-		value  interface{}
+		value  any
 	}
 	tests := []struct {
 		name    string
@@ -556,7 +556,7 @@ func TestBuilder_Like(t *testing.T) {
 func TestBuilder_OrLike(t *testing.T) {
 	type args struct {
 		column string
-		value  interface{}
+		value  any
 	}
 	tests := []struct {
 		name    string
@@ -939,7 +939,7 @@ func TestBuilder_toWhere(t *testing.T) {
 
 func TestBuilder_addArg(t *testing.T) {
 	type args struct {
-		value []interface{}
+		value []any
 	}
 	tests := []struct {
 		name    string
@@ -957,7 +957,7 @@ func TestBuilder_addArg(t *testing.T) {
 
 func TestBuilder_beforeArg(t *testing.T) {
 	type args struct {
-		value []interface{}
+		value []any
 	}
 	tests := []struct {
 		name    string
@@ -975,7 +975,7 @@ func TestBuilder_beforeArg(t *testing.T) {
 
 func TestBuilder_setData(t *testing.T) {
 	type args struct {
-		data []map[string]interface{}
+		data []map[string]any
 	}
 	tests := []struct {
 		name    string
@@ -993,14 +993,14 @@ func TestBuilder_setData(t *testing.T) {
 
 func TestBuilder_getInsertMap(t *testing.T) {
 	type args struct {
-		data interface{}
+		data any
 	}
 	tests := []struct {
 		name        string
 		builder     *Builder
 		args        args
 		wantColumns []string
-		wantValues  map[string][]interface{}
+		wantValues  map[string][]any
 		wantErr     bool
 	}{
 		// TODO: Add test cases.
@@ -1045,7 +1045,7 @@ func TestBuilder_IsZero(t *testing.T) {
 
 func TestBuilder_MultiInsert(t *testing.T) {
 	type args struct {
-		datas []interface{}
+		datas []any
 	}
 	tests := []struct {
 		name    string
@@ -1072,7 +1072,7 @@ func TestBuilder_MultiInsert(t *testing.T) {
 
 func TestBuilder_MultiInsertSQL(t *testing.T) {
 	type args struct {
-		datas []interface{}
+		datas []any
 	}
 	tests := []struct {
 		name    string
@@ -1093,7 +1093,7 @@ func TestBuilder_MultiInsertSQL(t *testing.T) {
 
 func TestBuilder_Replace(t *testing.T) {
 	type args struct {
-		datas []interface{}
+		datas []any
 	}
 	tests := []struct {
 		name    string
@@ -1120,7 +1120,7 @@ func TestBuilder_Replace(t *testing.T) {
 
 func TestBuilder_ReplaceSQL(t *testing.T) {
 	type args struct {
-		datas []interface{}
+		datas []any
 	}
 	tests := []struct {
 		name    string
@@ -1141,8 +1141,8 @@ func TestBuilder_ReplaceSQL(t *testing.T) {
 
 func TestBuilder_InsertUpdate(t *testing.T) {
 	type args struct {
-		insert interface{}
-		update interface{}
+		insert any
+		update any
 	}
 	tests := []struct {
 		name    string
@@ -1169,8 +1169,8 @@ func TestBuilder_InsertUpdate(t *testing.T) {
 
 func TestBuilder_InsertUpdateSQL(t *testing.T) {
 	type args struct {
-		insert interface{}
-		update interface{}
+		insert any
+		update any
 	}
 	tests := []struct {
 		name    string
@@ -1191,7 +1191,7 @@ func TestBuilder_InsertUpdateSQL(t *testing.T) {
 
 func TestBuilder_Insert(t *testing.T) {
 	type args struct {
-		data interface{}
+		data any
 	}
 	tests := []struct {
 		name    string
@@ -1218,7 +1218,7 @@ func TestBuilder_Insert(t *testing.T) {
 
 func TestBuilder_InsertSQL(t *testing.T) {
 	type args struct {
-		data interface{}
+		data any
 	}
 	tests := []struct {
 		name    string
@@ -1239,7 +1239,7 @@ func TestBuilder_InsertSQL(t *testing.T) {
 
 func TestBuilder_Update(t *testing.T) {
 	type args struct {
-		data interface{}
+		data any
 	}
 	tests := []struct {
 		name    string
@@ -1266,7 +1266,7 @@ func TestBuilder_Update(t *testing.T) {
 
 func TestBuilder_UpdateSQL(t *testing.T) {
 	type args struct {
-		data interface{}
+		data any
 	}
 	tests := []struct {
 		name    string
@@ -1351,7 +1351,7 @@ func TestBuilder_Count(t *testing.T) {
 func TestBuilder_Exec(t *testing.T) {
 	type args struct {
 		sql  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name    string
@@ -1379,7 +1379,7 @@ func TestBuilder_Exec(t *testing.T) {
 func TestBuilder_ExecSQL(t *testing.T) {
 	type args struct {
 		sql  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name    string
@@ -1401,7 +1401,7 @@ func TestBuilder_ExecSQL(t *testing.T) {
 func TestBuilder_QueryRows(t *testing.T) {
 	type args struct {
 		sql  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name    string
@@ -1423,7 +1423,7 @@ func TestBuilder_QueryRows(t *testing.T) {
 func TestBuilder_QueryRowsSQL(t *testing.T) {
 	type args struct {
 		sql  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name    string
@@ -1445,7 +1445,7 @@ func TestBuilder_QueryRowsSQL(t *testing.T) {
 func TestBuilder_QueryRowSQL(t *testing.T) {
 	type args struct {
 		sql  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name    string
@@ -1467,7 +1467,7 @@ func TestBuilder_QueryRowSQL(t *testing.T) {
 func TestBuilder_QueryRow(t *testing.T) {
 	type args struct {
 		sql  string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name    string

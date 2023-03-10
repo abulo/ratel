@@ -109,7 +109,7 @@ func TestConfig_Structure(t *testing.T) {
 
 	// custom data
 	cfg = New("test")
-	err = cfg.LoadData(map[string]interface{}{
+	err = cfg.LoadData(map[string]any{
 		"key":  "val",
 		"age":  120,
 		"tags": []int{12, 34},

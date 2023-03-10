@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"encoding/json"
-	"errors"
+
+	"github.com/pkg/errors"
 
 	"github.com/spf13/cast"
 )
@@ -127,7 +128,7 @@ func (b Byte) IsZero() bool {
 }
 
 // Scan implements the Scanner interface.
-func (b *Byte) Scan(value interface{}) error {
+func (b *Byte) Scan(value any) error {
 	if value == nil {
 		b.Byte, b.Valid, b.Set = 0, false, false
 		return nil

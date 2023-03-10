@@ -100,7 +100,7 @@ func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,{{Helper .Prima
 {{- if .Default}}
 
 // {{CamelStr .Table.TableName}}{{CamelStr .Name}} 列表数据
-func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,condition map[string]interface{})([]dao.{{CamelStr .Table.TableName}},error){
+func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,condition map[string]any)([]dao.{{CamelStr .Table.TableName}},error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	var res []dao.{{CamelStr .Table.TableName}}
 	builder := db.NewBuilder(ctx).Table("{{Char .Table.TableName}}")
@@ -116,7 +116,7 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,conditi
 }
 
 // {{CamelStr .Table.TableName}}{{CamelStr .Name}}Total 列表数据总量
-func {{CamelStr .Table.TableName}}{{CamelStr .Name}}Total(ctx context.Context,condition map[string]interface{})(int64,error){
+func {{CamelStr .Table.TableName}}{{CamelStr .Name}}Total(ctx context.Context,condition map[string]any)(int64,error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	builder := db.NewBuilder(ctx).Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
@@ -125,7 +125,7 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}Total(ctx context.Context,co
 {{- else}}
 
 // {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}} 列表数据
-func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx context.Context,condition map[string]interface{})([]dao.{{CamelStr .Table.TableName}},error){
+func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx context.Context,condition map[string]any)([]dao.{{CamelStr .Table.TableName}},error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	var res []dao.{{CamelStr .Table.TableName}}
 	builder := db.NewBuilder(ctx).Table("{{Char .Table.TableName}}")
@@ -141,7 +141,7 @@ func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx context.Context,c
 }
 
 // {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total 列表数据总量
-func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total(ctx context.Context,condition map[string]interface{})(int64,error){
+func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total(ctx context.Context,condition map[string]any)(int64,error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	builder := db.NewBuilder(ctx).Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
@@ -151,7 +151,7 @@ func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total(ctx context.Cont
 {{- else}}
 
 // {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}} 单列数据
-func {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}(ctx context.Context,condition map[string]interface{})(dao.{{CamelStr .Table.TableName}},error){
+func {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}(ctx context.Context,condition map[string]any)(dao.{{CamelStr .Table.TableName}},error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	var res dao.{{CamelStr .Table.TableName}}
 	builder := db.NewBuilder(ctx).Table("{{Char .Table.TableName}}")

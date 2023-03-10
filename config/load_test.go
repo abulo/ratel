@@ -30,7 +30,7 @@ func TestDefaultLoad(t *testing.T) {
 
 	ClearAll()
 	// load map
-	err = LoadData(map[string]interface{}{
+	err = LoadData(map[string]any{
 		"name":    "inhere",
 		"age":     28,
 		"working": true,
@@ -56,7 +56,7 @@ func TestLoad(t *testing.T) {
 	is.Equal(OnCleanData, name)
 
 	// load map data
-	err = c.LoadData(map[string]interface{}{
+	err = c.LoadData(map[string]any{
 		"name":    "inhere",
 		"age":     float64(28),
 		"working": true,

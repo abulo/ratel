@@ -50,7 +50,7 @@ func RestrictParallel(restrict int, fns ...func()) func() {
 }
 
 // GoDirect ...
-func GoDirect(fn interface{}, args ...interface{}) {
+func GoDirect(fn any, args ...any) {
 	var inj = inject.New()
 	for _, arg := range args {
 		inj.Map(arg)
