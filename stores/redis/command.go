@@ -44,6 +44,9 @@ func (r *Client) Pipeline() (val redis.Pipeliner, err error) {
 	return
 }
 func (r *Client) getCtx(ctx context.Context) context.Context {
+	if ctx == nil || ctx.Err() != nil {
+		ctx = context.TODO()
+	}
 	return ctx
 }
 
