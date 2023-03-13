@@ -37,10 +37,11 @@ type (
 		Compress         bool          // enable lz4 compression   clickhouse
 		MaxExecutionTime string        // 执行超时时间 clickhouse
 		DisableDebug     bool          // 关闭 debug模式  clickhouse
+		ParseTime        bool          // 是否解析时间
 	}
 )
 
-func NewSqlClient(opts ...Option) (*Client, error) {
+func NewClient(opts ...Option) (*Client, error) {
 	c := &Client{}
 	for _, opt := range opts {
 		opt(c)
@@ -60,5 +61,20 @@ func (c *Client) dns() string {
 	default:
 		logger.Logger.Panic(errors.New("driverName not support"))
 		return ""
+	}
+}
+
+// NewSqlClient 代理
+func (c *Client) NewSqlClient(opts ...SqlOption) SqlConn {
+	switch c.DriverName {
+	case driverMysql:
+		return c.NewMysql(opts...)
+	case driverClickhouse:
+		return c.NewClickhouse(opts...)
+	case driverPostgres:
+		return c.NewPostgres(opts...)
+	default:
+		logger.Logger.Panic(errors.New("driverName not support"))
+		return nil
 	}
 }

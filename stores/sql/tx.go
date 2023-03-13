@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
 	"github.com/abulo/ratel/v3/core/trace"
 	"github.com/opentracing/opentracing-go"
@@ -45,7 +46,7 @@ func transactOnConn(ctx context.Context, conn *sql.DB, pool *pool, b beginnable,
 			if e := tx.Rollback(); e != nil {
 				err = fmt.Errorf("recover from %#v, rollback failed: %w", p, e)
 			} else {
-				err = fmt.Errorf("recoveer from %#v", p)
+				err = fmt.Errorf("recover from %#v", p)
 			}
 		} else if err != nil {
 			if e := tx.Rollback(); e != nil {
@@ -59,17 +60,9 @@ func transactOnConn(ctx context.Context, conn *sql.DB, pool *pool, b beginnable,
 	return fn(ctx, tx)
 }
 
-// getCtx returns a context with a timeout.
-func (db txSession) getCtx(ctx context.Context) context.Context {
-	if ctx == nil || ctx.Err() != nil {
-		ctx = context.TODO()
-	}
-	return ctx
-}
-
 // MultiInsert 批量插入
-func (db txSession) MultiInsert(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db txSession) MultiInsert(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -77,8 +70,8 @@ func (db txSession) MultiInsert(ctx context.Context, querySql string, args ...an
 }
 
 // Replace 替换
-func (db txSession) Replace(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db txSession) Replace(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -86,8 +79,8 @@ func (db txSession) Replace(ctx context.Context, querySql string, args ...any) (
 }
 
 // InsertUpdate 插入或更新
-func (db txSession) InsertUpdate(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db txSession) InsertUpdate(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -95,8 +88,8 @@ func (db txSession) InsertUpdate(ctx context.Context, querySql string, args ...a
 }
 
 // Insert 插入
-func (db txSession) Insert(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db txSession) Insert(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -104,8 +97,8 @@ func (db txSession) Insert(ctx context.Context, querySql string, args ...any) (i
 }
 
 // Update 更新
-func (db txSession) Update(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db txSession) Update(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -113,8 +106,8 @@ func (db txSession) Update(ctx context.Context, querySql string, args ...any) (i
 }
 
 // Delete 删除
-func (db txSession) Delete(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db txSession) Delete(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -122,8 +115,8 @@ func (db txSession) Delete(ctx context.Context, querySql string, args ...any) (i
 }
 
 // Exec executes a query without returning any rows.
-func (db txSession) Exec(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db txSession) Exec(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -131,8 +124,8 @@ func (db txSession) Exec(ctx context.Context, querySql string, args ...any) (int
 }
 
 // QueryRow returns a single row from the database.
-func (db txSession) QueryRow(ctx context.Context, querySql string, args ...any) *Row {
-	res, err := db.QueryCtx(ctx, querySql, args...)
+func (db txSession) QueryRow(ctx context.Context, query string, args ...any) *Row {
+	res, err := db.QueryCtx(ctx, query, args...)
 	if err != nil {
 		return &Row{err: err}
 	}
@@ -143,8 +136,8 @@ func (db txSession) QueryRow(ctx context.Context, querySql string, args ...any) 
 }
 
 // QueryRow returns a single row from the database.
-func (db txSession) QueryRows(ctx context.Context, querySql string, args ...any) *Rows {
-	res, err := db.QueryCtx(ctx, querySql, args...)
+func (db txSession) QueryRows(ctx context.Context, query string, args ...any) *Rows {
+	res, err := db.QueryCtx(ctx, query, args...)
 	if err != nil {
 		return &Rows{err: err}
 	}
@@ -154,24 +147,13 @@ func (db txSession) QueryRows(ctx context.Context, querySql string, args ...any)
 	}
 }
 
-func (db txSession) ExecCtx(ctx context.Context, querySql string, args ...any) (result sql.Result, err error) {
-	ctx = db.getCtx(ctx)
+func (db txSession) ExecCtx(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
+	ctx = getCtx(ctx)
 	start := time.Now()
 	conn := db.Tx
-	if !db.disablePrepare {
-		var stmt *sql.Stmt
-		//添加预处理
-		stmt, errStmt := conn.PrepareContext(ctx, querySql)
-		if err != nil {
-			err = errStmt
-			return
-		}
-		defer stmt.Close()
-		result, err = stmt.ExecContext(ctx, args...)
-	} else {
-		result, err = conn.ExecContext(ctx, querySql, args...)
-	}
+
 	if !db.disableTrace {
+		call := Caller(11)
 		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan(db.driverName, opentracing.ChildOf(parentCtx))
@@ -184,13 +166,29 @@ func (db txSession) ExecCtx(ctx context.Context, querySql string, args ...any) (
 			ext.PeerAddress.Set(span, db.addr)
 			ext.DBInstance.Set(span, db.dbName)
 			ext.DBStatement.Set(span, db.driverName)
-			// span.SetTag("call.func", query.Func)
-			// span.SetTag("call.path", query.Path)
-			span.LogFields(log.String("sql", querySql))
+			span.LogFields(log.String("sql", query))
 			span.LogFields(log.Object("args", args))
+			span.LogFields(log.Object("call", call))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
+	}
+	if !db.disablePrepare {
+		var stmt *sql.Stmt
+		//添加预处理
+		stmt, errStmt := conn.PrepareContext(ctx, query)
+		if err != nil {
+			err = errStmt
+			return
+		}
+		defer func() {
+			if err := stmt.Close(); err != nil {
+				logger.Logger.Error("Error closing stmt: ", err)
+			}
+		}()
+		result, err = stmt.ExecContext(ctx, args...)
+	} else {
+		result, err = conn.ExecContext(ctx, query, args...)
 	}
 	if !db.disableMetric {
 		cost := time.Since(start)
@@ -204,25 +202,12 @@ func (db txSession) ExecCtx(ctx context.Context, querySql string, args ...any) (
 	return
 }
 
-func (db txSession) QueryCtx(ctx context.Context, querySql string, args ...any) (result *sql.Rows, err error) {
-	ctx = db.getCtx(ctx)
+func (db txSession) QueryCtx(ctx context.Context, query string, args ...any) (result *sql.Rows, err error) {
+	ctx = getCtx(ctx)
 	start := time.Now()
 	conn := db.Tx
-	if !db.disablePrepare {
-		var stmt *sql.Stmt
-		//添加预处理
-		stmt, errStmt := conn.PrepareContext(ctx, querySql)
-		if err != nil {
-			err = errStmt
-			return
-		}
-		defer stmt.Close()
-		result, err = stmt.QueryContext(ctx, args...)
-	} else {
-		result, err = conn.QueryContext(ctx, querySql, args...)
-	}
-	defer result.Close()
 	if !db.disableTrace {
+		call := Caller(11)
 		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 			parentCtx := parentSpan.Context()
 			span := opentracing.StartSpan(db.driverName, opentracing.ChildOf(parentCtx))
@@ -235,14 +220,31 @@ func (db txSession) QueryCtx(ctx context.Context, querySql string, args ...any) 
 			ext.PeerAddress.Set(span, db.addr)
 			ext.DBInstance.Set(span, db.dbName)
 			ext.DBStatement.Set(span, db.driverName)
-			// span.SetTag("call.func", query.Func)
-			// span.SetTag("call.path", query.Path)
-			span.LogFields(log.String("sql", querySql))
+			span.LogFields(log.String("sql", query))
 			span.LogFields(log.Object("args", args))
+			span.LogFields(log.Object("call", call))
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
+	if !db.disablePrepare {
+		var stmt *sql.Stmt
+		//添加预处理
+		stmt, errStmt := conn.PrepareContext(ctx, query)
+		if err != nil {
+			err = errStmt
+			return
+		}
+		defer func() {
+			if err := stmt.Close(); err != nil {
+				logger.Logger.Error("Error closing stmt: ", err)
+			}
+		}()
+		result, err = stmt.QueryContext(ctx, args...)
+	} else {
+		result, err = conn.QueryContext(ctx, query, args...)
+	}
+
 	if !db.disableMetric {
 		cost := time.Since(start)
 		if err != nil {

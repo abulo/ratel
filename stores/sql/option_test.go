@@ -425,3 +425,23 @@ func TestWithDisablePrepare(t *testing.T) {
 		})
 	}
 }
+
+func TestWithParseTime(t *testing.T) {
+	type args struct {
+		parseTime bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want Option
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := WithParseTime(tt.args.parseTime); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("WithParseTime() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

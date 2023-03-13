@@ -3,7 +3,13 @@ package sql
 import "github.com/abulo/ratel/v3/util"
 
 func (c *Client) mysqlDns() string {
-	return c.Username + ":" + c.Password + "@tcp(" + c.Host + ":" + c.Port + ")/" + c.Database + "?charset=" + c.Charset + "&loc=" + c.TimeZone + "&parseTime=true"
+	link := c.Username + ":" + c.Password + "@tcp(" + c.Host + ":" + c.Port + ")/" + c.Database + "?charset=" + c.Charset + "&loc=" + c.TimeZone
+	if c.ParseTime {
+		link = link + "&parseTime=true"
+	} else {
+		link = link + "&parseTime=false"
+	}
+	return link
 }
 
 func (c *Client) clickhouseDns() string {
@@ -45,5 +51,11 @@ func (c *Client) clickhouseDns() string {
 }
 
 func (c *Client) postgresDns() string {
-	return c.Username + ":" + c.Password + "@tcp(" + c.Host + ":" + c.Port + ")/" + c.Database + "?charset=" + c.Charset + "&loc=" + c.TimeZone + "&parseTime=true"
+	link := c.Username + ":" + c.Password + "@tcp(" + c.Host + ":" + c.Port + ")/" + c.Database + "?charset=" + c.Charset + "&loc=" + c.TimeZone
+	if c.ParseTime {
+		link = link + "&parseTime=true"
+	} else {
+		link = link + "&parseTime=false"
+	}
+	return link
 }

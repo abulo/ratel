@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
 	"github.com/abulo/ratel/v3/core/resource"
 	"github.com/abulo/ratel/v3/core/trace"
@@ -17,23 +19,24 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
+	"github.com/spf13/cast"
 )
 
 type (
 
 	// Session stands for raw connections or transaction sessions
 	Session interface {
-		MultiInsert(ctx context.Context, querySql string, args ...any) (int64, error)
-		Replace(ctx context.Context, querySql string, args ...any) (int64, error)
-		InsertUpdate(ctx context.Context, querySql string, args ...any) (int64, error)
-		Insert(ctx context.Context, querySql string, args ...any) (int64, error)
-		Update(ctx context.Context, querySql string, args ...any) (int64, error)
-		Delete(ctx context.Context, querySql string, args ...any) (int64, error)
-		Exec(ctx context.Context, querySql string, args ...any) (int64, error)
-		QueryRow(ctx context.Context, querySql string, args ...any) *Row
-		QueryRows(ctx context.Context, querySql string, args ...any) *Rows
-		ExecCtx(ctx context.Context, querySql string, args ...any) (sql.Result, error)
-		QueryCtx(ctx context.Context, querySql string, args ...any) (*sql.Rows, error)
+		MultiInsert(ctx context.Context, query string, args ...any) (int64, error)
+		Replace(ctx context.Context, query string, args ...any) (int64, error)
+		InsertUpdate(ctx context.Context, query string, args ...any) (int64, error)
+		Insert(ctx context.Context, query string, args ...any) (int64, error)
+		Update(ctx context.Context, query string, args ...any) (int64, error)
+		Delete(ctx context.Context, query string, args ...any) (int64, error)
+		Exec(ctx context.Context, query string, args ...any) (int64, error)
+		QueryRow(ctx context.Context, query string, args ...any) *Row
+		QueryRows(ctx context.Context, query string, args ...any) *Rows
+		ExecCtx(ctx context.Context, query string, args ...any) (sql.Result, error)
+		QueryCtx(ctx context.Context, query string, args ...any) (*sql.Rows, error)
 	}
 
 	// SqlConn only stands for raw connections, so Transact method can be called.
@@ -126,7 +129,7 @@ func NewSqlConn(driverName, dns string, pool *pool, opts ...SqlOption) SqlConn {
 }
 
 // getCtx returns a context with a timeout.
-func (r *commonSqlConn) getCtx(ctx context.Context) context.Context {
+func getCtx(ctx context.Context) context.Context {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
@@ -139,8 +142,8 @@ func (db *commonSqlConn) Close() error {
 }
 
 // MultiInsert 批量插入
-func (db *commonSqlConn) MultiInsert(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db *commonSqlConn) MultiInsert(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -148,8 +151,8 @@ func (db *commonSqlConn) MultiInsert(ctx context.Context, querySql string, args 
 }
 
 // Replace 替换
-func (db *commonSqlConn) Replace(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db *commonSqlConn) Replace(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -157,8 +160,8 @@ func (db *commonSqlConn) Replace(ctx context.Context, querySql string, args ...a
 }
 
 // InsertUpdate 插入或更新
-func (db *commonSqlConn) InsertUpdate(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db *commonSqlConn) InsertUpdate(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -166,8 +169,8 @@ func (db *commonSqlConn) InsertUpdate(ctx context.Context, querySql string, args
 }
 
 // Insert 插入
-func (db *commonSqlConn) Insert(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db *commonSqlConn) Insert(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -175,8 +178,8 @@ func (db *commonSqlConn) Insert(ctx context.Context, querySql string, args ...an
 }
 
 // Update 更新
-func (db *commonSqlConn) Update(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db *commonSqlConn) Update(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -184,8 +187,8 @@ func (db *commonSqlConn) Update(ctx context.Context, querySql string, args ...an
 }
 
 // Delete 删除
-func (db *commonSqlConn) Delete(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db *commonSqlConn) Delete(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -193,8 +196,8 @@ func (db *commonSqlConn) Delete(ctx context.Context, querySql string, args ...an
 }
 
 // Exec executes a query without returning any rows.
-func (db *commonSqlConn) Exec(ctx context.Context, querySql string, args ...any) (int64, error) {
-	res, err := db.ExecCtx(ctx, querySql, args...)
+func (db *commonSqlConn) Exec(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -202,8 +205,8 @@ func (db *commonSqlConn) Exec(ctx context.Context, querySql string, args ...any)
 }
 
 // QueryRow returns a single row from the database.
-func (db *commonSqlConn) QueryRow(ctx context.Context, querySql string, args ...any) *Row {
-	res, err := db.QueryCtx(ctx, querySql, args...)
+func (db *commonSqlConn) QueryRow(ctx context.Context, query string, args ...any) *Row {
+	res, err := db.QueryCtx(ctx, query, args...)
 	if err != nil {
 		return &Row{err: err}
 	}
@@ -214,8 +217,8 @@ func (db *commonSqlConn) QueryRow(ctx context.Context, querySql string, args ...
 }
 
 // QueryRow returns a single row from the database.
-func (db *commonSqlConn) QueryRows(ctx context.Context, querySql string, args ...any) *Rows {
-	res, err := db.QueryCtx(ctx, querySql, args...)
+func (db *commonSqlConn) QueryRows(ctx context.Context, query string, args ...any) *Rows {
+	res, err := db.QueryCtx(ctx, query, args...)
 	if err != nil {
 		return &Rows{err: err}
 	}
@@ -226,8 +229,8 @@ func (db *commonSqlConn) QueryRows(ctx context.Context, querySql string, args ..
 }
 
 // ExecCtx executes a query without returning any rows.
-func (db *commonSqlConn) ExecCtx(ctx context.Context, querySql string, args ...any) (result sql.Result, err error) {
-	ctx = db.getCtx(ctx)
+func (db *commonSqlConn) ExecCtx(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
+	ctx = getCtx(ctx)
 	start := time.Now()
 	err = db.brk.DoWithAcceptable(func() error {
 		var conn *sql.DB
@@ -235,19 +238,8 @@ func (db *commonSqlConn) ExecCtx(ctx context.Context, querySql string, args ...a
 		if err != nil {
 			return err
 		}
-		if !db.disablePrepare {
-			var stmt *sql.Stmt
-			//添加预处理
-			stmt, err = conn.PrepareContext(ctx, querySql)
-			if err != nil {
-				return err
-			}
-			defer stmt.Close()
-			result, err = stmt.ExecContext(ctx, args...)
-		} else {
-			result, err = conn.ExecContext(ctx, querySql, args...)
-		}
 		if !db.disableTrace {
+			call := Caller(7)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan(db.driverName, opentracing.ChildOf(parentCtx))
@@ -260,13 +252,28 @@ func (db *commonSqlConn) ExecCtx(ctx context.Context, querySql string, args ...a
 				ext.PeerAddress.Set(span, db.addr)
 				ext.DBInstance.Set(span, db.dbName)
 				ext.DBStatement.Set(span, db.driverName)
-				// span.SetTag("call.func", query.Func)
-				// span.SetTag("call.path", query.Path)
-				span.LogFields(log.String("sql", querySql))
+				span.LogFields(log.String("sql", query))
 				span.LogFields(log.Object("args", args))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
+		}
+		if !db.disablePrepare {
+			var stmt *sql.Stmt
+			//添加预处理
+			stmt, err = conn.PrepareContext(ctx, query)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				if err := stmt.Close(); err != nil {
+					logger.Logger.Error("Error closing stmt: ", err)
+				}
+			}()
+			result, err = stmt.ExecContext(ctx, args...)
+		} else {
+			result, err = conn.ExecContext(ctx, query, args...)
 		}
 		if !db.disableMetric {
 			cost := time.Since(start)
@@ -283,30 +290,17 @@ func (db *commonSqlConn) ExecCtx(ctx context.Context, querySql string, args ...a
 }
 
 // QueryCtx executes a query that returns rows, typically a SELECT.
-func (db *commonSqlConn) QueryCtx(ctx context.Context, querySql string, args ...any) (result *sql.Rows, err error) {
-	ctx = db.getCtx(ctx)
+func (db *commonSqlConn) QueryCtx(ctx context.Context, query string, args ...any) (result *sql.Rows, err error) {
+	ctx = getCtx(ctx)
 	start := time.Now()
-
 	err = db.brk.DoWithAcceptable(func() error {
 		var conn *sql.DB
 		conn, err = db.connProv()
 		if err != nil {
 			return err
 		}
-		if !db.disablePrepare {
-			var stmt *sql.Stmt
-			//添加预处理
-			stmt, err = conn.PrepareContext(ctx, querySql)
-			if err != nil {
-				return err
-			}
-			defer stmt.Close()
-			result, err = stmt.QueryContext(ctx, args...)
-		} else {
-			result, err = conn.QueryContext(ctx, querySql, args...)
-		}
-		defer result.Close()
 		if !db.disableTrace {
+			call := Caller(7)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan(db.driverName, opentracing.ChildOf(parentCtx))
@@ -321,11 +315,29 @@ func (db *commonSqlConn) QueryCtx(ctx context.Context, querySql string, args ...
 				ext.DBStatement.Set(span, db.driverName)
 				// span.SetTag("call.func", query.Func)
 				// span.SetTag("call.path", query.Path)
-				span.LogFields(log.String("sql", querySql))
+				span.LogFields(log.String("sql", query))
 				span.LogFields(log.Object("args", args))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
+
 			}
+		}
+		if !db.disablePrepare {
+			var stmt *sql.Stmt
+			//添加预处理
+			stmt, err = conn.PrepareContext(ctx, query)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				if err := stmt.Close(); err != nil {
+					logger.Logger.Error("Error closing stmt: ", err)
+				}
+			}()
+			result, err = stmt.QueryContext(ctx, args...)
+		} else {
+			result, err = conn.QueryContext(ctx, query, args...)
 		}
 		if !db.disableMetric {
 			cost := time.Since(start)
@@ -351,7 +363,7 @@ func (db *commonSqlConn) acceptable(err error) bool {
 }
 
 func (db *commonSqlConn) Transact(ctx context.Context, fn func(context.Context, Session) error) (err error) {
-	ctx = db.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = db.brk.DoWithAcceptable(func() error {
 		pool := &pool{
 			DisableTrace:   db.disableTrace,
@@ -467,7 +479,7 @@ func writeValue(buf *strings.Builder, arg any) {
 		buf.WriteString(v.String())
 		buf.WriteByte('\'')
 	default:
-		buf.WriteString(Repr(v))
+		buf.WriteString(replace(v))
 	}
 }
 
@@ -498,7 +510,7 @@ func escape(input string) string {
 	return b.String()
 }
 
-func Repr(v any) string {
+func replace(v any) string {
 	if v == nil {
 		return ""
 	}
@@ -514,10 +526,10 @@ func Repr(v any) string {
 		val = val.Elem()
 	}
 
-	return reprOfValue(val)
+	return replaceOfValue(val)
 }
 
-func reprOfValue(val reflect.Value) string {
+func replaceOfValue(val reflect.Value) string {
 	switch vt := val.Interface().(type) {
 	case bool:
 		return strconv.FormatBool(vt)
@@ -555,5 +567,14 @@ func reprOfValue(val reflect.Value) string {
 		return string(vt)
 	default:
 		return fmt.Sprint(val.Interface())
+	}
+}
+
+func Caller(skip int) map[string]string {
+	pc, file, lineNo, _ := runtime.Caller(skip)
+	name := runtime.FuncForPC(pc).Name()
+	return map[string]string{
+		"path": file + ":" + cast.ToString(lineNo),
+		"func": name,
 	}
 }

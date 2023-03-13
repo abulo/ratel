@@ -147,3 +147,8 @@ func WithDisablePrepare(disablePrepare bool) Option {
 		r.DisablePrepare = disablePrepare
 	}
 }
+func WithParseTime(parseTime bool) Option {
+	return func(r *Client) {
+		r.ParseTime = parseTime
+	}
+}

@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+
+	"github.com/abulo/ratel/v3/core/logger"
 )
 
 // Row 获取记录
@@ -23,7 +25,10 @@ func (r *Row) ToAny() (result map[string]any, err error) {
 		r.err = err
 		return nil, err
 	}
-	return items[0], nil
+	if len(items) > 0 {
+		result = items[0]
+	}
+	return result, err
 }
 
 // ToMap get Map
@@ -37,7 +42,10 @@ func (r *Row) ToMap() (result map[string]string, err error) {
 		r.err = err
 		return nil, err
 	}
-	return items[0], nil
+	if len(items) > 0 {
+		result = items[0]
+	}
+	return result, err
 }
 
 // ToStruct get Struct
@@ -45,6 +53,11 @@ func (r *Row) ToStruct(st any) error {
 	if r.rows.err != nil {
 		return r.rows.err
 	}
+	defer func() {
+		if err := r.rows.rows.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
 	//获取变量的类型
 	stType := reflect.TypeOf(st)
 	stVal := reflect.ValueOf(st)
@@ -87,6 +100,11 @@ func (r *Rows) ToAny() (data []map[string]any, err error) {
 	if r.rows == nil {
 		return nil, r.err
 	}
+	defer func() {
+		if err := r.rows.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
 	fields, err := r.rows.Columns()
 	if err != nil {
 		r.err = err
@@ -121,6 +139,11 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 	if r.rows == nil {
 		return nil, r.err
 	}
+	defer func() {
+		if err := r.rows.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
 	fields, err := r.rows.Columns()
 	if err != nil {
 		r.err = err
@@ -152,6 +175,16 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 
 // ToStruct 用法
 func (r *Rows) ToStruct(st any) error {
+
+	if r.rows == nil {
+		return r.err
+	}
+	defer func() {
+		if err := r.rows.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
+
 	//st->&[]user
 	//获取变量的类型,类型为指针
 	stType := reflect.TypeOf(st)
@@ -167,9 +200,6 @@ func (r *Rows) ToStruct(st any) error {
 	//2.传入的类型必须是slice,slice的成员类型必须是struct
 	if stTypeInd.Kind() != reflect.Slice || stTypeInd.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("the variable type is %v, not a slice struct", stType.Elem().Kind())
-	}
-	if r.rows == nil {
-		return r.err
 	}
 	//初始化struct
 	v := reflect.New(stTypeInd.Elem())

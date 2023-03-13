@@ -157,10 +157,7 @@ func IsNan(val float64) bool {
 // Divide 查询是否被整除
 func Divide(m, n any) bool {
 	r := math.Mod(cast.ToFloat64(m), cast.ToFloat64(n))
-	if r == 0 {
-		return true
-	}
-	return false
+	return r == 0
 }
 
 // Add ...

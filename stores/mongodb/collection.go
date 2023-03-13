@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"reflect"
+	"runtime"
 	"time"
 
 	"github.com/abulo/ratel/v3/core/logger"
@@ -14,6 +15,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
+	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -93,7 +95,7 @@ func (c *DecoratedCollection) reset() {
 	c.fields = nil
 }
 
-func (c *DecoratedCollection) getCtx(ctx context.Context) context.Context {
+func getCtx(ctx context.Context) context.Context {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
@@ -103,9 +105,10 @@ func (c *DecoratedCollection) getCtx(ctx context.Context) context.Context {
 // CreateIndex CreateOneIndex 创建单个普通索引
 func (c *DecoratedCollection) CreateIndex(ctx context.Context, key bson.D, op *options.IndexOptions) (res string, err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -120,6 +123,7 @@ func (c *DecoratedCollection) CreateIndex(ctx context.Context, key bson.D, op *o
 				span.LogFields(log.String("table", c.Name()))
 				span.LogFields(log.Object("keys", key))
 				span.LogFields(log.Object("options", op))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -144,9 +148,10 @@ func (c *DecoratedCollection) CreateIndex(ctx context.Context, key bson.D, op *o
 // ListIndexes 获取所有所有
 func (c *DecoratedCollection) ListIndexes(ctx context.Context, opts *options.ListIndexesOptions) (val []string, err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -160,6 +165,7 @@ func (c *DecoratedCollection) ListIndexes(ctx context.Context, opts *options.Lis
 				span.LogFields(log.String("database", c.Database().Name()))
 				span.LogFields(log.String("table", c.Name()))
 				span.LogFields(log.Object("options", opts))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -195,9 +201,10 @@ func (c *DecoratedCollection) ListIndexes(ctx context.Context, opts *options.Lis
 func (c *DecoratedCollection) DropIndex(ctx context.Context, name string, opts *options.DropIndexesOptions) (err error) {
 	start := time.Now()
 	indexView := c.Collection.Indexes()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -212,6 +219,7 @@ func (c *DecoratedCollection) DropIndex(ctx context.Context, name string, opts *
 				span.LogFields(log.String("table", c.Name()))
 				span.LogFields(log.String("indexname", name))
 				span.LogFields(log.Object("options", opts))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -239,18 +247,12 @@ func (c *DecoratedCollection) DropIndex(ctx context.Context, name string, opts *
 // InsertOne 写入单条数据
 func (c *DecoratedCollection) InsertOne(ctx context.Context, document any) (val *mongo.InsertOneResult, err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		var data any
 		data = BeforeCreate(document)
 		if !c.DisableTrace {
-
-			// pc, file, lineNo, _ := runtime.Caller(5)
-			// name := runtime.FuncForPC(pc).Name()
-			// Path := file + ":" + cast.ToString(lineNo)
-			// Func := name
-			// fmt.Println(Path, Func, "ddd")
-
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -264,6 +266,7 @@ func (c *DecoratedCollection) InsertOne(ctx context.Context, document any) (val 
 				span.LogFields(log.String("database", c.Database().Name()))
 				span.LogFields(log.String("table", c.Name()))
 				span.LogFields(log.Object("document", data))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -288,11 +291,12 @@ func (c *DecoratedCollection) InsertOne(ctx context.Context, document any) (val 
 // InsertMany 写入多条数据
 func (c *DecoratedCollection) InsertMany(ctx context.Context, documents any) (val *mongo.InsertManyResult, err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		var data []any
 		data = BeforeCreate(documents).([]any)
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -306,6 +310,7 @@ func (c *DecoratedCollection) InsertMany(ctx context.Context, documents any) (va
 				span.LogFields(log.String("database", c.Database().Name()))
 				span.LogFields(log.String("table", c.Name()))
 				span.LogFields(log.Object("documents", documents))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -329,9 +334,10 @@ func (c *DecoratedCollection) InsertMany(ctx context.Context, documents any) (va
 // Aggregate ...
 func (c *DecoratedCollection) Aggregate(ctx context.Context, pipeline any, result any) (err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -345,6 +351,7 @@ func (c *DecoratedCollection) Aggregate(ctx context.Context, pipeline any, resul
 				span.LogFields(log.String("database", c.Database().Name()))
 				span.LogFields(log.String("table", c.Name()))
 				span.LogFields(log.Object("pipeline", pipeline))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -374,9 +381,10 @@ func (c *DecoratedCollection) Aggregate(ctx context.Context, pipeline any, resul
 // UpdateOrInsert 存在更新,不存在写入, documents 里边的文档需要有 _id 的存在
 func (c *DecoratedCollection) UpdateOrInsert(ctx context.Context, documents []any) (val *mongo.UpdateResult, err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -391,6 +399,7 @@ func (c *DecoratedCollection) UpdateOrInsert(ctx context.Context, documents []an
 				span.LogFields(log.String("table", c.Name()))
 				span.LogFields(log.Object("filter", c.filter))
 				span.LogFields(log.Object("documents", documents))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -416,10 +425,11 @@ func (c *DecoratedCollection) UpdateOrInsert(ctx context.Context, documents []an
 // UpdateOne ...
 func (c *DecoratedCollection) UpdateOne(ctx context.Context, document any) (val *mongo.UpdateResult, err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		update := bson.M{"$set": BeforeUpdate(document)}
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -434,6 +444,7 @@ func (c *DecoratedCollection) UpdateOne(ctx context.Context, document any) (val 
 				span.LogFields(log.String("table", c.Name()))
 				span.LogFields(log.Object("filter", c.filter))
 				span.LogFields(log.Object("update", update))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -458,9 +469,10 @@ func (c *DecoratedCollection) UpdateOne(ctx context.Context, document any) (val 
 // UpdateOneRaw 原生update
 func (c *DecoratedCollection) UpdateOneRaw(ctx context.Context, document any, opt ...*options.UpdateOptions) (val *mongo.UpdateResult, err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -475,6 +487,7 @@ func (c *DecoratedCollection) UpdateOneRaw(ctx context.Context, document any, op
 				span.LogFields(log.String("table", c.Name()))
 				span.LogFields(log.Object("filter", c.filter))
 				span.LogFields(log.Object("update", document))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -498,10 +511,11 @@ func (c *DecoratedCollection) UpdateOneRaw(ctx context.Context, document any, op
 // UpdateMany ...
 func (c *DecoratedCollection) UpdateMany(ctx context.Context, document any) (val *mongo.UpdateResult, err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		update := bson.M{"$set": BeforeUpdate(document)}
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -516,6 +530,7 @@ func (c *DecoratedCollection) UpdateMany(ctx context.Context, document any) (val
 				span.LogFields(log.String("table", c.Name()))
 				span.LogFields(log.Object("filter", c.filter))
 				span.LogFields(log.Object("update", update))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -539,9 +554,10 @@ func (c *DecoratedCollection) UpdateMany(ctx context.Context, document any) (val
 // FindOne 查询一条数据
 func (c *DecoratedCollection) FindOne(ctx context.Context, document any) (err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -558,6 +574,7 @@ func (c *DecoratedCollection) FindOne(ctx context.Context, document any) (err er
 				span.LogFields(log.Int64("skip", c.skip))
 				span.LogFields(log.Object("sort", c.sort))
 				span.LogFields(log.Object("fields", c.fields))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -586,9 +603,10 @@ func (c *DecoratedCollection) FindOne(ctx context.Context, document any) (err er
 // FindMany 查询多条数据
 func (c *DecoratedCollection) FindMany(ctx context.Context, documents any) (err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -606,6 +624,7 @@ func (c *DecoratedCollection) FindMany(ctx context.Context, documents any) (err 
 				span.LogFields(log.Int64("limit", c.limit))
 				span.LogFields(log.Object("sort", c.sort))
 				span.LogFields(log.Object("fields", c.fields))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -663,9 +682,10 @@ func (c *DecoratedCollection) FindMany(ctx context.Context, documents any) (err 
 // Delete 删除数据,并返回删除成功的数量
 func (c *DecoratedCollection) Delete(ctx context.Context) (count int64, err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -679,6 +699,7 @@ func (c *DecoratedCollection) Delete(ctx context.Context) (count int64, err erro
 				span.LogFields(log.String("database", c.Database().Name()))
 				span.LogFields(log.String("table", c.Name()))
 				span.LogFields(log.Object("filter", c.filter))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -714,9 +735,10 @@ func (c *DecoratedCollection) Delete(ctx context.Context) (count int64, err erro
 // Drop ...
 func (c *DecoratedCollection) Drop(ctx context.Context) (err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -729,6 +751,7 @@ func (c *DecoratedCollection) Drop(ctx context.Context) (err error) {
 				span.SetTag("method", "Drop")
 				span.LogFields(log.String("database", c.Database().Name()))
 				span.LogFields(log.String("table", c.Name()))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -753,9 +776,10 @@ func (c *DecoratedCollection) Drop(ctx context.Context) (err error) {
 // Count ...
 func (c *DecoratedCollection) Count(ctx context.Context) (result int64, err error) {
 	start := time.Now()
-	ctx = c.getCtx(ctx)
+	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if !c.DisableTrace {
+			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
@@ -769,6 +793,7 @@ func (c *DecoratedCollection) Count(ctx context.Context) (result int64, err erro
 				span.LogFields(log.String("database", c.Database().Name()))
 				span.LogFields(log.String("table", c.Name()))
 				span.LogFields(log.Object("filter", c.filter))
+				span.LogFields(log.Object("call", call))
 				defer span.Finish()
 				ctx = opentracing.ContextWithSpan(ctx, span)
 			}
@@ -896,4 +921,13 @@ func acceptable(err error) bool {
 		err == session.ErrTransactInProgress || err == session.ErrAbortAfterCommit ||
 		err == session.ErrAbortTwice || err == session.ErrCommitAfterAbort ||
 		err == session.ErrUnackWCUnsupported || err == session.ErrSnapshotTransaction
+}
+
+func Caller(skip int) map[string]string {
+	pc, file, lineNo, _ := runtime.Caller(skip)
+	name := runtime.FuncForPC(pc).Name()
+	return map[string]string{
+		"path": file + ":" + cast.ToString(lineNo),
+		"func": name,
+	}
 }

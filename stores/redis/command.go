@@ -43,7 +43,7 @@ func (r *Client) Pipeline() (val redis.Pipeliner, err error) {
 	}, acceptable)
 	return
 }
-func (r *Client) getCtx(ctx context.Context) context.Context {
+func getCtx(ctx context.Context) context.Context {
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
@@ -57,7 +57,7 @@ func (r *Client) Pipelined(ctx context.Context, fn func(redis.Pipeliner) error) 
 		if err != nil {
 			return err
 		}
-		val, err = conn.Pipelined(r.getCtx(ctx), fn)
+		val, err = conn.Pipelined(getCtx(ctx), fn)
 		return err
 	}, acceptable)
 	return
@@ -70,7 +70,7 @@ func (r *Client) TxPipelined(ctx context.Context, fn func(redis.Pipeliner) error
 		if err != nil {
 			return err
 		}
-		val, err = conn.TxPipelined(r.getCtx(ctx), fn)
+		val, err = conn.TxPipelined(getCtx(ctx), fn)
 		return err
 	}, acceptable)
 	return
@@ -96,7 +96,7 @@ func (r *Client) Command(ctx context.Context) (val map[string]*redis.CommandInfo
 		if err != nil {
 			return err
 		}
-		val, err = conn.Command(r.getCtx(ctx)).Result()
+		val, err = conn.Command(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -109,7 +109,7 @@ func (r *Client) ClientGetName(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClientGetName(r.getCtx(ctx)).Result()
+		val, err = conn.ClientGetName(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -122,7 +122,7 @@ func (r *Client) Echo(ctx context.Context, message any) (val string, err error) 
 		if err != nil {
 			return err
 		}
-		val, err = conn.Echo(r.getCtx(ctx), message).Result()
+		val, err = conn.Echo(getCtx(ctx), message).Result()
 		return err
 	}, acceptable)
 	return
@@ -137,7 +137,7 @@ func (r *Client) Ping(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.Ping(r.getCtx(ctx)).Result()
+		val, err = conn.Ping(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -150,7 +150,7 @@ func (r *Client) Quit(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.Quit(r.getCtx(ctx)).Result()
+		val, err = conn.Quit(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -164,7 +164,7 @@ func (r *Client) Del(ctx context.Context, keys ...string) (val int64, err error)
 		if err != nil {
 			return err
 		}
-		val, err = conn.Del(r.getCtx(ctx), r.ks(keys...)...).Result()
+		val, err = conn.Del(getCtx(ctx), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -177,7 +177,7 @@ func (r *Client) Unlink(ctx context.Context, keys ...string) (val int64, err err
 		if err != nil {
 			return err
 		}
-		val, err = conn.Unlink(r.getCtx(ctx), r.ks(keys...)...).Result()
+		val, err = conn.Unlink(getCtx(ctx), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -192,7 +192,7 @@ func (r *Client) Dump(ctx context.Context, key string) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.Dump(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.Dump(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -206,7 +206,7 @@ func (r *Client) Exists(ctx context.Context, key ...string) (val bool, err error
 		if err != nil {
 			return err
 		}
-		valTmp, err := conn.Exists(r.getCtx(ctx), r.ks(key...)...).Result()
+		valTmp, err := conn.Exists(getCtx(ctx), r.ks(key...)...).Result()
 		val = valTmp > 0
 		return err
 	}, acceptable)
@@ -222,7 +222,7 @@ func (r *Client) Expire(ctx context.Context, key string, expiration time.Duratio
 		if err != nil {
 			return err
 		}
-		val, err = conn.Expire(r.getCtx(ctx), r.k(key), expiration).Result()
+		val, err = conn.Expire(getCtx(ctx), r.k(key), expiration).Result()
 		return err
 	}, acceptable)
 	return
@@ -236,7 +236,7 @@ func (r *Client) ExpireAt(ctx context.Context, key string, tm time.Time) (val bo
 		if err != nil {
 			return err
 		}
-		val, err = conn.ExpireAt(r.getCtx(ctx), r.k(key), tm).Result()
+		val, err = conn.ExpireAt(getCtx(ctx), r.k(key), tm).Result()
 		return err
 	}, acceptable)
 	return
@@ -250,7 +250,7 @@ func (r *Client) ExpireNX(ctx context.Context, key string, tm time.Duration) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.ExpireNX(r.getCtx(ctx), r.k(key), tm).Result()
+		val, err = conn.ExpireNX(getCtx(ctx), r.k(key), tm).Result()
 		return err
 	}, acceptable)
 	return
@@ -264,7 +264,7 @@ func (r *Client) ExpireXX(ctx context.Context, key string, tm time.Duration) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.ExpireXX(r.getCtx(ctx), r.k(key), tm).Result()
+		val, err = conn.ExpireXX(getCtx(ctx), r.k(key), tm).Result()
 		return err
 	}, acceptable)
 	return
@@ -278,7 +278,7 @@ func (r *Client) ExpireGT(ctx context.Context, key string, tm time.Duration) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.ExpireGT(r.getCtx(ctx), r.k(key), tm).Result()
+		val, err = conn.ExpireGT(getCtx(ctx), r.k(key), tm).Result()
 		return err
 	}, acceptable)
 	return
@@ -292,7 +292,7 @@ func (r *Client) ExpireLT(ctx context.Context, key string, tm time.Duration) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.ExpireLT(r.getCtx(ctx), r.k(key), tm).Result()
+		val, err = conn.ExpireLT(getCtx(ctx), r.k(key), tm).Result()
 		return err
 	}, acceptable)
 	return
@@ -305,7 +305,7 @@ func (r *Client) Keys(ctx context.Context, pattern string) (val []string, err er
 		if err != nil {
 			return err
 		}
-		val, err = conn.Keys(r.getCtx(ctx), r.k(pattern)).Result()
+		val, err = conn.Keys(getCtx(ctx), r.k(pattern)).Result()
 		return err
 	}, acceptable)
 	return
@@ -318,7 +318,7 @@ func (r *Client) Migrate(ctx context.Context, host, port, key string, db int, ti
 		if err != nil {
 			return err
 		}
-		val, err = conn.Migrate(r.getCtx(ctx), host, port, r.k(key), db, timeout).Result()
+		val, err = conn.Migrate(getCtx(ctx), host, port, r.k(key), db, timeout).Result()
 		return err
 	}, acceptable)
 	return
@@ -332,7 +332,7 @@ func (r *Client) Move(ctx context.Context, key string, db int) (val bool, err er
 		if err != nil {
 			return err
 		}
-		val, err = conn.Move(r.getCtx(ctx), r.k(key), db).Result()
+		val, err = conn.Move(getCtx(ctx), r.k(key), db).Result()
 		return err
 	}, acceptable)
 	return
@@ -345,7 +345,7 @@ func (r *Client) ObjectRefCount(ctx context.Context, key string) (val int64, err
 		if err != nil {
 			return err
 		}
-		val, err = conn.ObjectRefCount(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.ObjectRefCount(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -358,7 +358,7 @@ func (r *Client) ObjectEncoding(ctx context.Context, key string) (val string, er
 		if err != nil {
 			return err
 		}
-		val, err = conn.ObjectEncoding(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.ObjectEncoding(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -371,7 +371,7 @@ func (r *Client) ObjectIdleTime(ctx context.Context, key string) (val time.Durat
 		if err != nil {
 			return err
 		}
-		val, err = conn.ObjectIdleTime(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.ObjectIdleTime(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -386,7 +386,7 @@ func (r *Client) Persist(ctx context.Context, key string) (val bool, err error) 
 		if err != nil {
 			return err
 		}
-		val, err = conn.Persist(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.Persist(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -399,7 +399,7 @@ func (r *Client) PExpire(ctx context.Context, key string, expiration time.Durati
 		if err != nil {
 			return err
 		}
-		val, err = conn.PExpire(r.getCtx(ctx), r.k(key), expiration).Result()
+		val, err = conn.PExpire(getCtx(ctx), r.k(key), expiration).Result()
 		return err
 	}, acceptable)
 	return
@@ -413,7 +413,7 @@ func (r *Client) PExpireAt(ctx context.Context, key string, tm time.Time) (val b
 		if err != nil {
 			return err
 		}
-		val, err = conn.PExpireAt(r.getCtx(ctx), r.k(key), tm).Result()
+		val, err = conn.PExpireAt(getCtx(ctx), r.k(key), tm).Result()
 		return err
 	}, acceptable)
 	return
@@ -429,7 +429,7 @@ func (r *Client) PTTL(ctx context.Context, key string) (val time.Duration, err e
 		if err != nil {
 			return err
 		}
-		val, err = conn.PTTL(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.PTTL(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -442,7 +442,7 @@ func (r *Client) RandomKey(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.RandomKey(r.getCtx(ctx)).Result()
+		val, err = conn.RandomKey(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -457,7 +457,7 @@ func (r *Client) Rename(ctx context.Context, key, newkey string) (val string, er
 		if err != nil {
 			return err
 		}
-		val, err = conn.Rename(r.getCtx(ctx), r.k(key), r.k(newkey)).Result()
+		val, err = conn.Rename(getCtx(ctx), r.k(key), r.k(newkey)).Result()
 		return err
 	}, acceptable)
 	return
@@ -471,7 +471,7 @@ func (r *Client) RenameNX(ctx context.Context, key, newkey string) (val bool, er
 		if err != nil {
 			return err
 		}
-		val, err = conn.RenameNX(r.getCtx(ctx), r.k(key), r.k(newkey)).Result()
+		val, err = conn.RenameNX(getCtx(ctx), r.k(key), r.k(newkey)).Result()
 		return err
 	}, acceptable)
 	return
@@ -486,7 +486,7 @@ func (r *Client) Restore(ctx context.Context, key string, ttl time.Duration, val
 		if err != nil {
 			return err
 		}
-		val, err = conn.Restore(r.getCtx(ctx), r.k(key), ttl, value).Result()
+		val, err = conn.Restore(getCtx(ctx), r.k(key), ttl, value).Result()
 		return err
 	}, acceptable)
 	return
@@ -499,7 +499,7 @@ func (r *Client) RestoreReplace(ctx context.Context, key string, ttl time.Durati
 		if err != nil {
 			return err
 		}
-		val, err = conn.RestoreReplace(r.getCtx(ctx), r.k(key), ttl, value).Result()
+		val, err = conn.RestoreReplace(getCtx(ctx), r.k(key), ttl, value).Result()
 		return err
 	}, acceptable)
 	return
@@ -513,7 +513,7 @@ func (r *Client) Sort(ctx context.Context, key string, sort *redis.Sort) (val []
 		if err != nil {
 			return err
 		}
-		val, err = conn.Sort(r.getCtx(ctx), r.k(key), sort).Result()
+		val, err = conn.Sort(getCtx(ctx), r.k(key), sort).Result()
 		return err
 	}, acceptable)
 	return
@@ -526,7 +526,7 @@ func (r *Client) SortRO(ctx context.Context, key string, sort *redis.Sort) (val 
 		if err != nil {
 			return err
 		}
-		val, err = conn.SortRO(r.getCtx(ctx), r.k(key), sort).Result()
+		val, err = conn.SortRO(getCtx(ctx), r.k(key), sort).Result()
 		return err
 	}, acceptable)
 	return
@@ -539,7 +539,7 @@ func (r *Client) SortStore(ctx context.Context, key, store string, sort *redis.S
 		if err != nil {
 			return err
 		}
-		val, err = conn.SortStore(r.getCtx(ctx), r.k(key), r.k(store), sort).Result()
+		val, err = conn.SortStore(getCtx(ctx), r.k(key), r.k(store), sort).Result()
 		return err
 	}, acceptable)
 	return
@@ -552,7 +552,7 @@ func (r *Client) SortInterfaces(ctx context.Context, key string, sort *redis.Sor
 		if err != nil {
 			return err
 		}
-		val, err = conn.SortInterfaces(r.getCtx(ctx), r.k(key), sort).Result()
+		val, err = conn.SortInterfaces(getCtx(ctx), r.k(key), sort).Result()
 		return err
 	}, acceptable)
 	return
@@ -565,7 +565,7 @@ func (r *Client) Touch(ctx context.Context, keys ...string) (val int64, err erro
 		if err != nil {
 			return err
 		}
-		val, err = conn.Touch(r.getCtx(ctx), r.ks(keys...)...).Result()
+		val, err = conn.Touch(getCtx(ctx), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -581,7 +581,7 @@ func (r *Client) TTL(ctx context.Context, key string) (val time.Duration, err er
 		if err != nil {
 			return err
 		}
-		val, err = conn.TTL(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.TTL(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -594,7 +594,7 @@ func (r *Client) Type(ctx context.Context, key string) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.Type(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.Type(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -608,7 +608,7 @@ func (r *Client) Append(ctx context.Context, key, value string) (val int64, err 
 		if err != nil {
 			return err
 		}
-		val, err = conn.Append(r.getCtx(ctx), r.k(key), value).Result()
+		val, err = conn.Append(getCtx(ctx), r.k(key), value).Result()
 		return err
 	}, acceptable)
 	return
@@ -626,7 +626,7 @@ func (r *Client) Decr(ctx context.Context, key string) (val int64, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.Decr(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.Decr(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -644,7 +644,7 @@ func (r *Client) DecrBy(ctx context.Context, key string, value int64) (val int64
 		if err != nil {
 			return err
 		}
-		val, err = conn.DecrBy(r.getCtx(ctx), r.k(key), value).Result()
+		val, err = conn.DecrBy(getCtx(ctx), r.k(key), value).Result()
 		return err
 	}, acceptable)
 	return
@@ -661,7 +661,7 @@ func (r *Client) Get(ctx context.Context, key string) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.Get(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.Get(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -677,7 +677,7 @@ func (r *Client) GetRange(ctx context.Context, key string, start, end int64) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.GetRange(r.getCtx(ctx), r.k(key), start, end).Result()
+		val, err = conn.GetRange(getCtx(ctx), r.k(key), start, end).Result()
 		return err
 	}, acceptable)
 	return
@@ -693,7 +693,7 @@ func (r *Client) GetSet(ctx context.Context, key string, value any) (val string,
 		if err != nil {
 			return err
 		}
-		val, err = conn.GetSet(r.getCtx(ctx), r.k(key), value).Result()
+		val, err = conn.GetSet(getCtx(ctx), r.k(key), value).Result()
 		return err
 	}, acceptable)
 	return
@@ -706,7 +706,7 @@ func (r *Client) GetEx(ctx context.Context, key string, ts time.Duration) (val s
 		if err != nil {
 			return err
 		}
-		val, err = conn.GetEx(r.getCtx(ctx), r.k(key), ts).Result()
+		val, err = conn.GetEx(getCtx(ctx), r.k(key), ts).Result()
 		return err
 	}, acceptable)
 	return
@@ -719,7 +719,7 @@ func (r *Client) GetDel(ctx context.Context, key string) (val string, err error)
 		if err != nil {
 			return err
 		}
-		val, err = conn.GetDel(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.GetDel(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -736,7 +736,7 @@ func (r *Client) Incr(ctx context.Context, key string) (val int64, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.Incr(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.Incr(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -754,7 +754,7 @@ func (r *Client) IncrBy(ctx context.Context, key string, value int64) (val int64
 		if err != nil {
 			return err
 		}
-		val, err = conn.IncrBy(r.getCtx(ctx), r.k(key), value).Result()
+		val, err = conn.IncrBy(getCtx(ctx), r.k(key), value).Result()
 		return err
 	}, acceptable)
 	return
@@ -769,7 +769,7 @@ func (r *Client) IncrByFloat(ctx context.Context, key string, value float64) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.IncrByFloat(r.getCtx(ctx), r.k(key), value).Result()
+		val, err = conn.IncrByFloat(getCtx(ctx), r.k(key), value).Result()
 		return err
 	}, acceptable)
 	return
@@ -784,7 +784,7 @@ func (r *Client) MGet(ctx context.Context, keys ...string) (val []any, err error
 		if err != nil {
 			return err
 		}
-		val, err = conn.MGet(r.getCtx(ctx), r.ks(keys...)...).Result()
+		val, err = conn.MGet(getCtx(ctx), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -792,13 +792,13 @@ func (r *Client) MGet(ctx context.Context, keys ...string) (val []any, err error
 
 // MSet 同时设置一个或多个 key-value 对。
 func (r *Client) MSet(ctx context.Context, values ...any) (val string, err error) {
-	// return getRedis(r).MSet(r.getCtx(ctx), values...)
+	// return getRedis(r).MSet(getCtx(ctx), values...)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
 			return err
 		}
-		val, err = conn.MSet(r.getCtx(ctx), values...).Result()
+		val, err = conn.MSet(getCtx(ctx), values...).Result()
 		return err
 	}, acceptable)
 	return
@@ -814,7 +814,7 @@ func (r *Client) MSetNX(ctx context.Context, values ...any) (val bool, err error
 		if err != nil {
 			return err
 		}
-		val, err = conn.MSetNX(r.getCtx(ctx), values...).Result()
+		val, err = conn.MSetNX(getCtx(ctx), values...).Result()
 		return err
 	}, acceptable)
 	return
@@ -829,7 +829,7 @@ func (r *Client) Set(ctx context.Context, key string, value any, expiration time
 		if err != nil {
 			return err
 		}
-		val, err = conn.Set(r.getCtx(ctx), r.k(key), value, expiration).Result()
+		val, err = conn.Set(getCtx(ctx), r.k(key), value, expiration).Result()
 		return err
 	}, acceptable)
 	return
@@ -841,7 +841,7 @@ func (r *Client) SetArgs(ctx context.Context, key string, value any, a redis.Set
 		if err != nil {
 			return err
 		}
-		val, err = conn.SetArgs(r.getCtx(ctx), r.k(key), value, a).Result()
+		val, err = conn.SetArgs(getCtx(ctx), r.k(key), value, a).Result()
 		return err
 	}, acceptable)
 	return
@@ -854,7 +854,7 @@ func (r *Client) SetEx(ctx context.Context, key string, value any, expiration ti
 		if err != nil {
 			return err
 		}
-		val, err = conn.SetEx(r.getCtx(ctx), r.k(key), value, expiration).Result()
+		val, err = conn.SetEx(getCtx(ctx), r.k(key), value, expiration).Result()
 		return err
 	}, acceptable)
 	return
@@ -869,7 +869,7 @@ func (r *Client) SetNX(ctx context.Context, key string, value any, expiration ti
 		if err != nil {
 			return err
 		}
-		val, err = conn.SetNX(r.getCtx(ctx), r.k(key), value, expiration).Result()
+		val, err = conn.SetNX(getCtx(ctx), r.k(key), value, expiration).Result()
 		return err
 	}, acceptable)
 	return
@@ -882,7 +882,7 @@ func (r *Client) SetXX(ctx context.Context, key string, value any, expiration ti
 		if err != nil {
 			return err
 		}
-		val, err = conn.SetXX(r.getCtx(ctx), r.k(key), value, expiration).Result()
+		val, err = conn.SetXX(getCtx(ctx), r.k(key), value, expiration).Result()
 		return err
 	}, acceptable)
 	return
@@ -896,7 +896,7 @@ func (r *Client) SetRange(ctx context.Context, key string, offset int64, value s
 		if err != nil {
 			return err
 		}
-		val, err = conn.SetRange(r.getCtx(ctx), r.k(key), offset, value).Result()
+		val, err = conn.SetRange(getCtx(ctx), r.k(key), offset, value).Result()
 		return err
 	}, acceptable)
 	return
@@ -910,7 +910,7 @@ func (r *Client) StrLen(ctx context.Context, key string) (val int64, err error) 
 		if err != nil {
 			return err
 		}
-		val, err = conn.StrLen(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.StrLen(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -923,7 +923,7 @@ func (r *Client) Copy(ctx context.Context, sourceKey string, destKey string, db 
 		if err != nil {
 			return err
 		}
-		val, err = conn.Copy(r.getCtx(ctx), r.k(sourceKey), r.k(destKey), db, replace).Result()
+		val, err = conn.Copy(getCtx(ctx), r.k(sourceKey), r.k(destKey), db, replace).Result()
 		return err
 	}, acceptable)
 	return
@@ -938,7 +938,7 @@ func (r *Client) GetBit(ctx context.Context, key string, offset int64) (val int6
 		if err != nil {
 			return err
 		}
-		val, err = conn.GetBit(r.getCtx(ctx), r.k(key), offset).Result()
+		val, err = conn.GetBit(getCtx(ctx), r.k(key), offset).Result()
 		return err
 	}, acceptable)
 	return
@@ -955,7 +955,7 @@ func (r *Client) SetBit(ctx context.Context, key string, offset int64, value int
 		if err != nil {
 			return err
 		}
-		val, err = conn.SetBit(r.getCtx(ctx), r.k(key), offset, value).Result()
+		val, err = conn.SetBit(getCtx(ctx), r.k(key), offset, value).Result()
 		return err
 	}, acceptable)
 	return
@@ -971,7 +971,7 @@ func (r *Client) BitCount(ctx context.Context, key string, bitCount *redis.BitCo
 		if err != nil {
 			return err
 		}
-		val, err = conn.BitCount(r.getCtx(ctx), r.k(key), bitCount).Result()
+		val, err = conn.BitCount(getCtx(ctx), r.k(key), bitCount).Result()
 		return err
 	}, acceptable)
 	return
@@ -984,7 +984,7 @@ func (r *Client) BitOpAnd(ctx context.Context, destKey string, keys ...string) (
 		if err != nil {
 			return err
 		}
-		val, err = conn.BitOpAnd(r.getCtx(ctx), r.k(destKey), r.ks(keys...)...).Result()
+		val, err = conn.BitOpAnd(getCtx(ctx), r.k(destKey), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -997,7 +997,7 @@ func (r *Client) BitOpOr(ctx context.Context, destKey string, keys ...string) (v
 		if err != nil {
 			return err
 		}
-		val, err = conn.BitOpOr(r.getCtx(ctx), r.k(destKey), r.ks(keys...)...).Result()
+		val, err = conn.BitOpOr(getCtx(ctx), r.k(destKey), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1010,7 +1010,7 @@ func (r *Client) BitOpXor(ctx context.Context, destKey string, keys ...string) (
 		if err != nil {
 			return err
 		}
-		val, err = conn.BitOpXor(r.getCtx(ctx), r.k(destKey), r.ks(keys...)...).Result()
+		val, err = conn.BitOpXor(getCtx(ctx), r.k(destKey), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1023,7 +1023,7 @@ func (r *Client) BitOpNot(ctx context.Context, destKey string, key string) (val 
 		if err != nil {
 			return err
 		}
-		val, err = conn.BitOpNot(r.getCtx(ctx), r.k(destKey), r.k(key)).Result()
+		val, err = conn.BitOpNot(getCtx(ctx), r.k(destKey), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1036,7 +1036,7 @@ func (r *Client) BitPos(ctx context.Context, key string, bit int64, pos ...int64
 		if err != nil {
 			return err
 		}
-		val, err = conn.BitPos(r.getCtx(ctx), r.k(key), bit, pos...).Result()
+		val, err = conn.BitPos(getCtx(ctx), r.k(key), bit, pos...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1049,7 +1049,7 @@ func (r *Client) BitField(ctx context.Context, key string, args ...any) (val []i
 		if err != nil {
 			return err
 		}
-		val, err = conn.BitField(r.getCtx(ctx), r.k(key), args...).Result()
+		val, err = conn.BitField(getCtx(ctx), r.k(key), args...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1057,13 +1057,13 @@ func (r *Client) BitField(ctx context.Context, key string, args ...any) (val []i
 
 // Scan 命令及其相关的 SSCAN 命令、 HSCAN 命令和 ZSCAN 命令都用于增量地迭代（incrementally iterate）一集元素
 func (r *Client) Scan(ctx context.Context, cursorIn uint64, match string, count int64) (val []string, cursor uint64, err error) {
-	// return getRedis(r).Scan(r.getCtx(ctx), cursor, r.k(match), count)
+	// return getRedis(r).Scan(getCtx(ctx), cursor, r.k(match), count)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
 			return err
 		}
-		val, cursor, err = conn.Scan(r.getCtx(ctx), cursorIn, r.k(match), count).Result()
+		val, cursor, err = conn.Scan(getCtx(ctx), cursorIn, r.k(match), count).Result()
 		return err
 	}, acceptable)
 	return
@@ -1074,7 +1074,7 @@ func (r *Client) ScanType(ctx context.Context, cursorIn uint64, match string, co
 		if err != nil {
 			return err
 		}
-		val, cursor, err = conn.ScanType(r.getCtx(ctx), cursorIn, r.k(match), count, keyType).Result()
+		val, cursor, err = conn.ScanType(getCtx(ctx), cursorIn, r.k(match), count, keyType).Result()
 		return err
 	}, acceptable)
 	return
@@ -1087,7 +1087,7 @@ func (r *Client) SScan(ctx context.Context, key string, cursorIn uint64, match s
 		if err != nil {
 			return err
 		}
-		val, cursor, err = conn.SScan(r.getCtx(ctx), r.k(key), cursorIn, match, count).Result()
+		val, cursor, err = conn.SScan(getCtx(ctx), r.k(key), cursorIn, match, count).Result()
 		return err
 	}, acceptable)
 	return
@@ -1100,7 +1100,7 @@ func (r *Client) HScan(ctx context.Context, key string, cursorIn uint64, match s
 		if err != nil {
 			return err
 		}
-		val, cursor, err = conn.HScan(r.getCtx(ctx), r.k(key), cursorIn, match, count).Result()
+		val, cursor, err = conn.HScan(getCtx(ctx), r.k(key), cursorIn, match, count).Result()
 		return err
 	}, acceptable)
 	return
@@ -1113,7 +1113,7 @@ func (r *Client) ZScan(ctx context.Context, key string, cursorIn uint64, match s
 		if err != nil {
 			return err
 		}
-		val, cursor, err = conn.ZScan(r.getCtx(ctx), r.k(key), cursorIn, match, count).Result()
+		val, cursor, err = conn.ZScan(getCtx(ctx), r.k(key), cursorIn, match, count).Result()
 		return err
 	}, acceptable)
 	return
@@ -1126,7 +1126,7 @@ func (r *Client) HDel(ctx context.Context, key string, fields ...string) (val in
 		if err != nil {
 			return err
 		}
-		val, err = conn.HDel(r.getCtx(ctx), r.k(key), fields...).Result()
+		val, err = conn.HDel(getCtx(ctx), r.k(key), fields...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1139,7 +1139,7 @@ func (r *Client) HExists(ctx context.Context, key, field string) (val bool, err 
 		if err != nil {
 			return err
 		}
-		val, err = conn.HExists(r.getCtx(ctx), r.k(key), field).Result()
+		val, err = conn.HExists(getCtx(ctx), r.k(key), field).Result()
 		return err
 	}, acceptable)
 	return
@@ -1152,7 +1152,7 @@ func (r *Client) HGet(ctx context.Context, key, field string) (val string, err e
 		if err != nil {
 			return err
 		}
-		val, err = conn.HGet(r.getCtx(ctx), r.k(key), field).Result()
+		val, err = conn.HGet(getCtx(ctx), r.k(key), field).Result()
 		return err
 	}, acceptable)
 	return
@@ -1166,7 +1166,7 @@ func (r *Client) HGetAll(ctx context.Context, key string) (val map[string]string
 		if err != nil {
 			return err
 		}
-		val, err = conn.HGetAll(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.HGetAll(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1184,7 +1184,7 @@ func (r *Client) HIncrBy(ctx context.Context, key, field string, incr int64) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.HIncrBy(r.getCtx(ctx), r.k(key), field, incr).Result()
+		val, err = conn.HIncrBy(getCtx(ctx), r.k(key), field, incr).Result()
 		return err
 	}, acceptable)
 	return
@@ -1199,7 +1199,7 @@ func (r *Client) HIncrByFloat(ctx context.Context, key, field string, incr float
 		if err != nil {
 			return err
 		}
-		val, err = conn.HIncrByFloat(r.getCtx(ctx), r.k(key), field, incr).Result()
+		val, err = conn.HIncrByFloat(getCtx(ctx), r.k(key), field, incr).Result()
 		return err
 	}, acceptable)
 	return
@@ -1212,7 +1212,7 @@ func (r *Client) HKeys(ctx context.Context, key string) (val []string, err error
 		if err != nil {
 			return err
 		}
-		val, err = conn.HKeys(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.HKeys(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1225,7 +1225,7 @@ func (r *Client) HLen(ctx context.Context, key string) (val int64, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.HLen(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.HLen(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1240,7 +1240,7 @@ func (r *Client) HMGet(ctx context.Context, key string, fields ...string) (val [
 		if err != nil {
 			return err
 		}
-		val, err = conn.HMGet(r.getCtx(ctx), r.k(key), fields...).Result()
+		val, err = conn.HMGet(getCtx(ctx), r.k(key), fields...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1255,7 +1255,7 @@ func (r *Client) HSet(ctx context.Context, key string, value ...any) (val int64,
 		if err != nil {
 			return err
 		}
-		val, err = conn.HSet(r.getCtx(ctx), r.k(key), value...).Result()
+		val, err = conn.HSet(getCtx(ctx), r.k(key), value...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1270,7 +1270,7 @@ func (r *Client) HMSet(ctx context.Context, key string, value ...any) (val bool,
 		if err != nil {
 			return err
 		}
-		val, err = conn.HMSet(r.getCtx(ctx), r.k(key), value...).Result()
+		val, err = conn.HMSet(getCtx(ctx), r.k(key), value...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1285,7 +1285,7 @@ func (r *Client) HSetNX(ctx context.Context, key, field string, value any) (val 
 		if err != nil {
 			return err
 		}
-		val, err = conn.HSetNX(r.getCtx(ctx), r.k(key), field, value).Result()
+		val, err = conn.HSetNX(getCtx(ctx), r.k(key), field, value).Result()
 		return err
 	}, acceptable)
 	return
@@ -1298,7 +1298,7 @@ func (r *Client) HVals(ctx context.Context, key string) (val []string, err error
 		if err != nil {
 			return err
 		}
-		val, err = conn.HVals(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.HVals(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1309,7 +1309,7 @@ func (r *Client) HRandField(ctx context.Context, key string, count int) (val []s
 		if err != nil {
 			return err
 		}
-		val, err = conn.HRandField(r.getCtx(ctx), r.k(key), count).Result()
+		val, err = conn.HRandField(getCtx(ctx), r.k(key), count).Result()
 		return err
 	}, acceptable)
 	return
@@ -1320,7 +1320,7 @@ func (r *Client) HRandFieldWithValues(ctx context.Context, key string, count int
 		if err != nil {
 			return err
 		}
-		val, err = conn.HRandFieldWithValues(r.getCtx(ctx), r.k(key), count).Result()
+		val, err = conn.HRandFieldWithValues(getCtx(ctx), r.k(key), count).Result()
 		return err
 	}, acceptable)
 	return
@@ -1335,7 +1335,7 @@ func (r *Client) BLPop(ctx context.Context, timeout time.Duration, keys ...strin
 		if err != nil {
 			return err
 		}
-		val, err = conn.BLPop(r.getCtx(ctx), timeout, r.ks(keys...)...).Result()
+		val, err = conn.BLPop(getCtx(ctx), timeout, r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1351,7 +1351,7 @@ func (r *Client) BRPop(ctx context.Context, timeout time.Duration, keys ...strin
 		if err != nil {
 			return err
 		}
-		val, err = conn.BRPop(r.getCtx(ctx), timeout, r.ks(keys...)...).Result()
+		val, err = conn.BRPop(getCtx(ctx), timeout, r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1365,7 +1365,7 @@ func (r *Client) BRPopLPush(ctx context.Context, source, destination string, tim
 		if err != nil {
 			return err
 		}
-		val, err = conn.BRPopLPush(r.getCtx(ctx), r.k(source), r.k(destination), timeout).Result()
+		val, err = conn.BRPopLPush(getCtx(ctx), r.k(source), r.k(destination), timeout).Result()
 		return err
 	}, acceptable)
 	return
@@ -1376,13 +1376,13 @@ func (r *Client) BRPopLPush(ctx context.Context, source, destination string, tim
 // 你也可以使用负数下标，以 -1 表示列表的最后一个元素， -2 表示列表的倒数第二个元素，以此类推。
 // 如果 key 不是列表类型，返回一个错误。
 func (r *Client) LIndex(ctx context.Context, key string, index int64) (val string, err error) {
-	// return getRedis(r).LIndex(r.getCtx(ctx), r.k(key), index)
+	// return getRedis(r).LIndex(getCtx(ctx), r.k(key), index)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
 			return err
 		}
-		val, err = conn.LIndex(r.getCtx(ctx), r.k(key), index).Result()
+		val, err = conn.LIndex(getCtx(ctx), r.k(key), index).Result()
 		return err
 	}, acceptable)
 	return
@@ -1398,7 +1398,7 @@ func (r *Client) LInsert(ctx context.Context, key, op string, pivot, value any) 
 		if err != nil {
 			return err
 		}
-		val, err = conn.LInsert(r.getCtx(ctx), r.k(key), op, pivot, value).Result()
+		val, err = conn.LInsert(getCtx(ctx), r.k(key), op, pivot, value).Result()
 		return err
 	}, acceptable)
 	return
@@ -1411,7 +1411,7 @@ func (r *Client) LInsertBefore(ctx context.Context, key string, pivot, value any
 		if err != nil {
 			return err
 		}
-		val, err = conn.LInsertBefore(r.getCtx(ctx), r.k(key), pivot, value).Result()
+		val, err = conn.LInsertBefore(getCtx(ctx), r.k(key), pivot, value).Result()
 		return err
 	}, acceptable)
 	return
@@ -1424,7 +1424,7 @@ func (r *Client) LInsertAfter(ctx context.Context, key string, pivot, value any)
 		if err != nil {
 			return err
 		}
-		val, err = conn.LInsertAfter(r.getCtx(ctx), r.k(key), pivot, value).Result()
+		val, err = conn.LInsertAfter(getCtx(ctx), r.k(key), pivot, value).Result()
 		return err
 	}, acceptable)
 	return
@@ -1439,7 +1439,7 @@ func (r *Client) LLen(ctx context.Context, key string) (val int64, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.LLen(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.LLen(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1452,7 +1452,7 @@ func (r *Client) LPop(ctx context.Context, key string) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.LPop(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.LPop(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1465,7 +1465,7 @@ func (r *Client) LPopCount(ctx context.Context, key string, count int) (val []st
 		if err != nil {
 			return err
 		}
-		val, err = conn.LPopCount(r.getCtx(ctx), r.k(key), count).Result()
+		val, err = conn.LPopCount(getCtx(ctx), r.k(key), count).Result()
 		return err
 	}, acceptable)
 	return
@@ -1476,7 +1476,7 @@ func (r *Client) LPos(ctx context.Context, key string, value string, args redis.
 		if err != nil {
 			return err
 		}
-		val, err = conn.LPos(r.getCtx(ctx), r.k(key), value, args).Result()
+		val, err = conn.LPos(getCtx(ctx), r.k(key), value, args).Result()
 		return err
 	}, acceptable)
 	return
@@ -1487,7 +1487,7 @@ func (r *Client) LPosCount(ctx context.Context, key string, value string, count 
 		if err != nil {
 			return err
 		}
-		val, err = conn.LPosCount(r.getCtx(ctx), r.k(key), value, count, args).Result()
+		val, err = conn.LPosCount(getCtx(ctx), r.k(key), value, count, args).Result()
 		return err
 	}, acceptable)
 	return
@@ -1503,7 +1503,7 @@ func (r *Client) LPush(ctx context.Context, key string, values ...any) (val int6
 		if err != nil {
 			return err
 		}
-		val, err = conn.LPush(r.getCtx(ctx), r.k(key), values...).Result()
+		val, err = conn.LPush(getCtx(ctx), r.k(key), values...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1517,7 +1517,7 @@ func (r *Client) LPushX(ctx context.Context, key string, value any) (val int64, 
 		if err != nil {
 			return err
 		}
-		val, err = conn.LPushX(r.getCtx(ctx), r.k(key), value).Result()
+		val, err = conn.LPushX(getCtx(ctx), r.k(key), value).Result()
 		return err
 	}, acceptable)
 	return
@@ -1532,7 +1532,7 @@ func (r *Client) LRange(ctx context.Context, key string, start, stop int64) (val
 		if err != nil {
 			return err
 		}
-		val, err = conn.LRange(r.getCtx(ctx), r.k(key), start, stop).Result()
+		val, err = conn.LRange(getCtx(ctx), r.k(key), start, stop).Result()
 		return err
 	}, acceptable)
 	return
@@ -1546,7 +1546,7 @@ func (r *Client) LRem(ctx context.Context, key string, count int64, value any) (
 		if err != nil {
 			return err
 		}
-		val, err = conn.LRem(r.getCtx(ctx), r.k(key), count, value).Result()
+		val, err = conn.LRem(getCtx(ctx), r.k(key), count, value).Result()
 		return err
 	}, acceptable)
 	return
@@ -1561,7 +1561,7 @@ func (r *Client) LSet(ctx context.Context, key string, index int64, value any) (
 		if err != nil {
 			return err
 		}
-		val, err = conn.LSet(r.getCtx(ctx), r.k(key), index, value).Result()
+		val, err = conn.LSet(getCtx(ctx), r.k(key), index, value).Result()
 		return err
 	}, acceptable)
 	return
@@ -1578,7 +1578,7 @@ func (r *Client) LTrim(ctx context.Context, key string, start, stop int64) (val 
 		if err != nil {
 			return err
 		}
-		val, err = conn.LTrim(r.getCtx(ctx), r.k(key), start, stop).Result()
+		val, err = conn.LTrim(getCtx(ctx), r.k(key), start, stop).Result()
 		return err
 	}, acceptable)
 	return
@@ -1591,7 +1591,7 @@ func (r *Client) RPop(ctx context.Context, key string) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.RPop(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.RPop(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1604,7 +1604,7 @@ func (r *Client) RPopCount(ctx context.Context, key string, count int) (val []st
 		if err != nil {
 			return err
 		}
-		val, err = conn.RPopCount(r.getCtx(ctx), r.k(key), count).Result()
+		val, err = conn.RPopCount(getCtx(ctx), r.k(key), count).Result()
 		return err
 	}, acceptable)
 	return
@@ -1622,7 +1622,7 @@ func (r *Client) RPopLPush(ctx context.Context, source, destination string) (val
 		if err != nil {
 			return err
 		}
-		val, err = conn.RPopLPush(r.getCtx(ctx), r.k(source), r.k(destination)).Result()
+		val, err = conn.RPopLPush(getCtx(ctx), r.k(source), r.k(destination)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1638,7 +1638,7 @@ func (r *Client) RPush(ctx context.Context, key string, values ...any) (val int6
 		if err != nil {
 			return err
 		}
-		val, err = conn.RPush(r.getCtx(ctx), r.k(key), values...).Result()
+		val, err = conn.RPush(getCtx(ctx), r.k(key), values...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1652,7 +1652,7 @@ func (r *Client) RPushX(ctx context.Context, key string, value any) (val int64, 
 		if err != nil {
 			return err
 		}
-		val, err = conn.RPushX(r.getCtx(ctx), r.k(key), value).Result()
+		val, err = conn.RPushX(getCtx(ctx), r.k(key), value).Result()
 		return err
 	}, acceptable)
 	return
@@ -1663,7 +1663,7 @@ func (r *Client) LMove(ctx context.Context, source, destination, srcpos, destpos
 		if err != nil {
 			return err
 		}
-		val, err = conn.LMove(r.getCtx(ctx), r.k(source), r.k(destination), r.k(srcpos), r.k(destpos)).Result()
+		val, err = conn.LMove(getCtx(ctx), r.k(source), r.k(destination), r.k(srcpos), r.k(destpos)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1674,7 +1674,7 @@ func (r *Client) BLMove(ctx context.Context, source, destination, srcpos, destpo
 		if err != nil {
 			return err
 		}
-		val, err = conn.BLMove(r.getCtx(ctx), r.k(source), r.k(destination), r.k(srcpos), r.k(destpos), ts).Result()
+		val, err = conn.BLMove(getCtx(ctx), r.k(source), r.k(destination), r.k(srcpos), r.k(destpos), ts).Result()
 		return err
 	}, acceptable)
 	return
@@ -1689,7 +1689,7 @@ func (r *Client) SAdd(ctx context.Context, key string, members ...any) (val int6
 		if err != nil {
 			return err
 		}
-		val, err = conn.SAdd(r.getCtx(ctx), r.k(key), members...).Result()
+		val, err = conn.SAdd(getCtx(ctx), r.k(key), members...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1702,7 +1702,7 @@ func (r *Client) SCard(ctx context.Context, key string) (val int64, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.SCard(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.SCard(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1716,7 +1716,7 @@ func (r *Client) SDiff(ctx context.Context, keys ...string) (val []string, err e
 		if err != nil {
 			return err
 		}
-		val, err = conn.SDiff(r.getCtx(ctx), r.ks(keys...)...).Result()
+		val, err = conn.SDiff(getCtx(ctx), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1731,7 +1731,7 @@ func (r *Client) SDiffStore(ctx context.Context, destination string, keys ...str
 		if err != nil {
 			return err
 		}
-		val, err = conn.SDiffStore(r.getCtx(ctx), r.k(destination), r.ks(keys...)...).Result()
+		val, err = conn.SDiffStore(getCtx(ctx), r.k(destination), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1746,7 +1746,7 @@ func (r *Client) SInter(ctx context.Context, keys ...string) (val []string, err 
 		if err != nil {
 			return err
 		}
-		val, err = conn.SInter(r.getCtx(ctx), r.ks(keys...)...).Result()
+		val, err = conn.SInter(getCtx(ctx), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1761,7 +1761,7 @@ func (r *Client) SInterCard(ctx context.Context, limit int64, keys ...string) (v
 		if err != nil {
 			return err
 		}
-		val, err = conn.SInterCard(r.getCtx(ctx), limit, r.ks(keys...)...).Result()
+		val, err = conn.SInterCard(getCtx(ctx), limit, r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1776,7 +1776,7 @@ func (r *Client) SInterStore(ctx context.Context, destination string, keys ...st
 		if err != nil {
 			return err
 		}
-		val, err = conn.SInterStore(r.getCtx(ctx), r.k(destination), r.ks(keys...)...).Result()
+		val, err = conn.SInterStore(getCtx(ctx), r.k(destination), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1789,7 +1789,7 @@ func (r *Client) SIsMember(ctx context.Context, key string, member any) (val boo
 		if err != nil {
 			return err
 		}
-		val, err = conn.SIsMember(r.getCtx(ctx), r.k(key), member).Result()
+		val, err = conn.SIsMember(getCtx(ctx), r.k(key), member).Result()
 		return err
 	}, acceptable)
 	return
@@ -1803,7 +1803,7 @@ func (r *Client) SMembers(ctx context.Context, key string) (val []string, err er
 		if err != nil {
 			return err
 		}
-		val, err = conn.SMembers(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.SMembers(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1816,7 +1816,7 @@ func (r *Client) SMembersMap(ctx context.Context, key string) (val map[string]st
 		if err != nil {
 			return err
 		}
-		val, err = conn.SMembersMap(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.SMembersMap(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1833,7 +1833,7 @@ func (r *Client) SMove(ctx context.Context, source, destination string, member a
 		if err != nil {
 			return err
 		}
-		val, err = conn.SMove(r.getCtx(ctx), r.k(source), r.k(destination), member).Result()
+		val, err = conn.SMove(getCtx(ctx), r.k(source), r.k(destination), member).Result()
 		return err
 	}, acceptable)
 	return
@@ -1847,7 +1847,7 @@ func (r *Client) SPop(ctx context.Context, key string) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.SPop(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.SPop(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1860,7 +1860,7 @@ func (r *Client) SPopN(ctx context.Context, key string, count int64) (val []stri
 		if err != nil {
 			return err
 		}
-		val, err = conn.SPopN(r.getCtx(ctx), r.k(key), count).Result()
+		val, err = conn.SPopN(getCtx(ctx), r.k(key), count).Result()
 		return err
 	}, acceptable)
 	return
@@ -1877,7 +1877,7 @@ func (r *Client) SRandMember(ctx context.Context, key string) (val string, err e
 		if err != nil {
 			return err
 		}
-		val, err = conn.SRandMember(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.SRandMember(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1890,7 +1890,7 @@ func (r *Client) SRandMemberN(ctx context.Context, key string, count int64) (val
 		if err != nil {
 			return err
 		}
-		val, err = conn.SRandMemberN(r.getCtx(ctx), r.k(key), count).Result()
+		val, err = conn.SRandMemberN(getCtx(ctx), r.k(key), count).Result()
 		return err
 	}, acceptable)
 	return
@@ -1904,7 +1904,7 @@ func (r *Client) SRem(ctx context.Context, key string, members ...any) (val int6
 		if err != nil {
 			return err
 		}
-		val, err = conn.SRem(r.getCtx(ctx), r.k(key), members...).Result()
+		val, err = conn.SRem(getCtx(ctx), r.k(key), members...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1918,7 +1918,7 @@ func (r *Client) SUnion(ctx context.Context, keys ...string) (val []string, err 
 		if err != nil {
 			return err
 		}
-		val, err = conn.SUnion(r.getCtx(ctx), r.ks(keys...)...).Result()
+		val, err = conn.SUnion(getCtx(ctx), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1933,7 +1933,7 @@ func (r *Client) SUnionStore(ctx context.Context, destination string, keys ...st
 		if err != nil {
 			return err
 		}
-		val, err = conn.SUnionStore(r.getCtx(ctx), r.k(destination), r.ks(keys...)...).Result()
+		val, err = conn.SUnionStore(getCtx(ctx), r.k(destination), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1946,7 +1946,7 @@ func (r *Client) XAdd(ctx context.Context, a *redis.XAddArgs) (val string, err e
 		if err != nil {
 			return err
 		}
-		val, err = conn.XAdd(r.getCtx(ctx), a).Result()
+		val, err = conn.XAdd(getCtx(ctx), a).Result()
 		return err
 	}, acceptable)
 	return
@@ -1959,7 +1959,7 @@ func (r *Client) XDel(ctx context.Context, stream string, ids ...string) (val in
 		if err != nil {
 			return err
 		}
-		val, err = conn.XDel(r.getCtx(ctx), r.k(stream), ids...).Result()
+		val, err = conn.XDel(getCtx(ctx), r.k(stream), ids...).Result()
 		return err
 	}, acceptable)
 	return
@@ -1973,7 +1973,7 @@ func (r *Client) XLen(ctx context.Context, stream string) (val int64, err error)
 		if err != nil {
 			return err
 		}
-		val, err = conn.XLen(r.getCtx(ctx), r.k(stream)).Result()
+		val, err = conn.XLen(getCtx(ctx), r.k(stream)).Result()
 		return err
 	}, acceptable)
 	return
@@ -1986,7 +1986,7 @@ func (r *Client) XRange(ctx context.Context, stream, start, stop string) (val []
 		if err != nil {
 			return err
 		}
-		val, err = conn.XRange(r.getCtx(ctx), r.k(stream), start, stop).Result()
+		val, err = conn.XRange(getCtx(ctx), r.k(stream), start, stop).Result()
 		return err
 	}, acceptable)
 	return
@@ -1999,7 +1999,7 @@ func (r *Client) XRangeN(ctx context.Context, stream, start, stop string, count 
 		if err != nil {
 			return err
 		}
-		val, err = conn.XRangeN(r.getCtx(ctx), r.k(stream), start, stop, count).Result()
+		val, err = conn.XRangeN(getCtx(ctx), r.k(stream), start, stop, count).Result()
 		return err
 	}, acceptable)
 	return
@@ -2012,7 +2012,7 @@ func (r *Client) XRevRange(ctx context.Context, stream string, start, stop strin
 		if err != nil {
 			return err
 		}
-		val, err = conn.XRevRange(r.getCtx(ctx), r.k(stream), start, stop).Result()
+		val, err = conn.XRevRange(getCtx(ctx), r.k(stream), start, stop).Result()
 		return err
 	}, acceptable)
 	return
@@ -2025,7 +2025,7 @@ func (r *Client) XRevRangeN(ctx context.Context, stream string, start, stop stri
 		if err != nil {
 			return err
 		}
-		val, err = conn.XRevRangeN(r.getCtx(ctx), r.k(stream), start, stop, count).Result()
+		val, err = conn.XRevRangeN(getCtx(ctx), r.k(stream), start, stop, count).Result()
 		return err
 	}, acceptable)
 	return
@@ -2038,7 +2038,7 @@ func (r *Client) XRead(ctx context.Context, a *redis.XReadArgs) (val []redis.XSt
 		if err != nil {
 			return err
 		}
-		val, err = conn.XRead(r.getCtx(ctx), a).Result()
+		val, err = conn.XRead(getCtx(ctx), a).Result()
 		return err
 	}, acceptable)
 	return
@@ -2051,7 +2051,7 @@ func (r *Client) XReadStreams(ctx context.Context, streams ...string) (val []red
 		if err != nil {
 			return err
 		}
-		val, err = conn.XReadStreams(r.getCtx(ctx), r.ks(streams...)...).Result()
+		val, err = conn.XReadStreams(getCtx(ctx), r.ks(streams...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2064,7 +2064,7 @@ func (r *Client) XGroupCreate(ctx context.Context, stream, group, start string) 
 		if err != nil {
 			return err
 		}
-		val, err = conn.XGroupCreate(r.getCtx(ctx), r.k(stream), group, start).Result()
+		val, err = conn.XGroupCreate(getCtx(ctx), r.k(stream), group, start).Result()
 		return err
 	}, acceptable)
 	return
@@ -2077,7 +2077,7 @@ func (r *Client) XGroupCreateMkStream(ctx context.Context, stream, group, start 
 		if err != nil {
 			return err
 		}
-		val, err = conn.XGroupCreateMkStream(r.getCtx(ctx), r.k(stream), group, start).Result()
+		val, err = conn.XGroupCreateMkStream(getCtx(ctx), r.k(stream), group, start).Result()
 		return err
 	}, acceptable)
 	return
@@ -2090,7 +2090,7 @@ func (r *Client) XGroupSetID(ctx context.Context, stream, group, start string) (
 		if err != nil {
 			return err
 		}
-		val, err = conn.XGroupSetID(r.getCtx(ctx), r.k(stream), group, start).Result()
+		val, err = conn.XGroupSetID(getCtx(ctx), r.k(stream), group, start).Result()
 		return err
 	}, acceptable)
 	return
@@ -2103,7 +2103,7 @@ func (r *Client) XGroupDestroy(ctx context.Context, stream, group string) (val i
 		if err != nil {
 			return err
 		}
-		val, err = conn.XGroupDestroy(r.getCtx(ctx), r.k(stream), group).Result()
+		val, err = conn.XGroupDestroy(getCtx(ctx), r.k(stream), group).Result()
 		return err
 	}, acceptable)
 	return
@@ -2116,7 +2116,7 @@ func (r *Client) XGroupDelConsumer(ctx context.Context, stream, group, consumer 
 		if err != nil {
 			return err
 		}
-		val, err = conn.XGroupDelConsumer(r.getCtx(ctx), r.k(stream), group, consumer).Result()
+		val, err = conn.XGroupDelConsumer(getCtx(ctx), r.k(stream), group, consumer).Result()
 		return err
 	}, acceptable)
 	return
@@ -2129,7 +2129,7 @@ func (r *Client) XReadGroup(ctx context.Context, a *redis.XReadGroupArgs) (val [
 		if err != nil {
 			return err
 		}
-		val, err = conn.XReadGroup(r.getCtx(ctx), a).Result()
+		val, err = conn.XReadGroup(getCtx(ctx), a).Result()
 		return err
 	}, acceptable)
 	return
@@ -2142,7 +2142,7 @@ func (r *Client) XAck(ctx context.Context, stream, group string, ids ...string) 
 		if err != nil {
 			return err
 		}
-		val, err = conn.XAck(r.getCtx(ctx), r.k(stream), group, ids...).Result()
+		val, err = conn.XAck(getCtx(ctx), r.k(stream), group, ids...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2155,7 +2155,7 @@ func (r *Client) XPending(ctx context.Context, stream, group string) (val *redis
 		if err != nil {
 			return err
 		}
-		val, err = conn.XPending(r.getCtx(ctx), r.k(stream), group).Result()
+		val, err = conn.XPending(getCtx(ctx), r.k(stream), group).Result()
 		return err
 	}, acceptable)
 	return
@@ -2168,7 +2168,7 @@ func (r *Client) XPendingExt(ctx context.Context, a *redis.XPendingExtArgs) (val
 		if err != nil {
 			return err
 		}
-		val, err = conn.XPendingExt(r.getCtx(ctx), a).Result()
+		val, err = conn.XPendingExt(getCtx(ctx), a).Result()
 		return err
 	}, acceptable)
 	return
@@ -2181,7 +2181,7 @@ func (r *Client) XClaim(ctx context.Context, a *redis.XClaimArgs) (val []redis.X
 		if err != nil {
 			return err
 		}
-		val, err = conn.XClaim(r.getCtx(ctx), a).Result()
+		val, err = conn.XClaim(getCtx(ctx), a).Result()
 		return err
 	}, acceptable)
 	return
@@ -2194,7 +2194,7 @@ func (r *Client) XClaimJustID(ctx context.Context, a *redis.XClaimArgs) (val []s
 		if err != nil {
 			return err
 		}
-		val, err = conn.XClaimJustID(r.getCtx(ctx), a).Result()
+		val, err = conn.XClaimJustID(getCtx(ctx), a).Result()
 		return err
 	}, acceptable)
 	return
@@ -2206,7 +2206,7 @@ func (r *Client) XAutoClaim(ctx context.Context, a *redis.XAutoClaimArgs) (val [
 		if err != nil {
 			return err
 		}
-		val, start, err = conn.XAutoClaim(r.getCtx(ctx), a).Result()
+		val, start, err = conn.XAutoClaim(getCtx(ctx), a).Result()
 		return err
 	}, acceptable)
 	return
@@ -2218,7 +2218,7 @@ func (r *Client) XAutoClaimJustID(ctx context.Context, a *redis.XAutoClaimArgs) 
 		if err != nil {
 			return err
 		}
-		val, start, err = conn.XAutoClaimJustID(r.getCtx(ctx), a).Result()
+		val, start, err = conn.XAutoClaimJustID(getCtx(ctx), a).Result()
 		return err
 	}, acceptable)
 	return
@@ -2230,7 +2230,7 @@ func (r *Client) XTrimMaxLen(ctx context.Context, key string, maxLen int64) (val
 		if err != nil {
 			return err
 		}
-		val, err = conn.XTrimMaxLen(r.getCtx(ctx), r.k(key), maxLen).Result()
+		val, err = conn.XTrimMaxLen(getCtx(ctx), r.k(key), maxLen).Result()
 		return err
 	}, acceptable)
 	return
@@ -2242,7 +2242,7 @@ func (r *Client) XTrimMaxLenApprox(ctx context.Context, key string, maxLen, limi
 		if err != nil {
 			return err
 		}
-		val, err = conn.XTrimMaxLenApprox(r.getCtx(ctx), r.k(key), maxLen, limit).Result()
+		val, err = conn.XTrimMaxLenApprox(getCtx(ctx), r.k(key), maxLen, limit).Result()
 		return err
 	}, acceptable)
 	return
@@ -2254,7 +2254,7 @@ func (r *Client) XTrimMinID(ctx context.Context, key string, minID string) (val 
 		if err != nil {
 			return err
 		}
-		val, err = conn.XTrimMinID(r.getCtx(ctx), r.k(key), minID).Result()
+		val, err = conn.XTrimMinID(getCtx(ctx), r.k(key), minID).Result()
 		return err
 	}, acceptable)
 	return
@@ -2266,7 +2266,7 @@ func (r *Client) XTrimMinIDApprox(ctx context.Context, key string, minID string,
 		if err != nil {
 			return err
 		}
-		val, err = conn.XTrimMinIDApprox(r.getCtx(ctx), r.k(key), minID, limit).Result()
+		val, err = conn.XTrimMinIDApprox(getCtx(ctx), r.k(key), minID, limit).Result()
 		return err
 	}, acceptable)
 	return
@@ -2279,7 +2279,7 @@ func (r *Client) XInfoGroups(ctx context.Context, key string) (val []redis.XInfo
 		if err != nil {
 			return err
 		}
-		val, err = conn.XInfoGroups(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.XInfoGroups(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -2291,7 +2291,7 @@ func (r *Client) XInfoStream(ctx context.Context, key string) (val *redis.XInfoS
 		if err != nil {
 			return err
 		}
-		val, err = conn.XInfoStream(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.XInfoStream(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -2303,7 +2303,7 @@ func (r *Client) XInfoStreamFull(ctx context.Context, key string, count int) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.XInfoStreamFull(r.getCtx(ctx), r.k(key), count).Result()
+		val, err = conn.XInfoStreamFull(getCtx(ctx), r.k(key), count).Result()
 		return err
 	}, acceptable)
 	return
@@ -2315,7 +2315,7 @@ func (r *Client) XInfoConsumers(ctx context.Context, key string, group string) (
 		if err != nil {
 			return err
 		}
-		val, err = conn.XInfoConsumers(r.getCtx(ctx), r.k(key), group).Result()
+		val, err = conn.XInfoConsumers(getCtx(ctx), r.k(key), group).Result()
 		return err
 	}, acceptable)
 	return
@@ -2328,7 +2328,7 @@ func (r *Client) BZPopMax(ctx context.Context, timeout time.Duration, keys ...st
 		if err != nil {
 			return err
 		}
-		val, err = conn.BZPopMax(r.getCtx(ctx), timeout, r.ks(keys...)...).Result()
+		val, err = conn.BZPopMax(getCtx(ctx), timeout, r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2341,7 +2341,7 @@ func (r *Client) BZPopMin(ctx context.Context, timeout time.Duration, keys ...st
 		if err != nil {
 			return err
 		}
-		val, err = conn.BZPopMin(r.getCtx(ctx), timeout, r.ks(keys...)...).Result()
+		val, err = conn.BZPopMin(getCtx(ctx), timeout, r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2353,13 +2353,13 @@ func (r *Client) BZPopMin(ctx context.Context, timeout time.Duration, keys ...st
 // 如果 key 不存在，则创建一个空的有序集并执行 ZADD 操作。
 // 当 key 存在但不是有序集类型时，返回一个错误。
 func (r *Client) ZAdd(ctx context.Context, key string, members ...redis.Z) (val int64, err error) {
-	// return getRedis(r).ZAdd(r.getCtx(ctx), r.k(key), members...)
+	// return getRedis(r).ZAdd(getCtx(ctx), r.k(key), members...)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZAdd(r.getCtx(ctx), r.k(key), members...).Result()
+		val, err = conn.ZAdd(getCtx(ctx), r.k(key), members...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2372,7 +2372,7 @@ func (r *Client) ZAddNX(ctx context.Context, key string, members ...redis.Z) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZAddNX(r.getCtx(ctx), r.k(key), members...).Result()
+		val, err = conn.ZAddNX(getCtx(ctx), r.k(key), members...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2385,7 +2385,7 @@ func (r *Client) ZAddXX(ctx context.Context, key string, members ...redis.Z) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZAddXX(r.getCtx(ctx), r.k(key), members...).Result()
+		val, err = conn.ZAddXX(getCtx(ctx), r.k(key), members...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2397,7 +2397,7 @@ func (r *Client) ZAddArgs(ctx context.Context, key string, args redis.ZAddArgs) 
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZAddArgs(r.getCtx(ctx), r.k(key), args).Result()
+		val, err = conn.ZAddArgs(getCtx(ctx), r.k(key), args).Result()
 		return err
 	}, acceptable)
 	return
@@ -2408,7 +2408,7 @@ func (r *Client) ZAddArgsIncr(ctx context.Context, key string, args redis.ZAddAr
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZAddArgsIncr(r.getCtx(ctx), r.k(key), args).Result()
+		val, err = conn.ZAddArgsIncr(getCtx(ctx), r.k(key), args).Result()
 		return err
 	}, acceptable)
 	return
@@ -2421,7 +2421,7 @@ func (r *Client) ZCard(ctx context.Context, key string) (val int64, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZCard(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.ZCard(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -2435,7 +2435,7 @@ func (r *Client) ZCount(ctx context.Context, key, min, max string) (val int64, e
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZCount(r.getCtx(ctx), r.k(key), min, max).Result()
+		val, err = conn.ZCount(getCtx(ctx), r.k(key), min, max).Result()
 		return err
 	}, acceptable)
 	return
@@ -2448,7 +2448,7 @@ func (r *Client) ZLexCount(ctx context.Context, key, min, max string) (val int64
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZLexCount(r.getCtx(ctx), r.k(key), min, max).Result()
+		val, err = conn.ZLexCount(getCtx(ctx), r.k(key), min, max).Result()
 		return err
 	}, acceptable)
 	return
@@ -2465,7 +2465,7 @@ func (r *Client) ZIncrBy(ctx context.Context, key string, increment float64, mem
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZIncrBy(r.getCtx(ctx), r.k(key), increment, member).Result()
+		val, err = conn.ZIncrBy(getCtx(ctx), r.k(key), increment, member).Result()
 		return err
 	}, acceptable)
 	return
@@ -2480,7 +2480,7 @@ func (r *Client) ZInter(ctx context.Context, store *redis.ZStore) (val []string,
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZInter(r.getCtx(ctx), store).Result()
+		val, err = conn.ZInter(getCtx(ctx), store).Result()
 		return err
 	}, acceptable)
 	return
@@ -2491,7 +2491,7 @@ func (r *Client) ZInterWithScores(ctx context.Context, store *redis.ZStore) (val
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZInterWithScores(r.getCtx(ctx), store).Result()
+		val, err = conn.ZInterWithScores(getCtx(ctx), store).Result()
 		return err
 	}, acceptable)
 	return
@@ -2502,7 +2502,7 @@ func (r *Client) ZInterCard(ctx context.Context, limit int64, keys ...string) (v
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZInterCard(r.getCtx(ctx), limit, r.ks(keys...)...).Result()
+		val, err = conn.ZInterCard(getCtx(ctx), limit, r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2517,7 +2517,7 @@ func (r *Client) ZInterStore(ctx context.Context, key string, store *redis.ZStor
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZInterStore(r.getCtx(ctx), r.k(key), store).Result()
+		val, err = conn.ZInterStore(getCtx(ctx), r.k(key), store).Result()
 		return err
 	}, acceptable)
 	return
@@ -2528,7 +2528,7 @@ func (r *Client) ZMScore(ctx context.Context, key string, members ...string) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZMScore(r.getCtx(ctx), r.k(key), members...).Result()
+		val, err = conn.ZMScore(getCtx(ctx), r.k(key), members...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2541,7 +2541,7 @@ func (r *Client) ZPopMax(ctx context.Context, key string, count ...int64) (val [
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZPopMax(r.getCtx(ctx), r.k(key), count...).Result()
+		val, err = conn.ZPopMax(getCtx(ctx), r.k(key), count...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2554,7 +2554,7 @@ func (r *Client) ZPopMin(ctx context.Context, key string, count ...int64) (val [
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZPopMin(r.getCtx(ctx), r.k(key), count...).Result()
+		val, err = conn.ZPopMin(getCtx(ctx), r.k(key), count...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2568,7 +2568,7 @@ func (r *Client) ZRange(ctx context.Context, key string, start, stop int64) (val
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRange(r.getCtx(ctx), r.k(key), start, stop).Result()
+		val, err = conn.ZRange(getCtx(ctx), r.k(key), start, stop).Result()
 		return err
 	}, acceptable)
 	return
@@ -2581,7 +2581,7 @@ func (r *Client) ZRangeWithScores(ctx context.Context, key string, start, stop i
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRangeWithScores(r.getCtx(ctx), r.k(key), start, stop).Result()
+		val, err = conn.ZRangeWithScores(getCtx(ctx), r.k(key), start, stop).Result()
 		return err
 	}, acceptable)
 	return
@@ -2594,7 +2594,7 @@ func (r *Client) ZRangeByScore(ctx context.Context, key string, opt *redis.ZRang
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRangeByScore(r.getCtx(ctx), r.k(key), opt).Result()
+		val, err = conn.ZRangeByScore(getCtx(ctx), r.k(key), opt).Result()
 		return err
 	}, acceptable)
 	return
@@ -2607,7 +2607,7 @@ func (r *Client) ZRangeByLex(ctx context.Context, key string, opt *redis.ZRangeB
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRangeByLex(r.getCtx(ctx), r.k(key), opt).Result()
+		val, err = conn.ZRangeByLex(getCtx(ctx), r.k(key), opt).Result()
 		return err
 	}, acceptable)
 	return
@@ -2620,7 +2620,7 @@ func (r *Client) ZRangeByScoreWithScores(ctx context.Context, key string, opt *r
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRangeByScoreWithScores(r.getCtx(ctx), r.k(key), opt).Result()
+		val, err = conn.ZRangeByScoreWithScores(getCtx(ctx), r.k(key), opt).Result()
 		return err
 	}, acceptable)
 	return
@@ -2631,7 +2631,7 @@ func (r *Client) ZRangeArgs(ctx context.Context, z redis.ZRangeArgs) (val []stri
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRangeArgs(r.getCtx(ctx), z).Result()
+		val, err = conn.ZRangeArgs(getCtx(ctx), z).Result()
 		return err
 	}, acceptable)
 	return
@@ -2642,7 +2642,7 @@ func (r *Client) ZRangeArgsWithScores(ctx context.Context, z redis.ZRangeArgs) (
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRangeArgsWithScores(r.getCtx(ctx), z).Result()
+		val, err = conn.ZRangeArgsWithScores(getCtx(ctx), z).Result()
 		return err
 	}, acceptable)
 	return
@@ -2653,7 +2653,7 @@ func (r *Client) ZRangeStore(ctx context.Context, dst string, z redis.ZRangeArgs
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRangeStore(r.getCtx(ctx), r.k(dst), z).Result()
+		val, err = conn.ZRangeStore(getCtx(ctx), r.k(dst), z).Result()
 		return err
 	}, acceptable)
 	return
@@ -2669,7 +2669,7 @@ func (r *Client) ZRank(ctx context.Context, key, member string) (val int64, err 
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRank(r.getCtx(ctx), r.k(key), member).Result()
+		val, err = conn.ZRank(getCtx(ctx), r.k(key), member).Result()
 		return err
 	}, acceptable)
 	return
@@ -2683,7 +2683,7 @@ func (r *Client) ZRem(ctx context.Context, key string, members ...any) (val int6
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRem(r.getCtx(ctx), r.k(key), members...).Result()
+		val, err = conn.ZRem(getCtx(ctx), r.k(key), members...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2699,7 +2699,7 @@ func (r *Client) ZRemRangeByRank(ctx context.Context, key string, start, stop in
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRemRangeByRank(r.getCtx(ctx), r.k(key), start, stop).Result()
+		val, err = conn.ZRemRangeByRank(getCtx(ctx), r.k(key), start, stop).Result()
 		return err
 	}, acceptable)
 	return
@@ -2713,7 +2713,7 @@ func (r *Client) ZRemRangeByScore(ctx context.Context, key, min, max string) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRemRangeByScore(r.getCtx(ctx), r.k(key), min, max).Result()
+		val, err = conn.ZRemRangeByScore(getCtx(ctx), r.k(key), min, max).Result()
 		return err
 	}, acceptable)
 	return
@@ -2726,7 +2726,7 @@ func (r *Client) ZRemRangeByLex(ctx context.Context, key, min, max string) (val 
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRemRangeByLex(r.getCtx(ctx), r.k(key), min, max).Result()
+		val, err = conn.ZRemRangeByLex(getCtx(ctx), r.k(key), min, max).Result()
 		return err
 	}, acceptable)
 	return
@@ -2742,7 +2742,7 @@ func (r *Client) ZRevRange(ctx context.Context, key string, start, stop int64) (
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRevRange(r.getCtx(ctx), r.k(key), start, stop).Result()
+		val, err = conn.ZRevRange(getCtx(ctx), r.k(key), start, stop).Result()
 		return err
 	}, acceptable)
 	return
@@ -2755,7 +2755,7 @@ func (r *Client) ZRevRangeWithScores(ctx context.Context, key string, start, sto
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRevRangeWithScores(r.getCtx(ctx), r.k(key), start, stop).Result()
+		val, err = conn.ZRevRangeWithScores(getCtx(ctx), r.k(key), start, stop).Result()
 		return err
 	}, acceptable)
 	return
@@ -2770,7 +2770,7 @@ func (r *Client) ZRevRangeByScore(ctx context.Context, key string, opt *redis.ZR
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRevRangeByScore(r.getCtx(ctx), r.k(key), opt).Result()
+		val, err = conn.ZRevRangeByScore(getCtx(ctx), r.k(key), opt).Result()
 		return err
 	}, acceptable)
 	return
@@ -2783,7 +2783,7 @@ func (r *Client) ZRevRangeByLex(ctx context.Context, key string, opt *redis.ZRan
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRevRangeByLex(r.getCtx(ctx), r.k(key), opt).Result()
+		val, err = conn.ZRevRangeByLex(getCtx(ctx), r.k(key), opt).Result()
 		return err
 	}, acceptable)
 	return
@@ -2796,7 +2796,7 @@ func (r *Client) ZRevRangeByScoreWithScores(ctx context.Context, key string, opt
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRevRangeByScoreWithScores(r.getCtx(ctx), r.k(key), opt).Result()
+		val, err = conn.ZRevRangeByScoreWithScores(getCtx(ctx), r.k(key), opt).Result()
 		return err
 	}, acceptable)
 	return
@@ -2811,7 +2811,7 @@ func (r *Client) ZRevRank(ctx context.Context, key, member string) (val int64, e
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRevRank(r.getCtx(ctx), r.k(key), member).Result()
+		val, err = conn.ZRevRank(getCtx(ctx), r.k(key), member).Result()
 		return err
 	}, acceptable)
 	return
@@ -2825,7 +2825,7 @@ func (r *Client) ZScore(ctx context.Context, key, member string) (val float64, e
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZScore(r.getCtx(ctx), r.k(key), member).Result()
+		val, err = conn.ZScore(getCtx(ctx), r.k(key), member).Result()
 		return err
 	}, acceptable)
 	return
@@ -2839,7 +2839,7 @@ func (r *Client) ZUnionStore(ctx context.Context, dest string, store *redis.ZSto
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZUnionStore(r.getCtx(ctx), r.k(dest), store).Result()
+		val, err = conn.ZUnionStore(getCtx(ctx), r.k(dest), store).Result()
 		return err
 	}, acceptable)
 	return
@@ -2850,7 +2850,7 @@ func (r *Client) ZRandMember(ctx context.Context, key string, count int) (val []
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRandMember(r.getCtx(ctx), r.k(key), count).Result()
+		val, err = conn.ZRandMember(getCtx(ctx), r.k(key), count).Result()
 		return err
 	}, acceptable)
 	return
@@ -2861,7 +2861,7 @@ func (r *Client) ZRandMemberWithScores(ctx context.Context, key string, count in
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZRandMemberWithScores(r.getCtx(ctx), r.k(key), count).Result()
+		val, err = conn.ZRandMemberWithScores(getCtx(ctx), r.k(key), count).Result()
 		return err
 	}, acceptable)
 	return
@@ -2872,7 +2872,7 @@ func (r *Client) ZUnion(ctx context.Context, store redis.ZStore) (val []string, 
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZUnion(r.getCtx(ctx), store).Result()
+		val, err = conn.ZUnion(getCtx(ctx), store).Result()
 		return err
 	}, acceptable)
 	return
@@ -2883,7 +2883,7 @@ func (r *Client) ZUnionWithScores(ctx context.Context, store redis.ZStore) (val 
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZUnionWithScores(r.getCtx(ctx), store).Result()
+		val, err = conn.ZUnionWithScores(getCtx(ctx), store).Result()
 		return err
 	}, acceptable)
 	return
@@ -2894,19 +2894,19 @@ func (r *Client) ZDiff(ctx context.Context, keys ...string) (val []string, err e
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZDiff(r.getCtx(ctx), r.ks(keys...)...).Result()
+		val, err = conn.ZDiff(getCtx(ctx), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
 }
 func (r *Client) ZDiffWithScores(ctx context.Context, keys ...string) (val []redis.Z, err error) {
-	// return getRedis(r).ZDiffWithScores(r.getCtx(ctx), r.ks(keys...)...)
+	// return getRedis(r).ZDiffWithScores(getCtx(ctx), r.ks(keys...)...)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZDiffWithScores(r.getCtx(ctx), r.ks(keys...)...).Result()
+		val, err = conn.ZDiffWithScores(getCtx(ctx), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2917,7 +2917,7 @@ func (r *Client) ZDiffStore(ctx context.Context, destination string, keys ...str
 		if err != nil {
 			return err
 		}
-		val, err = conn.ZDiffStore(r.getCtx(ctx), r.k(destination), r.ks(keys...)...).Result()
+		val, err = conn.ZDiffStore(getCtx(ctx), r.k(destination), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2930,7 +2930,7 @@ func (r *Client) PFAdd(ctx context.Context, key string, els ...any) (val int64, 
 		if err != nil {
 			return err
 		}
-		val, err = conn.PFAdd(r.getCtx(ctx), r.k(key), els...).Result()
+		val, err = conn.PFAdd(getCtx(ctx), r.k(key), els...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2943,7 +2943,7 @@ func (r *Client) PFCount(ctx context.Context, keys ...string) (val int64, err er
 		if err != nil {
 			return err
 		}
-		val, err = conn.PFCount(r.getCtx(ctx), r.ks(keys...)...).Result()
+		val, err = conn.PFCount(getCtx(ctx), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2956,7 +2956,7 @@ func (r *Client) PFMerge(ctx context.Context, dest string, keys ...string) (val 
 		if err != nil {
 			return err
 		}
-		val, err = conn.PFMerge(r.getCtx(ctx), r.k(dest), r.ks(keys...)...).Result()
+		val, err = conn.PFMerge(getCtx(ctx), r.k(dest), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2967,7 +2967,7 @@ func (r *Client) ConfigGet(ctx context.Context, parameter string) (val map[strin
 		if err != nil {
 			return err
 		}
-		val, err = conn.ConfigGet(r.getCtx(ctx), parameter).Result()
+		val, err = conn.ConfigGet(getCtx(ctx), parameter).Result()
 		return err
 	}, acceptable)
 	return
@@ -2980,7 +2980,7 @@ func (r *Client) ConfigResetStat(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ConfigResetStat(r.getCtx(ctx)).Result()
+		val, err = conn.ConfigResetStat(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -2993,7 +2993,7 @@ func (r *Client) ConfigSet(ctx context.Context, parameter, value string) (val st
 		if err != nil {
 			return err
 		}
-		val, err = conn.ConfigSet(r.getCtx(ctx), parameter, value).Result()
+		val, err = conn.ConfigSet(getCtx(ctx), parameter, value).Result()
 		return err
 	}, acceptable)
 	return
@@ -3006,7 +3006,7 @@ func (r *Client) ConfigRewrite(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ConfigRewrite(r.getCtx(ctx)).Result()
+		val, err = conn.ConfigRewrite(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3019,7 +3019,7 @@ func (r *Client) BgRewriteAOF(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.BgRewriteAOF(r.getCtx(ctx)).Result()
+		val, err = conn.BgRewriteAOF(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3032,7 +3032,7 @@ func (r *Client) BgSave(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.BgSave(r.getCtx(ctx)).Result()
+		val, err = conn.BgSave(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3045,7 +3045,7 @@ func (r *Client) ClientKill(ctx context.Context, ipPort string) (val string, err
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClientKill(r.getCtx(ctx), ipPort).Result()
+		val, err = conn.ClientKill(getCtx(ctx), ipPort).Result()
 		return err
 	}, acceptable)
 	return
@@ -3059,7 +3059,7 @@ func (r *Client) ClientKillByFilter(ctx context.Context, keys ...string) (val in
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClientKillByFilter(r.getCtx(ctx), r.ks(keys...)...).Result()
+		val, err = conn.ClientKillByFilter(getCtx(ctx), r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3072,7 +3072,7 @@ func (r *Client) ClientList(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClientList(r.getCtx(ctx)).Result()
+		val, err = conn.ClientList(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3085,7 +3085,7 @@ func (r *Client) ClientPause(ctx context.Context, dur time.Duration) (val bool, 
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClientPause(r.getCtx(ctx), dur).Result()
+		val, err = conn.ClientPause(getCtx(ctx), dur).Result()
 		return err
 	}, acceptable)
 	return
@@ -3098,7 +3098,7 @@ func (r *Client) ClientUnpause(ctx context.Context) (val bool, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClientUnpause(r.getCtx(ctx)).Result()
+		val, err = conn.ClientUnpause(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3111,7 +3111,7 @@ func (r *Client) ClientID(ctx context.Context) (val int64, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClientID(r.getCtx(ctx)).Result()
+		val, err = conn.ClientID(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3122,7 +3122,7 @@ func (r *Client) ClientUnblock(ctx context.Context, id int64) (val int64, err er
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClientUnblock(r.getCtx(ctx), id).Result()
+		val, err = conn.ClientUnblock(getCtx(ctx), id).Result()
 		return err
 	}, acceptable)
 	return
@@ -3133,7 +3133,7 @@ func (r *Client) ClientUnblockWithError(ctx context.Context, id int64) (val int6
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClientUnblockWithError(r.getCtx(ctx), id).Result()
+		val, err = conn.ClientUnblockWithError(getCtx(ctx), id).Result()
 		return err
 	}, acceptable)
 	return
@@ -3146,7 +3146,7 @@ func (r *Client) DBSize(ctx context.Context) (val int64, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.DBSize(r.getCtx(ctx)).Result()
+		val, err = conn.DBSize(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3159,7 +3159,7 @@ func (r *Client) FlushAll(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.FlushAll(r.getCtx(ctx)).Result()
+		val, err = conn.FlushAll(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3172,7 +3172,7 @@ func (r *Client) FlushAllAsync(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.FlushAllAsync(r.getCtx(ctx)).Result()
+		val, err = conn.FlushAllAsync(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3185,7 +3185,7 @@ func (r *Client) FlushDB(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.FlushDB(r.getCtx(ctx)).Result()
+		val, err = conn.FlushDB(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3198,7 +3198,7 @@ func (r *Client) FlushDBAsync(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.FlushDBAsync(r.getCtx(ctx)).Result()
+		val, err = conn.FlushDBAsync(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3211,7 +3211,7 @@ func (r *Client) Info(ctx context.Context, section ...string) (val string, err e
 		if err != nil {
 			return err
 		}
-		val, err = conn.Info(r.getCtx(ctx), section...).Result()
+		val, err = conn.Info(getCtx(ctx), section...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3224,7 +3224,7 @@ func (r *Client) LastSave(ctx context.Context) (val int64, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.LastSave(r.getCtx(ctx)).Result()
+		val, err = conn.LastSave(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3232,13 +3232,13 @@ func (r *Client) LastSave(ctx context.Context) (val int64, err error) {
 
 // Save 异步保存数据到硬盘
 func (r *Client) Save(ctx context.Context) (val string, err error) {
-	// return getRedis(r).Save(r.getCtx(ctx))
+	// return getRedis(r).Save(getCtx(ctx))
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
 			return err
 		}
-		val, err = conn.Save(r.getCtx(ctx)).Result()
+		val, err = conn.Save(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3251,7 +3251,7 @@ func (r *Client) Shutdown(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.Shutdown(r.getCtx(ctx)).Result()
+		val, err = conn.Shutdown(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3264,7 +3264,7 @@ func (r *Client) ShutdownSave(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ShutdownSave(r.getCtx(ctx)).Result()
+		val, err = conn.ShutdownSave(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3277,7 +3277,7 @@ func (r *Client) ShutdownNoSave(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ShutdownNoSave(r.getCtx(ctx)).Result()
+		val, err = conn.ShutdownNoSave(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3290,7 +3290,7 @@ func (r *Client) SlaveOf(ctx context.Context, host, port string) (val string, er
 		if err != nil {
 			return err
 		}
-		val, err = conn.SlaveOf(r.getCtx(ctx), host, port).Result()
+		val, err = conn.SlaveOf(getCtx(ctx), host, port).Result()
 		return err
 	}, acceptable)
 	return
@@ -3302,7 +3302,7 @@ func (r *Client) SlowLogGet(ctx context.Context, num int64) (val []redis.SlowLog
 		if err != nil {
 			return err
 		}
-		val, err = conn.SlowLogGet(r.getCtx(ctx), num).Result()
+		val, err = conn.SlowLogGet(getCtx(ctx), num).Result()
 		return err
 	}, acceptable)
 	return
@@ -3315,7 +3315,7 @@ func (r *Client) Time(ctx context.Context) (val time.Time, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.Time(r.getCtx(ctx)).Result()
+		val, err = conn.Time(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3327,7 +3327,7 @@ func (r *Client) DebugObject(ctx context.Context, key string) (val string, err e
 		if err != nil {
 			return err
 		}
-		val, err = conn.DebugObject(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.DebugObject(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3339,7 +3339,7 @@ func (r *Client) ReadOnly(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ReadOnly(r.getCtx(ctx)).Result()
+		val, err = conn.ReadOnly(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3350,7 +3350,7 @@ func (r *Client) ReadWrite(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ReadWrite(r.getCtx(ctx)).Result()
+		val, err = conn.ReadWrite(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3361,7 +3361,7 @@ func (r *Client) MemoryUsage(ctx context.Context, key string, samples ...int) (v
 		if err != nil {
 			return err
 		}
-		val, err = conn.MemoryUsage(r.getCtx(ctx), r.k(key), samples...).Result()
+		val, err = conn.MemoryUsage(getCtx(ctx), r.k(key), samples...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3374,7 +3374,7 @@ func (r *Client) Eval(ctx context.Context, script string, keys []string, args ..
 		if err != nil {
 			return err
 		}
-		val, err = conn.Eval(r.getCtx(ctx), script, r.ks(keys...), args...).Result()
+		val, err = conn.Eval(getCtx(ctx), script, r.ks(keys...), args...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3387,7 +3387,7 @@ func (r *Client) EvalSha(ctx context.Context, sha1 string, keys []string, args .
 		if err != nil {
 			return err
 		}
-		val, err = conn.EvalSha(r.getCtx(ctx), sha1, r.ks(keys...), args...).Result()
+		val, err = conn.EvalSha(getCtx(ctx), sha1, r.ks(keys...), args...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3400,7 +3400,7 @@ func (r *Client) EvalRO(ctx context.Context, script string, keys []string, args 
 		if err != nil {
 			return err
 		}
-		val, err = conn.EvalRO(r.getCtx(ctx), script, r.ks(keys...), args...).Result()
+		val, err = conn.EvalRO(getCtx(ctx), script, r.ks(keys...), args...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3413,7 +3413,7 @@ func (r *Client) EvalShaRO(ctx context.Context, sha1 string, keys []string, args
 		if err != nil {
 			return err
 		}
-		val, err = conn.EvalShaRO(r.getCtx(ctx), sha1, r.ks(keys...), args...).Result()
+		val, err = conn.EvalShaRO(getCtx(ctx), sha1, r.ks(keys...), args...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3426,7 +3426,7 @@ func (r *Client) ScriptExists(ctx context.Context, hashes ...string) (val []bool
 		if err != nil {
 			return err
 		}
-		val, err = conn.ScriptExists(r.getCtx(ctx), hashes...).Result()
+		val, err = conn.ScriptExists(getCtx(ctx), hashes...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3439,7 +3439,7 @@ func (r *Client) ScriptFlush(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ScriptFlush(r.getCtx(ctx)).Result()
+		val, err = conn.ScriptFlush(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3452,7 +3452,7 @@ func (r *Client) ScriptKill(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ScriptKill(r.getCtx(ctx)).Result()
+		val, err = conn.ScriptKill(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3465,7 +3465,7 @@ func (r *Client) ScriptLoad(ctx context.Context, script string) (val string, err
 		if err != nil {
 			return err
 		}
-		val, err = conn.ScriptLoad(r.getCtx(ctx), script).Result()
+		val, err = conn.ScriptLoad(getCtx(ctx), script).Result()
 		return err
 	}, acceptable)
 	return
@@ -3478,7 +3478,7 @@ func (r *Client) Publish(ctx context.Context, channel string, message any) (val 
 		if err != nil {
 			return err
 		}
-		val, err = conn.Publish(r.getCtx(ctx), r.k(channel), message).Result()
+		val, err = conn.Publish(getCtx(ctx), r.k(channel), message).Result()
 		return err
 	}, acceptable)
 	return
@@ -3491,7 +3491,7 @@ func (r *Client) SPublish(ctx context.Context, channel string, message any) (val
 		if err != nil {
 			return err
 		}
-		val, err = conn.SPublish(r.getCtx(ctx), r.k(channel), message).Result()
+		val, err = conn.SPublish(getCtx(ctx), r.k(channel), message).Result()
 		return err
 	}, acceptable)
 	return
@@ -3504,7 +3504,7 @@ func (r *Client) PubSubChannels(ctx context.Context, pattern string) (val []stri
 		if err != nil {
 			return err
 		}
-		val, err = conn.PubSubChannels(r.getCtx(ctx), r.k(pattern)).Result()
+		val, err = conn.PubSubChannels(getCtx(ctx), r.k(pattern)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3516,7 +3516,7 @@ func (r *Client) PubSubNumSub(ctx context.Context, channels ...string) (val map[
 		if err != nil {
 			return err
 		}
-		val, err = conn.PubSubNumSub(r.getCtx(ctx), r.ks(channels...)...).Result()
+		val, err = conn.PubSubNumSub(getCtx(ctx), r.ks(channels...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3529,7 +3529,7 @@ func (r *Client) PubSubNumPat(ctx context.Context) (val int64, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.PubSubNumPat(r.getCtx(ctx)).Result()
+		val, err = conn.PubSubNumPat(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3542,7 +3542,7 @@ func (r *Client) PubSubShardChannels(ctx context.Context, pattern string) (val [
 		if err != nil {
 			return err
 		}
-		val, err = conn.PubSubShardChannels(r.getCtx(ctx), r.k(pattern)).Result()
+		val, err = conn.PubSubShardChannels(getCtx(ctx), r.k(pattern)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3553,7 +3553,7 @@ func (r *Client) PubSubShardNumSub(ctx context.Context, channels ...string) (val
 		if err != nil {
 			return err
 		}
-		val, err = conn.PubSubShardNumSub(r.getCtx(ctx), r.ks(channels...)...).Result()
+		val, err = conn.PubSubShardNumSub(getCtx(ctx), r.ks(channels...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3566,7 +3566,7 @@ func (r *Client) ClusterSlots(ctx context.Context) (val []redis.ClusterSlot, err
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterSlots(r.getCtx(ctx)).Result()
+		val, err = conn.ClusterSlots(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3579,7 +3579,7 @@ func (r *Client) ClusterNodes(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterNodes(r.getCtx(ctx)).Result()
+		val, err = conn.ClusterNodes(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3592,7 +3592,7 @@ func (r *Client) ClusterMeet(ctx context.Context, host, port string) (val string
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterMeet(r.getCtx(ctx), host, port).Result()
+		val, err = conn.ClusterMeet(getCtx(ctx), host, port).Result()
 		return err
 	}, acceptable)
 	return
@@ -3605,7 +3605,7 @@ func (r *Client) ClusterForget(ctx context.Context, nodeID string) (val string, 
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterForget(r.getCtx(ctx), nodeID).Result()
+		val, err = conn.ClusterForget(getCtx(ctx), nodeID).Result()
 		return err
 	}, acceptable)
 	return
@@ -3618,7 +3618,7 @@ func (r *Client) ClusterReplicate(ctx context.Context, nodeID string) (val strin
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterReplicate(r.getCtx(ctx), nodeID).Result()
+		val, err = conn.ClusterReplicate(getCtx(ctx), nodeID).Result()
 		return err
 	}, acceptable)
 	return
@@ -3631,7 +3631,7 @@ func (r *Client) ClusterResetSoft(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterResetSoft(r.getCtx(ctx)).Result()
+		val, err = conn.ClusterResetSoft(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3644,7 +3644,7 @@ func (r *Client) ClusterResetHard(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterResetHard(r.getCtx(ctx)).Result()
+		val, err = conn.ClusterResetHard(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3657,7 +3657,7 @@ func (r *Client) ClusterInfo(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterInfo(r.getCtx(ctx)).Result()
+		val, err = conn.ClusterInfo(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3670,7 +3670,7 @@ func (r *Client) ClusterKeySlot(ctx context.Context, key string) (val int64, err
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterKeySlot(r.getCtx(ctx), r.k(key)).Result()
+		val, err = conn.ClusterKeySlot(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3683,7 +3683,7 @@ func (r *Client) ClusterGetKeysInSlot(ctx context.Context, slot int, count int) 
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterGetKeysInSlot(r.getCtx(ctx), slot, count).Result()
+		val, err = conn.ClusterGetKeysInSlot(getCtx(ctx), slot, count).Result()
 		return err
 	}, acceptable)
 	return
@@ -3696,7 +3696,7 @@ func (r *Client) ClusterCountFailureReports(ctx context.Context, nodeID string) 
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterCountFailureReports(r.getCtx(ctx), nodeID).Result()
+		val, err = conn.ClusterCountFailureReports(getCtx(ctx), nodeID).Result()
 		return err
 	}, acceptable)
 	return
@@ -3709,7 +3709,7 @@ func (r *Client) ClusterCountKeysInSlot(ctx context.Context, slot int) (val int6
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterCountKeysInSlot(r.getCtx(ctx), slot).Result()
+		val, err = conn.ClusterCountKeysInSlot(getCtx(ctx), slot).Result()
 		return err
 	}, acceptable)
 	return
@@ -3722,7 +3722,7 @@ func (r *Client) ClusterDelSlots(ctx context.Context, slots ...int) (val string,
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterDelSlots(r.getCtx(ctx), slots...).Result()
+		val, err = conn.ClusterDelSlots(getCtx(ctx), slots...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3735,7 +3735,7 @@ func (r *Client) ClusterDelSlotsRange(ctx context.Context, min, max int) (val st
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterDelSlotsRange(r.getCtx(ctx), min, max).Result()
+		val, err = conn.ClusterDelSlotsRange(getCtx(ctx), min, max).Result()
 		return err
 	}, acceptable)
 	return
@@ -3748,7 +3748,7 @@ func (r *Client) ClusterSaveConfig(ctx context.Context) (val string, err error) 
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterSaveConfig(r.getCtx(ctx)).Result()
+		val, err = conn.ClusterSaveConfig(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3761,7 +3761,7 @@ func (r *Client) ClusterSlaves(ctx context.Context, nodeID string) (val []string
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterSlaves(r.getCtx(ctx), nodeID).Result()
+		val, err = conn.ClusterSlaves(getCtx(ctx), nodeID).Result()
 		return err
 	}, acceptable)
 	return
@@ -3774,7 +3774,7 @@ func (r *Client) ClusterFailover(ctx context.Context) (val string, err error) {
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterFailover(r.getCtx(ctx)).Result()
+		val, err = conn.ClusterFailover(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3787,7 +3787,7 @@ func (r *Client) ClusterAddSlots(ctx context.Context, slots ...int) (val string,
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterAddSlots(r.getCtx(ctx), slots...).Result()
+		val, err = conn.ClusterAddSlots(getCtx(ctx), slots...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3800,7 +3800,7 @@ func (r *Client) ClusterAddSlotsRange(ctx context.Context, min, max int) (val st
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterAddSlotsRange(r.getCtx(ctx), min, max).Result()
+		val, err = conn.ClusterAddSlotsRange(getCtx(ctx), min, max).Result()
 		return err
 	}, acceptable)
 	return
@@ -3813,7 +3813,7 @@ func (r *Client) GeoAdd(ctx context.Context, key string, geoLocation ...*redis.G
 		if err != nil {
 			return err
 		}
-		val, err = conn.GeoAdd(r.getCtx(ctx), r.k(key), geoLocation...).Result()
+		val, err = conn.GeoAdd(getCtx(ctx), r.k(key), geoLocation...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3826,7 +3826,7 @@ func (r *Client) GeoPos(ctx context.Context, key string, members ...string) (val
 		if err != nil {
 			return err
 		}
-		val, err = conn.GeoPos(r.getCtx(ctx), r.k(key), members...).Result()
+		val, err = conn.GeoPos(getCtx(ctx), r.k(key), members...).Result()
 		return err
 	}, acceptable)
 	return
@@ -3839,7 +3839,7 @@ func (r *Client) GeoRadius(ctx context.Context, key string, longitude, latitude 
 		if err != nil {
 			return err
 		}
-		val, err = conn.GeoRadius(r.getCtx(ctx), r.k(key), longitude, latitude, query).Result()
+		val, err = conn.GeoRadius(getCtx(ctx), r.k(key), longitude, latitude, query).Result()
 		return err
 	}, acceptable)
 	return
@@ -3852,7 +3852,7 @@ func (r *Client) GeoRadiusStore(ctx context.Context, key string, longitude, lati
 		if err != nil {
 			return err
 		}
-		val, err = conn.GeoRadiusStore(r.getCtx(ctx), r.k(key), longitude, latitude, query).Result()
+		val, err = conn.GeoRadiusStore(getCtx(ctx), r.k(key), longitude, latitude, query).Result()
 		return err
 	}, acceptable)
 	return
@@ -3865,7 +3865,7 @@ func (r *Client) GeoRadiusByMember(ctx context.Context, key, member string, quer
 		if err != nil {
 			return err
 		}
-		val, err = conn.GeoRadiusByMember(r.getCtx(ctx), r.k(key), member, query).Result()
+		val, err = conn.GeoRadiusByMember(getCtx(ctx), r.k(key), member, query).Result()
 		return err
 	}, acceptable)
 	return
@@ -3878,7 +3878,7 @@ func (r *Client) GeoRadiusByMemberStore(ctx context.Context, key, member string,
 		if err != nil {
 			return err
 		}
-		val, err = conn.GeoRadiusByMemberStore(r.getCtx(ctx), r.k(key), member, query).Result()
+		val, err = conn.GeoRadiusByMemberStore(getCtx(ctx), r.k(key), member, query).Result()
 		return err
 	}, acceptable)
 	return
@@ -3889,7 +3889,7 @@ func (r *Client) GeoSearch(ctx context.Context, key string, q *redis.GeoSearchQu
 		if err != nil {
 			return err
 		}
-		val, err = conn.GeoSearch(r.getCtx(ctx), r.k(key), q).Result()
+		val, err = conn.GeoSearch(getCtx(ctx), r.k(key), q).Result()
 		return err
 	}, acceptable)
 	return
@@ -3900,7 +3900,7 @@ func (r *Client) GeoSearchLocation(ctx context.Context, key string, q *redis.Geo
 		if err != nil {
 			return err
 		}
-		val, err = conn.GeoSearchLocation(r.getCtx(ctx), r.k(key), q).Result()
+		val, err = conn.GeoSearchLocation(getCtx(ctx), r.k(key), q).Result()
 		return err
 	}, acceptable)
 	return
@@ -3911,7 +3911,7 @@ func (r *Client) GeoSearchStore(ctx context.Context, key, store string, q *redis
 		if err != nil {
 			return err
 		}
-		val, err = conn.GeoSearchStore(r.getCtx(ctx), r.k(key), store, q).Result()
+		val, err = conn.GeoSearchStore(getCtx(ctx), r.k(key), store, q).Result()
 		return err
 	}, acceptable)
 	return
@@ -3924,7 +3924,7 @@ func (r *Client) GeoDist(ctx context.Context, key string, member1, member2, unit
 		if err != nil {
 			return err
 		}
-		val, err = conn.GeoDist(r.getCtx(ctx), r.k(key), member1, member2, unit).Result()
+		val, err = conn.GeoDist(getCtx(ctx), r.k(key), member1, member2, unit).Result()
 		return err
 	}, acceptable)
 	return
@@ -3938,7 +3938,7 @@ func (r *Client) GeoHash(ctx context.Context, key string, members ...string) (va
 		if err != nil {
 			return err
 		}
-		val, err = conn.GeoHash(r.getCtx(ctx), r.k(key), members...).Result()
+		val, err = conn.GeoHash(getCtx(ctx), r.k(key), members...).Result()
 		return err
 	}, acceptable)
 	return
