@@ -31,8 +31,6 @@ type (
 		Name          string // 数据库名称
 		Uri           string
 	}
-	// options = mopt.ClientOptions
-
 	// Option defines the method to customize a mongo model.
 	Option func(opts *options.ClientOptions)
 
@@ -67,27 +65,35 @@ func WithTimeout(timeout time.Duration) Option {
 	}
 }
 
-// NewClient
-func NewClient(uri string, opts ...Option) (*MongoDB, error) {
+// WithMaxConnIdleTime set the mon client max connection idle time.
+func WithMaxConnIdleTime(d time.Duration) Option {
+	return func(opts *options.ClientOptions) {
+		opts.SetMaxConnIdleTime(d)
+	}
+}
+
+// WithMaxPoolSize set the mon client max pool size.
+func WithMaxPoolSize(size uint64) Option {
+	return func(opts *options.ClientOptions) {
+		opts.SetMaxPoolSize(size)
+	}
+}
+
+// WithMinPoolSize set the mon client min pool size.
+func WithMinPoolSize(size uint64) Option {
+	return func(opts *options.ClientOptions) {
+		opts.SetMinPoolSize(size)
+	}
+}
+
+// NewMongoDBClient
+func NewMongoDBClient(uri string, opts ...Option) (*MongoDB, error) {
 	val, err := clientManager.GetResource(uri, func() (io.Closer, error) {
 		o := options.Client().ApplyURI(uri)
 		opts = append([]Option{defaultTimeoutOption()}, opts...)
 		for _, opt := range opts {
 			opt(o)
 		}
-
-		cli, err := mongo.Connect(context.Background(), o)
-		if err != nil {
-			logger.Logger.Panic(err)
-			return nil, err
-		}
-
-		err = cli.Ping(context.Background(), nil)
-		if err != nil {
-			logger.Logger.Panic(err)
-			return nil, err
-		}
-
 		//解析URL
 		u, err := url.Parse(uri)
 		if err != nil {
@@ -98,13 +104,27 @@ func NewClient(uri string, opts ...Option) (*MongoDB, error) {
 			logger.Logger.Panic(errors.New("no database"))
 			return nil, err
 		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		cli, err := mongo.Connect(ctx, o)
+		if err != nil {
+			logger.Logger.Panic(err)
+			return nil, err
+		}
+
+		err = cli.Ping(ctx, nil)
+		if err != nil {
+			logger.Logger.Panic(err)
+			return nil, err
+		}
 		name := u.Path[1:]
 		conn := &MongoDB{
 			Client: cli,
 			Name:   name,
 			Uri:    uri,
 		}
-
 		return conn, nil
 	})
 	if err != nil {
@@ -136,7 +156,6 @@ func (m *MongoDB) NewModel(collection string) (*Model, error) {
 	brk := resource.GetBreaker(m.Uri)
 	coll := newCollection(m.Client.Database(m.Name).Collection(collection), brk, m.DisableMetric, m.DisableTrace)
 	return &Model{
-		// name:       m.Name,
 		Collection: coll,
 		cli:        m.Client,
 		brk:        brk,
@@ -162,9 +181,10 @@ func (m *MongoDB) NewCollection(collection string) (*DecoratedCollection, error)
 }
 
 func (m *MongoDB) MustNewCollection(collection string) *DecoratedCollection {
-	model, err := m.NewCollection(collection)
+	err := m.Ping()
 	if err != nil {
 		logger.Logger.Fatal(err)
 	}
-	return model
+	brk := resource.GetBreaker(m.Uri)
+	return newCollection(m.Client.Database(m.Name).Collection(collection), brk, m.DisableMetric, m.DisableTrace)
 }

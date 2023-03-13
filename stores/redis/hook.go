@@ -68,6 +68,13 @@ func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (con
 	if ctx == nil || ctx.Err() != nil {
 		ctx = context.TODO()
 	}
+
+	// pc, file, lineNo, _ := runtime.Caller(10)
+	// name := runtime.FuncForPC(pc).Name()
+	// Path := file + ":" + cast.ToString(lineNo)
+	// Func := name
+	// fmt.Println(Path, Func, "ddd")
+
 	if !op.DisableTrace {
 		pc, file, lineNo, _ := runtime.Caller(5)
 		name := runtime.FuncForPC(pc).Name()

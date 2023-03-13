@@ -244,6 +244,13 @@ func (c *DecoratedCollection) InsertOne(ctx context.Context, document any) (val 
 		var data any
 		data = BeforeCreate(document)
 		if !c.DisableTrace {
+
+			// pc, file, lineNo, _ := runtime.Caller(5)
+			// name := runtime.FuncForPC(pc).Name()
+			// Path := file + ":" + cast.ToString(lineNo)
+			// Func := name
+			// fmt.Println(Path, Func, "ddd")
+
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
 				parentCtx := parentSpan.Context()
 				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
