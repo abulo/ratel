@@ -46,13 +46,13 @@ func Run(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	//获取表信息
-	tableList, err := base.TableList(ctx, base.Config.String("mysql.Database"))
+	tableList, err := base.TableList(ctx, base.Config.String("db.Database"))
 	if err != nil {
 		fmt.Println("数据库信息获取:", color.RedString(err.Error()))
 		return
 	}
 	for _, table := range tableList {
-		column, err := base.TableColumn(ctx, base.Config.String("mysql.Database"), table.TableName)
+		column, err := base.TableColumn(ctx, base.Config.String("db.Database"), table.TableName)
 		if err != nil {
 			continue
 		}

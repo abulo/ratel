@@ -80,7 +80,7 @@ func Run(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	// 表结构信息
-	tableColumn, err := base.TableColumn(ctx, base.Config.String("mysql.Database"), tableName)
+	tableColumn, err := base.TableColumn(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表结构信息:", color.RedString(err.Error()))
 		return
@@ -90,19 +90,19 @@ func Run(cmd *cobra.Command, args []string) {
 		tableColumnMap[item.ColumnName] = item
 	}
 	// 表信息
-	tableItem, err := base.TableItem(ctx, base.Config.String("mysql.Database"), tableName)
+	tableItem, err := base.TableItem(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表信息:", color.RedString(err.Error()))
 		return
 	}
 	// 表索引
-	tableIndex, err := base.TableIndex(ctx, base.Config.String("mysql.Database"), tableName)
+	tableIndex, err := base.TableIndex(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表索引:", color.RedString(err.Error()))
 		return
 	}
 	// 表主键
-	tablePrimary, err := base.TablePrimary(ctx, base.Config.String("mysql.Database"), tableName)
+	tablePrimary, err := base.TablePrimary(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表主键:", color.RedString(err.Error()))
 		return
