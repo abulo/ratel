@@ -18,13 +18,13 @@ func (proxy *ElasticSearch) Store(client *elasticsearch.Client) {
 }
 
 // StoreElasticSearch StoreEs 设置组
-func (proxypool *Proxy) StoreElasticSearch(group string, proxy *ElasticSearch) {
-	proxypool.m.Store(group, proxy)
+func (proxyPool *Proxy) StoreElasticSearch(group string, proxy *ElasticSearch) {
+	proxyPool.m.Store(group, proxy)
 }
 
 // LoadElasticSearch LoadEs 获取分组
-func (proxypool *Proxy) LoadElasticSearch(group string) *elasticsearch.Client {
-	if f, ok := proxypool.m.Load(group); ok {
+func (proxyPool *Proxy) LoadElasticSearch(group string) *elasticsearch.Client {
+	if f, ok := proxyPool.m.Load(group); ok {
 		return f.(*ElasticSearch).Client
 	}
 	return nil

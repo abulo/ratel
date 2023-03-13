@@ -1,4 +1,4 @@
-[mysql]
+[db]
     Host = "172.18.1.3"
     Port = "3306"
     Username = "root"
@@ -19,6 +19,8 @@
     DisableMetric = false
     # 关闭链路追踪
     DisableTrace = false
+    # 驱动名称
+    DriverName = "mysql"
 [watch]
     # 在 go.mod 发生变化自动运行 go mod tidy
     AutoTidy = false

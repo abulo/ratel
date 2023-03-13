@@ -10,15 +10,14 @@ import (
 
 	"github.com/abulo/ratel/v3/config"
 	"github.com/abulo/ratel/v3/config/toml"
-	"github.com/abulo/ratel/v3/stores/mysql"
-	"github.com/abulo/ratel/v3/stores/query"
+	"github.com/abulo/ratel/v3/stores/sql"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/fatih/color"
 	"github.com/spf13/cast"
 )
 
 var Config *config.Config
-var Query *query.Query
+var Query sql.SqlConn
 var Path string
 
 // InitPath 初始化路径
@@ -49,28 +48,32 @@ func InitConfig() error {
 
 // InitQuery 初始化数据查询
 func InitQuery() error {
-	//创建数据链接
-	opt := &mysql.Config{}
-	if Username := cast.ToString(Config.String("mysql.Username")); Username != "" {
-		opt.Username = Username
+
+	opts := make([]sql.Option, 0)
+
+	if Username := cast.ToString(Config.String("db.Username")); Username != "" {
+		opts = append(opts, sql.WithUsername(Username))
 	}
-	if Password := cast.ToString(Config.String("mysql.Password")); Password != "" {
-		opt.Password = Password
+	if Password := cast.ToString(Config.String("db.Password")); Password != "" {
+		opts = append(opts, sql.WithPassword(Password))
 	}
-	if Host := cast.ToString(Config.String("mysql.Host")); Host != "" {
-		opt.Host = Host
+	if Host := cast.ToString(Config.String("db.Host")); Host != "" {
+		opts = append(opts, sql.WithHost(Host))
 	}
-	if Port := cast.ToString(Config.String("mysql.Port")); Port != "" {
-		opt.Port = Port
+	if Port := cast.ToString(Config.String("db.Port")); Port != "" {
+		opts = append(opts, sql.WithPort(Port))
 	}
-	if Charset := cast.ToString(Config.String("mysql.Charset")); Charset != "" {
-		opt.Charset = Charset
+	if Charset := cast.ToString(Config.String("db.Charset")); Charset != "" {
+		opts = append(opts, sql.WithCharset(Charset))
 	}
-	if Database := cast.ToString(Config.String("mysql.Database")); Database != "" {
-		opt.Database = Database
+	if Database := cast.ToString(Config.String("db.Database")); Database != "" {
+		opts = append(opts, sql.WithDatabase(Database))
 	}
-	if TimeZone := cast.ToString(Config.String("mysql.TimeZone")); TimeZone != "" {
-		opt.TimeZone = TimeZone
+	if TimeZone := cast.ToString(Config.String("db.TimeZone")); TimeZone != "" {
+		opts = append(opts, sql.WithTimeZone(TimeZone))
+	}
+	if DriverName := cast.ToString(Config.String("db.DriverName")); DriverName != "" {
+		opts = append(opts, sql.WithDriverName(DriverName))
 	}
 	// # MaxOpenConns 连接池最多同时打开的连接数
 	// MaxOpenConns = 128
@@ -80,22 +83,27 @@ func InitQuery() error {
 	// MaxLifetime = 10
 	// # MaxIdleTime 连接池里面的连接最大空闲时长(分钟)
 	// MaxIdleTime = 5
-	if MaxLifetime := cast.ToInt(Config.Int("mysql.MaxLifetime")); MaxLifetime > 0 {
-		opt.MaxLifetime = time.Duration(MaxLifetime) * time.Minute
+	if MaxLifetime := cast.ToInt(Config.Int("db.MaxLifetime")); MaxLifetime > 0 {
+		opts = append(opts, sql.WithMaxLifetime(time.Duration(MaxLifetime)*time.Minute))
 	}
-	if MaxIdleTime := cast.ToInt(Config.Int("mysql.MaxIdleTime")); MaxIdleTime > 0 {
-		opt.MaxIdleTime = time.Duration(MaxIdleTime) * time.Minute
+	if MaxIdleTime := cast.ToInt(Config.Int("db.MaxIdleTime")); MaxIdleTime > 0 {
+		opts = append(opts, sql.WithMaxIdleTime(time.Duration(MaxIdleTime)*time.Minute))
 	}
-	if MaxIdleConns := cast.ToInt(Config.Int("mysql.MaxIdleConns")); MaxIdleConns > 0 {
-		opt.MaxIdleConns = cast.ToInt(MaxIdleConns)
+	if MaxIdleConns := cast.ToInt(Config.Int("db.MaxIdleConns")); MaxIdleConns > 0 {
+		opts = append(opts, sql.WithMaxIdleConns(MaxIdleConns))
 	}
-	if MaxOpenConns := cast.ToInt(Config.Int("mysql.MaxOpenConns")); MaxOpenConns > 0 {
-		opt.MaxOpenConns = cast.ToInt(MaxOpenConns)
+	if MaxOpenConns := cast.ToInt(Config.Int("db.MaxOpenConns")); MaxOpenConns > 0 {
+		opts = append(opts, sql.WithMaxOpenConns(MaxOpenConns))
 	}
-	opt.DriverName = "mysql"
-	opt.DisableMetric = cast.ToBool(Config.Bool("mysql.DisableMetric"))
-	opt.DisableTrace = cast.ToBool(Config.Bool("mysql.DisableTrace"))
-	Query = mysql.NewClient(opt)
+	opts = append(opts, sql.WithDisableMetric(cast.ToBool(Config.Bool("db.DisableMetric"))))
+	opts = append(opts, sql.WithDisableTrace(cast.ToBool(Config.Bool("db.DisableTrace"))))
+	opts = append(opts, sql.WithDisablePrepare(cast.ToBool(Config.Bool("db.DisablePrepare"))))
+	opts = append(opts, sql.WithParseTime(cast.ToBool(Config.Bool("db.ParseTime"))))
+	client, err := sql.NewClient(opts...)
+	if err != nil {
+		return err
+	}
+	Query = client.NewSqlClient()
 	return nil
 }
 

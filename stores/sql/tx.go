@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/abulo/ratel/v3/core/logger"
@@ -133,6 +134,26 @@ func (db txSession) QueryRow(ctx context.Context, query string, args ...any) *Ro
 		rows: &Rows{rows: res},
 		err:  err,
 	}
+}
+
+func (db txSession) Count(ctx context.Context, query string, args ...any) (int64, error) {
+	res, err := db.QueryCtx(ctx, query, args...)
+	if err != nil {
+		return 0, err
+	}
+	result := &Row{
+		rows: &Rows{rows: res},
+		err:  err,
+	}
+	d, err := result.ToMap()
+	if err != nil || d == nil {
+		return 0, err
+	}
+	if len(d) < 1 {
+		return 0, nil
+	}
+	v := d["_C"]
+	return strconv.ParseInt(v, 10, 0)
 }
 
 // QueryRow returns a single row from the database.

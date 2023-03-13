@@ -3,7 +3,7 @@ package base
 import (
 	"context"
 
-	"github.com/abulo/ratel/v3/stores/query"
+	"github.com/abulo/ratel/v3/stores/sql"
 	"github.com/spf13/cast"
 )
 
@@ -112,24 +112,36 @@ func NewDataType() map[string]DataType {
 // TableList 获取数据中表的信息
 func TableList(ctx context.Context, DbName string) ([]Table, error) {
 	var res []Table
-	builder := Query.NewBuilder(ctx).Select("TABLE_NAME", "TABLE_COMMENT").Table("information_schema.TABLES").Where("TABLE_SCHEMA", DbName)
-	err := builder.Rows().ToStruct(&res)
+	builder := sql.NewBuilder()
+	query, args, err := builder.Select("TABLE_NAME", "TABLE_COMMENT").Table("information_schema.TABLES").Where("TABLE_SCHEMA", DbName).Rows()
+	if err != nil {
+		return res, err
+	}
+	err = Query.QueryRows(ctx, query, args...).ToStruct(&res)
 	return res, err
 }
 
 // TableItem 获取数据中表的信息
 func TableItem(ctx context.Context, DbName, TableName string) (Table, error) {
 	var res Table
-	builder := Query.NewBuilder(ctx).Select("TABLE_NAME", "TABLE_COMMENT").Table("information_schema.TABLES").Where("TABLE_SCHEMA", DbName).Where("TABLE_NAME", TableName)
-	err := builder.Row().ToStruct(&res)
+	builder := sql.NewBuilder()
+	query, args, err := builder.Select("TABLE_NAME", "TABLE_COMMENT").Table("information_schema.TABLES").Where("TABLE_SCHEMA", DbName).Where("TABLE_NAME", TableName).Row()
+	if err != nil {
+		return res, err
+	}
+	err = Query.QueryRow(ctx, query, args...).ToStruct(&res)
 	return res, err
 }
 
 // TableColumn 获取数据中表中字段的信息
 func TableColumn(ctx context.Context, DbName, TableName string) ([]Column, error) {
 	var res []Column
-	builder := Query.NewBuilder(ctx).Select("COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "COLUMN_KEY", "COLUMN_COMMENT").Table("information_schema.COLUMNS").Where("TABLE_SCHEMA", DbName).Where("TABLE_NAME", TableName).OrderBy("ORDINAL_POSITION", query.ASC)
-	err := builder.Rows().ToStruct(&res)
+	builder := sql.NewBuilder()
+	query, args, err := builder.Select("COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "COLUMN_KEY", "COLUMN_COMMENT").Table("information_schema.COLUMNS").Where("TABLE_SCHEMA", DbName).Where("TABLE_NAME", TableName).OrderBy("ORDINAL_POSITION", sql.ASC).Rows()
+	if err != nil {
+		return res, err
+	}
+	err = Query.QueryRows(ctx, query, args...).ToStruct(&res)
 	if err == nil {
 		dataType := NewDataType()
 		for key, item := range res {
@@ -144,15 +156,24 @@ func TableColumn(ctx context.Context, DbName, TableName string) ([]Column, error
 // TableIndex 获取表的索引信息
 func TableIndex(ctx context.Context, DbName, TableName string) ([]Index, error) {
 	var res []Index
-	err := Query.NewBuilder(ctx).Select("statistics.INDEX_NAME", "GROUP_CONCAT(CONCAT(statistics.COLUMN_NAME)) AS FIELD").Table("`information_schema`.`STATISTICS` AS statistics").LeftJoin("information_schema.`COLUMNS` AS `columns`", "statistics.COLUMN_NAME = `columns`.COLUMN_NAME").Where("statistics.TABLE_SCHEMA", DbName).Where("statistics.TABLE_NAME", TableName).Where("`columns`.TABLE_SCHEMA", DbName).Where("`columns`.TABLE_NAME", TableName).NotEqual("statistics.INDEX_NAME", "PRIMARY").GroupBy("statistics.TABLE_NAME", "statistics.INDEX_NAME").OrderBy("statistics.NON_UNIQUE", query.ASC).OrderBy("statistics.SEQ_IN_INDEX", query.ASC).Rows().ToStruct(&res)
+	builder := sql.NewBuilder()
+	query, args, err := builder.Select("statistics.INDEX_NAME", "GROUP_CONCAT(CONCAT(statistics.COLUMN_NAME)) AS FIELD").Table("`information_schema`.`STATISTICS` AS statistics").LeftJoin("information_schema.`COLUMNS` AS `columns`", "statistics.COLUMN_NAME = `columns`.COLUMN_NAME").Where("statistics.TABLE_SCHEMA", DbName).Where("statistics.TABLE_NAME", TableName).Where("`columns`.TABLE_SCHEMA", DbName).Where("`columns`.TABLE_NAME", TableName).NotEqual("statistics.INDEX_NAME", "PRIMARY").GroupBy("statistics.TABLE_NAME", "statistics.INDEX_NAME").OrderBy("statistics.NON_UNIQUE", sql.ASC).OrderBy("statistics.SEQ_IN_INDEX", sql.ASC).Rows()
+	if err != nil {
+		return res, err
+	}
+	err = Query.QueryRows(ctx, query, args...).ToStruct(&res)
 	return res, err
 }
 
 // TablePrimary 获取主键
 func TablePrimary(ctx context.Context, DbName, TableName string) (Column, error) {
 	var res Column
-	builder := Query.NewBuilder(ctx).Select("COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "COLUMN_KEY", "COLUMN_COMMENT").Table("information_schema.COLUMNS").Where("TABLE_SCHEMA", DbName).Where("TABLE_NAME", TableName).Where("COLUMN_KEY", "PRI").OrderBy("ORDINAL_POSITION", query.ASC)
-	err := builder.Row().ToStruct(&res)
+	builder := sql.NewBuilder()
+	query, args, err := builder.Select("COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "COLUMN_KEY", "COLUMN_COMMENT").Table("information_schema.COLUMNS").Where("TABLE_SCHEMA", DbName).Where("TABLE_NAME", TableName).Where("COLUMN_KEY", "PRI").OrderBy("ORDINAL_POSITION", sql.ASC).Row()
+	if err != nil {
+		return res, err
+	}
+	err = Query.QueryRow(ctx, query, args...).ToStruct(&res)
 	if err == nil {
 		dataType := NewDataType()
 		res.DataTypeMap = dataType[res.DataType]
