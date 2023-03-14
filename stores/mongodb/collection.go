@@ -249,8 +249,8 @@ func (c *DecoratedCollection) InsertOne(ctx context.Context, document any) (val 
 	start := time.Now()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		var data any
-		data = BeforeCreate(document)
+		// var data any
+		data := BeforeCreate(document)
 		if !c.DisableTrace {
 			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
@@ -293,8 +293,8 @@ func (c *DecoratedCollection) InsertMany(ctx context.Context, documents any) (va
 	start := time.Now()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		var data []any
-		data = BeforeCreate(documents).([]any)
+		// var data []any
+		data := BeforeCreate(documents).([]any)
 		if !c.DisableTrace {
 			call := Caller(6)
 			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {

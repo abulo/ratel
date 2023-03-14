@@ -10,7 +10,7 @@ type pool struct {
 	DisableMetric  bool          // 关闭指标采集
 	DisableTrace   bool          // 关闭链路追踪
 	DisablePrepare bool          // 关闭预处理
-	DbName         string
-	Addr           string
-	DriverName     string
+	DbName         string        // 数据库名称
+	Addr           string        // 数据库地址
+	DriverName     string        // 驱动名称
 }

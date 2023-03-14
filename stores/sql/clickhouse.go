@@ -1,5 +1,7 @@
 package sql
 
+import "github.com/abulo/ratel/v3/util"
+
 // NewClickhouse returns a clickhouse connection.
 func (c *Client) NewClickhouse(opts ...SqlOption) SqlConn {
 	poolOpt := &pool{
@@ -11,6 +13,8 @@ func (c *Client) NewClickhouse(opts ...SqlOption) SqlConn {
 		DisableTrace:   c.DisableTrace,
 		DisablePrepare: c.DisablePrepare,
 		DriverName:     c.DriverName,
+		DbName:         c.Database,
+		Addr:           util.Implode(";", c.Addr),
 	}
 	return NewSqlConn(c.DriverName, c.dns(), poolOpt, opts...)
 }

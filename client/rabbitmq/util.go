@@ -2,7 +2,6 @@ package rabbitmq
 
 import (
 	"context"
-	"math/rand"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -15,9 +14,9 @@ import (
 const defaultRetryInterval = time.Second * 3
 const defaultRetryTimes = 10
 
-func init() {
-	rand.Seed(time.Now().Unix())
-}
+// func init() {
+// 	rand.Seed(time.Now().Unix())
+// }
 
 // Dial 如果 retryable 为 nil，则表示不启用断线重连
 func Dial(url string, retryable Retryable) (*Connection, error) {

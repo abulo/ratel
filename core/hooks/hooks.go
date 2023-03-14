@@ -26,7 +26,7 @@ func (s Stage) String() string {
 		return "AfterStop"
 	}
 
-	return "Unkown"
+	return "Unknown"
 }
 
 const (

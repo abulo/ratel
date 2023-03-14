@@ -11,6 +11,8 @@ func (c *Client) NewPostgres(opts ...SqlOption) SqlConn {
 		DisableTrace:   c.DisableTrace,
 		DisablePrepare: c.DisablePrepare,
 		DriverName:     c.DriverName,
+		DbName:         c.Database,
+		Addr:           c.Host,
 	}
 	return NewSqlConn(c.DriverName, c.dns(), poolOpt, opts...)
 }

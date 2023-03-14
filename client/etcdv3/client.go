@@ -16,6 +16,7 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Client ...
@@ -53,7 +54,7 @@ func NewClient(config *Config) (*Client, error) {
 	}
 
 	if !config.Secure {
-		conf.DialOptions = append(conf.DialOptions, grpc.WithInsecure())
+		conf.DialOptions = append(conf.DialOptions, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
 	if config.BasicAuth {
