@@ -4,7 +4,7 @@
     Username = "root"
     Password = "mysql"
     Charset = "utf8mb4"
-    Database = "safety"
+    Database = "xiaobao"
     #TimeZone 数据库时区
     TimeZone = "PRC"
     # MaxOpenConns 连接池最多同时打开的连接数

@@ -82,6 +82,9 @@ func (r *Row) ToStruct(st any) error {
 			refs[i] = new(any)
 		}
 	}
+	if !r.rows.rows.Next() {
+		return sql.ErrNoRows
+	}
 	if err := r.rows.rows.Scan(refs...); err != nil {
 		return err
 	}
