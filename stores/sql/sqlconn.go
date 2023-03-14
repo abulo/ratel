@@ -33,6 +33,7 @@ type (
 		Update(ctx context.Context, query string, args ...any) (int64, error)
 		Delete(ctx context.Context, query string, args ...any) (int64, error)
 		Exec(ctx context.Context, query string, args ...any) (int64, error)
+		Count(ctx context.Context, query string, args ...any) (int64, error)
 		QueryRow(ctx context.Context, query string, args ...any) *Row
 		QueryRows(ctx context.Context, query string, args ...any) *Rows
 		ExecCtx(ctx context.Context, query string, args ...any) (sql.Result, error)
