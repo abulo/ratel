@@ -746,7 +746,7 @@ func (builder *Builder) Delete() (sql string, args []any, err error) {
 func (builder *Builder) Count() (sql string, args []any, err error) {
 	builder.Select("COUNT(1) AS _C")
 	grammar := Grammar{builder: builder}
-	sql = grammar.Delete()
+	sql = grammar.Select()
 	args, err = builder.args, nil
 	return
 }
