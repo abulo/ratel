@@ -161,7 +161,7 @@ func (t Bool) ValueOrDefault() bool {
 // Result returns the string representation of the float or null.
 func (t Bool) Result() string {
 	if !t.Valid {
-		return "null"
+		return "NULL"
 	}
 	return strconv.FormatBool(t.Bool)
 }

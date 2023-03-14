@@ -151,7 +151,7 @@ func (t Time) ValueOrDefault() time.Time {
 // Result returns the string representation of the float or null.
 func (t Time) Result() string {
 	if !t.Valid {
-		return "null"
+		return "NULL"
 	}
 	return t.Time.String()
 }

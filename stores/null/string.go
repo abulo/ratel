@@ -144,7 +144,7 @@ func (t String) ValueOrDefault() string {
 // Result returns the string representation of the float or null.
 func (t String) Result() string {
 	if !t.Valid {
-		return "null"
+		return "NULL"
 	}
 	return cast.ToString(t.String)
 }

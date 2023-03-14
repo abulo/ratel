@@ -150,7 +150,7 @@ func (i Int) ValueOrDefault() int {
 // String returns the string representation of the float or null.
 func (a Int) Result() string {
 	if !a.Valid {
-		return "null"
+		return "NULL"
 	}
 	return strconv.FormatInt(int64(a.Int), 10)
 }

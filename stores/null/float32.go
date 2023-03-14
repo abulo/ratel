@@ -149,7 +149,7 @@ func (t Float32) ValueOrDefault() float32 {
 // String returns the string representation of the float or null.
 func (a Float32) Result() string {
 	if !a.Valid {
-		return "null"
+		return "NULL"
 	}
 	return strconv.FormatFloat(float64(a.Float32), 'f', -1, 32)
 }

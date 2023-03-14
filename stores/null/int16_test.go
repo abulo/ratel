@@ -105,7 +105,7 @@ func TestMarshalInt16(t *testing.T) {
 	null := NewInt16(0, false)
 	data, err = json.Marshal(null)
 	maybePanic(err)
-	assertJSONEquals(t, data, "null", "null json marshal")
+	assertJSONEquals(t, data, "NULL", "null json marshal")
 }
 
 func TestMarshalInt16Text(t *testing.T) {

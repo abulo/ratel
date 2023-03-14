@@ -156,7 +156,7 @@ func (u Uint16) ValueOrDefault() uint16 {
 // String returns the string representation of the float or null.
 func (t Uint16) Result() string {
 	if !t.Valid {
-		return "null"
+		return "NULL"
 	}
 	return cast.ToString(t.Uint16)
 }

@@ -106,7 +106,7 @@ func TestMarshalInt32(t *testing.T) {
 	null := NewInt32(0, false)
 	data, err = json.Marshal(null)
 	maybePanic(err)
-	assertJSONEquals(t, data, "null", "null json marshal")
+	assertJSONEquals(t, data, "NULL", "null json marshal")
 }
 
 func TestMarshalInt32Text(t *testing.T) {

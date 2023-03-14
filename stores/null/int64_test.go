@@ -106,7 +106,7 @@ func TestMarshalInt64(t *testing.T) {
 	null := NewInt64(0, false)
 	data, err = json.Marshal(null)
 	maybePanic(err)
-	assertJSONEquals(t, data, "null", "null json marshal")
+	assertJSONEquals(t, data, "NULL", "null json marshal")
 }
 
 func TestMarshalInt64Text(t *testing.T) {

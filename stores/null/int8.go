@@ -155,7 +155,7 @@ func (i Int8) ValueOrDefault() int8 {
 // String returns the string representation of the int or null.
 func (a Int8) Result() string {
 	if !a.Valid {
-		return "null"
+		return "NULL"
 	}
 	return strconv.FormatInt(int64(a.Int8), 10)
 }

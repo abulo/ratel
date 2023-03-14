@@ -88,7 +88,7 @@ func TestMarshalInt(t *testing.T) {
 	null := NewInt(0, false)
 	data, err = json.Marshal(null)
 	maybePanic(err)
-	assertJSONEquals(t, data, "null", "null json marshal")
+	assertJSONEquals(t, data, "NULL", "null json marshal")
 }
 
 func TestMarshalIntText(t *testing.T) {

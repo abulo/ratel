@@ -10,7 +10,7 @@ import (
 )
 
 // NullBytes is a global byte slice of JSON null
-var NullBytes = []byte("null")
+var NullBytes = []byte("NULL")
 
 // Bytes is a nullable []byte.
 type Bytes struct {
@@ -152,7 +152,7 @@ func (t Bytes) ValueOrDefault() []byte {
 // String returns the string representation of the float or null.
 func (t Bytes) Result() string {
 	if !t.Valid {
-		return "null"
+		return "NULL"
 	}
 	return cast.ToString(t.Bytes)
 }

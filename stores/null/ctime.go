@@ -183,7 +183,7 @@ func (t CTime) ValueOrDefault() time.Time {
 // String returns the string representation of the float or null.
 func (t CTime) Result() string {
 	if !t.Valid {
-		return "null"
+		return "NULL"
 	}
 	return t.CTime.Format(RFC3339TimeOnly)
 }

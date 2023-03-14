@@ -91,7 +91,7 @@ func TestMarshalBool(t *testing.T) {
 	null := NewBool(false, false)
 	data, err = json.Marshal(null)
 	maybePanic(err)
-	assertJSONEquals(t, data, "null", "null json marshal")
+	assertJSONEquals(t, data, "NULL", "null json marshal")
 }
 
 func TestMarshalBoolText(t *testing.T) {

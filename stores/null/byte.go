@@ -163,7 +163,7 @@ func (t Byte) ValueOrDefault() byte {
 // String returns the string representation of the float or null.
 func (t Byte) Result() string {
 	if !t.Valid {
-		return "null"
+		return "NULL"
 	}
 	return cast.ToString(t.Byte)
 }

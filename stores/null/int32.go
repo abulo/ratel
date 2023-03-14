@@ -155,7 +155,7 @@ func (i Int32) ValueOrDefault() int32 {
 // String returns the string representation of the int or null.
 func (a Int32) Result() string {
 	if !a.Valid {
-		return "null"
+		return "NULL"
 	}
 	return strconv.FormatInt(int64(a.Int32), 10)
 }

@@ -189,7 +189,7 @@ func (t TimeStamp) ValueOrDefault() time.Time {
 // Result returns the string representation of the float or null.
 func (t TimeStamp) Result() string {
 	if !t.Valid {
-		return "null"
+		return "NULL"
 	}
 	return t.TimeStamp.Format(TimeStampSQL)
 }

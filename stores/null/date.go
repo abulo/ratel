@@ -188,7 +188,7 @@ func (t Date) ValueOrDefault() time.Time {
 // String returns the string representation of the float or null.
 func (t Date) Result() string {
 	if !t.Valid {
-		return "null"
+		return "NULL"
 	}
 	return t.Date.Format(RFC3339DateOnly)
 }

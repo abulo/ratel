@@ -201,7 +201,7 @@ func (t JSON) ValueOrDefault() []byte {
 // String returns the string representation of the float or null.
 func (t JSON) Result() string {
 	if !t.Valid {
-		return "null"
+		return "NULL"
 	}
 	return cast.ToString(t.JSON)
 }

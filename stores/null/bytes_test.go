@@ -87,7 +87,7 @@ func TestMarshalBytes(t *testing.T) {
 	null := NewBytes(nil, false)
 	data, err = json.Marshal(null)
 	maybePanic(err)
-	assertJSONEquals(t, data, "null", "null json marshal")
+	assertJSONEquals(t, data, "NULL", "null json marshal")
 }
 
 func TestMarshalBytesText(t *testing.T) {

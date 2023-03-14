@@ -156,7 +156,7 @@ func (u Uint8) ValueOrDefault() uint8 {
 // String returns the string representation of the float or null.
 func (t Uint8) Result() string {
 	if !t.Valid {
-		return "null"
+		return "NULL"
 	}
 	return cast.ToString(t.Uint8)
 }

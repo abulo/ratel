@@ -160,7 +160,7 @@ func (u Uint64) ValueOrDefault() uint64 {
 // String returns the string representation of the float or null.
 func (t Uint64) Result() string {
 	if !t.Valid {
-		return "null"
+		return "NULL"
 	}
 	return cast.ToString(t.Uint64)
 }
