@@ -1,13 +1,13 @@
 package task
 
 import (
-	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/task/driver"
+	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cast"
 )
