@@ -2,6 +2,7 @@ package sftp
 
 import (
 	"io"
+	"net"
 	"os"
 	"path/filepath"
 	"time"
@@ -48,8 +49,13 @@ func (config *Config) New() (*Client, error) {
 		Auth: []ssh.AuthMethod{
 			ssh.Password(config.Password),
 		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         config.Timeout,
+		// HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		HostKeyCallback: ssh.HostKeyCallback(
+			func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+				return nil
+			},
+		),
+		Timeout: config.Timeout,
 	}
 
 	conn, err := ssh.Dial("tcp", config.Host+":"+config.Port, clientConfig)
