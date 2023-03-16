@@ -22,7 +22,7 @@ require (
 	github.com/h2non/bimg v1.1.9
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/hcl/v2 v2.16.2
-	github.com/imdario/mergo v0.3.13
+	github.com/imdario/mergo v0.3.14
 	github.com/issue9/term/v3 v3.1.1
 	github.com/jlaffaye/ftp v0.1.0
 	github.com/json-iterator/go v1.1.12

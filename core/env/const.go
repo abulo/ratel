@@ -25,7 +25,7 @@ var (
 	// appPodName  string
 )
 
-// InitEnv ...
+// InitEnv 初始化环境变量
 func InitEnv() {
 	appID = os.Getenv(constant.EnvAppID)
 	appMode = os.Getenv(constant.EnvAppMode)

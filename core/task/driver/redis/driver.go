@@ -87,16 +87,17 @@ func (rd *RedisDriver) registerServiceNode(nodeID string) error {
 func (rd *RedisDriver) scan(matchStr string) ([]string, error) {
 	ret := make([]string, 0)
 	ctx := context.Background()
-	iter, err := rd.client.ScanIterator(ctx, 0, matchStr, -1)
+	iter, _, err := rd.client.Scan(ctx, 0, matchStr, -1)
 	if err != nil {
 		return nil, err
 	}
-	for iter.Next(ctx) {
-		err := iter.Err()
-		if err != nil {
-			return nil, err
-		}
-		ret = append(ret, iter.Val())
-	}
+
+	// for iter.Next(ctx) {
+	// 	err := iter.Err()
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	ret = append(ret, iter...)
+	// }
 	return ret, nil
 }
