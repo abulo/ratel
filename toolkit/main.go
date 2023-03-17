@@ -5,10 +5,11 @@ import (
 
 	"github.com/abulo/ratel/v3/core/env"
 	"github.com/abulo/ratel/v3/toolkit/api"
+	"github.com/abulo/ratel/v3/toolkit/backend"
 	"github.com/abulo/ratel/v3/toolkit/build"
 	"github.com/abulo/ratel/v3/toolkit/dao"
+	"github.com/abulo/ratel/v3/toolkit/frontend"
 	"github.com/abulo/ratel/v3/toolkit/module"
-	"github.com/abulo/ratel/v3/toolkit/project"
 	"github.com/abulo/ratel/v3/toolkit/upgrade"
 	"github.com/spf13/cobra"
 )
@@ -32,7 +33,8 @@ func init() {
 		Use:    "no-help",
 		Hidden: true,
 	})
-	rootCmd.AddCommand(project.CmdNew)
+	rootCmd.AddCommand(frontend.CmdNew)
+	rootCmd.AddCommand(backend.CmdNew)
 	rootCmd.AddCommand(dao.CmdNew)
 	rootCmd.AddCommand(module.CmdNew)
 	rootCmd.AddCommand(build.CmdNew)

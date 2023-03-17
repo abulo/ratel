@@ -108,7 +108,16 @@ func (r *Repo) CopyTo(ctx context.Context, to string, modPath string, ignores []
 	if err != nil {
 		return err
 	}
+
 	return copyDir(r.Path(), to, []string{mod, modPath}, ignores)
+}
+
+// CopyTo copies the repository to project path.
+func (r *Repo) CopyFrontTo(ctx context.Context, to string, modPath string, ignores []string) error {
+	if err := r.Clone(ctx); err != nil {
+		return err
+	}
+	return copyDir(r.Path(), to, []string{}, ignores)
 }
 
 // CopyToV2 copies the repository to project path

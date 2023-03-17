@@ -1,24 +1,23 @@
-package project
+package frontend
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/abulo/ratel/v3/toolkit/base"
+	"github.com/abulo/ratel/v3/toolkit/project"
 	"github.com/spf13/cobra"
 )
 
 // CmdNew represents the new command.
 var CmdNew = &cobra.Command{
-	Use:   "new",
-	Short: "项目创建",
-	Long:  "新建微服务项目: toolkit new helloworld",
+	Use:   "frontend",
+	Short: "前端项目",
+	Long:  "前端项目: toolkit frontend helloworld",
 	Run:   run,
 }
 
@@ -26,18 +25,14 @@ var (
 	repoURL string
 	branch  string
 	timeout string
-	nomod   bool
 )
 
 func init() {
-	if repoURL = os.Getenv("RATEL_LAYOUT_REPO"); repoURL == "" {
-		repoURL = "https://github.com/abulo/layout.git"
-	}
+	repoURL = "https://github.com/abulo/layout-vue.git"
 	timeout = "60s"
 	CmdNew.Flags().StringVarP(&repoURL, "repo-url", "r", repoURL, "layout repo")
 	CmdNew.Flags().StringVarP(&branch, "branch", "b", branch, "repo branch")
 	CmdNew.Flags().StringVarP(&timeout, "timeout", "t", timeout, "time out")
-	CmdNew.Flags().BoolVarP(&nomod, "nomod", "", nomod, "retain go mod")
 }
 
 func run(cmd *cobra.Command, args []string) {
@@ -64,23 +59,10 @@ func run(cmd *cobra.Command, args []string) {
 	} else {
 		name = args[0]
 	}
-	p := &Project{Name: path.Base(name), Path: name}
+	p := &project.Project{Name: path.Base(name), Path: name}
 	done := make(chan error, 1)
 	go func() {
-		if !nomod {
-			done <- p.New(ctx, wd, repoURL, branch)
-			return
-		}
-		if _, e := os.Stat(path.Join(wd, "go.mod")); os.IsNotExist(e) {
-			done <- fmt.Errorf("🚫 未在 %s 中找到 go.mod 文件", wd)
-			return
-		}
-
-		mod, e := base.ModulePath(path.Join(wd, "go.mod"))
-		if e != nil {
-			panic(e)
-		}
-		done <- p.Add(ctx, wd, repoURL, branch, mod)
+		done <- p.NewFront(ctx, wd, repoURL, branch)
 	}()
 	select {
 	case <-ctx.Done():
