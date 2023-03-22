@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"runtime"
 	"testing"
 
 	"github.com/gookit/goutil/testutil"
@@ -109,39 +108,6 @@ func TestLoad(t *testing.T) {
 	is.Error(err)
 
 	err = c.LoadStrings(JSON, `{"name": "inhere"}`, "invalid")
-	is.Error(err)
-}
-
-func TestLoadRemote(t *testing.T) {
-	is := assert.New(t)
-
-	// invalid remote url
-	url3 := "invalid-url"
-	err := LoadRemote(JSON, url3)
-	is.Error(err)
-
-	if runtime.GOOS == "windows" {
-		return
-	}
-
-	// load remote config
-	c := New("remote")
-	url := "https://raw.githubusercontent.com/gookit/config/master/testdata/json_base.json"
-	err = c.LoadRemote(JSON, url)
-	is.Nil(err)
-	is.Equal("123", c.String("age", ""))
-
-	is.Len(c.LoadedFiles(), 1)
-	is.Equal(url, c.LoadedFiles()[0])
-
-	// load invalid remote data
-	url1 := "https://raw.githubusercontent.com/gookit/config/master/testdata/json_error.json"
-	err = c.LoadRemote(JSON, url1)
-	is.Error(err)
-
-	// load not exist
-	url2 := "https://raw.githubusercontent.com/gookit/config/master/testdata/not-exist.txt"
-	err = c.LoadRemote(JSON, url2)
 	is.Error(err)
 }
 

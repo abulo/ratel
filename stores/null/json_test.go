@@ -2,7 +2,9 @@ package null
 
 import (
 	"bytes"
+	"database/sql/driver"
 	"encoding/json"
+	"reflect"
 	"testing"
 )
 
@@ -290,5 +292,320 @@ func assertNullJSON(t *testing.T, i JSON, from string) {
 	t.Helper()
 	if i.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func TestNewJSON(t *testing.T) {
+	type args struct {
+		b     []byte
+		valid bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want JSON
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewJSON(tt.args.b, tt.args.valid); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewJSON() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestJSON_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		j    JSON
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.j.IsValid(); got != tt.want {
+				t.Errorf("JSON.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestJSON_IsSet(t *testing.T) {
+	tests := []struct {
+		name string
+		j    JSON
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.j.IsSet(); got != tt.want {
+				t.Errorf("JSON.IsSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestJSON_Unmarshal(t *testing.T) {
+	type args struct {
+		dest any
+	}
+	tests := []struct {
+		name    string
+		j       JSON
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.j.Unmarshal(tt.args.dest); (err != nil) != tt.wantErr {
+				t.Errorf("JSON.Unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestJSON_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		j       *JSON
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.j.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("JSON.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestJSON_UnmarshalText(t *testing.T) {
+	type args struct {
+		text []byte
+	}
+	tests := []struct {
+		name    string
+		j       *JSON
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.j.UnmarshalText(tt.args.text); (err != nil) != tt.wantErr {
+				t.Errorf("JSON.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestJSON_Marshal(t *testing.T) {
+	type args struct {
+		obj any
+	}
+	tests := []struct {
+		name    string
+		j       *JSON
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.j.Marshal(tt.args.obj); (err != nil) != tt.wantErr {
+				t.Errorf("JSON.Marshal() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestJSON_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		j       JSON
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.j.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("JSON.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("JSON.MarshalJSON() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestJSON_MarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		j       JSON
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.j.MarshalText()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("JSON.MarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("JSON.MarshalText() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestJSON_SetValid(t *testing.T) {
+	type args struct {
+		n []byte
+	}
+	tests := []struct {
+		name string
+		j    *JSON
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.j.SetValid(tt.args.n)
+		})
+	}
+}
+
+func TestJSON_Ptr(t *testing.T) {
+	tests := []struct {
+		name string
+		j    JSON
+		want *[]byte
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.j.Ptr(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("JSON.Ptr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestJSON_IsZero(t *testing.T) {
+	tests := []struct {
+		name string
+		j    JSON
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.j.IsZero(); got != tt.want {
+				t.Errorf("JSON.IsZero() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestJSON_Scan(t *testing.T) {
+	type args struct {
+		value any
+	}
+	tests := []struct {
+		name    string
+		j       *JSON
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.j.Scan(tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("JSON.Scan() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestJSON_Value(t *testing.T) {
+	tests := []struct {
+		name    string
+		j       JSON
+		want    driver.Value
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.j.Value()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("JSON.Value() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("JSON.Value() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestJSON_ValueOrDefault(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   JSON
+		want []byte
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.ValueOrDefault(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("JSON.ValueOrDefault() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestJSON_Result(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   JSON
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.Result(); got != tt.want {
+				t.Errorf("JSON.Result() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

@@ -1,7 +1,9 @@
 package null
 
 import (
+	"database/sql/driver"
 	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -166,5 +168,278 @@ func assertTimeStamp(t *testing.T, ts TimeStamp, from string) {
 func assertNullTimeStamp(t *testing.T, dt TimeStamp, from string) {
 	if dt.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func TestNewTimeStamp(t *testing.T) {
+	type args struct {
+		t     time.Time
+		valid bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want TimeStamp
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewTimeStamp(tt.args.t, tt.args.valid); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewTimeStamp() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTimeStamp_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   TimeStamp
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.IsValid(); got != tt.want {
+				t.Errorf("TimeStamp.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTimeStamp_IsSet(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   TimeStamp
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.IsSet(); got != tt.want {
+				t.Errorf("TimeStamp.IsSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTimeStamp_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		tr      TimeStamp
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.tr.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TimeStamp.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TimeStamp.MarshalJSON() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTimeStamp_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		tr      *TimeStamp
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.tr.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("TimeStamp.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestTimeStamp_MarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		tr      TimeStamp
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.tr.MarshalText()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TimeStamp.MarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TimeStamp.MarshalText() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTimeStamp_UnmarshalText(t *testing.T) {
+	type args struct {
+		text []byte
+	}
+	tests := []struct {
+		name    string
+		tr      *TimeStamp
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.tr.UnmarshalText(tt.args.text); (err != nil) != tt.wantErr {
+				t.Errorf("TimeStamp.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestTimeStamp_SetValid(t *testing.T) {
+	type args struct {
+		v time.Time
+	}
+	tests := []struct {
+		name string
+		tr   *TimeStamp
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.tr.SetValid(tt.args.v)
+		})
+	}
+}
+
+func TestTimeStamp_Ptr(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   TimeStamp
+		want *time.Time
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.Ptr(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TimeStamp.Ptr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTimeStamp_IsZero(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   TimeStamp
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.IsZero(); got != tt.want {
+				t.Errorf("TimeStamp.IsZero() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTimeStamp_Scan(t *testing.T) {
+	type args struct {
+		value any
+	}
+	tests := []struct {
+		name    string
+		tr      *TimeStamp
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.tr.Scan(tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("TimeStamp.Scan() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestTimeStamp_Value(t *testing.T) {
+	tests := []struct {
+		name    string
+		tr      TimeStamp
+		want    driver.Value
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.tr.Value()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TimeStamp.Value() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TimeStamp.Value() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTimeStamp_ValueOrDefault(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   TimeStamp
+		want time.Time
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.ValueOrDefault(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TimeStamp.ValueOrDefault() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTimeStamp_Result(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   TimeStamp
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.Result(); got != tt.want {
+				t.Errorf("TimeStamp.Result() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

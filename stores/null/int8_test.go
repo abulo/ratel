@@ -1,8 +1,10 @@
 package null
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"math"
+	"reflect"
 	"strconv"
 	"testing"
 )
@@ -184,5 +186,278 @@ func assertInt8(t *testing.T, i Int8, from string) {
 func assertNullInt8(t *testing.T, i Int8, from string) {
 	if i.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func TestNewInt8(t *testing.T) {
+	type args struct {
+		i     int8
+		valid bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want Int8
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewInt8(tt.args.i, tt.args.valid); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewInt8() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt8_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		i    Int8
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.i.IsValid(); got != tt.want {
+				t.Errorf("Int8.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt8_IsSet(t *testing.T) {
+	tests := []struct {
+		name string
+		i    Int8
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.i.IsSet(); got != tt.want {
+				t.Errorf("Int8.IsSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt8_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		i       *Int8
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.i.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("Int8.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestInt8_UnmarshalText(t *testing.T) {
+	type args struct {
+		text []byte
+	}
+	tests := []struct {
+		name    string
+		i       *Int8
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.i.UnmarshalText(tt.args.text); (err != nil) != tt.wantErr {
+				t.Errorf("Int8.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestInt8_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		i       Int8
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.i.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Int8.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Int8.MarshalJSON() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt8_MarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		i       Int8
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.i.MarshalText()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Int8.MarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Int8.MarshalText() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt8_SetValid(t *testing.T) {
+	type args struct {
+		n int8
+	}
+	tests := []struct {
+		name string
+		i    *Int8
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.i.SetValid(tt.args.n)
+		})
+	}
+}
+
+func TestInt8_Ptr(t *testing.T) {
+	tests := []struct {
+		name string
+		i    Int8
+		want *int8
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.i.Ptr(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Int8.Ptr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt8_IsZero(t *testing.T) {
+	tests := []struct {
+		name string
+		i    Int8
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.i.IsZero(); got != tt.want {
+				t.Errorf("Int8.IsZero() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt8_Scan(t *testing.T) {
+	type args struct {
+		value any
+	}
+	tests := []struct {
+		name    string
+		i       *Int8
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.i.Scan(tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("Int8.Scan() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestInt8_Value(t *testing.T) {
+	tests := []struct {
+		name    string
+		i       Int8
+		want    driver.Value
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.i.Value()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Int8.Value() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Int8.Value() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt8_ValueOrDefault(t *testing.T) {
+	tests := []struct {
+		name string
+		i    Int8
+		want int8
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.i.ValueOrDefault(); got != tt.want {
+				t.Errorf("Int8.ValueOrDefault() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt8_Result(t *testing.T) {
+	tests := []struct {
+		name string
+		a    Int8
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.a.Result(); got != tt.want {
+				t.Errorf("Int8.Result() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

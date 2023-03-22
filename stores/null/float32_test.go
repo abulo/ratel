@@ -1,7 +1,9 @@
 package null
 
 import (
+	"database/sql/driver"
 	"encoding/json"
+	"reflect"
 	"testing"
 )
 
@@ -157,5 +159,278 @@ func assertFloat32(t *testing.T, f Float32, from string) {
 func assertNullFloat32(t *testing.T, f Float32, from string) {
 	if f.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func TestNewFloat32(t *testing.T) {
+	type args struct {
+		f     float32
+		valid bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want Float32
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewFloat32(tt.args.f, tt.args.valid); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewFloat32() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFloat32_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		f    Float32
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.f.IsValid(); got != tt.want {
+				t.Errorf("Float32.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFloat32_IsSet(t *testing.T) {
+	tests := []struct {
+		name string
+		f    Float32
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.f.IsSet(); got != tt.want {
+				t.Errorf("Float32.IsSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFloat32_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		f       *Float32
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.f.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("Float32.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestFloat32_UnmarshalText(t *testing.T) {
+	type args struct {
+		text []byte
+	}
+	tests := []struct {
+		name    string
+		f       *Float32
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.f.UnmarshalText(tt.args.text); (err != nil) != tt.wantErr {
+				t.Errorf("Float32.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestFloat32_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		f       Float32
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.f.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Float32.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Float32.MarshalJSON() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFloat32_MarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		f       Float32
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.f.MarshalText()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Float32.MarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Float32.MarshalText() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFloat32_SetValid(t *testing.T) {
+	type args struct {
+		n float32
+	}
+	tests := []struct {
+		name string
+		f    *Float32
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.f.SetValid(tt.args.n)
+		})
+	}
+}
+
+func TestFloat32_Ptr(t *testing.T) {
+	tests := []struct {
+		name string
+		f    Float32
+		want *float32
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.f.Ptr(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Float32.Ptr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFloat32_IsZero(t *testing.T) {
+	tests := []struct {
+		name string
+		f    Float32
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.f.IsZero(); got != tt.want {
+				t.Errorf("Float32.IsZero() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFloat32_Scan(t *testing.T) {
+	type args struct {
+		value any
+	}
+	tests := []struct {
+		name    string
+		f       *Float32
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.f.Scan(tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("Float32.Scan() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestFloat32_Value(t *testing.T) {
+	tests := []struct {
+		name    string
+		f       Float32
+		want    driver.Value
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.f.Value()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Float32.Value() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Float32.Value() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFloat32_ValueOrDefault(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Float32
+		want float32
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.ValueOrDefault(); got != tt.want {
+				t.Errorf("Float32.ValueOrDefault() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFloat32_Result(t *testing.T) {
+	tests := []struct {
+		name string
+		a    Float32
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.a.Result(); got != tt.want {
+				t.Errorf("Float32.Result() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

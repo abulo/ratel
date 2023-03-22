@@ -1,7 +1,9 @@
 package null
 
 import (
+	"database/sql/driver"
 	"encoding/json"
+	"reflect"
 	"testing"
 )
 
@@ -166,5 +168,278 @@ func assertUint(t *testing.T, i Uint, from string) {
 func assertNullUint(t *testing.T, i Uint, from string) {
 	if i.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func TestNewUint(t *testing.T) {
+	type args struct {
+		i     uint
+		valid bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want Uint
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewUint(tt.args.i, tt.args.valid); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewUint() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		u    Uint
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.u.IsValid(); got != tt.want {
+				t.Errorf("Uint.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint_IsSet(t *testing.T) {
+	tests := []struct {
+		name string
+		u    Uint
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.u.IsSet(); got != tt.want {
+				t.Errorf("Uint.IsSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		u       *Uint
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.u.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("Uint.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestUint_UnmarshalText(t *testing.T) {
+	type args struct {
+		text []byte
+	}
+	tests := []struct {
+		name    string
+		u       *Uint
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.u.UnmarshalText(tt.args.text); (err != nil) != tt.wantErr {
+				t.Errorf("Uint.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestUint_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		u       Uint
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.u.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Uint.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Uint.MarshalJSON() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint_MarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		u       Uint
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.u.MarshalText()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Uint.MarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Uint.MarshalText() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint_SetValid(t *testing.T) {
+	type args struct {
+		n uint
+	}
+	tests := []struct {
+		name string
+		u    *Uint
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.u.SetValid(tt.args.n)
+		})
+	}
+}
+
+func TestUint_Ptr(t *testing.T) {
+	tests := []struct {
+		name string
+		u    Uint
+		want *uint
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.u.Ptr(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Uint.Ptr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint_IsZero(t *testing.T) {
+	tests := []struct {
+		name string
+		u    Uint
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.u.IsZero(); got != tt.want {
+				t.Errorf("Uint.IsZero() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint_Scan(t *testing.T) {
+	type args struct {
+		value any
+	}
+	tests := []struct {
+		name    string
+		u       *Uint
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.u.Scan(tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("Uint.Scan() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestUint_Value(t *testing.T) {
+	tests := []struct {
+		name    string
+		u       Uint
+		want    driver.Value
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.u.Value()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Uint.Value() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Uint.Value() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint_ValueOrDefault(t *testing.T) {
+	tests := []struct {
+		name string
+		u    Uint
+		want uint
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.u.ValueOrDefault(); got != tt.want {
+				t.Errorf("Uint.ValueOrDefault() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint_Result(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Uint
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.Result(); got != tt.want {
+				t.Errorf("Uint.Result() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

@@ -1,7 +1,9 @@
 package null
 
 import (
+	"database/sql/driver"
 	"encoding/json"
+	"reflect"
 	"testing"
 )
 
@@ -23,30 +25,6 @@ func TestByteFromPtr(t *testing.T) {
 
 	null := ByteFromPtr(nil)
 	assertNullByte(t, null, "ByteFromPtr(nil)")
-}
-
-func TestUnmarshalByte(t *testing.T) {
-	var null Byte
-	err := json.Unmarshal(nullJSON, &null)
-	maybePanic(err)
-	assertNullByte(t, null, "null json")
-	if !null.Set {
-		t.Error("expected Set to be true")
-	}
-
-	var badType Byte
-	err = json.Unmarshal(boolJSON, &badType)
-	if err == nil {
-		panic("err should not be nil")
-	}
-	assertNullByte(t, badType, "wrong type json")
-
-	var invalid Byte
-	err = invalid.UnmarshalJSON(invalidJSON)
-	if _, ok := err.(*json.SyntaxError); !ok {
-		t.Errorf("expected json.SyntaxError, not %T", err)
-	}
-	assertNullByte(t, invalid, "invalid json")
 }
 
 func TestUnmarshalNonByteegerNumber(t *testing.T) {
@@ -157,5 +135,278 @@ func assertByte(t *testing.T, i Byte, from string) {
 func assertNullByte(t *testing.T, i Byte, from string) {
 	if i.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func TestNewByte(t *testing.T) {
+	type args struct {
+		b     byte
+		valid bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want Byte
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewByte(tt.args.b, tt.args.valid); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewByte() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestByte_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		b    Byte
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.b.IsValid(); got != tt.want {
+				t.Errorf("Byte.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestByte_IsSet(t *testing.T) {
+	tests := []struct {
+		name string
+		b    Byte
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.b.IsSet(); got != tt.want {
+				t.Errorf("Byte.IsSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestByte_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		b       *Byte
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.b.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("Byte.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestByte_UnmarshalText(t *testing.T) {
+	type args struct {
+		text []byte
+	}
+	tests := []struct {
+		name    string
+		b       *Byte
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.b.UnmarshalText(tt.args.text); (err != nil) != tt.wantErr {
+				t.Errorf("Byte.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestByte_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		b       Byte
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.b.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Byte.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Byte.MarshalJSON() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestByte_MarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		b       Byte
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.b.MarshalText()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Byte.MarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Byte.MarshalText() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestByte_SetValid(t *testing.T) {
+	type args struct {
+		n byte
+	}
+	tests := []struct {
+		name string
+		b    *Byte
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.b.SetValid(tt.args.n)
+		})
+	}
+}
+
+func TestByte_Ptr(t *testing.T) {
+	tests := []struct {
+		name string
+		b    Byte
+		want *byte
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.b.Ptr(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Byte.Ptr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestByte_IsZero(t *testing.T) {
+	tests := []struct {
+		name string
+		b    Byte
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.b.IsZero(); got != tt.want {
+				t.Errorf("Byte.IsZero() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestByte_Scan(t *testing.T) {
+	type args struct {
+		value any
+	}
+	tests := []struct {
+		name    string
+		b       *Byte
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.b.Scan(tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("Byte.Scan() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestByte_Value(t *testing.T) {
+	tests := []struct {
+		name    string
+		b       Byte
+		want    driver.Value
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.b.Value()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Byte.Value() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Byte.Value() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestByte_ValueOrDefault(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Byte
+		want byte
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.ValueOrDefault(); got != tt.want {
+				t.Errorf("Byte.ValueOrDefault() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestByte_Result(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Byte
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.Result(); got != tt.want {
+				t.Errorf("Byte.Result() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

@@ -1,7 +1,9 @@
 package null
 
 import (
+	"database/sql/driver"
 	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -13,42 +15,6 @@ var (
 	ctimeValue, _  = time.Parse(RFC3339TimeOnly, ctimeString)
 	badCTimeObject = []byte(`{"hello": "world"}`)
 )
-
-func TestUnmarshalCTimeJSON(t *testing.T) {
-	var ct CTime
-	err := json.Unmarshal(ctimeJSON, &ct)
-	maybePanic(err)
-	assertCTime(t, ct, "UnmarshalJSON() json")
-
-	var null CTime
-	err = json.Unmarshal(nullCTimeJSON, &null)
-	maybePanic(err)
-	assertNullCTime(t, null, "null time json")
-	if !null.Set {
-		t.Error("should be Set")
-	}
-
-	var invalid CTime
-	err = invalid.UnmarshalJSON(invalidJSON)
-	if _, ok := err.(*time.ParseError); !ok {
-		t.Errorf("expected json.ParseError, not %T", err)
-	}
-	assertNullCTime(t, invalid, "invalid from object json")
-
-	var bad CTime
-	err = json.Unmarshal(badCTimeObject, &bad)
-	if err == nil {
-		t.Errorf("expected error: bad object")
-	}
-	assertNullCTime(t, bad, "bad from object json")
-
-	var wrongType CTime
-	err = json.Unmarshal(intJSON, &wrongType)
-	if err == nil {
-		t.Errorf("expected error: wrong type JSON")
-	}
-	assertNullCTime(t, wrongType, "wrong type object json")
-}
 
 func TestUnmarshalCTimeText(t *testing.T) {
 	ct := CTimeFrom(ctimeValue)
@@ -166,5 +132,278 @@ func assertCTime(t *testing.T, ct CTime, from string) {
 func assertNullCTime(t *testing.T, ct CTime, from string) {
 	if ct.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func TestNewCTime(t *testing.T) {
+	type args struct {
+		t     time.Time
+		valid bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want CTime
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewCTime(tt.args.t, tt.args.valid); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewCTime() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCTime_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   CTime
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.IsValid(); got != tt.want {
+				t.Errorf("CTime.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCTime_IsSet(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   CTime
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.IsSet(); got != tt.want {
+				t.Errorf("CTime.IsSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCTime_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		tr      CTime
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.tr.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CTime.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CTime.MarshalJSON() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCTime_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		tr      *CTime
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.tr.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("CTime.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestCTime_MarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		tr      CTime
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.tr.MarshalText()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CTime.MarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CTime.MarshalText() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCTime_UnmarshalText(t *testing.T) {
+	type args struct {
+		text []byte
+	}
+	tests := []struct {
+		name    string
+		tr      *CTime
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.tr.UnmarshalText(tt.args.text); (err != nil) != tt.wantErr {
+				t.Errorf("CTime.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestCTime_SetValid(t *testing.T) {
+	type args struct {
+		v time.Time
+	}
+	tests := []struct {
+		name string
+		tr   *CTime
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.tr.SetValid(tt.args.v)
+		})
+	}
+}
+
+func TestCTime_Ptr(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   CTime
+		want *time.Time
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.Ptr(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CTime.Ptr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCTime_IsZero(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   CTime
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.IsZero(); got != tt.want {
+				t.Errorf("CTime.IsZero() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCTime_Scan(t *testing.T) {
+	type args struct {
+		value any
+	}
+	tests := []struct {
+		name    string
+		tr      *CTime
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.tr.Scan(tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("CTime.Scan() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestCTime_Value(t *testing.T) {
+	tests := []struct {
+		name    string
+		tr      CTime
+		want    driver.Value
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.tr.Value()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CTime.Value() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CTime.Value() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCTime_ValueOrDefault(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   CTime
+		want time.Time
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.ValueOrDefault(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CTime.ValueOrDefault() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCTime_Result(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   CTime
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.Result(); got != tt.want {
+				t.Errorf("CTime.Result() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

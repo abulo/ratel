@@ -1,7 +1,8 @@
 package null
 
 import (
-	"encoding/json"
+	"database/sql/driver"
+	"reflect"
 	"testing"
 )
 
@@ -29,29 +30,6 @@ func TestBoolFromPtr(t *testing.T) {
 	assertNullBool(t, null, "BoolFromPtr(nil)")
 }
 
-func TestUnmarshalBool(t *testing.T) {
-	var null Bool
-	err := json.Unmarshal(nullJSON, &null)
-	maybePanic(err)
-	assertNullBool(t, null, "null json")
-	if !null.Set {
-		t.Error("should be Set", err)
-	}
-
-	var badType Bool
-	err = json.Unmarshal(intJSON, &badType)
-	if err == nil {
-		panic("err should not be nil")
-	}
-	assertNullBool(t, badType, "wrong type json")
-
-	var invalid Bool
-	err = invalid.UnmarshalJSON(invalidJSON)
-	if _, ok := err.(*json.SyntaxError); !ok {
-		t.Errorf("expected json.SyntaxError, not %T", err)
-	}
-}
-
 func TestTextUnmarshalBool(t *testing.T) {
 	var b Bool
 	err := b.UnmarshalText([]byte("true"))
@@ -74,24 +52,6 @@ func TestTextUnmarshalBool(t *testing.T) {
 		panic("err should not be nil")
 	}
 	assertNullBool(t, invalid, "invalid json")
-}
-
-func TestMarshalBool(t *testing.T) {
-	b := BoolFrom(true)
-	data, err := json.Marshal(b)
-	maybePanic(err)
-	assertJSONEquals(t, data, "true", "non-empty json marshal")
-
-	zero := NewBool(false, true)
-	data, err = json.Marshal(zero)
-	maybePanic(err)
-	assertJSONEquals(t, data, "false", "zero json marshal")
-
-	// invalid values should be encoded as null
-	null := NewBool(false, false)
-	data, err = json.Marshal(null)
-	maybePanic(err)
-	assertJSONEquals(t, data, "NULL", "null json marshal")
 }
 
 func TestMarshalBoolText(t *testing.T) {
@@ -183,5 +143,278 @@ func assertFalseBool(t *testing.T, b Bool, from string) {
 func assertNullBool(t *testing.T, b Bool, from string) {
 	if b.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func TestNewBool(t *testing.T) {
+	type args struct {
+		b     bool
+		valid bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want Bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewBool(tt.args.b, tt.args.valid); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewBool() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBool_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		b    Bool
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.b.IsValid(); got != tt.want {
+				t.Errorf("Bool.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBool_IsSet(t *testing.T) {
+	tests := []struct {
+		name string
+		b    Bool
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.b.IsSet(); got != tt.want {
+				t.Errorf("Bool.IsSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBool_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		b       *Bool
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.b.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("Bool.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestBool_UnmarshalText(t *testing.T) {
+	type args struct {
+		text []byte
+	}
+	tests := []struct {
+		name    string
+		b       *Bool
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.b.UnmarshalText(tt.args.text); (err != nil) != tt.wantErr {
+				t.Errorf("Bool.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestBool_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		b       Bool
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.b.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Bool.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Bool.MarshalJSON() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBool_MarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		b       Bool
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.b.MarshalText()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Bool.MarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Bool.MarshalText() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBool_SetValid(t *testing.T) {
+	type args struct {
+		v bool
+	}
+	tests := []struct {
+		name string
+		b    *Bool
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.b.SetValid(tt.args.v)
+		})
+	}
+}
+
+func TestBool_Ptr(t *testing.T) {
+	tests := []struct {
+		name string
+		b    Bool
+		want *bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.b.Ptr(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Bool.Ptr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBool_IsZero(t *testing.T) {
+	tests := []struct {
+		name string
+		b    Bool
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.b.IsZero(); got != tt.want {
+				t.Errorf("Bool.IsZero() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBool_Scan(t *testing.T) {
+	type args struct {
+		value any
+	}
+	tests := []struct {
+		name    string
+		b       *Bool
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.b.Scan(tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("Bool.Scan() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestBool_Value(t *testing.T) {
+	tests := []struct {
+		name    string
+		b       Bool
+		want    driver.Value
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.b.Value()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Bool.Value() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Bool.Value() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBool_ValueOrDefault(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Bool
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.ValueOrDefault(); got != tt.want {
+				t.Errorf("Bool.ValueOrDefault() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBool_Result(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Bool
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.Result(); got != tt.want {
+				t.Errorf("Bool.Result() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

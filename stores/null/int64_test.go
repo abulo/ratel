@@ -1,8 +1,10 @@
 package null
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"math"
+	"reflect"
 	"strconv"
 	"testing"
 )
@@ -184,5 +186,278 @@ func assertInt64(t *testing.T, i Int64, from string) {
 func assertNullInt64(t *testing.T, i Int64, from string) {
 	if i.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func TestNewInt64(t *testing.T) {
+	type args struct {
+		i     int64
+		valid bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want Int64
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewInt64(tt.args.i, tt.args.valid); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewInt64() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt64_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		i    Int64
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.i.IsValid(); got != tt.want {
+				t.Errorf("Int64.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt64_IsSet(t *testing.T) {
+	tests := []struct {
+		name string
+		i    Int64
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.i.IsSet(); got != tt.want {
+				t.Errorf("Int64.IsSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt64_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		i       *Int64
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.i.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("Int64.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestInt64_UnmarshalText(t *testing.T) {
+	type args struct {
+		text []byte
+	}
+	tests := []struct {
+		name    string
+		i       *Int64
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.i.UnmarshalText(tt.args.text); (err != nil) != tt.wantErr {
+				t.Errorf("Int64.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestInt64_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		i       Int64
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.i.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Int64.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Int64.MarshalJSON() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt64_MarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		i       Int64
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.i.MarshalText()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Int64.MarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Int64.MarshalText() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt64_SetValid(t *testing.T) {
+	type args struct {
+		n int64
+	}
+	tests := []struct {
+		name string
+		i    *Int64
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.i.SetValid(tt.args.n)
+		})
+	}
+}
+
+func TestInt64_Ptr(t *testing.T) {
+	tests := []struct {
+		name string
+		i    Int64
+		want *int64
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.i.Ptr(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Int64.Ptr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt64_IsZero(t *testing.T) {
+	tests := []struct {
+		name string
+		i    Int64
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.i.IsZero(); got != tt.want {
+				t.Errorf("Int64.IsZero() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt64_Scan(t *testing.T) {
+	type args struct {
+		value any
+	}
+	tests := []struct {
+		name    string
+		i       *Int64
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.i.Scan(tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("Int64.Scan() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestInt64_Value(t *testing.T) {
+	tests := []struct {
+		name    string
+		i       Int64
+		want    driver.Value
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.i.Value()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Int64.Value() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Int64.Value() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt64_ValueOrDefault(t *testing.T) {
+	tests := []struct {
+		name string
+		i    Int64
+		want int64
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.i.ValueOrDefault(); got != tt.want {
+				t.Errorf("Int64.ValueOrDefault() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt64_Result(t *testing.T) {
+	tests := []struct {
+		name string
+		a    Int64
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.a.Result(); got != tt.want {
+				t.Errorf("Int64.Result() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

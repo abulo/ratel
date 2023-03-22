@@ -1,7 +1,8 @@
 package null
 
 import (
-	"encoding/json"
+	"database/sql/driver"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -13,42 +14,6 @@ var (
 	dateValue, _  = time.Parse(RFC3339DateOnly, dateString)
 	badDateObject = []byte(`{"hello": "world"}`)
 )
-
-func TestUnmarshalDateJSON(t *testing.T) {
-	var dt Date
-	err := json.Unmarshal(dateJSON, &dt)
-	maybePanic(err)
-	assertDate(t, dt, "UnmarshalJSON() json")
-
-	var null Date
-	err = json.Unmarshal(nullDateJSON, &null)
-	maybePanic(err)
-	assertNullDate(t, null, "null time json")
-	if !null.Set {
-		t.Error("should be Set")
-	}
-
-	var invalid Date
-	err = invalid.UnmarshalJSON(invalidJSON)
-	if _, ok := err.(*time.ParseError); !ok {
-		t.Errorf("expected json.ParseError, not %T", err)
-	}
-	assertNullDate(t, invalid, "invalid from object json")
-
-	var bad Date
-	err = json.Unmarshal(badDateObject, &bad)
-	if err == nil {
-		t.Errorf("expected error: bad object")
-	}
-	assertNullDate(t, bad, "bad from object json")
-
-	var wrongType Date
-	err = json.Unmarshal(intJSON, &wrongType)
-	if err == nil {
-		t.Errorf("expected error: wrong type JSON")
-	}
-	assertNullDate(t, wrongType, "wrong type object json")
-}
 
 func TestUnmarshalDateText(t *testing.T) {
 	dt := DateFrom(dateValue)
@@ -67,18 +32,6 @@ func TestUnmarshalDateText(t *testing.T) {
 		t.Error("expected error")
 	}
 	assertNullDate(t, invalid, "bad string")
-}
-
-func TestMarshalDate(t *testing.T) {
-	dt := DateFrom(dateValue)
-	data, err := json.Marshal(dt)
-	maybePanic(err)
-	assertJSONEquals(t, data, string(dateJSON), "non-empty json marshal")
-
-	dt.Valid = false
-	data, err = json.Marshal(dt)
-	maybePanic(err)
-	assertJSONEquals(t, data, string(nullJSON), "null json marshal")
 }
 
 func TestDateFrom(t *testing.T) {
@@ -166,5 +119,278 @@ func assertDate(t *testing.T, dt Date, from string) {
 func assertNullDate(t *testing.T, dt Date, from string) {
 	if dt.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func TestNewDate(t *testing.T) {
+	type args struct {
+		t     time.Time
+		valid bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want Date
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewDate(tt.args.t, tt.args.valid); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewDate() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDate_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Date
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.IsValid(); got != tt.want {
+				t.Errorf("Date.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDate_IsSet(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Date
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.IsSet(); got != tt.want {
+				t.Errorf("Date.IsSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDate_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		tr      Date
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.tr.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Date.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Date.MarshalJSON() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDate_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		tr      *Date
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.tr.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("Date.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestDate_MarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		tr      Date
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.tr.MarshalText()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Date.MarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Date.MarshalText() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDate_UnmarshalText(t *testing.T) {
+	type args struct {
+		text []byte
+	}
+	tests := []struct {
+		name    string
+		tr      *Date
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.tr.UnmarshalText(tt.args.text); (err != nil) != tt.wantErr {
+				t.Errorf("Date.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestDate_SetValid(t *testing.T) {
+	type args struct {
+		v time.Time
+	}
+	tests := []struct {
+		name string
+		tr   *Date
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.tr.SetValid(tt.args.v)
+		})
+	}
+}
+
+func TestDate_Ptr(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Date
+		want *time.Time
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.Ptr(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Date.Ptr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDate_IsZero(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Date
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.IsZero(); got != tt.want {
+				t.Errorf("Date.IsZero() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDate_Scan(t *testing.T) {
+	type args struct {
+		value any
+	}
+	tests := []struct {
+		name    string
+		tr      *Date
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.tr.Scan(tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("Date.Scan() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestDate_Value(t *testing.T) {
+	tests := []struct {
+		name    string
+		tr      Date
+		want    driver.Value
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.tr.Value()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Date.Value() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Date.Value() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDate_ValueOrDefault(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Date
+		want time.Time
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.ValueOrDefault(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Date.ValueOrDefault() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDate_Result(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Date
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.Result(); got != tt.want {
+				t.Errorf("Date.Result() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

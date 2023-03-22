@@ -1,8 +1,10 @@
 package null
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"math"
+	"reflect"
 	"strconv"
 	"testing"
 )
@@ -184,5 +186,278 @@ func assertUint16(t *testing.T, i Uint16, from string) {
 func assertNullUint16(t *testing.T, i Uint16, from string) {
 	if i.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func TestNewUint16(t *testing.T) {
+	type args struct {
+		i     uint16
+		valid bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want Uint16
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewUint16(tt.args.i, tt.args.valid); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewUint16() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint16_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		u    Uint16
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.u.IsValid(); got != tt.want {
+				t.Errorf("Uint16.IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint16_IsSet(t *testing.T) {
+	tests := []struct {
+		name string
+		u    Uint16
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.u.IsSet(); got != tt.want {
+				t.Errorf("Uint16.IsSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint16_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		u       *Uint16
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.u.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("Uint16.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestUint16_UnmarshalText(t *testing.T) {
+	type args struct {
+		text []byte
+	}
+	tests := []struct {
+		name    string
+		u       *Uint16
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.u.UnmarshalText(tt.args.text); (err != nil) != tt.wantErr {
+				t.Errorf("Uint16.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestUint16_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		u       Uint16
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.u.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Uint16.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Uint16.MarshalJSON() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint16_MarshalText(t *testing.T) {
+	tests := []struct {
+		name    string
+		u       Uint16
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.u.MarshalText()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Uint16.MarshalText() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Uint16.MarshalText() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint16_SetValid(t *testing.T) {
+	type args struct {
+		n uint16
+	}
+	tests := []struct {
+		name string
+		u    *Uint16
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.u.SetValid(tt.args.n)
+		})
+	}
+}
+
+func TestUint16_Ptr(t *testing.T) {
+	tests := []struct {
+		name string
+		u    Uint16
+		want *uint16
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.u.Ptr(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Uint16.Ptr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint16_IsZero(t *testing.T) {
+	tests := []struct {
+		name string
+		u    Uint16
+		want bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.u.IsZero(); got != tt.want {
+				t.Errorf("Uint16.IsZero() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint16_Scan(t *testing.T) {
+	type args struct {
+		value any
+	}
+	tests := []struct {
+		name    string
+		u       *Uint16
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.u.Scan(tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("Uint16.Scan() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestUint16_Value(t *testing.T) {
+	tests := []struct {
+		name    string
+		u       Uint16
+		want    driver.Value
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.u.Value()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Uint16.Value() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Uint16.Value() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint16_ValueOrDefault(t *testing.T) {
+	tests := []struct {
+		name string
+		u    Uint16
+		want uint16
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.u.ValueOrDefault(); got != tt.want {
+				t.Errorf("Uint16.ValueOrDefault() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint16_Result(t *testing.T) {
+	tests := []struct {
+		name string
+		tr   Uint16
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.tr.Result(); got != tt.want {
+				t.Errorf("Uint16.Result() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
