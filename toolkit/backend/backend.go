@@ -30,7 +30,7 @@ var (
 )
 
 func init() {
-	repoURL = "https://github.com/abulo/layout.git"
+	repoURL = "https://github.com/abulo/layout-ratel.git"
 	timeout = "60s"
 	CmdNew.Flags().StringVarP(&repoURL, "repo-url", "r", repoURL, "layout repo")
 	CmdNew.Flags().StringVarP(&branch, "branch", "b", branch, "repo branch")

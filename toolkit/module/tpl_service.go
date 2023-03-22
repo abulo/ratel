@@ -189,17 +189,17 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 	// 当前页面
 	pageNumber := request.GetPageNumber()
 	// 每页多少数据
-	resultPerPage := request.GetResultPerPage()
+	pageSize := request.GetPageSize()
 	if pageNumber < 1 {
 		pageNumber = 1
 	}
-	if resultPerPage < 1 {
-		resultPerPage = 10
+	if pageSize < 1 {
+		pageSize = 10
 	}
 	// 分页数据
-	offset := resultPerPage * (pageNumber - 1)
-	condition["pageOffset"] = offset
-	condition["pageSize"] = resultPerPage
+	offset := pageSize * (pageNumber - 1)
+	condition["offset"] = offset
+	condition["limit"] = pageSize
 	// 构造查询条件
 	{{ModuleProtoConvertMap .Condition "request"}}
 	// 获取数据量
@@ -239,17 +239,17 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 	// 当前页面
 	pageNumber := request.GetPageNumber()
 	// 每页多少数据
-	resultPerPage := request.GetResultPerPage()
+	pageSize := request.GetPageSize()
 	if pageNumber < 1 {
 		pageNumber = 1
 	}
-	if resultPerPage < 1 {
-		resultPerPage = 10
+	if pageSize < 1 {
+		pageSize = 10
 	}
 	// 分页数据
-	offset := resultPerPage * (pageNumber - 1)
-	condition["pageOffset"] = offset
-	condition["pageSize"] = resultPerPage
+	offset := pageSize * (pageNumber - 1)
+	condition["offset"] = offset
+	condition["limit"] = pageSize
 	// 构造查询条件
 	{{ModuleProtoConvertMap .Condition "request"}}
 	// 获取数据量

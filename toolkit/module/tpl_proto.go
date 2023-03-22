@@ -137,7 +137,7 @@ message {{CamelStr .Table.TableName}}{{CamelStr .Name}}Request {
 	{{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
 	{{- end}}
 	int64 page_number = {{Add .ConditionTotal 1}};
-  	int64 result_per_page = {{Add .ConditionTotal 2}};
+  	int64 page_size = {{Add .ConditionTotal 2}};
 }
 
 // {{CamelStr .Table.TableName}}{{CamelStr .Name}}Response 数据响应
@@ -155,7 +155,7 @@ message {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Request {
 	{{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
 	{{- end}}
 	int64 page_number = {{Add .ConditionTotal 1}};
-  	int64 result_per_page = {{Add .ConditionTotal 2}};
+  	int64 page_size = {{Add .ConditionTotal 2}};
 }
 
 // {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response 数据响应

@@ -149,6 +149,7 @@ func {{CamelStr .Table.TableName}}Item(ctx context.Context,newCtx *app.RequestCo
 	newCtx.JSON(consts.StatusOK, utils.H{
 		"code": res.GetCode(),
 		"msg":  res.GetMsg(),
+		"data": {{CamelStr .Table.TableName}}Dao(res.GetData()),
 	})
 }
 
@@ -202,7 +203,7 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx 
 	// 构造查询条件
 	{{ApiToProto .Condition "request" "newCtx.Query"}}
 	request.PageNumber = cast.ToInt64(newCtx.Query("pageNumber"))
-	request.ResultPerPage = cast.ToInt64(newCtx.Query("resultPerPage"))
+	request.PageSize = cast.ToInt64(newCtx.Query("pageSize"))
 	// 执行服务
 	res, err := client.{{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx, request)
 	if err != nil {

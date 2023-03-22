@@ -126,11 +126,11 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,conditi
 	builder := sql.NewBuilder()
 	builder.Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
-	if !util.Empty(condition["pageOffset"]) {
-		builder.Offset(cast.ToInt64(condition["pageOffset"]))
+	if !util.Empty(condition["offset"]) {
+		builder.Offset(cast.ToInt64(condition["offset"]))
 	}
-	if !util.Empty(condition["pageSize"]) {
-		builder.Limit(cast.ToInt64(condition["pageSize"]))
+	if !util.Empty(condition["limit"]) {
+		builder.Limit(cast.ToInt64(condition["limit"]))
 	}
 	builder.OrderBy("{{Char .Primary.ColumnName}}", sql.DESC)
 	query,args,err := builder.Rows()
@@ -162,11 +162,11 @@ func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx context.Context,c
 	builder := sql.NewBuilder()
 	builder.Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
-	if !util.Empty(condition["pageOffset"]) {
-		builder.Offset(cast.ToInt64(condition["pageOffset"]))
+	if !util.Empty(condition["offset"]) {
+		builder.Offset(cast.ToInt64(condition["offset"]))
 	}
-	if !util.Empty(condition["pageSize"]) {
-		builder.Limit(cast.ToInt64(condition["pageSize"]))
+	if !util.Empty(condition["limit"]) {
+		builder.Limit(cast.ToInt64(condition["limit"]))
 	}
 	query,args,err := builder.OrderBy("{{Char .Primary.ColumnName}}", sql.DESC).Rows()
 	if err != nil {
