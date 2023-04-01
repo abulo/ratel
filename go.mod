@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/BurntSushi/toml v1.2.1
-	github.com/ClickHouse/clickhouse-go/v2 v2.8.0
+	github.com/ClickHouse/clickhouse-go/v2 v2.8.2
 	github.com/cloudwego/hertz v0.6.1
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
@@ -16,7 +16,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.3.0
 	github.com/gookit/goutil v0.6.7
-	github.com/gookit/ini/v2 v2.2.1
+	github.com/gookit/ini/v2 v2.2.2
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.9
@@ -54,7 +54,7 @@ require (
 	golang.org/x/mod v0.9.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/text v0.8.0
-	google.golang.org/genproto v0.0.0-20230327215041-6ac7f18bb9d5
+	google.golang.org/genproto v0.0.0-20230331144136-dcfb400f0633
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v2 v2.4.0
