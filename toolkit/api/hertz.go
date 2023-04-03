@@ -230,6 +230,8 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx 
 		"data": utils.H{
 			"total": total,
 			"list":  list,
+			"pageNumber": request.PageNumber,
+			"pageSize": request.PageSize,
 		},
 	})
 }

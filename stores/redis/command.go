@@ -102,6 +102,40 @@ func (r *Client) Command(ctx context.Context) (val map[string]*redis.CommandInfo
 	return
 }
 
+func (r *Client) CommandList(ctx context.Context, filter *redis.FilterBy) (val []string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.CommandList(getCtx(ctx), filter).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) CommandGetKeys(ctx context.Context, commands ...interface{}) (val []string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.CommandGetKeys(getCtx(ctx), commands...).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) CommandGetKeysAndFlags(ctx context.Context, commands ...interface{}) (val []redis.KeyFlags, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.CommandGetKeysAndFlags(getCtx(ctx), commands...).Result()
+		return err
+	}, acceptable)
+	return
+}
+
 // ClientGetName returns the name of the connection.
 func (r *Client) ClientGetName(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
@@ -237,6 +271,18 @@ func (r *Client) ExpireAt(ctx context.Context, key string, tm time.Time) (val bo
 			return err
 		}
 		val, err = conn.ExpireAt(getCtx(ctx), r.k(key), tm).Result()
+		return err
+	}, acceptable)
+	return
+}
+
+func (r *Client) ExpireTime(ctx context.Context, key string) (val time.Duration, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ExpireTime(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -419,6 +465,18 @@ func (r *Client) PExpireAt(ctx context.Context, key string, tm time.Time) (val b
 	return
 }
 
+func (r *Client) PExpireTime(ctx context.Context, key string) (val time.Duration, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.PExpireTime(getCtx(ctx), r.k(key)).Result()
+		return err
+	}, acceptable)
+	return
+}
+
 // PTTL 这个命令类似于 TTL 命令，但它以毫秒为单位返回 key 的剩余生存时间，而不是像 TTL 命令那样，以秒为单位。
 // 当 key 不存在时，返回 -2 。
 // 当 key 存在但没有设置剩余生存时间时，返回 -1 。
@@ -519,7 +577,6 @@ func (r *Client) Sort(ctx context.Context, key string, sort *redis.Sort) (val []
 	return
 }
 
-// SortRO -> Sort
 func (r *Client) SortRO(ctx context.Context, key string, sort *redis.Sort) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -1342,6 +1399,18 @@ func (r *Client) BLPop(ctx context.Context, timeout time.Duration, keys ...strin
 	return
 }
 
+func (r *Client) BLMPop(ctx context.Context, timeout time.Duration, direction string, count int64, keys ...string) (key string, val []string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		key, val, err = conn.BLMPop(getCtx(ctx), timeout, direction, count, r.ks(keys...)...).Result()
+		return err
+	}, acceptable)
+	return
+}
+
 // BRPop 是列表的阻塞式(blocking)弹出原语。
 // 它是 RPOP 命令的阻塞版本，当给定列表内没有任何元素可供弹出的时候，连接将被 BRPOP 命令阻塞，直到等待超时或发现可弹出元素为止。
 // 当给定多个 key 参数时，按参数 key 的先后顺序依次检查各个列表，弹出第一个非空列表的尾部元素。
@@ -1367,6 +1436,18 @@ func (r *Client) BRPopLPush(ctx context.Context, source, destination string, tim
 			return err
 		}
 		val, err = conn.BRPopLPush(getCtx(ctx), r.k(source), r.k(destination), timeout).Result()
+		return err
+	}, acceptable)
+	return
+}
+
+func (r *Client) LCS(ctx context.Context, q *redis.LCSQuery) (val *redis.LCSMatch, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.LCS(getCtx(ctx), q).Result()
 		return err
 	}, acceptable)
 	return
@@ -1441,6 +1522,21 @@ func (r *Client) LLen(ctx context.Context, key string) (val int64, err error) {
 			return err
 		}
 		val, err = conn.LLen(getCtx(ctx), r.k(key)).Result()
+		return err
+	}, acceptable)
+	return
+}
+
+// LMPop Pops one or more elements from the first non-empty list key from the list of provided key names.
+// direction: left or right, count: > 0
+// example: client.LMPop(ctx, "left", 3, "key1", "key2")
+func (r *Client) LMPop(ctx context.Context, direction string, count int64, keys ...string) (key string, val []string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		key, val, err = conn.LMPop(getCtx(ctx), direction, count, r.ks(keys...)...).Result()
 		return err
 	}, acceptable)
 	return
@@ -2348,6 +2444,18 @@ func (r *Client) BZPopMin(ctx context.Context, timeout time.Duration, keys ...st
 	return
 }
 
+func (r *Client) BZMPop(ctx context.Context, timeout time.Duration, order string, count int64, keys ...string) (val string, ret []redis.Z, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, ret, err = conn.BZMPop(getCtx(ctx), timeout, order, count, r.ks(keys...)...).Result()
+		return err
+	}, acceptable)
+	return
+}
+
 // ZAdd 将一个或多个 member 元素及其 score 值加入到有序集 key 当中。
 // 如果某个 member 已经是有序集的成员，那么更新这个 member 的 score 值，并通过重新插入这个 member 元素，来保证该 member 在正确的位置上。
 // score 值可以是整数值或双精度浮点数。
@@ -2523,6 +2631,19 @@ func (r *Client) ZInterStore(ctx context.Context, key string, store *redis.ZStor
 	}, acceptable)
 	return
 }
+
+func (r *Client) ZMPop(ctx context.Context, order string, count int64, keys ...string) (key string, ret []redis.Z, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		key, ret, err = conn.ZMPop(getCtx(ctx), order, count, r.ks(keys...)...).Result()
+		return err
+	}, acceptable)
+	return
+}
+
 func (r *Client) ZMScore(ctx context.Context, key string, members ...string) (val []float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -3472,6 +3593,139 @@ func (r *Client) ScriptLoad(ctx context.Context, script string) (val string, err
 	return
 }
 
+func (r *Client) FunctionLoad(ctx context.Context, code string) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FunctionLoad(getCtx(ctx), code).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) FunctionLoadReplace(ctx context.Context, code string) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FunctionLoadReplace(getCtx(ctx), code).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) FunctionDelete(ctx context.Context, libName string) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FunctionDelete(getCtx(ctx), libName).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) FunctionFlush(ctx context.Context) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FunctionFlush(getCtx(ctx)).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) FunctionKill(ctx context.Context) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FunctionKill(getCtx(ctx)).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) FunctionFlushAsync(ctx context.Context) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FunctionFlushAsync(getCtx(ctx)).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) FunctionList(ctx context.Context, q redis.FunctionListQuery) (val []redis.Library, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FunctionList(getCtx(ctx), q).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) FunctionDump(ctx context.Context) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FunctionDump(getCtx(ctx)).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) FunctionRestore(ctx context.Context, libDump string) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FunctionRestore(getCtx(ctx), libDump).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) FunctionStats(ctx context.Context) (val redis.FunctionStats, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FunctionStats(getCtx(ctx)).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) FCall(ctx context.Context, function string, keys []string, args ...interface{}) (val interface{}, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FCall(getCtx(ctx), function, r.ks(keys...), args...).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) FCallRo(ctx context.Context, function string, keys []string, args ...interface{}) (val interface{}, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FCallRo(getCtx(ctx), function, r.ks(keys...), args...).Result()
+		return err
+	}, acceptable)
+	return
+}
+
 // Publish 将信息发送到指定的频道。
 func (r *Client) Publish(ctx context.Context, channel string, message any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
@@ -3568,6 +3822,29 @@ func (r *Client) ClusterSlots(ctx context.Context) (val []redis.ClusterSlot, err
 			return err
 		}
 		val, err = conn.ClusterSlots(getCtx(ctx)).Result()
+		return err
+	}, acceptable)
+	return
+}
+
+func (r *Client) ClusterShards(ctx context.Context) (val []redis.ClusterShard, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ClusterShards(getCtx(ctx)).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) ClusterLinks(ctx context.Context) (val []redis.ClusterLink, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ClusterLinks(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3940,6 +4217,18 @@ func (r *Client) GeoHash(ctx context.Context, key string, members ...string) (va
 			return err
 		}
 		val, err = conn.GeoHash(getCtx(ctx), r.k(key), members...).Result()
+		return err
+	}, acceptable)
+	return
+}
+
+func (r *Client) ACLDryRun(ctx context.Context, username string, command ...interface{}) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ACLDryRun(getCtx(ctx), username, command...).Result()
 		return err
 	}, acceptable)
 	return

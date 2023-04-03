@@ -237,6 +237,8 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(newCtx *gin.Context){
 		"data": gin.H{
 			"total": total,
 			"list":  list,
+			"pageNumber": request.PageNumber,
+			"pageSize": request.PageSize,
 		},
 	})
 }
