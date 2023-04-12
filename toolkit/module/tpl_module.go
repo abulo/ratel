@@ -71,58 +71,61 @@ import (
 
 
 // {{CamelStr .Table.TableName}}ItemCreate 创建数据
-func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,data dao.{{CamelStr .Table.TableName}})(int64,error){
+func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,data dao.{{CamelStr .Table.TableName}})(res int64, err error){
 	db := initial.Core.Store.LoadSQL("mysql").Write()
 	builder := sql.NewBuilder()
 	query,args,err := builder.Table("{{Char .Table.TableName}}").Insert(data)
 	if err != nil {
-		return 0,err
+		return
 	}
-	return db.Insert(ctx ,query,args...)
+	res, err = db.Insert(ctx ,query,args...)
+	return
 }
 
 // {{CamelStr .Table.TableName}}ItemUpdate 更新数据
-func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}},data dao.{{CamelStr .Table.TableName}})(int64,error){
+func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}},data dao.{{CamelStr .Table.TableName}})(res int64, err error){
 	db := initial.Core.Store.LoadSQL("mysql").Write()
 	builder := sql.NewBuilder()
 	query,args,err := builder.Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{Helper .Primary.AlisaColumnName}}).Update(data)
 	if err != nil {
-		return 0,err
+		return
 	}
-	return db.Update(ctx ,query,args...)
+	res, err = db.Update(ctx ,query,args...)
+	return
 }
 
 // {{CamelStr .Table.TableName}}Item 获取数据
-func {{CamelStr .Table.TableName}}Item(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}})(dao.{{CamelStr .Table.TableName}},error){
+func {{CamelStr .Table.TableName}}Item(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}})(res dao.{{CamelStr .Table.TableName}},err error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
-	var res dao.{{CamelStr .Table.TableName}}
+	// var res dao.{{CamelStr .Table.TableName}}
 	builder := sql.NewBuilder()
 	query,args,err := builder.Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{Helper .Primary.AlisaColumnName}}).Row()
 	if err != nil {
-		return res,err
+		return
 	}
 	err = db.QueryRow(ctx ,query,args...).ToStruct(&res)
-	return res, err
+	return
 }
 
 // {{CamelStr .Table.TableName}}ItemDelete 删除数据
-func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}})(int64,error){
+func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}})(res int64,err error){
 	db := initial.Core.Store.LoadSQL("mysql").Write()
 	builder := sql.NewBuilder()
 	query,args,err := builder.Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{Helper .Primary.AlisaColumnName}}).Delete()
 	if err != nil {
-		return 0,err
+		return
 	}
-	return db.Delete(ctx ,query,args...)
+	res, err = db.Delete(ctx ,query,args...)
+	return
 }
 {{- range .Method}}
 {{- if eq .Type "List"}}
 {{- if .Default}}
 
 // {{CamelStr .Table.TableName}}{{CamelStr .Name}} 列表数据
-func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,condition map[string]any)([]dao.{{CamelStr .Table.TableName}},error){
+func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,condition map[string]any)(res []dao.{{CamelStr .Table.TableName}}, err error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
-	var res []dao.{{CamelStr .Table.TableName}}
+	// var res []dao.{{CamelStr .Table.TableName}}
 	builder := sql.NewBuilder()
 	builder.Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
@@ -135,30 +138,31 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,conditi
 	builder.OrderBy("{{Char .Primary.ColumnName}}", sql.DESC)
 	query,args,err := builder.Rows()
 	if err != nil {
-		return res,err
+		return
 	}
 	err = db.QueryRows(ctx ,query,args...).ToStruct(&res)
-	return res, err
+	return
 }
 
 // {{CamelStr .Table.TableName}}{{CamelStr .Name}}Total 列表数据总量
-func {{CamelStr .Table.TableName}}{{CamelStr .Name}}Total(ctx context.Context,condition map[string]any)(int64,error){
+func {{CamelStr .Table.TableName}}{{CamelStr .Name}}Total(ctx context.Context,condition map[string]any)(res int64,err error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	builder := sql.NewBuilder()
 	builder.Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
 	query,args,err := builder.Count()
 	if err != nil {
-		return 0,err
+		return
 	}
-	return db.Count(ctx ,query,args...)
+	res,err = db.Count(ctx ,query,args...)
+	return
 }
 {{- else}}
 
 // {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}} 列表数据
-func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx context.Context,condition map[string]any)([]dao.{{CamelStr .Table.TableName}},error){
+func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx context.Context,condition map[string]any)(res []dao.{{CamelStr .Table.TableName}},err error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
-	var res []dao.{{CamelStr .Table.TableName}}
+	// var res []dao.{{CamelStr .Table.TableName}}
 	builder := sql.NewBuilder()
 	builder.Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
@@ -170,40 +174,41 @@ func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx context.Context,c
 	}
 	query,args,err := builder.OrderBy("{{Char .Primary.ColumnName}}", sql.DESC).Rows()
 	if err != nil {
-		return res,err
+		return
 	}
 	err = db.QueryRows(ctx ,query,args...).ToStruct(&res)
-	return res, err
+	return
 }
 
 // {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total 列表数据总量
-func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total(ctx context.Context,condition map[string]any)(int64,error){
+func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total(ctx context.Context,condition map[string]any)(res int64,err error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
 	builder := sql.NewBuilder()
 	builder.Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
 	query,args,err := builder.Count()
 	if err != nil {
-		return 0,err
+		return
 	}
-	return db.Count(ctx ,query,args...)
+	res,err = db.Count(ctx ,query,args...)
+	return
 }
 {{- end}}
 {{- else}}
 
 // {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}} 单列数据
-func {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}(ctx context.Context,condition map[string]any)(dao.{{CamelStr .Table.TableName}},error){
+func {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}(ctx context.Context,condition map[string]any)(res dao.{{CamelStr .Table.TableName}},err error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
-	var res dao.{{CamelStr .Table.TableName}}
+	// var res dao.{{CamelStr .Table.TableName}}
 	builder := sql.NewBuilder()
 	builder.Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
 	query,args,err := builder.Row()
 	if err != nil {
-		return res,err
+		return
 	}
 	err = db.QueryRow(ctx ,query,args...).ToStruct(&res)
-	return res, err
+	return
 }
 {{- end}}
 {{- end}}

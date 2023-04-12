@@ -48,6 +48,7 @@ type ModuleParam struct {
 	TableColumn []Column
 	Method      []Method // 方法
 	Pkg         string   // 包名
+	PkgPath     string   // 包名路径
 	Primary     Column   // 主键信息
 	ModName     string   // go.mod 信息
 }
@@ -62,6 +63,7 @@ type Method struct {
 	TableColumn    []Column // 表结构信息
 	Default        bool     // 默认
 	Pkg            string   // 包名
+	PkgPath        string   // 包名路径
 	Primary        Column   // 主键信息
 	ModName        string   // go.mod 信息
 }

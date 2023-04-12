@@ -11,11 +11,13 @@ import (
 	"{{.ModName}}/code"
 	"{{.ModName}}/dao"
 	"{{.ModName}}/initial"
-	"{{.ModName}}/service/logger"
+	"{{.ModName}}/service/{{.PkgPath}}"
 
+	globalLogger "github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/stores/null"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/spf13/cast"
+	"github.com/sirupsen/logrus"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/utils"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
@@ -44,6 +46,9 @@ func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,newCtx *app.Req
 	//判断这个服务能不能链接
 	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
 	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemCreate")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  err.Error(),
@@ -66,6 +71,10 @@ func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,newCtx *app.Req
 	// 执行服务
 	res, err := client.{{CamelStr .Table.TableName}}ItemCreate(ctx, request)
 	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": request,
+			"err": err,
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemCreate")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RemoteServiceError,
 			"msg":  err.Error(),
@@ -83,6 +92,9 @@ func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,newCtx *app.Req
 	//判断这个服务能不能链接
 	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
 	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemUpdate")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  err.Error(),
@@ -109,6 +121,10 @@ func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,newCtx *app.Req
 	// 执行服务
 	res, err := client.{{CamelStr .Table.TableName}}ItemUpdate(ctx, request)
 	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": request,
+			"err": err,
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemUpdate")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RemoteServiceError,
 			"msg":  err.Error(),
@@ -126,6 +142,9 @@ func {{CamelStr .Table.TableName}}Item(ctx context.Context,newCtx *app.RequestCo
 	//判断这个服务能不能链接
 	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
 	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}Item")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  err.Error(),
@@ -140,6 +159,10 @@ func {{CamelStr .Table.TableName}}Item(ctx context.Context,newCtx *app.RequestCo
 	// 执行服务
 	res, err := client.{{CamelStr .Table.TableName}}Item(ctx, request)
 	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": request,
+			"err": err,
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}Item")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RemoteServiceError,
 			"msg":  err.Error(),
@@ -158,6 +181,9 @@ func {{CamelStr .Table.TableName}}Item(ctx context.Context,newCtx *app.RequestCo
 func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,newCtx *app.RequestContext){
 	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
 	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemDelete")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  err.Error(),
@@ -172,6 +198,10 @@ func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,newCtx *app.Req
 	// 执行服务
 	res, err := client.{{CamelStr .Table.TableName}}ItemDelete(ctx, request)
 	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": request,
+			"err": err,
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemDelete")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RemoteServiceError,
 			"msg":  err.Error(),
@@ -191,6 +221,9 @@ func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,newCtx *app.Req
 func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx *app.RequestContext){
 	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
 	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}{{CamelStr .Name}}")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  err.Error(),
@@ -202,11 +235,15 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx 
 	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}{{CamelStr .Name}}Request{}
 	// 构造查询条件
 	{{ApiToProto .Condition "request" "newCtx.Query"}}
-	request.PageNumber = cast.ToInt64(newCtx.Query("pageNumber"))
+	request.PageNum = cast.ToInt64(newCtx.Query("pageNum"))
 	request.PageSize = cast.ToInt64(newCtx.Query("pageSize"))
 	// 执行服务
 	res, err := client.{{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx, request)
 	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": request,
+			"err": err,
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}{{CamelStr .Name}}")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RemoteServiceError,
 			"msg":  err.Error(),
@@ -230,7 +267,7 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx 
 		"data": utils.H{
 			"total": total,
 			"list":  list,
-			"pageNumber": request.PageNumber,
+			"pageNum": request.PageNum,
 			"pageSize": request.PageSize,
 		},
 	})

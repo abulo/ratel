@@ -58,6 +58,7 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 	cmdImportTag.CombinedOutput()
 }
 
+// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"
 func ProtoTemplate() string {
 	outString := `
 syntax = "proto3";
@@ -69,7 +70,7 @@ import "google/protobuf/timestamp.proto";
 // {{CamelStr .Table.TableName}}Object 数据对象
 message {{CamelStr .Table.TableName}}Object {
 	{{- range .TableColumn}}
-	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"
+	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"
 	{{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
 	{{- end}}
 }
@@ -133,10 +134,10 @@ message {{CamelStr .Table.TableName}}ItemResponse {
 // {{CamelStr .Table.TableName}}{{CamelStr .Name}}Request 列表数据
 message {{CamelStr .Table.TableName}}{{CamelStr .Name}}Request {
 	{{- range .Condition}}
-	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"
+	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"
 	{{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
 	{{- end}}
-	int64 page_number = {{Add .ConditionTotal 1}};
+	int64 page_num = {{Add .ConditionTotal 1}};
   	int64 page_size = {{Add .ConditionTotal 2}};
 }
 
@@ -151,10 +152,10 @@ message {{CamelStr .Table.TableName}}{{CamelStr .Name}}Response {
 // {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Request 列表数据
 message {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Request {
 	{{- range .Condition}}
-	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"
+	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"
 	{{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
 	{{- end}}
-	int64 page_number = {{Add .ConditionTotal 1}};
+	int64 page_num = {{Add .ConditionTotal 1}};
   	int64 page_size = {{Add .ConditionTotal 2}};
 }
 
@@ -170,7 +171,7 @@ message {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response {
 // {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Request 单列数据
 message {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Request {
 	{{- range .Condition}}
-	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"
+	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"
 	{{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
 	{{- end}}
 }

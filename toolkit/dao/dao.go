@@ -113,12 +113,27 @@ import "github.com/abulo/ratel/v3/stores/null"
 type {{CamelStr .Table.TableName}} struct {
 	{{- range .TableColumn }}
 	{{- if eq .IsNullable "YES" }}
-	{{CamelStr .ColumnName}}	{{.DataTypeMap.Empty}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"{{SymbolChar}}  //DataType:{{.DataType}} {{.ColumnComment}}
+	{{CamelStr .ColumnName}}	{{.DataTypeMap.Empty}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
 	{{- else }}
-	{{CamelStr .ColumnName}}	{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"{{SymbolChar}}  //DataType:{{.DataType}} {{.ColumnComment}}
+	{{CamelStr .ColumnName}}	{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
 	{{- end}}
 	{{- end}}
 }
 `
 	return outString
 }
+
+// package dao
+
+// import "github.com/abulo/ratel/v3/stores/null"
+
+// // {{CamelStr .Table.TableName}} {{.Table.TableComment}} {{.Table.TableName}}
+// type {{CamelStr .Table.TableName}} struct {
+// 	{{- range .TableColumn }}
+// 	{{- if eq .IsNullable "YES" }}
+// 	{{CamelStr .ColumnName}}	{{.DataTypeMap.Empty}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
+// 	{{- else }}
+// 	{{CamelStr .ColumnName}}	{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
+// 	{{- end}}
+// 	{{- end}}
+// }

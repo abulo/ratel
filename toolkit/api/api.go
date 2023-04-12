@@ -59,6 +59,10 @@ func Run(cmd *cobra.Command, args []string) {
 		}, &apiType); err != nil || apiType == "" {
 			return
 		}
+	} else {
+		dir = args[0]
+		tableName = args[1]
+		apiType = args[2]
 	}
 
 	if tableName == "" || dir == "" || apiType == "" {
@@ -131,6 +135,7 @@ func Run(cmd *cobra.Command, args []string) {
 			ConditionTotal: 0,
 			Primary:        tablePrimary,
 			Pkg:            dir[strLen+1:],
+			PkgPath:        dir,
 			ModName:        mod,
 		}
 		methodList = append(methodList, method)
@@ -174,6 +179,7 @@ func Run(cmd *cobra.Command, args []string) {
 				ConditionTotal: len(condition),
 				Primary:        tablePrimary,
 				Pkg:            dir[strLen+1:],
+				PkgPath:        dir,
 				ModName:        mod,
 			}
 			//添加到集合中
@@ -198,6 +204,7 @@ func Run(cmd *cobra.Command, args []string) {
 			ConditionTotal: len(condition),
 			Primary:        tablePrimary,
 			Pkg:            dir[strLen+1:],
+			PkgPath:        dir,
 			ModName:        mod,
 		}
 		methodList = append(methodList, method)
@@ -205,16 +212,17 @@ func Run(cmd *cobra.Command, args []string) {
 	// 数据模型
 	moduleParam := base.ModuleParam{
 		Pkg:         dir[strLen+1:],
+		PkgPath:     dir,
 		Primary:     tablePrimary,
 		Table:       tableItem,
 		TableColumn: tableColumn,
 		Method:      methodList,
 		ModName:     mod,
 	}
-	Generate(moduleParam, fullApiDir, tableName, dir[strLen+1:], apiType)
+	Generate(moduleParam, fullApiDir, tableName, dir[strLen+1:], dir, apiType)
 }
 
-func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, apiType string) {
+func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, pkgPath, apiType string) {
 
 	var tplString string
 
@@ -268,26 +276,26 @@ func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, apiType 
 	builder.WriteString("\n")
 	builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "创建"))
 	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("xxx.POST(\"%s\",%s)", "/"+pkg+"/"+base.Helper(moduleParam.Table.TableName), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemCreate"))
+	builder.WriteString(fmt.Sprintf("handle.POST(\"%s\",%s)", "/"+pkgPath+"/"+base.Helper(moduleParam.Table.TableName), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemCreate"))
 	builder.WriteString("\n")
 	builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "更新"))
 	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("xxx.PUT(\"%s\",%s)", "/"+pkg+"/"+base.Helper(moduleParam.Table.TableName)+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemUpdate"))
+	builder.WriteString(fmt.Sprintf("handle.PUT(\"%s\",%s)", "/"+pkgPath+"/"+base.Helper(moduleParam.Table.TableName)+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemUpdate"))
 	builder.WriteString("\n")
 	builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "单条数据信息查看"))
 	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("xxx.GET(\"%s\",%s)", "/"+pkg+"/"+base.Helper(moduleParam.Table.TableName)+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"Item"))
+	builder.WriteString(fmt.Sprintf("handle.GET(\"%s\",%s)", "/"+pkgPath+"/"+base.Helper(moduleParam.Table.TableName)+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"Item"))
 	builder.WriteString("\n")
 	builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "单条数据信息删除"))
 	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("xxx.DELETE(\"%s\",%s)", "/"+pkg+"/"+base.Helper(moduleParam.Table.TableName)+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemDelete"))
+	builder.WriteString(fmt.Sprintf("handle.DELETE(\"%s\",%s)", "/"+pkgPath+"/"+base.Helper(moduleParam.Table.TableName)+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName), pkg+"."+base.CamelStr(moduleParam.Table.TableName)+"ItemDelete"))
 	builder.WriteString("\n")
 	for _, item := range moduleParam.Method {
 		if item.Type == "List" {
 			if item.Default {
 				builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "列表"))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("xxx.GET(\"%s\",%s)", "/"+pkg+"/"+base.Helper(moduleParam.Table.TableName), pkg+"."+base.CamelStr(item.Table.TableName)+base.CamelStr(item.Name)))
+				builder.WriteString(fmt.Sprintf("handle.GET(\"%s\",%s)", "/"+pkgPath+"/"+base.Helper(moduleParam.Table.TableName), pkg+"."+base.CamelStr(item.Table.TableName)+base.CamelStr(item.Name)))
 				builder.WriteString("\n")
 			}
 		}

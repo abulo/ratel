@@ -138,6 +138,7 @@ func Run(cmd *cobra.Command, args []string) {
 			ConditionTotal: 0,
 			Primary:        tablePrimary,
 			Pkg:            dir[strLen+1:],
+			PkgPath:        dir,
 			ModName:        mod,
 		}
 		methodList = append(methodList, method)
@@ -181,6 +182,7 @@ func Run(cmd *cobra.Command, args []string) {
 				ConditionTotal: len(condition),
 				Primary:        tablePrimary,
 				Pkg:            dir[strLen+1:],
+				PkgPath:        dir,
 				ModName:        mod,
 			}
 			//添加到集合中
@@ -205,6 +207,7 @@ func Run(cmd *cobra.Command, args []string) {
 			ConditionTotal: len(condition),
 			Primary:        tablePrimary,
 			Pkg:            dir[strLen+1:],
+			PkgPath:        dir,
 			ModName:        mod,
 		}
 		methodList = append(methodList, method)
@@ -212,6 +215,7 @@ func Run(cmd *cobra.Command, args []string) {
 	// 数据模型
 	moduleParam := base.ModuleParam{
 		Pkg:         dir[strLen+1:],
+		PkgPath:     dir,
 		ModName:     mod,
 		Primary:     tablePrimary,
 		Table:       tableItem,
@@ -221,4 +225,36 @@ func Run(cmd *cobra.Command, args []string) {
 	GenerateModule(moduleParam, fullModuleDir, tableName)
 	GenerateProto(moduleParam, fullProtoDir, fullServiceDir, tableName)
 	GenerateService(moduleParam, fullServiceDir, tableName)
+
+	strLenSlot := util.Explode("/", dir)
+	pkgName := strLenSlot[len(strLenSlot)-1]
+	if len(strLenSlot) > 1 {
+		pkgName = strLenSlot[len(strLenSlot)-2]
+	}
+
+	builder := strings.Builder{}
+	builder.WriteString("\n")
+	builder.WriteString(fmt.Sprintf("package %s", pkgName))
+	builder.WriteString("\n")
+	builder.WriteString("import (")
+	builder.WriteString("\n")
+	builder.WriteString(fmt.Sprintf("	\"%s/service/%s\"", moduleParam.ModName, moduleParam.PkgPath))
+	builder.WriteString("\n")
+	builder.WriteString("\n")
+	builder.WriteString("	\"github.com/abulo/ratel/v3/server/xgrpc\"")
+	builder.WriteString("\n")
+	builder.WriteString(")")
+	builder.WriteString("\n")
+	builder.WriteString("func Registry(server *xgrpc.Server) {")
+	builder.WriteString("\n")
+	builder.WriteString(fmt.Sprintf("	// %s->%s", moduleParam.Table.TableComment, moduleParam.Table.TableName))
+	builder.WriteString("\n")
+	builder.WriteString(fmt.Sprintf("	%s.Register%sServiceServer(server.Server, &%s.Srv%sServiceServer{", moduleParam.Pkg, base.CamelStr(moduleParam.Table.TableName), moduleParam.Pkg, base.CamelStr(moduleParam.Table.TableName)))
+	builder.WriteString("\n")
+	builder.WriteString("		Server: server,")
+	builder.WriteString("\n")
+	builder.WriteString("	})")
+	builder.WriteString("\n")
+	builder.WriteString("}")
+	fmt.Println(builder.String())
 }
