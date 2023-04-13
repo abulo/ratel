@@ -17,41 +17,41 @@ type Row struct {
 // ToInterface ...
 func (r *Row) ToAny() (result map[string]any, err error) {
 	if r.rows.err != nil {
-		err = ResultAccept(r.rows.err)
+		err = r.rows.err
 		return
 	}
 	items, err := r.rows.ToAny()
 	if err != nil {
-		r.err = ResultAccept(err)
-		return nil, ResultAccept(err)
+		r.err = err
+		return nil, err
 	}
 	if len(items) > 0 {
 		result = items[0]
 	}
-	return result, ResultAccept(err)
+	return result, err
 }
 
 // ToMap get Map
 func (r *Row) ToMap() (result map[string]string, err error) {
 	if r.rows.err != nil {
-		err = ResultAccept(r.rows.err)
+		err = r.rows.err
 		return
 	}
 	items, err := r.rows.ToMap()
 	if err != nil {
-		r.err = ResultAccept(err)
-		return nil, ResultAccept(err)
+		r.err = err
+		return nil, err
 	}
 	if len(items) > 0 {
 		result = items[0]
 	}
-	return result, ResultAccept(err)
+	return result, err
 }
 
 // ToStruct get Struct
 func (r *Row) ToStruct(st any) error {
 	if r.rows.err != nil {
-		return ResultAccept(r.rows.err)
+		return r.rows.err
 	}
 	defer func() {
 		if err := r.rows.rows.Close(); err != nil {
@@ -68,11 +68,11 @@ func (r *Row) ToStruct(st any) error {
 	v := reflect.New(stTypeInd)
 	tagList, err := extractTagInfo(v)
 	if err != nil {
-		return ResultAccept(err)
+		return err
 	}
 	fields, err := r.rows.rows.Columns()
 	if err != nil {
-		return ResultAccept(err)
+		return err
 	}
 	refs := make([]any, len(fields))
 	for i, field := range fields {
@@ -83,10 +83,10 @@ func (r *Row) ToStruct(st any) error {
 		}
 	}
 	if !r.rows.rows.Next() {
-		return ResultAccept(sql.ErrNoRows)
+		return sql.ErrNoRows
 	}
 	if err := r.rows.rows.Scan(refs...); err != nil {
-		return ResultAccept(err)
+		return err
 	}
 	stVal.Elem().Set(v.Elem())
 	return nil
@@ -101,7 +101,7 @@ type Rows struct {
 // ToAny 用法
 func (r *Rows) ToAny() (data []map[string]any, err error) {
 	if r.rows == nil {
-		return nil, ResultAccept(r.err)
+		return nil, r.err
 	}
 	defer func() {
 		if err := r.rows.Close(); err != nil {
@@ -110,8 +110,8 @@ func (r *Rows) ToAny() (data []map[string]any, err error) {
 	}()
 	fields, err := r.rows.Columns()
 	if err != nil {
-		r.err = ResultAccept(err)
-		return nil, ResultAccept(err)
+		r.err = err
+		return nil, err
 	}
 	data = make([]map[string]any, 0)
 	num := len(fields)
@@ -123,13 +123,13 @@ func (r *Rows) ToAny() (data []map[string]any, err error) {
 	for r.rows.Next() {
 		result := make(map[string]any)
 		if err := r.rows.Scan(refs...); err != nil {
-			return nil, ResultAccept(err)
+			return nil, err
 		}
 		for i, field := range fields {
 			if val, err := toString(refs[i]); err == nil {
 				result[field] = any(val)
 			} else {
-				return nil, ResultAccept(err)
+				return nil, err
 			}
 		}
 		data = append(data, result)
@@ -140,7 +140,7 @@ func (r *Rows) ToAny() (data []map[string]any, err error) {
 // ToMap 用法
 func (r *Rows) ToMap() (data []map[string]string, err error) {
 	if r.rows == nil {
-		return nil, ResultAccept(r.err)
+		return nil, r.err
 	}
 	defer func() {
 		if err := r.rows.Close(); err != nil {
@@ -149,8 +149,8 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 	}()
 	fields, err := r.rows.Columns()
 	if err != nil {
-		r.err = ResultAccept(err)
-		return nil, ResultAccept(err)
+		r.err = err
+		return nil, err
 	}
 	data = make([]map[string]string, 0)
 	num := len(fields)
@@ -162,13 +162,13 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 	for r.rows.Next() {
 		result := make(map[string]string)
 		if err := r.rows.Scan(refs...); err != nil {
-			return nil, ResultAccept(err)
+			return nil, err
 		}
 		for i, field := range fields {
 			if val, err := toString(refs[i]); err == nil {
 				result[field] = val
 			} else {
-				return nil, ResultAccept(err)
+				return nil, err
 			}
 		}
 		data = append(data, result)
@@ -180,7 +180,7 @@ func (r *Rows) ToMap() (data []map[string]string, err error) {
 func (r *Rows) ToStruct(st any) error {
 
 	if r.rows == nil {
-		return ResultAccept(r.err)
+		return r.err
 	}
 	defer func() {
 		if err := r.rows.Close(); err != nil {
@@ -209,12 +209,12 @@ func (r *Rows) ToStruct(st any) error {
 	//提取结构体中的tag
 	tagList, err := extractTagInfo(v)
 	if err != nil {
-		return ResultAccept(err)
+		return err
 	}
 	fields, err := r.rows.Columns()
 	if err != nil {
-		r.err = ResultAccept(err)
-		return ResultAccept(err)
+		r.err = err
+		return err
 	}
 	refs := make([]any, len(fields))
 	for i, field := range fields {
@@ -227,7 +227,7 @@ func (r *Rows) ToStruct(st any) error {
 	}
 	for r.rows.Next() {
 		if err := r.rows.Scan(refs...); err != nil {
-			return ResultAccept(err)
+			return err
 		}
 		stValInd = reflect.Append(stValInd, v.Elem())
 	}
