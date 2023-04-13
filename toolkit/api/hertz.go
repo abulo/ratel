@@ -21,6 +21,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/utils"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -51,7 +52,7 @@ func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,newCtx *app.Req
 		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemCreate")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
-			"msg":  err.Error(),
+			"msg":  code.StatusText(code.RPCError),
 		})
 		return
 	}
@@ -63,7 +64,7 @@ func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,newCtx *app.Req
 	if err := newCtx.BindAndValidate(&reqInfo); err != nil {
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.ParamInvalid,
-			"msg":  err.Error(),
+			"msg":  code.StatusText(code.ParamInvalid),
 		})
 		return
 	}
@@ -75,9 +76,10 @@ func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,newCtx *app.Req
 			"req": request,
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemCreate")
+		fromError := status.Convert(err)
 		newCtx.JSON(consts.StatusOK, utils.H{
-			"code": code.RemoteServiceError,
-			"msg":  err.Error(),
+			"code": code.ConvertToHttp(fromError.Code()),
+			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
 		return
 	}
@@ -97,7 +99,7 @@ func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,newCtx *app.Req
 		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemUpdate")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
-			"msg":  err.Error(),
+			"msg":  code.StatusText(code.RPCError),
 		})
 		return
 	}
@@ -112,7 +114,7 @@ func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,newCtx *app.Req
 	if err := newCtx.BindAndValidate(&reqInfo); err != nil {
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.ParamInvalid,
-			"msg":  err.Error(),
+			"msg":  code.StatusText(code.ParamInvalid),
 		})
 		return
 	}
@@ -125,9 +127,10 @@ func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,newCtx *app.Req
 			"req": request,
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemUpdate")
+		fromError := status.Convert(err)
 		newCtx.JSON(consts.StatusOK, utils.H{
-			"code": code.RemoteServiceError,
-			"msg":  err.Error(),
+			"code": code.ConvertToHttp(fromError.Code()),
+			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
 		return
 	}
@@ -147,7 +150,7 @@ func {{CamelStr .Table.TableName}}Item(ctx context.Context,newCtx *app.RequestCo
 		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}Item")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
-			"msg":  err.Error(),
+			"msg":  code.StatusText(code.RPCError),
 		})
 		return
 	}
@@ -163,9 +166,10 @@ func {{CamelStr .Table.TableName}}Item(ctx context.Context,newCtx *app.RequestCo
 			"req": request,
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}Item")
+		fromError := status.Convert(err)
 		newCtx.JSON(consts.StatusOK, utils.H{
-			"code": code.RemoteServiceError,
-			"msg":  err.Error(),
+			"code": code.ConvertToHttp(fromError.Code()),
+			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
 		return
 	}
@@ -186,7 +190,7 @@ func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,newCtx *app.Req
 		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemDelete")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
-			"msg":  err.Error(),
+			"msg":  code.StatusText(code.RPCError),
 		})
 		return
 	}
@@ -202,9 +206,10 @@ func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,newCtx *app.Req
 			"req": request,
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemDelete")
+		fromError := status.Convert(err)
 		newCtx.JSON(consts.StatusOK, utils.H{
-			"code": code.RemoteServiceError,
-			"msg":  err.Error(),
+			"code": code.ConvertToHttp(fromError.Code()),
+			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
 		return
 	}
@@ -226,7 +231,7 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx 
 		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}{{CamelStr .Name}}")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
-			"msg":  err.Error(),
+			"msg":  code.StatusText(code.RPCError),
 		})
 		return
 	}
@@ -244,9 +249,10 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx 
 			"req": request,
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}{{CamelStr .Name}}")
+		fromError := status.Convert(err)
 		newCtx.JSON(consts.StatusOK, utils.H{
-			"code": code.RemoteServiceError,
-			"msg":  err.Error(),
+			"code": code.ConvertToHttp(fromError.Code()),
+			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
 		return
 	}
