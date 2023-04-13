@@ -133,6 +133,13 @@ func getCtx(ctx context.Context) context.Context {
 	return ctx
 }
 
+func ResultAccept(err error) error {
+	if err == nil || err == sql.ErrNoRows || err == sql.ErrTxDone || err == context.Canceled {
+		return nil
+	}
+	return err
+}
+
 // Close closes the connection.
 func (db *commonSqlConn) Close() error {
 	return nil
