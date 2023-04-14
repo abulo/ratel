@@ -87,7 +87,7 @@ func (f *Float32) UnmarshalText(text []byte) error {
 // MarshalJSON implements json.Marshaler.
 func (f Float32) MarshalJSON() ([]byte, error) {
 	if !f.Valid {
-		return NullBytes, nil
+		return json.Marshal(nil)
 	}
 	return []byte(strconv.FormatFloat(float64(f.Float32), 'f', -1, 32)), nil
 }

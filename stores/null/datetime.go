@@ -3,6 +3,7 @@ package null
 import (
 	"bytes"
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -97,7 +98,7 @@ func (t *DateTime) UnmarshalJSON(data []byte) error {
 // MarshalText implements encoding.TextMarshaler.
 func (t DateTime) MarshalText() ([]byte, error) {
 	if !t.Valid {
-		return NullBytes, nil
+		return json.Marshal(nil)
 	}
 
 	// customize from golang time/time.go
