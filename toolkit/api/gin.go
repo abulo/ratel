@@ -40,9 +40,9 @@ func {{CamelStr .Table.TableName}}Dao(item *{{.Pkg}}.{{CamelStr .Table.TableName
 
 // {{CamelStr .Table.TableName}}Proto 数据绑定
 func {{CamelStr .Table.TableName}}Proto(item dao.{{CamelStr .Table.TableName}}) *{{.Pkg}}.{{CamelStr .Table.TableName}}Object {
-	return  &{{.Pkg}}.{{CamelStr .Table.TableName}}Object{
-		{{ModuleDaoConvertProto .TableColumn "item"}}
-	}
+	res := &{{.Pkg}}.{{CamelStr .Table.TableName}}Object{}
+	{{ModuleDaoConvertProto .TableColumn "res" "item"}}
+	return res
 }
 
 
@@ -248,8 +248,12 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(newCtx *gin.Context){
 	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}{{CamelStr .Name}}Request{}
 	// 构造查询条件
 	{{ApiToProto .Condition "request" "newCtx.Query"}}
+
+	{{- if .Page}}
+	// 构造分页条件
 	request.PageNum = cast.ToInt64(newCtx.Query("pageNum"))
 	request.PageSize = cast.ToInt64(newCtx.Query("pageSize"))
+	{{- end}}
 	// 执行服务
 	ctx := newCtx.Request.Context()
 	res, err := client.{{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx, request)
@@ -265,13 +269,18 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(newCtx *gin.Context){
 		})
 		return
 	}
-
+	{{- if .Page}}
 	var total int64
+	{{- end}}
 	var list []dao.{{CamelStr .Table.TableName}}
 
 	if res.GetCode() == code.Success {
+		{{- if .Page}}
 		total = res.GetData().GetTotal()
 		rpcList := res.GetData().GetList()
+		{{- else}}
+		rpcList := res.GetData()
+		{{- end}}
 		for _, item := range rpcList {
 			list = append(list, {{CamelStr .Table.TableName}}Dao(item))
 		}
@@ -279,12 +288,16 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(newCtx *gin.Context){
 	newCtx.JSON(http.StatusOK, gin.H{
 		"code": res.GetCode(),
 		"msg":  res.GetMsg(),
+		{{- if .Page}}
 		"data": gin.H{
 			"total": total,
 			"list":  list,
 			"pageNum": request.PageNum,
 			"pageSize": request.PageSize,
 		},
+		{{- else}}
+		"data": list,
+		{{- end}}
 	})
 }
 {{- end}}

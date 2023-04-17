@@ -91,9 +91,9 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.Table
 
 
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}ItemResult(item dao.{{CamelStr .Table.TableName}}) *{{CamelStr .Table.TableName}}Object {
-	return  &{{CamelStr .Table.TableName}}Object{
-		{{ModuleDaoConvertProto .TableColumn "item"}}
-	}
+	res := &{{CamelStr .Table.TableName}}Object{}
+	{{ModuleDaoConvertProto .TableColumn "res" "item"}}
+	return res
 }
 
 // {{CamelStr .Table.TableName}}ItemCreate 创建数据
@@ -190,6 +190,12 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,request *{{CamelStr .Table.TableName}}{{CamelStr .Name}}Request)(*{{CamelStr .Table.TableName}}{{CamelStr .Name}}Response,error){
 	// 数据库查询条件
 	condition := make(map[string]any)
+
+	// 构造查询条件
+	{{ModuleProtoConvertMap .Condition "request"}}
+
+
+	{{- if .Page}}
 	// 当前页面
 	pageNum := request.GetPageNum()
 	// 每页多少数据
@@ -204,8 +210,6 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 	offset := pageSize * (pageNum - 1)
 	condition["offset"] = offset
 	condition["limit"] = pageSize
-	// 构造查询条件
-	{{ModuleProtoConvertMap .Condition "request"}}
 	// 获取数据量
 	total, err := {{.Pkg}}.{{CamelStr .Table.TableName}}{{CamelStr .Name}}Total(ctx, condition)
 	if err != nil {
@@ -217,6 +221,8 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 		}
 		return &{{CamelStr .Table.TableName}}{{CamelStr .Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
 	}
+	{{- end}}
+
 	// 获取数据集合
 	list, err := {{.Pkg}}.{{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx, condition)
 	if err != nil {
@@ -235,10 +241,14 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 	return &{{CamelStr .Table.TableName}}{{CamelStr .Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
+		{{- if .Page}}
 		Data: &{{CamelStr .Table.TableName}}ListObject{
 			Total: total,
 			List:  res,
 		},
+		{{- else}}
+		Data: res,
+		{{- end}}
 	}, nil
 }
 {{- else}}
@@ -246,6 +256,13 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx context.Context,request *{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Request)(*{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response,error){
 	// 数据库查询条件
 	condition := make(map[string]any)
+
+	// 构造查询条件
+	{{ModuleProtoConvertMap .Condition "request"}}
+
+
+
+	{{- if .Page}}
 	// 当前页面
 	pageNum := request.GetPageNum()
 	// 每页多少数据
@@ -260,8 +277,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 	offset := pageSize * (pageNum - 1)
 	condition["offset"] = offset
 	condition["limit"] = pageSize
-	// 构造查询条件
-	{{ModuleProtoConvertMap .Condition "request"}}
+
 	// 获取数据量
 	total, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total(ctx, condition)
 	if err != nil {
@@ -273,6 +289,8 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 		}
 		return &{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
 	}
+	{{- end}}
+
 	// 获取数据集合
 	list, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx, condition)
 	if err != nil {
@@ -291,10 +309,14 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableN
 	return &{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
+		{{- if .Page}}
 		Data: &{{CamelStr .Table.TableName}}ListObject{
 			Total: total,
 			List:  res,
 		},
+		{{- else}}
+		Data: res,
+		{{- end}}
 	}, nil
 }
 {{- end}}

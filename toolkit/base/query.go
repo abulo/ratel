@@ -51,6 +51,7 @@ type ModuleParam struct {
 	PkgPath     string   // 包名路径
 	Primary     Column   // 主键信息
 	ModName     string   // go.mod 信息
+	Page        bool     // 是否分页
 }
 
 // Method 构造的函数
@@ -66,6 +67,7 @@ type Method struct {
 	PkgPath        string   // 包名路径
 	Primary        Column   // 主键信息
 	ModName        string   // go.mod 信息
+	Page           bool     // 是否分页
 }
 
 func NewDataType() map[string]DataType {
@@ -89,7 +91,7 @@ func NewDataType() map[string]DataType {
 	res["mediumtext"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
 	res["longtext"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
 	res["text"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
-	res["json"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
+	res["json"] = DataType{Default: "null.JSON", Empty: "null.JSON", Proto: "string"}
 	res["enum"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
 
 	res["binary"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes"}

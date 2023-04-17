@@ -43,6 +43,7 @@ func Run(cmd *cobra.Command, args []string) {
 	//创建数据
 	dir := ""
 	tableName := ""
+	page := ""
 	if len(args) == 0 {
 		if err := survey.AskOne(&survey.Input{
 			Message: "模型路径",
@@ -56,12 +57,20 @@ func Run(cmd *cobra.Command, args []string) {
 		}, &tableName); err != nil || tableName == "" {
 			return
 		}
+		if err := survey.AskOne(&survey.Select{
+			Message: "列表分页",
+			Help:    "列表分页",
+			Options: []string{"yes", "no"},
+		}, &page); err != nil || page == "" {
+			return
+		}
 	} else {
 		dir = args[0]
 		tableName = args[1]
+		page = args[2]
 	}
-	if tableName == "" || dir == "" {
-		fmt.Println("初始化:", color.RedString("模型层名称 & 表名称 必须填写"))
+	if tableName == "" || dir == "" || page == "" {
+		fmt.Println("初始化:", color.RedString("模型层名称 & 表名称 && 分页 必须填写"))
 		return
 	}
 	// 文件夹的路径
@@ -126,6 +135,12 @@ func Run(cmd *cobra.Command, args []string) {
 
 	var methodList []base.Method
 
+	var pageBool bool
+
+	if page == "yes" {
+		pageBool = true
+	}
+
 	//获取的索引信息没有
 	if err != nil {
 		method := base.Method{
@@ -140,6 +155,7 @@ func Run(cmd *cobra.Command, args []string) {
 			Pkg:            dir[strLen+1:],
 			PkgPath:        dir,
 			ModName:        mod,
+			Page:           pageBool,
 		}
 		methodList = append(methodList, method)
 	} else {
@@ -184,6 +200,7 @@ func Run(cmd *cobra.Command, args []string) {
 				Pkg:            dir[strLen+1:],
 				PkgPath:        dir,
 				ModName:        mod,
+				Page:           pageBool,
 			}
 			//添加到集合中
 			methodList = append(methodList, method)
@@ -209,6 +226,7 @@ func Run(cmd *cobra.Command, args []string) {
 			Pkg:            dir[strLen+1:],
 			PkgPath:        dir,
 			ModName:        mod,
+			Page:           pageBool,
 		}
 		methodList = append(methodList, method)
 	}
@@ -221,6 +239,7 @@ func Run(cmd *cobra.Command, args []string) {
 		Table:       tableItem,
 		TableColumn: tableColumn,
 		Method:      methodList,
+		Page:        pageBool,
 	}
 	GenerateModule(moduleParam, fullModuleDir, tableName)
 	GenerateProto(moduleParam, fullProtoDir, fullServiceDir, tableName)

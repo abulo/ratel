@@ -39,6 +39,7 @@ func Run(cmd *cobra.Command, args []string) {
 	tableName := ""
 	//驱动类型
 	apiType := ""
+	page := ""
 	if len(args) == 0 {
 		if err := survey.AskOne(&survey.Input{
 			Message: "接口路径",
@@ -59,14 +60,22 @@ func Run(cmd *cobra.Command, args []string) {
 		}, &apiType); err != nil || apiType == "" {
 			return
 		}
+		if err := survey.AskOne(&survey.Select{
+			Message: "列表分页",
+			Help:    "列表分页",
+			Options: []string{"yes", "no"},
+		}, &page); err != nil || page == "" {
+			return
+		}
 	} else {
 		dir = args[0]
 		tableName = args[1]
 		apiType = args[2]
+		page = args[3]
 	}
 
-	if tableName == "" || dir == "" || apiType == "" {
-		fmt.Println("初始化:", color.RedString("接口路径 & 表名称 & 驱动类型 必须填写"))
+	if tableName == "" || dir == "" || apiType == "" || page == "" {
+		fmt.Println("初始化:", color.RedString("接口路径 & 表名称 & 驱动类型 && 分页 必须填写"))
 		return
 	}
 	// 文件夹的路径
@@ -123,6 +132,12 @@ func Run(cmd *cobra.Command, args []string) {
 	// 数字长度
 	strLen := strings.LastIndex(dir, "/")
 
+	var pageBool bool
+
+	if page == "yes" {
+		pageBool = true
+	}
+
 	//获取的索引信息没有
 	if err != nil {
 		method := base.Method{
@@ -137,6 +152,7 @@ func Run(cmd *cobra.Command, args []string) {
 			Pkg:            dir[strLen+1:],
 			PkgPath:        dir,
 			ModName:        mod,
+			Page:           pageBool,
 		}
 		methodList = append(methodList, method)
 	} else {
@@ -181,6 +197,7 @@ func Run(cmd *cobra.Command, args []string) {
 				Pkg:            dir[strLen+1:],
 				PkgPath:        dir,
 				ModName:        mod,
+				Page:           pageBool,
 			}
 			//添加到集合中
 			methodList = append(methodList, method)
@@ -206,6 +223,7 @@ func Run(cmd *cobra.Command, args []string) {
 			Pkg:            dir[strLen+1:],
 			PkgPath:        dir,
 			ModName:        mod,
+			Page:           pageBool,
 		}
 		methodList = append(methodList, method)
 	}
@@ -218,6 +236,7 @@ func Run(cmd *cobra.Command, args []string) {
 		TableColumn: tableColumn,
 		Method:      methodList,
 		ModName:     mod,
+		Page:        pageBool,
 	}
 	Generate(moduleParam, fullApiDir, tableName, dir[strLen+1:], dir, apiType)
 }

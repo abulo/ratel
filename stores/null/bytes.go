@@ -10,7 +10,7 @@ import (
 )
 
 // NullBytes is a global byte slice of JSON null
-var NullBytes = []byte("NULL")
+var NullBytes = []byte("null")
 
 // Bytes is a nullable []byte.
 type Bytes struct {
@@ -89,8 +89,11 @@ func (b *Bytes) UnmarshalText(text []byte) error {
 
 // MarshalJSON implements json.Marshaler.
 func (b Bytes) MarshalJSON() ([]byte, error) {
+	if !b.Valid {
+		return json.Marshal(nil)
+	}
 	if len(b.Bytes) == 0 {
-		return NullBytes, nil
+		return json.Marshal(nil)
 	}
 	return json.Marshal(b.Bytes)
 }

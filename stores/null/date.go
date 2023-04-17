@@ -3,6 +3,7 @@ package null
 import (
 	"bytes"
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -54,7 +55,7 @@ func (t Date) IsSet() bool {
 // MarshalJSON implements json.Marshaler.
 func (t Date) MarshalJSON() ([]byte, error) {
 	if !t.Valid {
-		return NullBytes, nil
+		return json.Marshal(nil)
 	}
 
 	// customize from golang time/time.go

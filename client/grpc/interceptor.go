@@ -36,9 +36,9 @@ func debugUnaryClientInterceptor(addr string) grpc.UnaryClientInterceptor {
 
 		err := invoker(ctx, method, req, reply, cc, append(opts, grpc.Peer(&p))...)
 		if err != nil {
-			fmt.Printf("%-50s[%s] => %s\n", prefix, time.Now().Format("04:05.000"), "Error: "+err.Error())
+			fmt.Printf("%-50s[%s] => %s\n", prefix, time.Now().Format("2006-01-02 15:04:05.000000"), "Error: "+err.Error())
 		} else {
-			fmt.Printf("%-50s[%s] => %s\n", prefix, time.Now().Format("04:05.000"), "Recv: "+util.JSONString(reply))
+			fmt.Printf("%-50s[%s] => %s\n", prefix, time.Now().Format("2006-01-02 15:04:05.000000"), "Recv: "+util.JSONString(reply))
 		}
 		return err
 	}

@@ -65,7 +65,9 @@ import (
 
 	"github.com/abulo/ratel/v3/stores/sql"
 	"github.com/abulo/ratel/v3/util"
+	{{- if .Page}}
 	"github.com/spf13/cast"
+	{{- end}}
 )
 // {{.Table.TableName}} {{.Table.TableComment}}
 
@@ -129,12 +131,14 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,conditi
 	builder := sql.NewBuilder()
 	builder.Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
+	{{- if .Page}}
 	if !util.Empty(condition["offset"]) {
 		builder.Offset(cast.ToInt64(condition["offset"]))
 	}
 	if !util.Empty(condition["limit"]) {
 		builder.Limit(cast.ToInt64(condition["limit"]))
 	}
+	{{- end}}
 	builder.OrderBy("{{Char .Primary.ColumnName}}", sql.DESC)
 	query,args,err := builder.Rows()
 	if err != nil {
@@ -144,6 +148,7 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,conditi
 	return
 }
 
+{{- if .Page}}
 // {{CamelStr .Table.TableName}}{{CamelStr .Name}}Total 列表数据总量
 func {{CamelStr .Table.TableName}}{{CamelStr .Name}}Total(ctx context.Context,condition map[string]any)(res int64,err error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
@@ -157,6 +162,7 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}Total(ctx context.Context,co
 	res,err = db.Count(ctx ,query,args...)
 	return
 }
+{{- end}}
 {{- else}}
 
 // {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}} 列表数据
@@ -166,12 +172,14 @@ func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx context.Context,c
 	builder := sql.NewBuilder()
 	builder.Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
+	{{- if .Page}}
 	if !util.Empty(condition["offset"]) {
 		builder.Offset(cast.ToInt64(condition["offset"]))
 	}
 	if !util.Empty(condition["limit"]) {
 		builder.Limit(cast.ToInt64(condition["limit"]))
 	}
+	{{- end}}
 	query,args,err := builder.OrderBy("{{Char .Primary.ColumnName}}", sql.DESC).Rows()
 	if err != nil {
 		return
@@ -180,6 +188,7 @@ func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx context.Context,c
 	return
 }
 
+{{- if .Page}}
 // {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total 列表数据总量
 func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total(ctx context.Context,condition map[string]any)(res int64,err error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()
@@ -193,6 +202,7 @@ func {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total(ctx context.Cont
 	res,err = db.Count(ctx ,query,args...)
 	return
 }
+{{- end}}
 {{- end}}
 {{- else}}
 

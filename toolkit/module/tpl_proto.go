@@ -75,11 +75,13 @@ message {{CamelStr .Table.TableName}}Object {
 	{{- end}}
 }
 
+{{- if .Page}}
 // {{CamelStr .Table.TableName}}ListObject 列表数据对象
 message {{CamelStr .Table.TableName}}ListObject {
 	int64 total = 1;
 	repeated {{CamelStr .Table.TableName}}Object list = 2;
 }
+{{- end}}
 
 // {{CamelStr .Table.TableName}}ItemCreateRequest 创建数据
 message {{CamelStr .Table.TableName}}ItemCreateRequest {
@@ -137,15 +139,21 @@ message {{CamelStr .Table.TableName}}{{CamelStr .Name}}Request {
 	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"
 	{{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
 	{{- end}}
+	{{- if .Page}}
 	int64 page_num = {{Add .ConditionTotal 1}};
   	int64 page_size = {{Add .ConditionTotal 2}};
+	{{- end}}
 }
 
 // {{CamelStr .Table.TableName}}{{CamelStr .Name}}Response 数据响应
 message {{CamelStr .Table.TableName}}{{CamelStr .Name}}Response {
 	int64 code = 1;
   	string msg = 2;
+	{{- if .Page}}
 	{{CamelStr .Table.TableName}}ListObject data = 3;
+	{{- else}}
+	repeated {{CamelStr .Table.TableName}}Object data = 3;
+	{{- end }}
 }
 {{- else}}
 
@@ -155,15 +163,21 @@ message {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Request {
 	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"
 	{{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
 	{{- end}}
+	{{- if .Page}}
 	int64 page_num = {{Add .ConditionTotal 1}};
   	int64 page_size = {{Add .ConditionTotal 2}};
+	{{- end}}
 }
 
 // {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response 数据响应
 message {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response {
 	int64 code = 1;
   	string msg = 2;
+	{{- if .Page}}
 	{{CamelStr .Table.TableName}}ListObject data = 3;
+	{{- else}}
+	repeated {{CamelStr .Table.TableName}}Object data = 3;
+	{{- end }}
 }
 {{- end}}
 {{- else}}

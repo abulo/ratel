@@ -51,7 +51,17 @@ func Run(cmd *cobra.Command, args []string) {
 		fmt.Println("数据库信息获取:", color.RedString(err.Error()))
 		return
 	}
+	tables := make([]string, 0)
+	tableName := args[0]
+	if tableName != "" {
+		tables = util.Explode(",", tableName)
+	}
 	for _, table := range tableList {
+		if !util.Empty(tables) {
+			if !util.InArray(table.TableName, tables) {
+				continue
+			}
+		}
 		column, err := base.TableColumn(ctx, base.Config.String("db.Database"), table.TableName)
 		if err != nil {
 			continue

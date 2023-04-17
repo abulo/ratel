@@ -138,8 +138,11 @@ func (j *JSON) Marshal(obj any) error {
 
 // MarshalJSON implements json.Marshaler.
 func (j JSON) MarshalJSON() ([]byte, error) {
+	if !j.Valid {
+		return json.Marshal(nil)
+	}
 	if len(j.JSON) == 0 || j.JSON == nil {
-		return NullBytes, nil
+		return json.Marshal(nil)
 	}
 	return j.JSON, nil
 }
