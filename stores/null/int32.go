@@ -93,7 +93,7 @@ func (i *Int32) UnmarshalText(text []byte) error {
 // MarshalJSON implements json.Marshaler.
 func (i Int32) MarshalJSON() ([]byte, error) {
 	if !i.Valid {
-		return json.Marshal(nil)
+		return NullBytes, nil
 	}
 	return []byte(strconv.FormatInt(int64(i.Int32), 10)), nil
 }

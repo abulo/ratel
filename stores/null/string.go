@@ -69,7 +69,7 @@ func (s *String) UnmarshalJSON(data []byte) error {
 // MarshalJSON implements json.Marshaler.
 func (s String) MarshalJSON() ([]byte, error) {
 	if !s.Valid {
-		return json.Marshal(nil)
+		return NullBytes, nil
 	}
 	return json.Marshal(s.String)
 }
