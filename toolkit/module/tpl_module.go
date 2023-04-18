@@ -50,6 +50,7 @@ func GenerateModule(moduleParam base.ModuleParam, fullModuleDir, tableName strin
 	}
 	cmdImport := exec.Command("goimports", "-w", path.Join(fullModuleDir, "*.go"))
 	cmdImport.CombinedOutput()
+
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(outModuleFile))
 }
 

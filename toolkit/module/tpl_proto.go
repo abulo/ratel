@@ -27,6 +27,7 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
 		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
 		"ApiToProto":            base.ApiToProto,
+		"ProtoRequest":          base.ProtoRequest,
 	}).Parse(ProtoTemplate()))
 	// 文件夹路径
 	outProtoFile := path.Join(fullProtoDir, tableName+".proto")
@@ -56,6 +57,10 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 	//修改自定义 tag
 	cmdImportTag := exec.Command("protoc-go-inject-tag", "-input="+fullServiceDir+"/"+tableName+".pb.go")
 	cmdImportTag.CombinedOutput()
+	fmt.Printf("\nGenerate %s Proto Command\n", color.GreenString(tableName))
+	fmt.Printf("\ncd %s\n", color.GreenString(protoParentDir))
+	fmt.Printf("\nprotoc --go-grpc_out=%s --go_out=%s %s/%s.proto\n", color.GreenString(serviceParentDir), color.GreenString(serviceParentDir), color.GreenString(currentDir), color.GreenString(tableName))
+	fmt.Printf("\nprotoc-go-inject-tag -input=%s/%s.pb.go\n", color.GreenString(fullServiceDir), color.GreenString(tableName))
 }
 
 // @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"
@@ -135,10 +140,7 @@ message {{CamelStr .Table.TableName}}ItemResponse {
 {{- if .Default}}
 // {{CamelStr .Table.TableName}}{{CamelStr .Name}}Request 列表数据
 message {{CamelStr .Table.TableName}}{{CamelStr .Name}}Request {
-	{{- range .Condition}}
-	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"
-	{{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
-	{{- end}}
+	{{ProtoRequest .Condition}}
 	{{- if .Page}}
 	int64 page_num = {{Add .ConditionTotal 1}};
   	int64 page_size = {{Add .ConditionTotal 2}};
@@ -159,10 +161,7 @@ message {{CamelStr .Table.TableName}}{{CamelStr .Name}}Response {
 
 // {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Request 列表数据
 message {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Request {
-	{{- range .Condition}}
-	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"
-	{{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
-	{{- end}}
+	{{ProtoRequest .Condition}}
 	{{- if .Page}}
 	int64 page_num = {{Add .ConditionTotal 1}};
   	int64 page_size = {{Add .ConditionTotal 2}};
@@ -184,10 +183,7 @@ message {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response {
 
 // {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Request 单列数据
 message {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Request {
-	{{- range .Condition}}
-	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"
-	{{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
-	{{- end}}
+	{{ProtoRequest .Condition}}
 }
 
 // {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Response 单列数据

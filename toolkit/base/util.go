@@ -209,6 +209,26 @@ func ModuleDaoConvertProto(Condition []Column, res, resItem string) string {
 	return builder.String()
 }
 
+func ProtoRequest(condition []Column) string {
+	builder := strings.Builder{}
+	builder.WriteString("\n")
+	for _, item := range condition {
+		builder.WriteString(fmt.Sprintf("	// @inject_tag: db:\"%s\" json:\"%s\"", item.ColumnName, Helper(item.ColumnName)))
+		builder.WriteString("\n")
+		if item.DataTypeMap.Proto == "int32" || item.DataTypeMap.Proto == "int64" {
+			item.DataTypeMap.Proto = "string"
+		}
+		builder.WriteString(fmt.Sprintf("	%s %s = %d; // %s",
+			item.DataTypeMap.Proto,
+			item.ColumnName,
+			item.PosiTion,
+			item.ColumnComment,
+		))
+		builder.WriteString("\n")
+	}
+	return builder.String()
+}
+
 func ApiToProto(Condition []Column, res, request string) string {
 	builder := strings.Builder{}
 	for _, item := range Condition {
@@ -217,7 +237,7 @@ func ApiToProto(Condition []Column, res, request string) string {
 		case "int32":
 			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToInt32(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("		%s.%s =  cast.ToString(cast.ToInt32(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
 			builder.WriteString("	}")
 			builder.WriteString("\n")
@@ -225,7 +245,7 @@ func ApiToProto(Condition []Column, res, request string) string {
 		case "int64":
 			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToInt64(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("		%s.%s =  cast.ToString(cast.ToInt64(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
 			builder.WriteString("	}")
 			builder.WriteString("\n")
