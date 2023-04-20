@@ -186,24 +186,24 @@ func Run(cmd *cobra.Command, args []string) {
 				continue
 			}
 			// 自定义函数名称和索引信息
-			customIndexType := util.UCWords(indexNameSlice[0])
-			customIndexName := util.UCWords(indexNameSlice[1])
-			method := base.Method{
-				Table:          tableItem,
-				TableColumn:    tableColumn,
-				Type:           customIndexType,
-				Name:           customIndexName,
-				Default:        false,
-				Condition:      condition,
-				ConditionTotal: len(condition),
-				Primary:        tablePrimary,
-				Pkg:            dir[strLen+1:],
-				PkgPath:        dir,
-				ModName:        mod,
-				Page:           pageBool,
-			}
-			//添加到集合中
-			methodList = append(methodList, method)
+			// customIndexType := util.UCWords(indexNameSlice[0])
+			// customIndexName := util.UCWords(indexNameSlice[1])
+			// method := base.Method{
+			// 	Table:          tableItem,
+			// 	TableColumn:    tableColumn,
+			// 	Type:           customIndexType,
+			// 	Name:           customIndexName,
+			// 	Default:        false,
+			// 	Condition:      condition,
+			// 	ConditionTotal: len(condition),
+			// 	Primary:        tablePrimary,
+			// 	Pkg:            dir[strLen+1:],
+			// 	PkgPath:        dir,
+			// 	ModName:        mod,
+			// 	Page:           pageBool,
+			// }
+			// //添加到集合中
+			// methodList = append(methodList, method)
 		}
 		condition := make([]base.Column, 0)
 		for _, fieldValue := range field {

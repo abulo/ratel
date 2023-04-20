@@ -57,10 +57,20 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 	//修改自定义 tag
 	cmdImportTag := exec.Command("protoc-go-inject-tag", "-input="+fullServiceDir+"/"+tableName+".pb.go")
 	cmdImportTag.CombinedOutput()
-	fmt.Printf("\nGenerate %s Proto Command\n", color.GreenString(tableName))
-	fmt.Printf("\ncd %s\n", color.GreenString(protoParentDir))
-	fmt.Printf("\nprotoc --go-grpc_out=%s --go_out=%s %s/%s.proto\n", color.GreenString(serviceParentDir), color.GreenString(serviceParentDir), color.GreenString(currentDir), color.GreenString(tableName))
-	fmt.Printf("\nprotoc-go-inject-tag -input=%s/%s.pb.go\n", color.GreenString(fullServiceDir), color.GreenString(tableName))
+
+	builder := strings.Builder{}
+	builder.WriteString("\n")
+	builder.WriteString(fmt.Sprintf("cd %s;", protoParentDir))
+	builder.WriteString("\n")
+	builder.WriteString(fmt.Sprintf("protoc  --go-grpc_out=%s  --go_out=%s  %s/%s.proto;", serviceParentDir, serviceParentDir, currentDir, tableName))
+	builder.WriteString("\n")
+	builder.WriteString(fmt.Sprintf("protoc-go-inject-tag -input=%s/%s.pb.go;", fullServiceDir, tableName))
+	// return builder.String()
+	shell := path.Join(fullProtoDir, tableName+".sh")
+	if util.FileExists(shell) {
+		util.Delete(shell)
+	}
+	_ = os.WriteFile(shell, []byte(builder.String()), os.ModePerm)
 }
 
 // @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"
