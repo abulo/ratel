@@ -258,7 +258,7 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx 
 		})
 		return
 	}
-	{{ if .Page}}}
+	{{ if .Page}}
 	var total int64
 	{{- end}}
 	var list []dao.{{CamelStr .Table.TableName}}
