@@ -26,15 +26,15 @@ require (
 	github.com/issue9/term/v3 v3.1.2
 	github.com/jlaffaye/ftp v0.1.0
 	github.com/json-iterator/go v1.1.12
-	github.com/lib/pq v1.10.8
+	github.com/lib/pq v1.10.9
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mozillazg/go-pinyin v0.19.0
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.5
-	github.com/prometheus/client_golang v1.15.0
-	github.com/redis/go-redis/v9 v9.0.3
+	github.com/prometheus/client_golang v1.15.1
+	github.com/redis/go-redis/v9 v9.0.4
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/smallnest/weighted v0.0.0-20230419055410-36b780e40a7a
@@ -47,12 +47,12 @@ require (
 	github.com/yosuke-furukawa/json5 v0.1.1
 	go.etcd.io/etcd/api/v3 v3.5.8
 	go.etcd.io/etcd/client/v3 v3.5.8
-	go.mongodb.org/mongo-driver v1.11.4
+	go.mongodb.org/mongo-driver v1.11.6
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.8.0
 	golang.org/x/image v0.7.0
 	golang.org/x/mod v0.10.0
-	golang.org/x/sync v0.1.0
+	golang.org/x/sync v0.2.0
 	golang.org/x/text v0.9.0
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
 	google.golang.org/grpc v1.54.0

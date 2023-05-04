@@ -52,9 +52,11 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 	tables := make([]string, 0)
-	tableName := args[0]
-	if tableName != "" {
-		tables = util.Explode(",", tableName)
+	if len(args) > 0 {
+		tableName := args[0]
+		if tableName != "" {
+			tables = util.Explode(",", tableName)
+		}
 	}
 	for _, table := range tableList {
 		if !util.Empty(tables) {

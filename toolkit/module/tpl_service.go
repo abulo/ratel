@@ -68,6 +68,7 @@ import (
 	"github.com/abulo/ratel/v3/stores/null"
 	"github.com/abulo/ratel/v3/stores/sql"
 	"github.com/abulo/ratel/v3/util"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -83,265 +84,198 @@ type Srv{{CamelStr .Table.TableName}}ServiceServer struct {
 
 
 
-func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}ItemConvert(request *{{CamelStr .Table.TableName}}Object) dao.{{CamelStr .Table.TableName}} {
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}Convert(request *{{CamelStr .Table.TableName}}Object) dao.{{CamelStr .Table.TableName}} {
 	var res dao.{{CamelStr .Table.TableName}}
 	{{ModuleProtoConvertDao .TableColumn "res" "request"}}
 	return res
 }
 
 
-func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}ItemResult(item dao.{{CamelStr .Table.TableName}}) *{{CamelStr .Table.TableName}}Object {
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}Result(item dao.{{CamelStr .Table.TableName}}) *{{CamelStr .Table.TableName}}Object {
 	res := &{{CamelStr .Table.TableName}}Object{}
 	{{ModuleDaoConvertProto .TableColumn "res" "item"}}
 	return res
 }
 
-// {{CamelStr .Table.TableName}}ItemCreate 创建数据
-func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,request *{{CamelStr .Table.TableName}}ItemCreateRequest) (*{{CamelStr .Table.TableName}}ItemCreateResponse,error){
-	req := srv.{{CamelStr .Table.TableName}}ItemConvert(request.GetData())
-	_, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ItemCreate(ctx, req)
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": req,
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemCreate")
-		}
-		return &{{CamelStr .Table.TableName}}ItemCreateResponse{}, status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
-	}
-	return &{{CamelStr .Table.TableName}}ItemCreateResponse{
-		Code: code.Success,
-		Msg:  code.StatusText(code.Success),
-	}, err
-}
-
-// {{CamelStr .Table.TableName}}ItemUpdate 更新数据
-func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,request *{{CamelStr .Table.TableName}}ItemUpdateRequest) (*{{CamelStr .Table.TableName}}ItemUpdateResponse,error){
-	{{Helper .Primary.AlisaColumnName}} := request.Get{{CamelStr .Primary.AlisaColumnName}}()
-	if {{Helper .Primary.AlisaColumnName}} < 1 {
-		return &{{CamelStr .Table.TableName}}ItemUpdateResponse{}, status.Error(code.ConvertToGrpc(code.ParamInvalid), code.StatusText(code.ParamInvalid))
-	}
-	req := srv.{{CamelStr .Table.TableName}}ItemConvert(request.GetData())
-	_, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ItemUpdate(ctx, {{Helper .Primary.AlisaColumnName}}, req)
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": req,
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemUpdate")
-		}
-		return &{{CamelStr .Table.TableName}}ItemUpdateResponse{}, status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
-	}
-	return &{{CamelStr .Table.TableName}}ItemUpdateResponse{
-		Code: code.Success,
-		Msg:  code.StatusText(code.Success),
-	}, err
-}
-
-// {{CamelStr .Table.TableName}}Item 获取数据
-func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}Item(ctx context.Context,request *{{CamelStr .Table.TableName}}ItemRequest)(*{{CamelStr .Table.TableName}}ItemResponse,error){
-	{{Helper .Primary.AlisaColumnName}} := request.Get{{CamelStr .Primary.AlisaColumnName}}()
-	if {{Helper .Primary.AlisaColumnName}} < 1 {
-		return &{{CamelStr .Table.TableName}}ItemResponse{}, status.Error(code.ConvertToGrpc(code.ParamInvalid), code.StatusText(code.ParamInvalid))
-	}
-	res,err := {{.Pkg}}.{{CamelStr .Table.TableName}}Item(ctx ,{{Helper .Primary.AlisaColumnName}})
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": {{Helper .Primary.AlisaColumnName}},
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}Item")
-		}
-		return &{{CamelStr .Table.TableName}}ItemResponse{}, status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
-	}
-	return &{{CamelStr .Table.TableName}}ItemResponse{
-		Code: code.Success,
-		Msg:  code.StatusText(code.Success),
-		Data: srv.{{CamelStr .Table.TableName}}ItemResult(res),
-	}, err
-}
-
-// {{CamelStr .Table.TableName}}ItemDelete 删除数据
-func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,request *{{CamelStr .Table.TableName}}ItemDeleteRequest)(*{{CamelStr .Table.TableName}}ItemDeleteResponse,error){
-	{{Helper .Primary.AlisaColumnName}} := request.Get{{CamelStr .Primary.AlisaColumnName}}()
-	if {{Helper .Primary.AlisaColumnName}} < 1 {
-		return &{{CamelStr .Table.TableName}}ItemDeleteResponse{}, status.Error(code.ConvertToGrpc(code.ParamInvalid), code.StatusText(code.ParamInvalid))
-	}
-	_, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ItemDelete(ctx, {{Helper .Primary.AlisaColumnName}})
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": {{Helper .Primary.AlisaColumnName}},
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemDelete")
-		}
-		return &{{CamelStr .Table.TableName}}ItemDeleteResponse{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
-	}
-	return &{{CamelStr .Table.TableName}}ItemDeleteResponse{
-		Code: code.Success,
-		Msg:  code.StatusText(code.Success),
-	}, err
-}
-
 {{- range .Method}}
-{{- if eq .Type "List"}}
-{{- if .Default}}
-// {{CamelStr .Table.TableName}}{{CamelStr .Name}} 列表数据
-func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,request *{{CamelStr .Table.TableName}}{{CamelStr .Name}}Request)(*{{CamelStr .Table.TableName}}{{CamelStr .Name}}Response,error){
-	// 数据库查询条件
-	condition := make(map[string]any)
-
-	// 构造查询条件
-	{{ModuleProtoConvertMap .Condition "request"}}
-
-
-	{{- if .Page}}
-	// 当前页面
-	pageNum := request.GetPageNum()
-	// 每页多少数据
-	pageSize := request.GetPageSize()
-	if pageNum < 1 {
-		pageNum = 1
-	}
-	if pageSize < 1 {
-		pageSize = 10
-	}
-	// 分页数据
-	offset := pageSize * (pageNum - 1)
-	condition["offset"] = offset
-	condition["limit"] = pageSize
-	// 获取数据量
-	total, err := {{.Pkg}}.{{CamelStr .Table.TableName}}{{CamelStr .Name}}Total(ctx, condition)
+{{- if eq .Type "Create"}}
+// {{.Name}} 创建数据
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.Context,request *{{.Name}}Request) (*{{.Name}}Response,error){
+	req := srv.{{CamelStr .Table.TableName}}Convert(request.GetData())
+	_, err := {{.Pkg}}.{{.Name}}(ctx, req)
 	if err != nil {
 		if sql.ResultAccept(err) != nil {
 			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": condition,
+				"req": req,
 				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}{{CamelStr .Name}}Total")
+			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		}
-		return &{{CamelStr .Table.TableName}}{{CamelStr .Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
+		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
 	}
-	{{- end}}
-
-	// 获取数据集合
-	list, err := {{.Pkg}}.{{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx, condition)
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": condition,
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}{{CamelStr .Name}}")
-		}
-		return &{{CamelStr .Table.TableName}}{{CamelStr .Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
-	}
-	var res []*{{CamelStr .Table.TableName}}Object
-	for _, item := range list {
-		res = append(res, srv.{{CamelStr .Table.TableName}}ItemResult(item))
-	}
-	return &{{CamelStr .Table.TableName}}{{CamelStr .Name}}Response{
+	return &{{.Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
-		{{- if .Page}}
-		Data: &{{CamelStr .Table.TableName}}ListObject{
-			Total: total,
-			List:  res,
-		},
-		{{- else}}
-		Data: res,
-		{{- end}}
-	}, nil
-}
-{{- else}}
-// {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}} 列表数据
-func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx context.Context,request *{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Request)(*{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response,error){
-	// 数据库查询条件
-	condition := make(map[string]any)
-
-	// 构造查询条件
-	{{ModuleProtoConvertMap .Condition "request"}}
-
-
-
-	{{- if .Page}}
-	// 当前页面
-	pageNum := request.GetPageNum()
-	// 每页多少数据
-	pageSize := request.GetPageSize()
-	if pageNum < 1 {
-		pageNum = 1
-	}
-	if pageSize < 1 {
-		pageSize = 10
-	}
-	// 分页数据
-	offset := pageSize * (pageNum - 1)
-	condition["offset"] = offset
-	condition["limit"] = pageSize
-
-	// 获取数据量
-	total, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total(ctx, condition)
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": condition,
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Total")
-		}
-		return &{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
-	}
-	{{- end}}
-
-	// 获取数据集合
-	list, err := {{.Pkg}}.{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}(ctx, condition)
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": condition,
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}")
-		}
-		return &{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
-	}
-	var res []*{{CamelStr .Table.TableName}}Object
-	for _, item := range list {
-		res = append(res, srv.{{CamelStr .Table.TableName}}ItemResult(item))
-	}
-	return &{{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response{
-		Code: code.Success,
-		Msg:  code.StatusText(code.Success),
-		{{- if .Page}}
-		Data: &{{CamelStr .Table.TableName}}ListObject{
-			Total: total,
-			List:  res,
-		},
-		{{- else}}
-		Data: res,
-		{{- end}}
-	}, nil
-}
-{{- end}}
-{{- else}}
-// {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}} 单列数据
-func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}(ctx context.Context,request *{{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Request)(*{{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Response,error){
-	// 数据库查询条件
-	condition := make(map[string]any)
-	// 构造查询条件
-	{{ModuleProtoConvertMap .Condition "request"}}
-	res,err := {{.Pkg}}.{{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}(ctx ,condition)
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": condition,
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}")
-		}
-		return &{{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
-	}
-	return &{{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Response{
-		Code: code.Success,
-		Msg:  code.StatusText(code.Success),
-		Data:  srv.{{CamelStr .Table.TableName}}ItemResult(res),
 	}, err
+}
+{{- else if eq .Type "Update"}}
+// {{.Name}} 更新数据
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.Context,request *{{.Name}}Request) (*{{.Name}}Response,error){
+	{{Helper .Primary.AlisaColumnName}} := request.Get{{CamelStr .Primary.AlisaColumnName}}()
+	if {{Helper .Primary.AlisaColumnName}} < 1 {
+		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.ParamInvalid), code.StatusText(code.ParamInvalid))
+	}
+	req := srv.{{CamelStr .Table.TableName}}Convert(request.GetData())
+	_, err := {{.Pkg}}.{{.Name}}(ctx, {{Helper .Primary.AlisaColumnName}}, req)
+	if err != nil {
+		if sql.ResultAccept(err) != nil {
+			globalLogger.Logger.WithFields(logrus.Fields{
+				"req": req,
+				"err": err,
+			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		}
+		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
+	}
+	return &{{.Name}}Response{
+		Code: code.Success,
+		Msg:  code.StatusText(code.Success),
+	}, err
+}
+{{- else if eq .Type "Delete"}}
+// {{.Name}} 删除数据
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Context,request *{{.Name}}Request)(*{{.Name}}Response,error){
+	{{Helper .Primary.AlisaColumnName}} := request.Get{{CamelStr .Primary.AlisaColumnName}}()
+	if {{Helper .Primary.AlisaColumnName}} < 1 {
+		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.ParamInvalid), code.StatusText(code.ParamInvalid))
+	}
+	_, err := {{.Pkg}}.{{.Name}}(ctx, {{Helper .Primary.AlisaColumnName}})
+	if err != nil {
+		if sql.ResultAccept(err) != nil {
+			globalLogger.Logger.WithFields(logrus.Fields{
+				"req": {{Helper .Primary.AlisaColumnName}},
+				"err": err,
+			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		}
+		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
+	}
+	return &{{.Name}}Response{
+		Code: code.Success,
+		Msg:  code.StatusText(code.Success),
+	}, err
+}
+{{- else if eq .Type "Only"}}
+// {{.Name}} 查询单条数据
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.Context,request *{{.Name}}Request)(*{{.Name}}Response,error){
+	{{Helper .Primary.AlisaColumnName}} := request.Get{{CamelStr .Primary.AlisaColumnName}}()
+	if {{Helper .Primary.AlisaColumnName}} < 1 {
+		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.ParamInvalid), code.StatusText(code.ParamInvalid))
+	}
+	res,err := {{.Pkg}}.{{.Name}}(ctx ,{{Helper .Primary.AlisaColumnName}})
+	if err != nil {
+		if sql.ResultAccept(err) != nil {
+			globalLogger.Logger.WithFields(logrus.Fields{
+				"req": {{Helper .Primary.AlisaColumnName}},
+				"err": err,
+			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		}
+		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
+	}
+	return &{{.Name}}Response{
+		Code: code.Success,
+		Msg:  code.StatusText(code.Success),
+		Data: srv.{{.Name}}Result(res),
+	}, err
+}
+{{- else if eq .Type "Item"}}
+// {{.Name}} 查询单条数据
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.Context,request *{{.Name}}Request)(*{{.Name}}Response,error){
+	// 数据库查询条件
+	condition := make(map[string]any)
+	// 构造查询条件
+	{{ModuleProtoConvertMap .Condition "request"}}
+	if util.Empty(condition) {
+		err := errors.New("condition is empty")
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": condition,
+			"err": err,
+		}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
+	}
+	res,err := {{.Pkg}}.{{.Name}}(ctx ,condition)
+	if err != nil {
+		if sql.ResultAccept(err) != nil {
+			globalLogger.Logger.WithFields(logrus.Fields{
+				"req": condition,
+				"err": err,
+			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		}
+		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
+	}
+	return &{{.Name}}Response{
+		Code: code.Success,
+		Msg:  code.StatusText(code.Success),
+		Data:  srv.{{CamelStr .Table.TableName}}Result(res),
+	}, err
+}
+{{- else if eq .Type "List"}}
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Context,request *{{.Name}}Request)(*{{.Name}}Response,error){
+	// 数据库查询条件
+	condition := make(map[string]any)
+	// 构造查询条件
+	{{ModuleProtoConvertMap .Condition "request"}}
+	{{- if .Page}}
+	// 当前页面
+	pageNum := request.GetPageNum()
+	// 每页多少数据
+	pageSize := request.GetPageSize()
+	if pageNum < 1 {
+		pageNum = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+	// 分页数据
+	offset := pageSize * (pageNum - 1)
+	condition["offset"] = offset
+	condition["limit"] = pageSize
+	// 获取数据量
+	total, err := {{.Pkg}}.{{.Name}}Total(ctx, condition)
+	if err != nil {
+		if sql.ResultAccept(err) != nil {
+			globalLogger.Logger.WithFields(logrus.Fields{
+				"req": condition,
+				"err": err,
+			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}Total")
+		}
+		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
+	}
+	{{- end}}
+	// 获取数据集合
+	list, err := {{.Pkg}}.{{.Name}}(ctx, condition)
+	if err != nil {
+		if sql.ResultAccept(err) != nil {
+			globalLogger.Logger.WithFields(logrus.Fields{
+				"req": condition,
+				"err": err,
+			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		}
+		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
+	}
+	var res []*{{CamelStr .Table.TableName}}Object
+	for _, item := range list {
+		res = append(res, srv.{{CamelStr .Table.TableName}}Result(item))
+	}
+	return &{{.Name}}Response{
+		Code: code.Success,
+		Msg:  code.StatusText(code.Success),
+		{{- if .Page}}
+		Data: &{{CamelStr .Table.TableName}}ListObject{
+			Total: total,
+			List:  res,
+		},
+		{{- else}}
+		Data: res,
+		{{- end}}
+	}, nil
 }
 {{- end}}
 {{- end}}

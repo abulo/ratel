@@ -2796,6 +2796,17 @@ func (r *Client) ZRank(ctx context.Context, key, member string) (val int64, err 
 	}, acceptable)
 	return
 }
+func (r *Client) ZRankWithScore(ctx context.Context, key, member string) (val redis.RankScore, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ZRankWithScore(getCtx(ctx), r.k(key), member).Result()
+		return err
+	}, acceptable)
+	return
+}
 
 // ZRem 移除有序集 key 中的一个或多个成员，不存在的成员将被忽略。
 // 当 key 存在但不是有序集类型时，返回一个错误。
@@ -2934,6 +2945,17 @@ func (r *Client) ZRevRank(ctx context.Context, key, member string) (val int64, e
 			return err
 		}
 		val, err = conn.ZRevRank(getCtx(ctx), r.k(key), member).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) ZRevRankWithScore(ctx context.Context, key, member string) (val redis.RankScore, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ZRevRankWithScore(getCtx(ctx), r.k(key), member).Result()
 		return err
 	}, acceptable)
 	return
@@ -3195,6 +3217,18 @@ func (r *Client) ClientList(ctx context.Context) (val string, err error) {
 			return err
 		}
 		val, err = conn.ClientList(getCtx(ctx)).Result()
+		return err
+	}, acceptable)
+	return
+}
+
+func (r *Client) ClientInfo(ctx context.Context) (val *redis.ClientInfo, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ClientInfo(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -3725,6 +3759,17 @@ func (r *Client) FCallRo(ctx context.Context, function string, keys []string, ar
 	}, acceptable)
 	return
 }
+func (r *Client) FCallRO(ctx context.Context, function string, keys []string, args ...interface{}) (val interface{}, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.FCallRO(getCtx(ctx), function, r.ks(keys...), args...).Result()
+		return err
+	}, acceptable)
+	return
+}
 
 // Publish 将信息发送到指定的频道。
 func (r *Client) Publish(ctx context.Context, channel string, message any) (val int64, err error) {
@@ -3809,6 +3854,17 @@ func (r *Client) PubSubShardNumSub(ctx context.Context, channels ...string) (val
 			return err
 		}
 		val, err = conn.PubSubShardNumSub(getCtx(ctx), r.ks(channels...)...).Result()
+		return err
+	}, acceptable)
+	return
+}
+func (r *Client) ClusterMyShardID(ctx context.Context) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ClusterMyShardID(getCtx(ctx)).Result()
 		return err
 	}, acceptable)
 	return
@@ -4229,6 +4285,18 @@ func (r *Client) ACLDryRun(ctx context.Context, username string, command ...inte
 			return err
 		}
 		val, err = conn.ACLDryRun(getCtx(ctx), username, command...).Result()
+		return err
+	}, acceptable)
+	return
+}
+
+func (r *Client) ModuleLoadex(ctx context.Context, conf *redis.ModuleLoadexConfig) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ModuleLoadex(getCtx(ctx), conf).Result()
 		return err
 	}, acceptable)
 	return

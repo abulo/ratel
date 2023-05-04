@@ -41,15 +41,16 @@ func {{CamelStr .Table.TableName}}Proto(item dao.{{CamelStr .Table.TableName}}) 
 	return res
 }
 
-// {{CamelStr .Table.TableName}}ItemCreate 创建数据
-func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,newCtx *app.RequestContext) {
-
+{{- range .Method}}
+{{- if eq .Type "Create"}}
+// {{.Name}} 创建数据
+func {{.Name}}(ctx context.Context,newCtx *app.RequestContext) {
 	//判断这个服务能不能链接
 	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
 	if err != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"err": err,
-		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemCreate")
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  code.StatusText(code.RPCError),
@@ -58,7 +59,7 @@ func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,newCtx *app.Req
 	}
 	//链接服务
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
-	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}ItemCreateRequest{}
+	request := &{{.Pkg}}.{{.Name}}Request{}
 	// 数据绑定
 	var reqInfo dao.{{CamelStr .Table.TableName}}
 	if err := newCtx.BindAndValidate(&reqInfo); err != nil {
@@ -70,12 +71,12 @@ func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,newCtx *app.Req
 	}
 	request.Data = {{CamelStr .Table.TableName}}Proto(reqInfo)
 	// 执行服务
-	res, err := client.{{CamelStr .Table.TableName}}ItemCreate(ctx, request)
+	res, err := client.{{.Name}}(ctx, request)
 	if err != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"req": request,
 			"err": err,
-		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemCreate")
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
@@ -88,15 +89,15 @@ func {{CamelStr .Table.TableName}}ItemCreate(ctx context.Context,newCtx *app.Req
 		"msg":  res.GetMsg(),
 	})
 }
-
-// {{CamelStr .Table.TableName}}ItemUpdate 更新数据
-func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,newCtx *app.RequestContext) {
+{{- else if eq .Type "Update"}}
+// {{.Name}} 更新数据
+func {{.Name}}(ctx context.Context,newCtx *app.RequestContext) {
 	//判断这个服务能不能链接
 	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
 	if err != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"err": err,
-		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemUpdate")
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  code.StatusText(code.RPCError),
@@ -106,9 +107,8 @@ func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,newCtx *app.Req
 	//链接服务
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
 	{{Helper .Primary.AlisaColumnName }} := cast.ToInt64(newCtx.Param("{{Helper .Primary.AlisaColumnName }}"))
-	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}ItemUpdateRequest{}
+	request := &{{.Pkg}}.{{.Name}}Request{}
 	request.{{CamelStr .Primary.AlisaColumnName }} = {{Helper .Primary.AlisaColumnName }}
-
 	// 数据绑定
 	var reqInfo dao.{{CamelStr .Table.TableName}}
 	if err := newCtx.BindAndValidate(&reqInfo); err != nil {
@@ -119,14 +119,13 @@ func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,newCtx *app.Req
 		return
 	}
 	request.Data = {{CamelStr .Table.TableName}}Proto(reqInfo)
-
 	// 执行服务
-	res, err := client.{{CamelStr .Table.TableName}}ItemUpdate(ctx, request)
+	res, err := client.{{.Name}}(ctx, request)
 	if err != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"req": request,
 			"err": err,
-		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemUpdate")
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
@@ -139,15 +138,15 @@ func {{CamelStr .Table.TableName}}ItemUpdate(ctx context.Context,newCtx *app.Req
 		"msg":  res.GetMsg(),
 	})
 }
-
-// {{CamelStr .Table.TableName}}Item 获取数据
-func {{CamelStr .Table.TableName}}Item(ctx context.Context,newCtx *app.RequestContext){
+{{- else if eq .Type "Only"}}
+// {{.Name}} 查询单条数据
+func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 	//判断这个服务能不能链接
 	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
 	if err != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"err": err,
-		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}Item")
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  code.StatusText(code.RPCError),
@@ -157,15 +156,15 @@ func {{CamelStr .Table.TableName}}Item(ctx context.Context,newCtx *app.RequestCo
 	//链接服务
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
 	{{Helper .Primary.AlisaColumnName }} := cast.ToInt64(newCtx.Param("{{Helper .Primary.AlisaColumnName }}"))
-	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}ItemRequest{}
+	request := &{{.Pkg}}.{{.Name}}Request{}
 	request.{{CamelStr .Primary.AlisaColumnName }} = {{Helper .Primary.AlisaColumnName }}
 	// 执行服务
-	res, err := client.{{CamelStr .Table.TableName}}Item(ctx, request)
+	res, err := client.{{.Name}}(ctx, request)
 	if err != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"req": request,
 			"err": err,
-		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}Item")
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
@@ -179,15 +178,14 @@ func {{CamelStr .Table.TableName}}Item(ctx context.Context,newCtx *app.RequestCo
 		"data": {{CamelStr .Table.TableName}}Dao(res.GetData()),
 	})
 }
-
-
-// {{CamelStr .Table.TableName}}ItemDelete 删除数据
-func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,newCtx *app.RequestContext){
+{{- else if eq .Type "Delete"}}
+// {{.Name}} 删除数据
+func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
 	if err != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"err": err,
-		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemDelete")
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  code.StatusText(code.RPCError),
@@ -197,15 +195,15 @@ func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,newCtx *app.Req
 	//链接服务
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
 	{{Helper .Primary.AlisaColumnName }} := cast.ToInt64(newCtx.Param("{{Helper .Primary.AlisaColumnName }}"))
-	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}ItemDeleteRequest{}
+	request := &{{.Pkg}}.{{.Name}}Request{}
 	request.{{CamelStr .Primary.AlisaColumnName }} = {{Helper .Primary.AlisaColumnName }}
 	// 执行服务
-	res, err := client.{{CamelStr .Table.TableName}}ItemDelete(ctx, request)
+	res, err := client.{{.Name}}(ctx, request)
 	if err != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"req": request,
 			"err": err,
-		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}ItemDelete")
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
@@ -218,17 +216,55 @@ func {{CamelStr .Table.TableName}}ItemDelete(ctx context.Context,newCtx *app.Req
 		"msg":  res.GetMsg(),
 	})
 }
-
-{{- range .Method}}
-{{- if eq .Type "List"}}
-{{- if .Default}}
-// {{CamelStr .Table.TableName}}{{CamelStr .Name}} 列表数据
-func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx *app.RequestContext){
+{{- else if eq .Type "Item"}}
+// {{.Name}} 查询单条数据
+func {{.Name}}(newCtx *gin.Context){
+	//判断这个服务能不能链接
 	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
 	if err != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"err": err,
-		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}{{CamelStr .Name}}")
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		newCtx.JSON(http.StatusOK, gin.H{
+			"code": code.RPCError,
+			"msg":  code.StatusText(code.RPCError),
+		})
+		return
+	}
+	//链接服务
+	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
+	request := &{{.Pkg}}.{{.Name}}Request{}
+	// 构造查询条件
+	{{ApiToProto .Condition "request" "newCtx.Query"}}
+	// 执行服务
+	ctx := newCtx.Request.Context()
+	res, err := client.{{.Name}}(ctx, request)
+	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": request,
+			"err": err,
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		fromError := status.Convert(err)
+		newCtx.JSON(http.StatusOK, gin.H{
+			"code": code.ConvertToHttp(fromError.Code()),
+			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
+		})
+		return
+	}
+	newCtx.JSON(http.StatusOK, gin.H{
+		"code": res.GetCode(),
+		"msg":  res.GetMsg(),
+		"data": {{CamelStr .Table.TableName}}Dao(res.GetData()),
+	})
+}
+{{- else if eq .Type "List"}}
+// {{.Name}} 列表数据
+func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
+	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
+	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  code.StatusText(code.RPCError),
@@ -237,7 +273,7 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx 
 	}
 	//链接服务
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
-	request := &{{.Pkg}}.{{CamelStr .Table.TableName}}{{CamelStr .Name}}Request{}
+	request := &{{.Pkg}}.{{.Name}}Request{}
 	// 构造查询条件
 	{{ApiToProto .Condition "request" "newCtx.Query"}}
 	{{- if .Page}}
@@ -245,12 +281,12 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx 
 	request.PageSize = cast.ToInt64(newCtx.Query("pageSize"))
 	{{- end}}
 	// 执行服务
-	res, err := client.{{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx, request)
+	res, err := client.{{.Name}}(ctx, request)
 	if err != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"req": request,
 			"err": err,
-		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{CamelStr .Table.TableName}}{{CamelStr .Name}}")
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
 		newCtx.JSON(consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
@@ -262,7 +298,6 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx 
 	var total int64
 	{{- end}}
 	var list []dao.{{CamelStr .Table.TableName}}
-
 	if res.GetCode() == code.Success {
 		{{ if .Page}}
 		total = res.GetData().GetTotal()
@@ -289,7 +324,6 @@ func {{CamelStr .Table.TableName}}{{CamelStr .Name}}(ctx context.Context,newCtx 
 		{{- end}}
 	})
 }
-{{- end}}
 {{- end}}
 {{- end}}
 `

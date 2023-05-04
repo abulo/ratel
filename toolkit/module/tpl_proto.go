@@ -98,88 +98,78 @@ message {{CamelStr .Table.TableName}}ListObject {
 }
 {{- end}}
 
-// {{CamelStr .Table.TableName}}ItemCreateRequest 创建数据
-message {{CamelStr .Table.TableName}}ItemCreateRequest {
+
+{{- range .Method}}
+{{- if eq .Type "Create"}}
+// {{.Name}}Request 创建数据请求
+message {{.Name}}Request {
 	{{CamelStr .Table.TableName}}Object data = 1;
 }
-
-// {{CamelStr .Table.TableName}}ItemCreateResponse 创建数据响应
-message {{CamelStr .Table.TableName}}ItemCreateResponse {
+// {{.Name}}Response 创建数据响应
+message {{.Name}}Response {
 	int64 code = 1;
 	string msg = 2;
 }
-
-// {{CamelStr .Table.TableName}}ItemUpdateRequest 更新数据
-message {{CamelStr .Table.TableName}}ItemUpdateRequest {
+{{- else if eq .Type "Update"}}
+// {{.Name}}Request 更新数据请求
+message {{.Name}}Request {
+	// @inject_tag: db:"{{.Primary.AlisaColumnName}}" json:"{{Helper .Primary.AlisaColumnName}}"
 	{{.Primary.DataTypeMap.Proto}} {{ .Primary.AlisaColumnName}} = 1; //{{.Primary.ColumnComment}}
 	{{CamelStr .Table.TableName}}Object data = 2;
 }
-
-// {{CamelStr .Table.TableName}}ItemUpdateResponse 更新数据响应
-message {{CamelStr .Table.TableName}}ItemUpdateResponse {
+// {{.Name}}Response 更新数据响应
+message {{.Name}}Response {
 	int64 code = 1;
 	string msg = 2;
 }
-
-// {{CamelStr .Table.TableName}}ItemDeleteRequest 删除数据
-message {{CamelStr .Table.TableName}}ItemDeleteRequest {
+{{- else if eq .Type "Delete"}}
+// {{.Name}}Request 删除数据请求
+message {{.Name}}Request {
+	// @inject_tag: db:"{{.Primary.AlisaColumnName}}" json:"{{Helper .Primary.AlisaColumnName}}"
 	{{.Primary.DataTypeMap.Proto}} {{ .Primary.AlisaColumnName}} = 1; //{{.Primary.ColumnComment}}
 }
-
-// {{CamelStr .Table.TableName}}ItemDeleteResponse 删除数据响应
-message {{CamelStr .Table.TableName}}ItemDeleteResponse {
+// {{.Name}}Response 删除数据响应
+message {{.Name}}Response {
 	int64 code = 1;
 	string msg = 2;
 }
-
-
-// {{CamelStr .Table.TableName}}ItemRequest 数据
-message {{CamelStr .Table.TableName}}ItemRequest {
+{{- else if eq .Type "Only"}}
+// {{.Name}}Request 查询单条数据请求
+message {{.Name}}Request {
+	// @inject_tag: db:"{{.Primary.AlisaColumnName}}" json:"{{Helper .Primary.AlisaColumnName}}"
 	{{.Primary.DataTypeMap.Proto}} {{ .Primary.AlisaColumnName}} = 1; //{{.Primary.ColumnComment}}
 }
-
-// {{CamelStr .Table.TableName}}ItemResponse 数据响应
-message {{CamelStr .Table.TableName}}ItemResponse {
+// {{.Name}}Response 查询单条数据响应
+message {{.Name}}Response {
 	int64 code = 1;
 	string msg = 2;
 	{{CamelStr .Table.TableName}}Object data = 3;
 }
-
-{{- range .Method}}
-{{- if eq .Type "List"}}
-{{- if .Default}}
-// {{CamelStr .Table.TableName}}{{CamelStr .Name}}Request 列表数据
-message {{CamelStr .Table.TableName}}{{CamelStr .Name}}Request {
+{{- else if eq .Type "Item"}}
+// {{.Name}}Request 查询单条数据请求
+message {{.Name}}Request {
 	{{ProtoRequest .Condition}}
-	{{- if .Page}}
-	int64 page_num = {{Add .ConditionTotal 1}};
-  	int64 page_size = {{Add .ConditionTotal 2}};
-	{{- end}}
 }
-
-// {{CamelStr .Table.TableName}}{{CamelStr .Name}}Response 数据响应
-message {{CamelStr .Table.TableName}}{{CamelStr .Name}}Response {
+// {{.Name}}Response 查询单条数据响应
+message {{.Name}}Response {
 	int64 code = 1;
-  	string msg = 2;
-	{{- if .Page}}
-	{{CamelStr .Table.TableName}}ListObject data = 3;
-	{{- else}}
-	repeated {{CamelStr .Table.TableName}}Object data = 3;
-	{{- end }}
+	string msg = 2;
+	{{CamelStr .Table.TableName}}Object data = 3;
 }
-{{- else}}
-
-// {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Request 列表数据
-message {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Request {
+{{- else if eq .Type "List"}}
+// {{.Name}}Request 列表数据
+message {{.Name}}Request {
 	{{ProtoRequest .Condition}}
 	{{- if .Page}}
+	// @inject_tag: db:"page_num" json:"pageNum"
 	int64 page_num = {{Add .ConditionTotal 1}};
+	// @inject_tag: db:"page_size" json:"pageSize"
   	int64 page_size = {{Add .ConditionTotal 2}};
 	{{- end}}
 }
 
-// {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response 数据响应
-message {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response {
+// {{.Name}}Response 数据响应
+message {{.Name}}Response {
 	int64 code = 1;
   	string msg = 2;
 	{{- if .Page}}
@@ -189,38 +179,13 @@ message {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response {
 	{{- end }}
 }
 {{- end}}
-{{- else}}
-
-// {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Request 单列数据
-message {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Request {
-	{{ProtoRequest .Condition}}
-}
-
-// {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Response 单列数据
-message {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Response {
-	int64 code = 1;
-	string msg = 2;
-	{{CamelStr .Table.TableName}}Object data = 3;
-}
 {{- end}}
-{{- end}}
+
 
 // {{CamelStr .Table.TableName}}Service 服务
 service {{CamelStr .Table.TableName}}Service{
-	rpc {{CamelStr .Table.TableName}}ItemCreate({{CamelStr .Table.TableName}}ItemCreateRequest) returns ({{CamelStr .Table.TableName}}ItemCreateResponse);
-	rpc {{CamelStr .Table.TableName}}ItemUpdate({{CamelStr .Table.TableName}}ItemUpdateRequest) returns ({{CamelStr .Table.TableName}}ItemUpdateResponse);
-	rpc {{CamelStr .Table.TableName}}ItemDelete({{CamelStr .Table.TableName}}ItemDeleteRequest) returns ({{CamelStr .Table.TableName}}ItemDeleteResponse);
-	rpc {{CamelStr .Table.TableName}}Item({{CamelStr .Table.TableName}}ItemRequest) returns ({{CamelStr .Table.TableName}}ItemResponse);
 	{{- range .Method}}
-	{{- if eq .Type "List"}}
-	{{- if .Default}}
-	rpc {{CamelStr .Table.TableName}}{{CamelStr .Name}}({{CamelStr .Table.TableName}}{{CamelStr .Name}}Request) returns ({{CamelStr .Table.TableName}}{{CamelStr .Name}}Response);
-	{{- else}}
-	rpc {{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}({{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Request) returns ({{CamelStr .Table.TableName}}ListBy{{CamelStr .Name}}Response);
-	{{- end}}
-	{{- else}}
-	rpc {{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}({{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Request) returns ({{CamelStr .Table.TableName}}ItemBy{{CamelStr .Name}}Response);
-	{{- end}}
+	rpc {{.Name}}({{.Name}}Request) returns ({{.Name}}Response);
 	{{- end}}
 }
 `

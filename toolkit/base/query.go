@@ -56,13 +56,13 @@ type ModuleParam struct {
 
 // Method 构造的函数
 type Method struct {
-	Type           string   // 方法类型(list多个/one单条)
+	Type           string   // 方法类型(List多个/Item单条/Create新增/Update修改/Delete删除/Only单个)
 	Name           string   // 函数名称
+	Alias          string   // 函数别名
 	Condition      []Column // 函数需要的条件信息
 	ConditionTotal int      // 条件数量
 	Table          Table    // 表信息
 	TableColumn    []Column // 表结构信息
-	Default        bool     // 默认
 	Pkg            string   // 包名
 	PkgPath        string   // 包名路径
 	Primary        Column   // 主键信息

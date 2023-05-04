@@ -2,7 +2,6 @@ package frontend
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/abulo/ratel/v3/toolkit/project"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
