@@ -290,6 +290,18 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	tpl := make([]string, 0)
+	tpl = append(tpl, "module", "proto", "service")
+
+	tplSelected := make([]string, 0)
+	if err := survey.AskOne(&survey.MultiSelect{
+		Message: "模板",
+		Help:    "模板列表",
+		Options: tpl,
+	}, &tplSelected); err != nil || len(tplSelected) == 0 {
+		return
+	}
+
 	var newMethodList []base.Method
 	for key, val := range methodList {
 		if util.InArray(val.Name, multiSelected) {
@@ -307,38 +319,46 @@ func Run(cmd *cobra.Command, args []string) {
 		Method:      newMethodList,
 		Page:        pageBool,
 	}
-	GenerateModule(moduleParam, fullModuleDir, tableName)
-	GenerateProto(moduleParam, fullProtoDir, fullServiceDir, tableName)
-	GenerateService(moduleParam, fullServiceDir, tableName)
-	strLenSlot := util.Explode("/", dir)
-	pkgName := strLenSlot[len(strLenSlot)-1]
-	if len(strLenSlot) > 1 {
-		pkgName = strLenSlot[len(strLenSlot)-2]
+	if util.InArray("module", tplSelected) {
+		GenerateModule(moduleParam, fullModuleDir, tableName)
 	}
 
-	builder := strings.Builder{}
-	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("package %s", pkgName))
-	builder.WriteString("\n")
-	builder.WriteString("import (")
-	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("	\"%s/service/%s\"", moduleParam.ModName, moduleParam.PkgPath))
-	builder.WriteString("\n")
-	builder.WriteString("\n")
-	builder.WriteString("	\"github.com/abulo/ratel/v3/server/xgrpc\"")
-	builder.WriteString("\n")
-	builder.WriteString(")")
-	builder.WriteString("\n")
-	builder.WriteString("func Registry(server *xgrpc.Server) {")
-	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("	// %s->%s", moduleParam.Table.TableComment, moduleParam.Table.TableName))
-	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("	%s.Register%sServiceServer(server.Server, &%s.Srv%sServiceServer{", moduleParam.Pkg, base.CamelStr(moduleParam.Table.TableName), moduleParam.Pkg, base.CamelStr(moduleParam.Table.TableName)))
-	builder.WriteString("\n")
-	builder.WriteString("		Server: server,")
-	builder.WriteString("\n")
-	builder.WriteString("	})")
-	builder.WriteString("\n")
-	builder.WriteString("}")
-	fmt.Println(builder.String())
+	if util.InArray("proto", tplSelected) {
+		GenerateProto(moduleParam, fullProtoDir, fullServiceDir, tableName)
+	}
+
+	if util.InArray("service", tplSelected) {
+		GenerateService(moduleParam, fullServiceDir, tableName)
+		strLenSlot := util.Explode("/", dir)
+		pkgName := strLenSlot[len(strLenSlot)-1]
+		if len(strLenSlot) > 1 {
+			pkgName = strLenSlot[len(strLenSlot)-2]
+		}
+
+		builder := strings.Builder{}
+		builder.WriteString("\n")
+		builder.WriteString(fmt.Sprintf("package %s", pkgName))
+		builder.WriteString("\n")
+		builder.WriteString("import (")
+		builder.WriteString("\n")
+		builder.WriteString(fmt.Sprintf("	\"%s/service/%s\"", moduleParam.ModName, moduleParam.PkgPath))
+		builder.WriteString("\n")
+		builder.WriteString("\n")
+		builder.WriteString("	\"github.com/abulo/ratel/v3/server/xgrpc\"")
+		builder.WriteString("\n")
+		builder.WriteString(")")
+		builder.WriteString("\n")
+		builder.WriteString("func Registry(server *xgrpc.Server) {")
+		builder.WriteString("\n")
+		builder.WriteString(fmt.Sprintf("	// %s->%s", moduleParam.Table.TableComment, moduleParam.Table.TableName))
+		builder.WriteString("\n")
+		builder.WriteString(fmt.Sprintf("	%s.Register%sServiceServer(server.Server, &%s.Srv%sServiceServer{", moduleParam.Pkg, base.CamelStr(moduleParam.Table.TableName), moduleParam.Pkg, base.CamelStr(moduleParam.Table.TableName)))
+		builder.WriteString("\n")
+		builder.WriteString("		Server: server,")
+		builder.WriteString("\n")
+		builder.WriteString("	})")
+		builder.WriteString("\n")
+		builder.WriteString("}")
+		fmt.Println(builder.String())
+	}
 }

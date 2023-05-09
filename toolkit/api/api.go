@@ -372,17 +372,17 @@ func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, pkgPath,
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "更新"))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("handle.PUT(\"%s\",%s)", apiUrl+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName), pkg+"."+v.Name))
+			builder.WriteString(fmt.Sprintf("handle.PUT(\"%s\",%s)", apiUrl+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName)+"/put", pkg+"."+v.Name))
 		case "Delete":
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "删除"))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("handle.DELETE(\"%s\",%s)", apiUrl+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName), pkg+"."+v.Name))
+			builder.WriteString(fmt.Sprintf("handle.DELETE(\"%s\",%s)", apiUrl+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName)+"/delete", pkg+"."+v.Name))
 		case "Only":
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "单条数据信息查看"))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("handle.GET(\"%s\",%s)", apiUrl+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName), pkg+"."+v.Name))
+			builder.WriteString(fmt.Sprintf("handle.GET(\"%s\",%s)", apiUrl+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName)+"/item", pkg+"."+v.Name))
 		case "Item":
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "单条数据信息查看"))
