@@ -45,6 +45,7 @@ func Run(cmd *cobra.Command, args []string) {
 	tableName := ""
 	page := ""
 	multiSelect := make([]string, 0)
+	delete := ""
 	if err := survey.AskOne(&survey.Input{
 		Message: "模型路径",
 		Help:    "文件夹路径",
@@ -62,6 +63,13 @@ func Run(cmd *cobra.Command, args []string) {
 		Help:    "列表分页",
 		Options: []string{"yes", "no"},
 	}, &page); err != nil || page == "" {
+		return
+	}
+	if err := survey.AskOne(&survey.Select{
+		Message: "是否软删除",
+		Help:    "是否软删除",
+		Options: []string{"yes", "no"},
+	}, &delete); err != nil || delete == "" {
 		return
 	}
 	// 文件夹的路径
@@ -127,9 +135,14 @@ func Run(cmd *cobra.Command, args []string) {
 	var methodList []base.Method
 
 	var pageBool bool
-
+	
 	if page == "yes" {
 		pageBool = true
+	}
+
+	var deleteBool bool
+	if delete == "yes" {
+		deleteBool = true
 	}
 
 	//添加默认方法
@@ -145,6 +158,7 @@ func Run(cmd *cobra.Command, args []string) {
 		PkgPath:        dir,
 		ModName:        mod,
 		Page:           pageBool,
+		SoftDelete:     deleteBool,
 	}, base.Method{
 		Table:          tableItem,
 		TableColumn:    tableColumn,
@@ -157,6 +171,7 @@ func Run(cmd *cobra.Command, args []string) {
 		PkgPath:        dir,
 		ModName:        mod,
 		Page:           pageBool,
+		SoftDelete:     deleteBool,
 	}, base.Method{
 		Table:          tableItem,
 		TableColumn:    tableColumn,
@@ -169,6 +184,20 @@ func Run(cmd *cobra.Command, args []string) {
 		PkgPath:        dir,
 		ModName:        mod,
 		Page:           pageBool,
+		SoftDelete:     deleteBool,
+	}, base.Method{
+		Table:          tableItem,
+		TableColumn:    tableColumn,
+		Type:           "Recover",
+		Name:           base.CamelStr(tableItem.TableName) + "Recover",
+		Condition:      nil,
+		ConditionTotal: 0,
+		Primary:        tablePrimary,
+		Pkg:            dir[strLen+1:],
+		PkgPath:        dir,
+		ModName:        mod,
+		Page:           pageBool,
+		SoftDelete:     deleteBool,
 	}, base.Method{
 		Table:          tableItem,
 		TableColumn:    tableColumn,
@@ -181,12 +210,14 @@ func Run(cmd *cobra.Command, args []string) {
 		PkgPath:        dir,
 		ModName:        mod,
 		Page:           pageBool,
+		SoftDelete:     deleteBool,
 	})
 
 	multiSelect = append(multiSelect,
 		base.CamelStr(tableItem.TableName)+"Create",
 		base.CamelStr(tableItem.TableName)+"Update",
 		base.CamelStr(tableItem.TableName)+"Delete",
+		base.CamelStr(tableItem.TableName)+"Recover",
 		base.CamelStr(tableItem.TableName),
 	)
 	//获取的索引信息没有
@@ -204,6 +235,7 @@ func Run(cmd *cobra.Command, args []string) {
 			PkgPath:        dir,
 			ModName:        mod,
 			Page:           pageBool,
+			SoftDelete:     deleteBool,
 		}
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
@@ -250,6 +282,7 @@ func Run(cmd *cobra.Command, args []string) {
 				PkgPath:        dir,
 				ModName:        mod,
 				Page:           pageBool,
+				SoftDelete:     deleteBool,
 			}
 			multiSelect = append(multiSelect, methodName)
 			//添加到集合中
@@ -276,6 +309,7 @@ func Run(cmd *cobra.Command, args []string) {
 			PkgPath:        dir,
 			ModName:        mod,
 			Page:           pageBool,
+			SoftDelete:     deleteBool,
 		}
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
@@ -318,6 +352,7 @@ func Run(cmd *cobra.Command, args []string) {
 		TableColumn: tableColumn,
 		Method:      newMethodList,
 		Page:        pageBool,
+		SoftDelete:  deleteBool,
 	}
 	if util.InArray("module", tplSelected) {
 		GenerateModule(moduleParam, fullModuleDir, tableName)

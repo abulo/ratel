@@ -23,6 +23,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/proto"
 )
 
 // {{.Table.TableName}} {{.Table.TableComment}}
@@ -180,6 +181,44 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 }
 {{- else if eq .Type "Delete"}}
 // {{.Name}} 删除数据
+func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
+	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
+	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		newCtx.JSON(consts.StatusOK, utils.H{
+			"code": code.RPCError,
+			"msg":  code.StatusText(code.RPCError),
+		})
+		return
+	}
+	//链接服务
+	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
+	{{Helper .Primary.AlisaColumnName }} := cast.ToInt64(newCtx.Param("{{Helper .Primary.AlisaColumnName }}"))
+	request := &{{.Pkg}}.{{.Name}}Request{}
+	request.{{CamelStr .Primary.AlisaColumnName }} = {{Helper .Primary.AlisaColumnName }}
+	// 执行服务
+	res, err := client.{{.Name}}(ctx, request)
+	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": request,
+			"err": err,
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		fromError := status.Convert(err)
+		newCtx.JSON(consts.StatusOK, utils.H{
+			"code": code.ConvertToHttp(fromError.Code()),
+			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
+		})
+		return
+	}
+	newCtx.JSON(consts.StatusOK, utils.H{
+		"code": res.GetCode(),
+		"msg":  res.GetMsg(),
+	})
+}
+{{- else if eq .Type "Recover"}}
+// {{.Name}} 恢复数据
 func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
 	if err != nil {

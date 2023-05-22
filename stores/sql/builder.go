@@ -410,14 +410,10 @@ func (builder *Builder) getInsertMap(data any) (columns []string, values map[str
 	case reflect.Struct:
 		var ignore bool
 		for i := 0; i < stValue.NumField(); i++ {
-
 			v := reflect.Indirect(stValue.Field(i))
-
 			//处理嵌套的struct中的db映射字段
 			if v.Kind() == reflect.Struct {
-
 				var ignore bool
-
 				switch v.Interface().(type) {
 				case time.Time:
 					ignore = true

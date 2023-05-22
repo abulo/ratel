@@ -1,3 +1,5 @@
+[option]
+    deleted = true
 [db]
     Host = "172.18.1.3"
     Port = "3306"

@@ -127,7 +127,11 @@ type {{CamelStr .Table.TableName}} struct {
 	{{- if eq .IsNullable "YES" }}
 	{{CamelStr .ColumnName}}	{{.DataTypeMap.Empty}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
 	{{- else }}
-	{{CamelStr .ColumnName}}	{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
+	{{- if eq .ColumnKey "PRI" }}
+	{{CamelStr .ColumnName}}	*{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}},-" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}},PRI
+	{{- else }}
+	{{CamelStr .ColumnName}}	*{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
+	{{- end}}
 	{{- end}}
 	{{- end}}
 }

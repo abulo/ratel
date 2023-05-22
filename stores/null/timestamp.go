@@ -76,7 +76,7 @@ func (t TimeStamp) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (t *TimeStamp) UnmarshalJSON(data []byte) error {
 	t.Set = true
-	if bytes.Equal(data, NullBytes) {
+	if bytes.Equal(data, NullBytes) || len(data) == 2 {
 		t.Valid = false
 		t.TimeStamp = time.Time{}
 		return nil

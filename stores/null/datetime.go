@@ -76,12 +76,11 @@ func (t DateTime) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (t *DateTime) UnmarshalJSON(data []byte) error {
 	t.Set = true
-	if bytes.Equal(data, NullBytes) {
+	if bytes.Equal(data, NullBytes) || len(data) == 2 {
 		t.Valid = false
 		t.DateTime = time.Time{}
 		return nil
 	}
-
 	// customize from golang time/time.go
 	// Fractional seconds are handled implicitly by Parse.
 	var err error
@@ -89,8 +88,6 @@ func (t *DateTime) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	// ---
-
 	t.Valid = true
 	return nil
 }

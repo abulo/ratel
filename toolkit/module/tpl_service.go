@@ -162,6 +162,28 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Co
 		Msg:  code.StatusText(code.Success),
 	}, err
 }
+{{- else if eq .Type "Recover"}}
+// {{.Name}} 恢复数据
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Context,request *{{.Name}}Request)(*{{.Name}}Response,error){
+	{{Helper .Primary.AlisaColumnName}} := request.Get{{CamelStr .Primary.AlisaColumnName}}()
+	if {{Helper .Primary.AlisaColumnName}} < 1 {
+		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.ParamInvalid), code.StatusText(code.ParamInvalid))
+	}
+	_, err := {{.Pkg}}.{{.Name}}(ctx, {{Helper .Primary.AlisaColumnName}})
+	if err != nil {
+		if sql.ResultAccept(err) != nil {
+			globalLogger.Logger.WithFields(logrus.Fields{
+				"req": {{Helper .Primary.AlisaColumnName}},
+				"err": err,
+			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		}
+		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
+	}
+	return &{{.Name}}Response{
+		Code: code.Success,
+		Msg:  code.StatusText(code.Success),
+	}, err
+}
 {{- else if eq .Type "Only"}}
 // {{.Name}} 查询单条数据
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.Context,request *{{.Name}}Request)(*{{.Name}}Response,error){

@@ -86,7 +86,11 @@ import "google/protobuf/timestamp.proto";
 message {{CamelStr .Table.TableName}}Object {
 	{{- range .TableColumn}}
 	// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"
+	{{- if .DataTypeMap.OptionProto}}
+	optional {{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
+	{{- else }}
 	{{.DataTypeMap.Proto}} {{.ColumnName}} = {{.PosiTion}}; //{{.ColumnComment}}
+	{{- end}}
 	{{- end}}
 }
 
@@ -124,6 +128,17 @@ message {{.Name}}Response {
 }
 {{- else if eq .Type "Delete"}}
 // {{.Name}}Request 删除数据请求
+message {{.Name}}Request {
+	// @inject_tag: db:"{{.Primary.AlisaColumnName}}" json:"{{Helper .Primary.AlisaColumnName}}"
+	{{.Primary.DataTypeMap.Proto}} {{ .Primary.AlisaColumnName}} = 1; //{{.Primary.ColumnComment}}
+}
+// {{.Name}}Response 删除数据响应
+message {{.Name}}Response {
+	int64 code = 1;
+	string msg = 2;
+}
+{{- else if eq .Type "Recover"}}
+// {{.Name}}Request 恢复数据请求
 message {{.Name}}Request {
 	// @inject_tag: db:"{{.Primary.AlisaColumnName}}" json:"{{Helper .Primary.AlisaColumnName}}"
 	{{.Primary.DataTypeMap.Proto}} {{ .Primary.AlisaColumnName}} = 1; //{{.Primary.ColumnComment}}

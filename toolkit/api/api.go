@@ -42,6 +42,7 @@ func Run(cmd *cobra.Command, args []string) {
 	page := ""
 	apiUrl := ""
 	multiSelect := make([]string, 0)
+	delete := ""
 	if err := survey.AskOne(&survey.Input{
 		Message: "接口路径",
 		Help:    "文件夹路径",
@@ -72,6 +73,13 @@ func Run(cmd *cobra.Command, args []string) {
 		Message: "接口地址",
 		Help:    "地址",
 	}, &apiUrl); err != nil || apiUrl == "" {
+		return
+	}
+	if err := survey.AskOne(&survey.Select{
+		Message: "是否软删除",
+		Help:    "是否软删除",
+		Options: []string{"yes", "no"},
+	}, &delete); err != nil || delete == "" {
 		return
 	}
 
@@ -134,6 +142,10 @@ func Run(cmd *cobra.Command, args []string) {
 	if page == "yes" {
 		pageBool = true
 	}
+	var deleteBool bool
+	if delete == "yes" {
+		deleteBool = true
+	}
 
 	//添加默认方法
 	methodList = append(methodList, base.Method{
@@ -148,6 +160,7 @@ func Run(cmd *cobra.Command, args []string) {
 		PkgPath:        dir,
 		ModName:        mod,
 		Page:           pageBool,
+		SoftDelete:     deleteBool,
 	}, base.Method{
 		Table:          tableItem,
 		TableColumn:    tableColumn,
@@ -160,6 +173,7 @@ func Run(cmd *cobra.Command, args []string) {
 		PkgPath:        dir,
 		ModName:        mod,
 		Page:           pageBool,
+		SoftDelete:     deleteBool,
 	}, base.Method{
 		Table:          tableItem,
 		TableColumn:    tableColumn,
@@ -172,6 +186,20 @@ func Run(cmd *cobra.Command, args []string) {
 		PkgPath:        dir,
 		ModName:        mod,
 		Page:           pageBool,
+		SoftDelete:     deleteBool,
+	}, base.Method{
+		Table:          tableItem,
+		TableColumn:    tableColumn,
+		Type:           "Recover",
+		Name:           base.CamelStr(tableItem.TableName) + "Recover",
+		Condition:      nil,
+		ConditionTotal: 0,
+		Primary:        tablePrimary,
+		Pkg:            dir[strLen+1:],
+		PkgPath:        dir,
+		ModName:        mod,
+		Page:           pageBool,
+		SoftDelete:     deleteBool,
 	}, base.Method{
 		Table:          tableItem,
 		TableColumn:    tableColumn,
@@ -184,12 +212,14 @@ func Run(cmd *cobra.Command, args []string) {
 		PkgPath:        dir,
 		ModName:        mod,
 		Page:           pageBool,
+		SoftDelete:     deleteBool,
 	})
 
 	multiSelect = append(multiSelect,
 		base.CamelStr(tableItem.TableName)+"Create",
 		base.CamelStr(tableItem.TableName)+"Update",
 		base.CamelStr(tableItem.TableName)+"Delete",
+		base.CamelStr(tableItem.TableName)+"Recover",
 		base.CamelStr(tableItem.TableName),
 	)
 	//获取的索引信息没有
@@ -207,6 +237,7 @@ func Run(cmd *cobra.Command, args []string) {
 			PkgPath:        dir,
 			ModName:        mod,
 			Page:           pageBool,
+			SoftDelete:     deleteBool,
 		}
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
@@ -253,6 +284,7 @@ func Run(cmd *cobra.Command, args []string) {
 				PkgPath:        dir,
 				ModName:        mod,
 				Page:           pageBool,
+				SoftDelete:     deleteBool,
 			}
 			multiSelect = append(multiSelect, methodName)
 			//添加到集合中
@@ -279,6 +311,7 @@ func Run(cmd *cobra.Command, args []string) {
 			PkgPath:        dir,
 			ModName:        mod,
 			Page:           pageBool,
+			SoftDelete:     deleteBool,
 		}
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
@@ -378,6 +411,11 @@ func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, pkgPath,
 			builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "删除"))
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("handle.DELETE(\"%s\",%s)", apiUrl+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName)+"/delete", pkg+"."+v.Name))
+		case "Recover":
+			builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "恢复"))
+			builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("handle.PUT(\"%s\",%s)", apiUrl+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName)+"/recover", pkg+"."+v.Name))
 		case "Only":
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "单条数据信息查看"))

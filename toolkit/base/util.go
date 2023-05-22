@@ -39,9 +39,9 @@ func Add(numberOne, numberTwo any) int {
 func Convert(Condition []Column) string {
 	builder := strings.Builder{}
 	for _, item := range Condition {
-		builder.WriteString(fmt.Sprintf("	if !util.Empty(condition[\"%s\"]){", Helper(item.ColumnName)))
+		builder.WriteString(fmt.Sprintf("	if val,ok := (condition[\"%s\"]) ;ok {", Helper(item.ColumnName)))
 		builder.WriteString("\n")
-		builder.WriteString(fmt.Sprintf("		builder.Where(\"%s\",condition[\"%s\"])", Char(item.ColumnName), Helper(item.ColumnName)))
+		builder.WriteString(fmt.Sprintf("		builder.Where(\"%s\",val)", Char(item.ColumnName)))
 		builder.WriteString("\n")
 		builder.WriteString("	}")
 		builder.WriteString("\n")
@@ -58,49 +58,49 @@ func ModuleDaoConvertProto(Condition []Column, res, resItem string) string {
 			case "null.Int32":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = *%s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
 				builder.WriteString("		}")
 				builder.WriteString("\n")
 			case "null.Int64":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = *%s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
 				builder.WriteString("		}")
 				builder.WriteString("\n")
 			case "null.Float32":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = *%s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
 				builder.WriteString("		}")
 				builder.WriteString("\n")
 			case "null.Float64":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = *%s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
 				builder.WriteString("		}")
 				builder.WriteString("\n")
 			case "null.String":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = *%s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
 				builder.WriteString("		}")
 				builder.WriteString("\n")
 			case "null.Bytes":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = *%s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
 				builder.WriteString("		}")
 				builder.WriteString("\n")
 			case "null.Bool":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = *%s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
 				builder.WriteString("		}")
 				builder.WriteString("\n")
@@ -135,7 +135,7 @@ func ModuleDaoConvertProto(Condition []Column, res, resItem string) string {
 			case "null.JSON":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToString(*%s.%s.Ptr())", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToString(%s.%s.Ptr())", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
 				builder.WriteString("		}")
 				builder.WriteString("\n")
@@ -215,15 +215,27 @@ func ProtoRequest(condition []Column) string {
 	for _, item := range condition {
 		builder.WriteString(fmt.Sprintf("	// @inject_tag: db:\"%s\" json:\"%s\"", item.ColumnName, Helper(item.ColumnName)))
 		builder.WriteString("\n")
-		if item.DataTypeMap.Proto == "int32" || item.DataTypeMap.Proto == "int64" {
-			item.DataTypeMap.Proto = "string"
+		// if item.DataTypeMap.Proto == "int32" || item.DataTypeMap.Proto == "int64" {
+		// item.DataTypeMap.Proto = "string"
+		// }
+
+		if item.DataTypeMap.OptionProto {
+			builder.WriteString(fmt.Sprintf("	%s %s %s = %d; // %s",
+				"optional",
+				item.DataTypeMap.Proto,
+				item.ColumnName,
+				item.PosiTion,
+				item.ColumnComment,
+			))
+		} else {
+			builder.WriteString(fmt.Sprintf("	%s %s = %d; // %s",
+				item.DataTypeMap.Proto,
+				item.ColumnName,
+				item.PosiTion,
+				item.ColumnComment,
+			))
 		}
-		builder.WriteString(fmt.Sprintf("	%s %s = %d; // %s",
-			item.DataTypeMap.Proto,
-			item.ColumnName,
-			item.PosiTion,
-			item.ColumnComment,
-		))
+
 		builder.WriteString("\n")
 	}
 	return builder.String()
@@ -231,48 +243,49 @@ func ProtoRequest(condition []Column) string {
 
 func ApiToProto(Condition []Column, res, request string) string {
 	builder := strings.Builder{}
+	builder.WriteString("\n")
 	for _, item := range Condition {
 		switch item.DataTypeMap.Default {
 		case "null.Int32":
 		case "int32":
-			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			// builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.Int32(cast.ToInt32(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s =  cast.ToString(cast.ToInt32(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
-			builder.WriteString("\n")
-			builder.WriteString("	}")
-			builder.WriteString("\n")
+			// builder.WriteString("	}")
+			// builder.WriteString("\n")
 		case "null.Int64":
 		case "int64":
-			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			// builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.Int64(cast.ToInt64(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s =  cast.ToString(cast.ToInt64(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
-			builder.WriteString("\n")
-			builder.WriteString("	}")
-			builder.WriteString("\n")
+			// builder.WriteString("	}")
+			// builder.WriteString("\n")
 		case "null.Float32":
 		case "float32":
-			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			// builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("		%s.%s = proto.Float32(cast.ToFloat32(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToFloat32(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
-			builder.WriteString("\n")
-			builder.WriteString("	}")
-			builder.WriteString("\n")
+			// builder.WriteString("	}")
+			// builder.WriteString("\n")
 		case "null.Float64":
 		case "float64":
-			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToFloat64(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("		%s.%s = proto.Float64(cast.ToFloat64(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
-			builder.WriteString("	}")
-			builder.WriteString("\n")
+			// builder.WriteString("	}")
+			// builder.WriteString("\n")
 		case "null.String":
 		case "string":
-			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			// builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("		%s.%s = proto.String(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToString(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
-			builder.WriteString("\n")
-			builder.WriteString("	}")
-			builder.WriteString("\n")
+			// builder.WriteString("	}")
+			// builder.WriteString("\n")
 		case "null.Bytes":
 			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
@@ -332,7 +345,7 @@ func ApiToProto(Condition []Column, res, request string) string {
 func ModuleProtoConvertMap(Condition []Column, request string) string {
 	builder := strings.Builder{}
 	for _, item := range Condition {
-		builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+		builder.WriteString(fmt.Sprintf("	if %s.%s != nil {", request, CamelStr(item.ColumnName)))
 		builder.WriteString("\n")
 		builder.WriteString(fmt.Sprintf("		condition[\"%s\"] = %s.Get%s()", Helper(item.ColumnName), request, CamelStr(item.ColumnName)))
 		builder.WriteString("	}")
@@ -344,180 +357,181 @@ func ModuleProtoConvertMap(Condition []Column, request string) string {
 // ModuleProtoConvertDao 条件转换
 func ModuleProtoConvertDao(Condition []Column, res, request string) string {
 	builder := strings.Builder{}
+	builder.WriteString("\n")
 	for _, item := range Condition {
 		if item.IsNullable == "YES" {
 			switch item.DataTypeMap.Empty {
 			case "null.Int32":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.Int32From(%s.Get%s()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
+				// builder.WriteString("\n")
+				// builder.WriteString("	}")
 				builder.WriteString("\n")
 			case "null.Int64":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.Int64From(%s.Get%s()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
+				// builder.WriteString("\n")
+				// builder.WriteString("	}")
 				builder.WriteString("\n")
 			case "null.Float32":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.Float32From(%s.Get%s()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
+				// builder.WriteString("\n")
+				// builder.WriteString("	}")
 				builder.WriteString("\n")
 			case "null.Float64":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.Float64From(%s.Get%s()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
+				// builder.WriteString("\n")
+				// builder.WriteString("	}")
 				builder.WriteString("\n")
 			case "null.String":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.StringFrom(%s.Get%s()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
+				// builder.WriteString("\n")
+				// builder.WriteString("	}")
 				builder.WriteString("\n")
 			case "null.Bytes":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.BytesFrom(%s.Get%s()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
+				// builder.WriteString("\n")
+				// builder.WriteString("	}")
 				builder.WriteString("\n")
 			case "null.JSON":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.JSONFrom([]byte(%s.Get%s())) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
+				// builder.WriteString("\n")
+				// builder.WriteString("	}")
 				builder.WriteString("\n")
 			case "null.Bool":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.BoolFrom(%s.Get%s()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
+				// builder.WriteString("\n")
+				// builder.WriteString("	}")
 				builder.WriteString("\n")
 			case "null.CTime":
-				builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.CTimeFrom(%s.%s.AsTime()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
+				// builder.WriteString("\n")
+				// builder.WriteString("	}")
 				builder.WriteString("\n")
 			case "null.Date":
-				builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.DateFrom(%s.%s.AsTime()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
+				// builder.WriteString("\n")
+				// builder.WriteString("	}")
 				builder.WriteString("\n")
 			case "null.DateTime":
-				builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.DateTimeFrom(%s.%s.AsTime()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
+				// builder.WriteString("\n")
+				// builder.WriteString("	}")
 				builder.WriteString("\n")
 			case "null.TimeStamp":
-				builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.TimeStampFrom(%s.%s.AsTime()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
+				// builder.WriteString("\n")
+				// builder.WriteString("	}")
 				builder.WriteString("\n")
 			}
 		} else {
 			switch item.DataTypeMap.Default {
 			case "int32":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = %s.Get%s() // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
-				builder.WriteString("\n")
+				// builder.WriteString("	}")
+				// builder.WriteString("\n")
 			case "int64":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = %s.Get%s() // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
-				builder.WriteString("\n")
+				// builder.WriteString("	}")
+				// builder.WriteString("\n")
 			case "float32":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = %s.Get%s() // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
-				builder.WriteString("\n")
+				// builder.WriteString("	}")
+				// builder.WriteString("\n")
 			case "float64":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = %s.Get%s() // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
-				builder.WriteString("\n")
+				// builder.WriteString("	}")
+				// builder.WriteString("\n")
 			case "string":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = %s.Get%s() // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
-				builder.WriteString("\n")
-				builder.WriteString("	}")
-				builder.WriteString("\n")
+				// builder.WriteString("	}")
+				// builder.WriteString("\n")
 			case "null.Bytes":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.BytesFrom(%s.Get%s()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
-				builder.WriteString("	}")
-				builder.WriteString("\n")
+				// builder.WriteString("	}")
+				// builder.WriteString("\n")
 			case "null.JSON":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.JSONFrom([]byte(%s.Get%s())) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
-				builder.WriteString("	}")
-				builder.WriteString("\n")
+				// builder.WriteString("	}")
+				// builder.WriteString("\n")
 			case "null.CTime":
-				builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.CTimeFrom(%s.%s.AsTime()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
-				builder.WriteString("	}")
-				builder.WriteString("\n")
+				// builder.WriteString("	}")
+				// builder.WriteString("\n")
 			case "null.Date":
-				builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.DateFrom(%s.%s.AsTime()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
-				builder.WriteString("	}")
-				builder.WriteString("\n")
+				// builder.WriteString("	}")
+				// builder.WriteString("\n")
 			case "null.DateTime":
-				builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.DateTimeFrom(%s.%s.AsTime()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
-				builder.WriteString("	}")
-				builder.WriteString("\n")
+				// builder.WriteString("	}")
+				// builder.WriteString("\n")
 			case "null.TimeStamp":
-				builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if err := %s.%s.CheckValid(); err == nil {", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = null.TimeStampFrom(%s.%s.AsTime()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
-				builder.WriteString("	}")
-				builder.WriteString("\n")
+				// builder.WriteString("	}")
+				// builder.WriteString("\n")
 			case "bool":
-				builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
-				builder.WriteString("\n")
+				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
+				// builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = %s.Get%s() // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
-				builder.WriteString("	}")
-				builder.WriteString("\n")
+				// builder.WriteString("	}")
+				// builder.WriteString("\n")
 			}
 		}
 	}

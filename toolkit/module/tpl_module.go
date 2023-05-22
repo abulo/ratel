@@ -115,13 +115,39 @@ func {{.Name}}(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primar
 func {{.Name}}(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}})(res int64,err error){
 	db := initial.Core.Store.LoadSQL("mysql").Write()
 	builder := sql.NewBuilder()
+	{{- if .SoftDelete}}
+	data := make(map[string]any)
+	data["deleted"] = 1
+	query,args,err := builder.Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{Helper .Primary.AlisaColumnName}}).Update(data)
+	if err != nil {
+		return
+	}
+	res, err = db.Update(ctx ,query,args...)
+	{{- else}}
 	query,args,err := builder.Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{Helper .Primary.AlisaColumnName}}).Delete()
 	if err != nil {
 		return
 	}
 	res, err = db.Delete(ctx ,query,args...)
+	{{- end}}
 	return
 }
+{{- else if eq .Type "Recover"}}
+{{- if .SoftDelete}}
+// {{.Name}} 恢复数据
+func {{.Name}}(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}})(res int64,err error){
+	db := initial.Core.Store.LoadSQL("mysql").Write()
+	builder := sql.NewBuilder()
+	data := make(map[string]any)
+	data["deleted"] = 0
+	query,args,err := builder.Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{Helper .Primary.AlisaColumnName}}).Update(data)
+	if err != nil {
+		return
+	}
+	res, err = db.Update(ctx ,query,args...)
+	return
+}
+{{- end}}
 {{- else if eq .Type "Item"}}
 // {{.Name}} 查询单条数据
 func {{.Name}}(ctx context.Context,condition map[string]any)(res dao.{{CamelStr .Table.TableName}},err error){
