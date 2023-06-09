@@ -279,7 +279,7 @@ func {{.Name}}(newCtx *gin.Context){
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
 	request := &{{.Pkg}}.{{.Name}}Request{}
 	// 构造查询条件
-	{{ApiToProto .Condition "request" "newCtx.Query"}}
+	{{ApiToProto .Condition "request" "newCtx.GetQuery"}}
 	// 执行服务
 	ctx := newCtx.Request.Context()
 	res, err := client.{{.Name}}(ctx, request)
@@ -315,19 +315,38 @@ func {{.Name}}(newCtx *gin.Context){
 		})
 		return
 	}
+	ctx := newCtx.Request.Context()
 	//链接服务
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
 	request := &{{.Pkg}}.{{.Name}}Request{}
 	// 构造查询条件
-	{{ApiToProto .Condition "request" "newCtx.Query"}}
-
+	{{ApiToProto .Condition "request" "newCtx.GetQuery"}}
 	{{- if .Page}}
-	// 构造分页条件
-	request.PageNum = cast.ToInt64(newCtx.Query("pageNum"))
-	request.PageSize = cast.ToInt64(newCtx.Query("pageSize"))
+	requestTotal := &{{.Pkg}}.{{.Name}}TotalRequest{}
+	{{ApiToProto .Condition "requestTotal" "newCtx.GetQuery"}}
+	// 执行服务,获取数据量
+	resTotal, err := client.{{.Name}}Total(ctx, requestTotal)
+	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": request,
+			"err": err,
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		fromError := status.Convert(err)
+		newCtx.JSON(consts.StatusOK, utils.H{
+			"code": code.ConvertToHttp(fromError.Code()),
+			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
+		})
+		return
+	}
+	var total int64
+	request.PageNum = proto.Int64(cast.ToInt64(newCtx.Query("pageNum")))
+	request.PageSize = proto.Int64(cast.ToInt64(newCtx.Query("pageSize")))
+	if resTotal.GetCode() == code.Success {
+		total = resTotal.GetData()
+	}
 	{{- end}}
 	// 执行服务
-	ctx := newCtx.Request.Context()
+	
 	res, err := client.{{.Name}}(ctx, request)
 	if err != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
@@ -341,18 +360,10 @@ func {{.Name}}(newCtx *gin.Context){
 		})
 		return
 	}
-	{{- if .Page}}
-	var total int64
-	{{- end}}
 	var list []dao.{{CamelStr .Table.TableName}}
 
 	if res.GetCode() == code.Success {
-		{{- if .Page}}
-		total = res.GetData().GetTotal()
-		rpcList := res.GetData().GetList()
-		{{- else}}
 		rpcList := res.GetData()
-		{{- end}}
 		for _, item := range rpcList {
 			list = append(list, {{CamelStr .Table.TableName}}Dao(item))
 		}

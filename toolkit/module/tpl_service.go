@@ -259,17 +259,6 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Co
 	offset := pageSize * (pageNum - 1)
 	condition["offset"] = offset
 	condition["limit"] = pageSize
-	// 获取数据量
-	total, err := {{.Pkg}}.{{.Name}}Total(ctx, condition)
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": condition,
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}Total")
-		}
-		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
-	}
 	{{- end}}
 	// 获取数据集合
 	list, err := {{.Pkg}}.{{.Name}}(ctx, condition)
@@ -289,16 +278,34 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Co
 	return &{{.Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
-		{{- if .Page}}
-		Data: &{{CamelStr .Table.TableName}}ListObject{
-			Total: total,
-			List:  res,
-		},
-		{{- else}}
 		Data: res,
-		{{- end}}
 	}, nil
 }
+{{- if .Page}}
+// {{.Name}}Total 获取总数
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}Total(ctx context.Context,request *{{.Name}}TotalRequest)(*{{CamelStr .Table.TableName}}TotalResponse,error){
+	// 数据库查询条件
+	condition := make(map[string]any)
+	// 构造查询条件
+	{{ModuleProtoConvertMap .Condition "request"}}
+	// 获取数据集合
+	total, err := {{.Pkg}}.{{.Name}}Total(ctx, condition)
+	if err != nil {
+		if sql.ResultAccept(err) != nil {
+			globalLogger.Logger.WithFields(logrus.Fields{
+				"req": condition,
+				"err": err,
+			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}Total")
+		}
+		return &{{CamelStr .Table.TableName}}TotalResponse{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
+	}
+	return &{{CamelStr .Table.TableName}}TotalResponse{
+		Code: code.Success,
+		Msg:  code.StatusText(code.Success),
+		Data: total,
+	}, nil
+}
+{{- end}}
 {{- end}}
 {{- end}}
 `

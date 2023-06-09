@@ -39,7 +39,6 @@ func Run(cmd *cobra.Command, args []string) {
 	tableName := ""
 	//驱动类型
 	apiType := ""
-	page := ""
 	apiUrl := ""
 	multiSelect := make([]string, 0)
 	delete := ""
@@ -60,13 +59,6 @@ func Run(cmd *cobra.Command, args []string) {
 		Help:    "选择驱动类型",
 		Options: []string{"gin", "hertz"},
 	}, &apiType); err != nil || apiType == "" {
-		return
-	}
-	if err := survey.AskOne(&survey.Select{
-		Message: "列表分页",
-		Help:    "列表分页",
-		Options: []string{"yes", "no"},
-	}, &page); err != nil || page == "" {
 		return
 	}
 	if err := survey.AskOne(&survey.Input{
@@ -136,12 +128,11 @@ func Run(cmd *cobra.Command, args []string) {
 	strLen := strings.LastIndex(dir, "/")
 
 	var methodList []base.Method
+	needPageMethodList := make([]string, 0)
 
-	var pageBool bool
+	// 是否需要分页
+	pageBool := false
 
-	if page == "yes" {
-		pageBool = true
-	}
 	var deleteBool bool
 	if delete == "yes" {
 		deleteBool = true
@@ -241,6 +232,7 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
+		needPageMethodList = append(needPageMethodList, methodName)
 	} else {
 		//存储条件信息
 		field := make([]string, 0)
@@ -289,6 +281,9 @@ func Run(cmd *cobra.Command, args []string) {
 			multiSelect = append(multiSelect, methodName)
 			//添加到集合中
 			methodList = append(methodList, method)
+			if base.CamelStr(customIndexType) == "List" {
+				needPageMethodList = append(needPageMethodList, methodName)
+			}
 		}
 		condition := make([]base.Column, 0)
 		for _, fieldValue := range field {
@@ -315,6 +310,7 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
+		needPageMethodList = append(needPageMethodList, methodName)
 	}
 
 	multiSelected := make([]string, 0)
@@ -326,11 +322,28 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	multiPageSelected := make([]string, 0)
+	if err := survey.AskOne(&survey.MultiSelect{
+		Message: "分页方法",
+		Help:    "方法列表",
+		Options: needPageMethodList,
+	}, &multiPageSelected); err != nil {
+		return
+	}
+
 	var newMethodList []base.Method
-	for key, val := range methodList {
-		if util.InArray(val.Name, multiSelected) {
-			newMethodList = append(newMethodList, methodList[key])
+	for _, val := range methodList {
+		newMethod := val
+		// 判断是否分页
+		if util.InArray(newMethod.Name, multiPageSelected) {
+			newMethod.Page = true
 		}
+		if util.InArray(newMethod.Name, multiSelected) {
+			newMethodList = append(newMethodList, newMethod)
+		}
+	}
+	if len(multiPageSelected) > 0 {
+		pageBool = true
 	}
 	// 数据模型
 	moduleParam := base.ModuleParam{
@@ -405,7 +418,7 @@ func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, pkgPath,
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "更新"))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("handle.PUT(\"%s\",%s)", apiUrl+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName)+"/put", pkg+"."+v.Name))
+			builder.WriteString(fmt.Sprintf("handle.PUT(\"%s\",%s)", apiUrl+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName)+"/update", pkg+"."+v.Name))
 		case "Delete":
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "删除"))

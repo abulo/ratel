@@ -95,10 +95,11 @@ message {{CamelStr .Table.TableName}}Object {
 }
 
 {{- if .Page}}
-// {{CamelStr .Table.TableName}}ListObject 列表数据对象
-message {{CamelStr .Table.TableName}}ListObject {
-	int64 total = 1;
-	repeated {{CamelStr .Table.TableName}}Object list = 2;
+// {{CamelStr .Table.TableName}}TotalResponse 列表数据总量
+message {{CamelStr .Table.TableName}}TotalResponse {
+	int64 code = 1;
+	string msg = 2;
+	int64 data = 3;
 }
 {{- end}}
 
@@ -177,9 +178,9 @@ message {{.Name}}Request {
 	{{ProtoRequest .Condition}}
 	{{- if .Page}}
 	// @inject_tag: db:"page_num" json:"pageNum"
-	int64 page_num = {{Add .ConditionTotal 1}};
+	optional int64 page_num = {{Add .ConditionTotal 1}};
 	// @inject_tag: db:"page_size" json:"pageSize"
-  	int64 page_size = {{Add .ConditionTotal 2}};
+	optional int64 page_size = {{Add .ConditionTotal 2}};
 	{{- end}}
 }
 
@@ -187,12 +188,15 @@ message {{.Name}}Request {
 message {{.Name}}Response {
 	int64 code = 1;
   	string msg = 2;
-	{{- if .Page}}
-	{{CamelStr .Table.TableName}}ListObject data = 3;
-	{{- else}}
 	repeated {{CamelStr .Table.TableName}}Object data = 3;
-	{{- end }}
 }
+
+{{- if .Page}}
+// {{.Name}}TotalRequest 列表数据
+message {{.Name}}TotalRequest {
+	{{ProtoRequest .Condition}}
+}
+{{- end}}
 {{- end}}
 {{- end}}
 
@@ -201,6 +205,11 @@ message {{.Name}}Response {
 service {{CamelStr .Table.TableName}}Service{
 	{{- range .Method}}
 	rpc {{.Name}}({{.Name}}Request) returns ({{.Name}}Response);
+	{{- if eq .Type "List"}}
+	{{- if .Page}}
+	rpc {{.Name}}Total({{.Name}}TotalRequest) returns ({{CamelStr .Table.TableName}}TotalResponse);
+	{{- end}}
+	{{- end}}
 	{{- end}}
 }
 `

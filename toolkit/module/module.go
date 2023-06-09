@@ -43,7 +43,6 @@ func Run(cmd *cobra.Command, args []string) {
 	//创建数据
 	dir := ""
 	tableName := ""
-	page := ""
 	multiSelect := make([]string, 0)
 	delete := ""
 	if err := survey.AskOne(&survey.Input{
@@ -56,13 +55,6 @@ func Run(cmd *cobra.Command, args []string) {
 		Message: "表名称",
 		Help:    "数据库中某个表名称",
 	}, &tableName); err != nil || tableName == "" {
-		return
-	}
-	if err := survey.AskOne(&survey.Select{
-		Message: "列表分页",
-		Help:    "列表分页",
-		Options: []string{"yes", "no"},
-	}, &page); err != nil || page == "" {
 		return
 	}
 	if err := survey.AskOne(&survey.Select{
@@ -133,12 +125,10 @@ func Run(cmd *cobra.Command, args []string) {
 	strLen := strings.LastIndex(dir, "/")
 
 	var methodList []base.Method
+	needPageMethodList := make([]string, 0)
 
-	var pageBool bool
-	
-	if page == "yes" {
-		pageBool = true
-	}
+	// 是否需要分页
+	pageBool := false
 
 	var deleteBool bool
 	if delete == "yes" {
@@ -239,6 +229,7 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
+		needPageMethodList = append(needPageMethodList, methodName)
 	} else {
 		//存储条件信息
 		field := make([]string, 0)
@@ -287,6 +278,9 @@ func Run(cmd *cobra.Command, args []string) {
 			multiSelect = append(multiSelect, methodName)
 			//添加到集合中
 			methodList = append(methodList, method)
+			if base.CamelStr(customIndexType) == "List" {
+				needPageMethodList = append(needPageMethodList, methodName)
+			}
 		}
 		condition := make([]base.Column, 0)
 		for _, fieldValue := range field {
@@ -313,6 +307,7 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
+		needPageMethodList = append(needPageMethodList, methodName)
 	}
 
 	multiSelected := make([]string, 0)
@@ -321,6 +316,15 @@ func Run(cmd *cobra.Command, args []string) {
 		Help:    "方法列表",
 		Options: multiSelect,
 	}, &multiSelected); err != nil || len(multiSelected) == 0 {
+		return
+	}
+
+	multiPageSelected := make([]string, 0)
+	if err := survey.AskOne(&survey.MultiSelect{
+		Message: "分页方法",
+		Help:    "方法列表",
+		Options: needPageMethodList,
+	}, &multiPageSelected); err != nil {
 		return
 	}
 
@@ -337,10 +341,18 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	var newMethodList []base.Method
-	for key, val := range methodList {
-		if util.InArray(val.Name, multiSelected) {
-			newMethodList = append(newMethodList, methodList[key])
+	for _, val := range methodList {
+		newMethod := val
+		// 判断是否分页
+		if util.InArray(newMethod.Name, multiPageSelected) {
+			newMethod.Page = true
 		}
+		if util.InArray(newMethod.Name, multiSelected) {
+			newMethodList = append(newMethodList, newMethod)
+		}
+	}
+	if len(multiPageSelected) > 0 {
+		pageBool = true
 	}
 	// 数据模型
 	moduleParam := base.ModuleParam{

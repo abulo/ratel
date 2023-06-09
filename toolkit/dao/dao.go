@@ -98,6 +98,7 @@ func GenerateDao(table base.Table, column []base.Column) {
 		"CamelStr":   base.CamelStr,
 		"Helper":     base.Helper,
 		"SymbolChar": base.SymbolChar,
+		"Pointer":    base.Pointer,
 	}).Parse(DaoTemplate()))
 
 	//定义结构体接收数据
@@ -125,12 +126,12 @@ import "github.com/abulo/ratel/v3/stores/null"
 type {{CamelStr .Table.TableName}} struct {
 	{{- range .TableColumn }}
 	{{- if eq .IsNullable "YES" }}
-	{{CamelStr .ColumnName}}	{{.DataTypeMap.Empty}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
+	{{CamelStr .ColumnName}}	{{Pointer .DataTypeMap.Empty}}{{.DataTypeMap.Empty}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
 	{{- else }}
 	{{- if eq .ColumnKey "PRI" }}
 	{{CamelStr .ColumnName}}	*{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}},-" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}},PRI
 	{{- else }}
-	{{CamelStr .ColumnName}}	*{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
+	{{CamelStr .ColumnName}}	{{Pointer .DataTypeMap.Default}}{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
 	{{- end}}
 	{{- end}}
 	{{- end}}

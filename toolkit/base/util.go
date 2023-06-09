@@ -26,6 +26,13 @@ func Char(in string) string {
 	return "`" + in + "`"
 }
 
+func Pointer(in string) string {
+	if strings.Contains(in, "null") {
+		return ""
+	}
+	return "*"
+}
+
 // SymbolChar 模板变量函数
 func SymbolChar() string {
 	return "`"
@@ -39,7 +46,7 @@ func Add(numberOne, numberTwo any) int {
 func Convert(Condition []Column) string {
 	builder := strings.Builder{}
 	for _, item := range Condition {
-		builder.WriteString(fmt.Sprintf("	if val,ok := (condition[\"%s\"]) ;ok {", Helper(item.ColumnName)))
+		builder.WriteString(fmt.Sprintf("	if val,ok := condition[\"%s\"] ;ok {", Helper(item.ColumnName)))
 		builder.WriteString("\n")
 		builder.WriteString(fmt.Sprintf("		builder.Where(\"%s\",val)", Char(item.ColumnName)))
 		builder.WriteString("\n")
@@ -248,44 +255,44 @@ func ApiToProto(Condition []Column, res, request string) string {
 		switch item.DataTypeMap.Default {
 		case "null.Int32":
 		case "int32":
-			// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
-			// builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.Int32(cast.ToInt32(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			// builder.WriteString("	}")
-			// builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.Int32(cast.ToInt32(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+			builder.WriteString("	}")
+			builder.WriteString("\n")
 		case "null.Int64":
 		case "int64":
-			// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
-			// builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.Int64(cast.ToInt64(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			// builder.WriteString("	}")
-			// builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.Int64(cast.ToInt64(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+			builder.WriteString("	}")
+			builder.WriteString("\n")
 		case "null.Float32":
 		case "float32":
-			// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
-			// builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = proto.Float32(cast.ToFloat32(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			// builder.WriteString("	}")
-			// builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.Float32(cast.ToFloat32(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+			builder.WriteString("	}")
+			builder.WriteString("\n")
 		case "null.Float64":
 		case "float64":
-			// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = proto.Float64(cast.ToFloat64(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.Float64(cast.ToFloat64(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
-			// builder.WriteString("	}")
-			// builder.WriteString("\n")
+			builder.WriteString("	}")
+			builder.WriteString("\n")
 		case "null.String":
 		case "string":
-			// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
-			// builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = proto.String(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			// builder.WriteString("	}")
-			// builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.String(val) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+			builder.WriteString("	}")
+			builder.WriteString("\n")
 		case "null.Bytes":
 			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
