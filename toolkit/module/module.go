@@ -114,7 +114,24 @@ func Run(cmd *cobra.Command, args []string) {
 		fmt.Println("表主键:", color.RedString(err.Error()))
 		return
 	}
-
+	selectIndex := make([]string, 0)
+	for _, item := range tableIndex {
+		tmpSlice := util.Explode(",", item.Field)
+		for _, v := range tmpSlice {
+			if util.InArray(v, selectIndex) {
+				continue
+			}
+			selectIndex = append(selectIndex, v)
+		}
+	}
+	useIndex := make([]string, 0)
+	if err := survey.AskOne(&survey.MultiSelect{
+		Message: "选择索引",
+		Help:    "索引列表",
+		Options: selectIndex,
+	}, &useIndex); err != nil {
+		return
+	}
 	//获取 go.mod
 	mod, err := base.ModulePath(path.Join(base.Path, "go.mod"))
 	if err != nil {
@@ -191,7 +208,7 @@ func Run(cmd *cobra.Command, args []string) {
 	}, base.Method{
 		Table:          tableItem,
 		TableColumn:    tableColumn,
-		Type:           "Only",
+		Type:           "Show",
 		Name:           base.CamelStr(tableItem.TableName),
 		Condition:      nil,
 		ConditionTotal: 0,
@@ -241,6 +258,9 @@ func Run(cmd *cobra.Command, args []string) {
 			indexField := v.Field
 			indexFieldSlice := util.Explode(",", indexField)
 			for _, fieldValue := range indexFieldSlice {
+				if !util.InArray(fieldValue, useIndex) {
+					continue
+				}
 				//构造查询条件
 				positionIndex := cast.ToInt64(len(condition)) + 1
 				currentColumn := tableColumnMap[fieldValue]
@@ -260,7 +280,7 @@ func Run(cmd *cobra.Command, args []string) {
 			// 自定义函数名称和索引信息
 			customIndexType := util.UCWords(indexNameSlice[0])
 			customIndexName := util.UCWords(indexNameSlice[1])
-			methodName := base.CamelStr(tableItem.TableName) + base.CamelStr(customIndexType) + base.CamelStr(customIndexName)
+			methodName := base.CamelStr(tableItem.TableName) + base.CamelStr(customIndexName)
 			method := base.Method{
 				Table:          tableItem,
 				TableColumn:    tableColumn,

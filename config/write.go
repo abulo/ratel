@@ -5,9 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"dario.cat/mergo"
 	"github.com/pkg/errors"
-
-	"github.com/imdario/mergo"
 )
 
 var (

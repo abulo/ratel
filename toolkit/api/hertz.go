@@ -139,7 +139,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext) {
 		"msg":  res.GetMsg(),
 	})
 }
-{{- else if eq .Type "Only"}}
+{{- else if eq .Type "Show"}}
 // {{.Name}} 查询单条数据
 func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 	//判断这个服务能不能链接

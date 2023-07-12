@@ -98,7 +98,7 @@ func {{.Name}}(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primar
 	res, err = db.Update(ctx ,query,args...)
 	return
 }
-{{- else if eq .Type "Only"}}
+{{- else if eq .Type "Show"}}
 // {{.Name}} 查询单条数据
 func {{.Name}}(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}})(res dao.{{CamelStr .Table.TableName}},err error){
 	db := initial.Core.Store.LoadSQL("mysql").Read()

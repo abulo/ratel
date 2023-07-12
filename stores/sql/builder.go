@@ -35,6 +35,9 @@ const (
 	UNIONALL     = "UNION ALL"
 	DESC         = "DESC"
 	ASC          = "ASC"
+	LeftBracket  = "("
+	RightBracket = ")"
+	And          = "AND"
 )
 
 // Builder 查询构造器
@@ -238,6 +241,29 @@ func (builder *Builder) OrNotIn(column string, value ...any) *Builder {
 // IsNULL .
 func (builder *Builder) IsNULL(column string) *Builder {
 	builder.toWhere(column, ISNULL, 0, AND)
+	return builder
+}
+
+// IsNULL .
+func (builder *Builder) And() *Builder {
+	builder.toWhere("", AND, 0, "")
+	return builder
+}
+
+// Like .
+func (builder *Builder) FirstLike(column string, value any) *Builder {
+	builder.toWhere(column, LIKE, 1, "")
+	builder.addArg(value)
+	return builder
+}
+
+func (builder *Builder) LeftBracket() *Builder {
+	builder.toWhere("", LeftBracket, 0, "")
+	return builder
+}
+
+func (builder *Builder) RightBracket() *Builder {
+	builder.toWhere("", RightBracket, 0, "")
 	return builder
 }
 
@@ -585,6 +611,7 @@ func (builder *Builder) IsZero(v reflect.Value) bool {
 		}
 		return true
 	default:
+		// return false
 		// This should never happens, but will act as a safeguard for
 		// later, as a default value doesn't makes sense here.
 		panic(&reflect.ValueError{

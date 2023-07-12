@@ -94,7 +94,7 @@ func NewDataType() map[string]DataType {
 	res["mediumtext"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true}
 	res["longtext"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true}
 	res["text"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true}
-	res["json"] = DataType{Default: "null.JSON", Empty: "null.JSON", Proto: "string", OptionProto: true}
+	res["json"] = DataType{Default: "null.JSON", Empty: "null.JSON", Proto: "bytes", OptionProto: true}
 	res["enum"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true}
 
 	res["binary"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true}

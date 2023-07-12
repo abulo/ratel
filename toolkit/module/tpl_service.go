@@ -184,7 +184,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Co
 		Msg:  code.StatusText(code.Success),
 	}, err
 }
-{{- else if eq .Type "Only"}}
+{{- else if eq .Type "Show"}}
 // {{.Name}} 查询单条数据
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.Context,request *{{.Name}}Request)(*{{.Name}}Response,error){
 	{{Helper .Primary.AlisaColumnName}} := request.Get{{CamelStr .Primary.AlisaColumnName}}()

@@ -142,7 +142,7 @@ func ModuleDaoConvertProto(Condition []Column, res, resItem string) string {
 			case "null.JSON":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToString(%s.%s.Ptr())", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString(fmt.Sprintf("		%s.%s = *%s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
 				builder.WriteString("		}")
 				builder.WriteString("\n")
@@ -177,7 +177,7 @@ func ModuleDaoConvertProto(Condition []Column, res, resItem string) string {
 			case "null.JSON":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToString(*%s.%s.Ptr())", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString(fmt.Sprintf("		%s.%s = *%s.%s.Ptr()", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
 				builder.WriteString("		}")
 				builder.WriteString("\n")
@@ -413,7 +413,7 @@ func ModuleProtoConvertDao(Condition []Column, res, request string) string {
 			case "null.JSON":
 				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
 				// builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = null.JSONFrom([]byte(%s.Get%s())) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString(fmt.Sprintf("		%s.%s = null.JSONFrom(%s.Get%s()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				// builder.WriteString("\n")
 				// builder.WriteString("	}")
 				builder.WriteString("\n")
@@ -500,7 +500,7 @@ func ModuleProtoConvertDao(Condition []Column, res, request string) string {
 			case "null.JSON":
 				// builder.WriteString(fmt.Sprintf("	if !util.Empty(%s.%s){", request, CamelStr(item.ColumnName)))
 				// builder.WriteString("\n")
-				builder.WriteString(fmt.Sprintf("		%s.%s = null.JSONFrom([]byte(%s.Get%s())) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString(fmt.Sprintf("		%s.%s = null.JSONFrom(%s.Get%s()) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
 				// builder.WriteString("	}")
 				// builder.WriteString("\n")

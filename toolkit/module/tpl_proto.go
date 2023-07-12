@@ -149,7 +149,7 @@ message {{.Name}}Response {
 	int64 code = 1;
 	string msg = 2;
 }
-{{- else if eq .Type "Only"}}
+{{- else if eq .Type "Show"}}
 // {{.Name}}Request 查询单条数据请求
 message {{.Name}}Request {
 	// @inject_tag: db:"{{.Primary.AlisaColumnName}}" json:"{{Helper .Primary.AlisaColumnName}}"

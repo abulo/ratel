@@ -141,7 +141,7 @@ func {{.Name}}(newCtx *gin.Context) {
 		"msg":  res.GetMsg(),
 	})
 }
-{{- else if eq .Type "Only"}}
+{{- else if eq .Type "Show"}}
 // {{.Name}} 查询单条数据
 func {{.Name}}(newCtx *gin.Context){
 	//判断这个服务能不能链接
