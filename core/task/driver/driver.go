@@ -3,13 +3,13 @@ package driver
 import "time"
 
 const (
-	PrefixKey = "crond"
+	PrefixKey = "Task"
 	JAR       = ":"
 	SPL       = "/"
 	REG       = "*"
 )
 
-//Driver is a driver interface
+// Driver is a driver interface
 type Driver interface {
 	// Ping 检查驱动是否可用
 	Ping() error

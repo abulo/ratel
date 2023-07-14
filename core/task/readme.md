@@ -1,4 +1,4 @@
-# Crond
+# Task
 
 A lightweight distributed cron job library for distributed system
 
@@ -34,7 +34,7 @@ Todo：
 ### 导包
 
 ```go
-import "cloud/crond"
+import "cloud/Task"
 ```
 
 ### 示例
@@ -44,7 +44,7 @@ package main
 
 import (
 	"fmt"
-	"cloud/crond"
+	"cloud/Task"
 	"taskdriver/redis"
 	"time"
 )
@@ -59,15 +59,15 @@ func cronJob() func() {
 
 	driver := redis.NewDriver(clientRedis())
 
-	cron := crond.NewCrond("test-service", driver, crond.WithLazyPick(true))
+	cron := Task.NewTask("test-service", driver, Task.WithLazyPick(true))
 
 	// 分布式任务
-	_ = cron.AddFunc("job1", crond.JobDistributed, "*/1 * * * *", func() {
+	_ = cron.AddFunc("job1", Task.JobDistributed, "*/1 * * * *", func() {
 		fmt.Println("执行job1: ", time.Now().Format("15:04:05"))
 	})
 
 	// 本地任务
-	_ = cron.AddFunc("job2", crond.JobLocaled, "*/1 * * * *", func() {
+	_ = cron.AddFunc("job2", Task.JobLocaled, "*/1 * * * *", func() {
 		fmt.Println("执行job2: ", time.Now().Format("15:04:05"))
 	})
 

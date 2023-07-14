@@ -2,9 +2,9 @@ package redis
 
 import (
 	"context"
-	"log"
 	"time"
 
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/task/driver"
 	"github.com/abulo/ratel/v3/stores/redis"
 	"github.com/google/uuid"
@@ -52,7 +52,7 @@ func (r *driverRedis) GetServiceNodeList(serviceName string) ([]string, error) {
 func (r *driverRedis) UnRegisterServiceNode() { r.cancelCh <- struct{}{} }
 
 func (r *driverRedis) RegisterServiceNode(serviceName string) (string, error) {
-	//              crond:{serviceName}:{uuid}
+	//              Task:{serviceName}:{uuid}
 	nodeId := driver.PrefixKey + driver.JAR + serviceName + driver.JAR + uuid.NewString()
 
 	return nodeId, r.register(nodeId)
@@ -86,7 +86,7 @@ func (r *driverRedis) keepalive(nodeId string) {
 		case <-r.cancelCh:
 			err := r.unregister(nodeId)
 			if err != nil {
-				log.Printf("error: node[%s] unregister failed: [%+v]", nodeId, err)
+				logger.Logger.Printf("error: node[%s] unregister failed: [%+v]", nodeId, err)
 			}
 
 			return
@@ -97,12 +97,12 @@ func (r *driverRedis) keepalive(nodeId string) {
 			cancel()
 
 			if err != nil {
-				log.Printf("error: node[%s] renewal failed: [%+v]", nodeId, err)
+				logger.Logger.Printf("error: node[%s] renewal failed: [%+v]", nodeId, err)
 			}
 
 			if !ok {
 				if err := r.register(nodeId); err != nil {
-					log.Printf("error: node[%s] register failed: [%+v]", nodeId, err)
+					logger.Logger.Printf("error: node[%s] register failed: [%+v]", nodeId, err)
 				}
 			}
 		}

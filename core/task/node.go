@@ -18,12 +18,12 @@ type Node struct {
 	updateInterval time.Duration
 
 	driver driver.Driver
-	crond  *Crond
+	Task   *Task
 
 	nodes *hash.ConsistentHash
 }
 
-func newNode(serviceName string, driver driver.Driver, crond *Crond, updateInterval time.Duration) *Node {
+func newNode(serviceName string, driver driver.Driver, Task *Task, updateInterval time.Duration) *Node {
 	err := driver.Ping()
 	if err != nil {
 		panic(err)
@@ -32,7 +32,7 @@ func newNode(serviceName string, driver driver.Driver, crond *Crond, updateInter
 	return &Node{
 		serviceName:    serviceName,
 		driver:         driver,
-		crond:          crond,
+		Task:           Task,
 		updateInterval: updateInterval,
 	}
 }
@@ -49,7 +49,7 @@ func (n *Node) Start() error {
 
 	n.nodeId = nodeId
 
-	if n.crond.lazyPick {
+	if n.Task.lazyPick {
 		return nil
 	}
 
@@ -88,7 +88,7 @@ func (n *Node) tickerTTL() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		if n.crond.isRunning {
+		if n.Task.isRunning {
 			err := n.ttl()
 			if err != nil {
 				log.Printf("error: update node failed: [%+v]", err)
@@ -100,7 +100,7 @@ func (n *Node) tickerTTL() {
 }
 
 func (n *Node) pickNode(jobName string) (string, error) {
-	if n.crond.lazyPick {
+	if n.Task.lazyPick {
 		return n.pickLazy(jobName)
 	}
 

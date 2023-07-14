@@ -3,8 +3,8 @@ package task
 import "github.com/abulo/ratel/v3/core/task/cron"
 
 const (
-	JobLocaled     = "localed"
-	JobDistributed = "distributed"
+	JobLocaled     = "Localed"
+	JobDistributed = "Distributed"
 )
 
 // JobWrapper is a job wrapper
@@ -13,9 +13,9 @@ type JobWrapper struct {
 	Job  cron.Job
 	Func func()
 
-	Crond *Crond
-	Name  string
-	Type  string
+	Task *Task
+	Name string
+	Type string
 }
 
 func (job *JobWrapper) Run() {
@@ -24,7 +24,7 @@ func (job *JobWrapper) Run() {
 	}
 
 	if job.Type == JobDistributed &&
-		job.Crond.thisNodeRun(job.Name) {
+		job.Task.thisNodeRun(job.Name) {
 		job.run()
 	}
 }

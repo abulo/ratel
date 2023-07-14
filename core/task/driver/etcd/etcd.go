@@ -3,10 +3,10 @@ package etcd
 import (
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/abulo/ratel/v3/client/etcdv3"
+	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/task/driver"
 	"github.com/google/uuid"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -50,7 +50,7 @@ func (e *driverEtcd) GetServiceNodeList(serviceName string) (nodeIds []string, e
 	ctx, cancel := context.WithTimeout(e.ctx, ctxTimeout)
 	defer cancel()
 
-	//  /crond/{serviceName}/
+	//  /Task/{serviceName}/
 	var prefix = driver.SPL + driver.PrefixKey + driver.SPL + serviceName + driver.SPL
 
 	gets, err := e.driver.Get(ctx, prefix, clientv3.WithPrefix())
@@ -66,7 +66,7 @@ func (e *driverEtcd) GetServiceNodeList(serviceName string) (nodeIds []string, e
 }
 
 func (e *driverEtcd) RegisterServiceNode(serviceName string) (nodeId string, err error) {
-	//         /crond/{serviceName}/{uuid}
+	//         /Task/{serviceName}/{uuid}
 	nodeId = driver.SPL + driver.PrefixKey + driver.SPL + serviceName + driver.SPL + uuid.NewString()
 
 	return nodeId, e.register(nodeId)
@@ -116,7 +116,7 @@ func (e *driverEtcd) keepalive(nodeId string) {
 		case <-e.cancelCh:
 			err := e.unregister(nodeId)
 			if err != nil {
-				log.Printf("error: node[%s] unregister failed: [%+v]", nodeId, err)
+				logger.Logger.Printf("error: node[%s] unregister failed: [%+v]", nodeId, err)
 			}
 			return
 
@@ -124,7 +124,7 @@ func (e *driverEtcd) keepalive(nodeId string) {
 			if e.aliveCh == nil {
 				err := e.register(nodeId)
 				if err != nil {
-					log.Printf("error: node[%s] register failed: [%+v]", nodeId, err)
+					logger.Logger.Printf("error: node[%s] register failed: [%+v]", nodeId, err)
 				}
 			}
 
@@ -132,7 +132,7 @@ func (e *driverEtcd) keepalive(nodeId string) {
 			if !ok {
 				err := e.register(nodeId)
 				if err != nil {
-					log.Printf("error: node[%s] register failed: [%+v]", nodeId, err)
+					logger.Logger.Printf("error: node[%s] register failed: [%+v]", nodeId, err)
 				}
 			}
 		}
