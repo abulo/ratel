@@ -3,7 +3,7 @@ package task
 import "github.com/abulo/ratel/v3/core/task/cron"
 
 const (
-	JobLocaled     = "Localed"
+	JobLocal       = "Local"
 	JobDistributed = "Distributed"
 )
 
@@ -19,7 +19,7 @@ type JobWrapper struct {
 }
 
 func (job *JobWrapper) Run() {
-	if job.Type == JobLocaled {
+	if job.Type == JobLocal {
 		job.run()
 	}
 

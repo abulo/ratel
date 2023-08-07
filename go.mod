@@ -6,7 +6,7 @@ require (
 	dario.cat/mergo v1.0.0
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/BurntSushi/toml v1.3.2
-	github.com/ClickHouse/clickhouse-go/v2 v2.10.1
+	github.com/ClickHouse/clickhouse-go/v2 v2.12.0
 	github.com/cloudwego/hertz v0.6.6
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
@@ -18,14 +18,14 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.5.3
 	github.com/google/uuid v1.3.0
-	github.com/gookit/goutil v0.6.10
+	github.com/gookit/goutil v0.6.12
 	github.com/gookit/ini/v2 v2.2.2
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.9
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/hcl/v2 v2.17.0
-	github.com/issue9/term/v3 v3.1.2
+	github.com/issue9/term/v3 v3.2.0
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.9
@@ -43,7 +43,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/streadway/amqp v1.1.0
 	github.com/stretchr/testify v1.8.4
-	github.com/tdewolff/parse/v2 v2.6.6
+	github.com/tdewolff/parse/v2 v2.6.7
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/yosuke-furukawa/json5 v0.1.1
 	go.etcd.io/etcd/api/v3 v3.5.9
@@ -51,12 +51,12 @@ require (
 	go.mongodb.org/mongo-driver v1.12.0
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.11.0
-	golang.org/x/image v0.9.0
+	golang.org/x/image v0.10.0
 	golang.org/x/mod v0.12.0
 	golang.org/x/sync v0.3.0
 	golang.org/x/text v0.11.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230711160842-782d3b101e98
-	google.golang.org/grpc v1.56.2
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230731193218-e0aa005b6bdf
+	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -90,7 +90,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/gookit/color v1.5.3 // indirect
+	github.com/gookit/color v1.5.4 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/henrylee2cn/ameda v1.4.10 // indirect
@@ -145,6 +145,6 @@ require (
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/term v0.10.0 // indirect
-	google.golang.org/genproto v0.0.0-20230706204954-ccb25ca9f130 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20230629202037-9506855d4529 // indirect
+	google.golang.org/genproto v0.0.0-20230726155614-23370e0ffb3e // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20230706204954-ccb25ca9f130 // indirect
 )

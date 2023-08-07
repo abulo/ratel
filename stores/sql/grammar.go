@@ -77,24 +77,33 @@ func (g Grammar) compileWhere() string {
 		if i > 0 {
 			sql += " " + w[i].do
 		}
-		sql += " " + w[i].column
 		if w[i].operator != "" {
 			switch w[i].operator {
 			case BETWEEN, NOTBETWEEN:
+				sql += " " + w[i].column
 				sql += " " + w[i].operator + " ? AND ?"
 			case IN, NOTIN:
+				sql += " " + w[i].column
 				int64Num := w[i].valueNum - 1
 				intNum := *(*int)(unsafe.Pointer(&int64Num))
 				sql += " " + w[i].operator + "(?" + strings.Repeat(",?", intNum) + ")"
+			case JsonContainsOne:
+				sql += " JSON_CONTAINS(" + w[i].column + ",?)"
+			case JsonContainsMany:
+				int64Num := w[i].valueNum - 1
+				intNum := *(*int)(unsafe.Pointer(&int64Num))
+				sql += " JSON_CONTAINS(" + w[i].column + ",JSON_ARRAY(?" + strings.Repeat(",?", intNum) + "))"
 			case ISNULL, ISNOTNULL:
+				sql += " " + w[i].column
 				sql += " " + w[i].operator
 			case LeftBracket, RightBracket, AND:
+				sql += " " + w[i].column
 				sql += " " + w[i].operator
 			default:
+				sql += " " + w[i].column
 				sql += " " + w[i].operator + " ?"
 			}
 		}
-
 	}
 	return sql
 }

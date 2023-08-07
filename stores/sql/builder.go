@@ -12,32 +12,34 @@ import (
 
 // BETWEEN ...
 const (
-	BETWEEN      = "BETWEEN"
-	NOTBETWEEN   = "NOT BETWEEN"
-	IN           = "IN"
-	NOTIN        = "NOT IN"
-	AND          = "AND"
-	OR           = "OR"
-	ISNULL       = "IS NULL"
-	ISNOTNULL    = "IS NOT NULL"
-	EQUAL        = "="
-	NOTEQUAL     = "!="
-	GREATER      = ">"
-	GREATEREQUAL = ">="
-	LESS         = "<"
-	LESSEQUAL    = "<="
-	LIKE         = "LIKE"
-	JOIN         = "JOIN"
-	INNERJOIN    = "INNER JOIN"
-	LEFTJOIN     = "LEFT JOIN"
-	RIGHTJOIN    = "RIGHT JOIN"
-	UNION        = "UNION"
-	UNIONALL     = "UNION ALL"
-	DESC         = "DESC"
-	ASC          = "ASC"
-	LeftBracket  = "("
-	RightBracket = ")"
-	And          = "AND"
+	BETWEEN          = "BETWEEN"
+	NOTBETWEEN       = "NOT BETWEEN"
+	IN               = "IN"
+	NOTIN            = "NOT IN"
+	AND              = "AND"
+	OR               = "OR"
+	ISNULL           = "IS NULL"
+	ISNOTNULL        = "IS NOT NULL"
+	EQUAL            = "="
+	NOTEQUAL         = "!="
+	GREATER          = ">"
+	GREATEREQUAL     = ">="
+	LESS             = "<"
+	LESSEQUAL        = "<="
+	LIKE             = "LIKE"
+	JOIN             = "JOIN"
+	INNERJOIN        = "INNER JOIN"
+	LEFTJOIN         = "LEFT JOIN"
+	RIGHTJOIN        = "RIGHT JOIN"
+	UNION            = "UNION"
+	UNIONALL         = "UNION ALL"
+	DESC             = "DESC"
+	ASC              = "ASC"
+	LeftBracket      = "("
+	RightBracket     = ")"
+	And              = "AND"
+	JsonContainsOne  = "JsonContainsOne"
+	JsonContainsMany = "JsonContainsMany"
 )
 
 // Builder 查询构造器
@@ -241,6 +243,20 @@ func (builder *Builder) OrNotIn(column string, value ...any) *Builder {
 // IsNULL .
 func (builder *Builder) IsNULL(column string) *Builder {
 	builder.toWhere(column, ISNULL, 0, AND)
+	return builder
+}
+
+// JsonContainsOne .
+func (builder *Builder) JsonContainsOne(column string, value any) *Builder {
+	builder.toWhere(column, JsonContainsOne, 0, AND)
+	builder.addArg(value)
+	return builder
+}
+
+// JsonContainsMany .
+func (builder *Builder) JsonContainsMany(column string, value ...any) *Builder {
+	builder.toWhere(column, JsonContainsMany, int64(len(value)), AND)
+	builder.addArg(value...)
 	return builder
 }
 
@@ -609,6 +625,8 @@ func (builder *Builder) IsZero(v reflect.Value) bool {
 				return false
 			}
 		}
+		return true
+	case reflect.Invalid:
 		return true
 	default:
 		// return false

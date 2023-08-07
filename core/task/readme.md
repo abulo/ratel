@@ -67,7 +67,7 @@ func cronJob() func() {
 	})
 
 	// 本地任务
-	_ = cron.AddFunc("job2", Task.JobLocaled, "*/1 * * * *", func() {
+	_ = cron.AddFunc("job2", Task.JobLocal, "*/1 * * * *", func() {
 		fmt.Println("执行job2: ", time.Now().Format("15:04:05"))
 	})
 
