@@ -87,12 +87,16 @@ func (g Grammar) compileWhere() string {
 				int64Num := w[i].valueNum - 1
 				intNum := *(*int)(unsafe.Pointer(&int64Num))
 				sql += " " + w[i].operator + "(?" + strings.Repeat(",?", intNum) + ")"
+			case JsonExtract:
+				sql += " JSON_EXTRACT(" + w[i].column + ",?) = ?"
 			case JsonContainsOne:
 				sql += " JSON_CONTAINS(" + w[i].column + ",?)"
 			case JsonContainsMany:
 				int64Num := w[i].valueNum - 1
 				intNum := *(*int)(unsafe.Pointer(&int64Num))
 				sql += " JSON_CONTAINS(" + w[i].column + ",JSON_ARRAY(?" + strings.Repeat(",?", intNum) + "))"
+			case JsonContainsObject:
+				sql += " JSON_CONTAINS(" + w[i].column + ",JSON_OBJECT(?,?))"
 			case ISNULL, ISNOTNULL:
 				sql += " " + w[i].column
 				sql += " " + w[i].operator

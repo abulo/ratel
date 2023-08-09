@@ -1,6 +1,8 @@
 package xhertz
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // ModName ..
 const ModName = "server.hertz"
@@ -75,7 +77,6 @@ func (config *Config) WithSlowQueryThresholdInMilli(milli int64) *Config {
 // Build create server instance, then initialize it with necessary interceptor
 func (config *Config) Build() *Server {
 	serverInstance := newServer(config)
-
 	if !config.DisableSlowQuery {
 		//慢日志查询
 		serverInstance.Use(recoverMiddleware(config.SlowQueryThresholdInMilli))

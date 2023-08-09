@@ -109,7 +109,12 @@ func (op OpenTraceHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error
 	}
 	if !op.DisableMetric {
 		start := ctx.Value(RequestCmdStart)
-		cost := time.Since(start.(time.Time))
+		var cost time.Duration
+		if start == nil {
+			cost = time.Since(time.Now())
+		} else {
+			cost = time.Since(start.(time.Time))
+		}
 		if cmd.Err() != nil {
 			metric.LibHandleCounter.WithLabelValues("redis", cast.ToString(op.DB), op.Addr, "ERR").Inc()
 		} else {
