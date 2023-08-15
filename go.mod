@@ -1,12 +1,12 @@
 module github.com/abulo/ratel/v3
 
-go 1.20
+go 1.21
 
 require (
 	dario.cat/mergo v1.0.0
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/BurntSushi/toml v1.3.2
-	github.com/ClickHouse/clickhouse-go/v2 v2.12.1
+	github.com/ClickHouse/clickhouse-go/v2 v2.13.0
 	github.com/cloudwego/hertz v0.6.7
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
@@ -25,7 +25,7 @@ require (
 	github.com/h2non/bimg v1.1.9
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/hcl/v2 v2.17.0
-	github.com/issue9/term/v3 v3.2.0
+	github.com/issue9/term/v3 v3.2.1
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.9
@@ -34,7 +34,7 @@ require (
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
-	github.com/pkg/sftp v1.13.5
+	github.com/pkg/sftp v1.13.6
 	github.com/prometheus/client_golang v1.16.0
 	github.com/redis/go-redis/v9 v9.0.5
 	github.com/sirupsen/logrus v1.9.3
@@ -55,7 +55,7 @@ require (
 	golang.org/x/mod v0.12.0
 	golang.org/x/sync v0.3.0
 	golang.org/x/text v0.12.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230807174057-1744710a1577
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230814215434-ca7cfce7776a
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -113,7 +113,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/nyaruka/phonenumbers v1.0.55 // indirect
-	github.com/paulmach/orb v0.9.0 // indirect
+	github.com/paulmach/orb v0.10.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

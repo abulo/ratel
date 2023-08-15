@@ -92,7 +92,8 @@ func extractTagInfo(st reflect.Value) (tagList map[string]reflect.Value, err err
 
 				for k, ptr := range t {
 					if _, ok := tagList[k]; ok {
-						return nil, fmt.Errorf("%s:%s is exists", "db", k)
+						// return nil, fmt.Errorf("%s:%s is exists1", "db", k)
+						continue
 					}
 					tagList[k] = ptr
 				}
@@ -160,7 +161,8 @@ func extractTagInfo(st reflect.Value) (tagList map[string]reflect.Value, err err
 
 				for k, ptr := range t {
 					if _, ok := tagList[k]; ok {
-						return nil, fmt.Errorf("%s:%s is exists", "db", k)
+						continue
+						// return nil, fmt.Errorf("%s:%s is exists2", "db", k)
 					}
 					tagList[k] = ptr
 				}
@@ -175,7 +177,7 @@ func extractTagInfo(st reflect.Value) (tagList map[string]reflect.Value, err err
 			attr := strings.Split(tagName, ",")
 			column := attr[0]
 			if _, ok := tagList[column]; ok {
-				return nil, fmt.Errorf("%s:%s is exists", "db", tagName)
+				return nil, fmt.Errorf("%s:%s is exists3", "db", tagName)
 			}
 			//字段对应结构体成员地址
 			tagList[column] = v
