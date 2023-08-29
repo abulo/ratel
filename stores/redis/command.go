@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/spf13/cast"
 )
 
 // Prefix 返回前缀+键
@@ -14,12 +15,12 @@ func (r *Client) Prefix(key string) string {
 }
 
 // k 格式化并返回带前缀的密钥
-func (r *Client) k(key string) string {
-	return fmt.Sprintf(r.KeyPrefix, key)
+func (r *Client) k(key any) string {
+	return fmt.Sprintf(r.KeyPrefix, cast.ToString(key))
 }
 
 // ks 使用前缀格式化并返回一组键
-func (r *Client) ks(key ...string) []string {
+func (r *Client) ks(key ...any) []string {
 	keys := make([]string, len(key))
 	for i, k := range key {
 		keys[i] = r.k(k)
@@ -192,7 +193,7 @@ func (r *Client) Quit(ctx context.Context) (val string, err error) {
 
 // Del 删除给定的一个或多个 key 。
 // 不存在的 key 会被忽略。
-func (r *Client) Del(ctx context.Context, keys ...string) (val int64, err error) {
+func (r *Client) Del(ctx context.Context, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -205,7 +206,7 @@ func (r *Client) Del(ctx context.Context, keys ...string) (val int64, err error)
 }
 
 // Unlink 这个命令非常类似于DEL：它删除指定的键。就像DEL键一样，如果它不存在，它将被忽略。但是，该命令在不同的线程中执行实际的内存回收，所以它不会阻塞，而DEL是。这是命令名称的来源：命令只是将键与键空间断开连接。实际删除将在以后异步发生。
-func (r *Client) Unlink(ctx context.Context, keys ...string) (val int64, err error) {
+func (r *Client) Unlink(ctx context.Context, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -220,7 +221,7 @@ func (r *Client) Unlink(ctx context.Context, keys ...string) (val int64, err err
 // Dump 序列化给定 key ，并返回被序列化的值，使用 RESTORE 命令可以将这个值反序列化为 Redis 键。
 // 如果 key 不存在，那么返回 nil 。
 // 否则，返回序列化之后的值。
-func (r *Client) Dump(ctx context.Context, key string) (val string, err error) {
+func (r *Client) Dump(ctx context.Context, key any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -234,7 +235,7 @@ func (r *Client) Dump(ctx context.Context, key string) (val string, err error) {
 
 // Exists 检查给定 key 是否存在。
 // 若 key 存在，返回 1 ，否则返回 0 。
-func (r *Client) Exists(ctx context.Context, key ...string) (val bool, err error) {
+func (r *Client) Exists(ctx context.Context, key ...any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -250,7 +251,7 @@ func (r *Client) Exists(ctx context.Context, key ...string) (val bool, err error
 // Expire 为给定 key 设置生存时间，当 key 过期时(生存时间为 0 )，它会被自动删除。
 // 设置成功返回 1 。
 // 当 key 不存在或者不能为 key 设置生存时间时(比如在低于 2.1.3 版本的 Redis 中你尝试更新 key 的生存时间)，返回 0 。
-func (r *Client) Expire(ctx context.Context, key string, expiration time.Duration) (val bool, err error) {
+func (r *Client) Expire(ctx context.Context, key any, expiration time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -264,7 +265,7 @@ func (r *Client) Expire(ctx context.Context, key string, expiration time.Duratio
 
 // ExpireAt  EXPIREAT 的作用和 EXPIRE 类似，都用于为 key 设置生存时间。
 // 命令用于以 UNIX 时间戳(unix timestamp)格式设置 key 的过期时间
-func (r *Client) ExpireAt(ctx context.Context, key string, tm time.Time) (val bool, err error) {
+func (r *Client) ExpireAt(ctx context.Context, key any, tm time.Time) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -276,7 +277,7 @@ func (r *Client) ExpireAt(ctx context.Context, key string, tm time.Time) (val bo
 	return
 }
 
-func (r *Client) ExpireTime(ctx context.Context, key string) (val time.Duration, err error) {
+func (r *Client) ExpireTime(ctx context.Context, key any) (val time.Duration, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -290,7 +291,7 @@ func (r *Client) ExpireTime(ctx context.Context, key string) (val time.Duration,
 
 // ExpireNX  ExpireNX 的作用和 EXPIRE 类似，都用于为 key 设置生存时间。
 // 命令用于以 UNIX 时间戳(unix timestamp)格式设置 key 的过期时间
-func (r *Client) ExpireNX(ctx context.Context, key string, tm time.Duration) (val bool, err error) {
+func (r *Client) ExpireNX(ctx context.Context, key any, tm time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -304,7 +305,7 @@ func (r *Client) ExpireNX(ctx context.Context, key string, tm time.Duration) (va
 
 // ExpireXX  ExpireXX 的作用和 EXPIRE 类似，都用于为 key 设置生存时间。
 // 命令用于以 UNIX 时间戳(unix timestamp)格式设置 key 的过期时间
-func (r *Client) ExpireXX(ctx context.Context, key string, tm time.Duration) (val bool, err error) {
+func (r *Client) ExpireXX(ctx context.Context, key any, tm time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -318,7 +319,7 @@ func (r *Client) ExpireXX(ctx context.Context, key string, tm time.Duration) (va
 
 // ExpireGT  ExpireGT 的作用和 EXPIRE 类似，都用于为 key 设置生存时间。
 // 命令用于以 UNIX 时间戳(unix timestamp)格式设置 key 的过期时间
-func (r *Client) ExpireGT(ctx context.Context, key string, tm time.Duration) (val bool, err error) {
+func (r *Client) ExpireGT(ctx context.Context, key any, tm time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -332,7 +333,7 @@ func (r *Client) ExpireGT(ctx context.Context, key string, tm time.Duration) (va
 
 // ExpireLT  ExpireLT 的作用和 EXPIRE 类似，都用于为 key 设置生存时间。
 // 命令用于以 UNIX 时间戳(unix timestamp)格式设置 key 的过期时间
-func (r *Client) ExpireLT(ctx context.Context, key string, tm time.Duration) (val bool, err error) {
+func (r *Client) ExpireLT(ctx context.Context, key any, tm time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -345,13 +346,13 @@ func (r *Client) ExpireLT(ctx context.Context, key string, tm time.Duration) (va
 }
 
 // Keys 查找所有符合给定模式 pattern 的 key 。
-func (r *Client) Keys(ctx context.Context, pattern string) (val []string, err error) {
+func (r *Client) Keys(ctx context.Context, key any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
 			return err
 		}
-		val, err = conn.Keys(getCtx(ctx), r.k(pattern)).Result()
+		val, err = conn.Keys(getCtx(ctx), r.k(key)).Result()
 		return err
 	}, acceptable)
 	return
@@ -372,7 +373,7 @@ func (r *Client) Migrate(ctx context.Context, host, port, key string, db int, ti
 
 // Move 将当前数据库的 key 移动到给定的数据库 db 当中。
 // 如果当前数据库(源数据库)和给定数据库(目标数据库)有相同名字的给定 key ，或者 key 不存在于当前数据库，那么 MOVE 没有任何效果。
-func (r *Client) Move(ctx context.Context, key string, db int) (val bool, err error) {
+func (r *Client) Move(ctx context.Context, key any, db int) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -385,7 +386,7 @@ func (r *Client) Move(ctx context.Context, key string, db int) (val bool, err er
 }
 
 // ObjectRefCount 返回给定 key 引用所储存的值的次数。此命令主要用于除错。
-func (r *Client) ObjectRefCount(ctx context.Context, key string) (val int64, err error) {
+func (r *Client) ObjectRefCount(ctx context.Context, key any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -398,7 +399,7 @@ func (r *Client) ObjectRefCount(ctx context.Context, key string) (val int64, err
 }
 
 // ObjectEncoding 返回给定 key 锁储存的值所使用的内部表示(representation)。
-func (r *Client) ObjectEncoding(ctx context.Context, key string) (val string, err error) {
+func (r *Client) ObjectEncoding(ctx context.Context, key any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -411,7 +412,7 @@ func (r *Client) ObjectEncoding(ctx context.Context, key string) (val string, er
 }
 
 // ObjectIdleTime 返回给定 key 自储存以来的空转时间(idle， 没有被读取也没有被写入)，以秒为单位。
-func (r *Client) ObjectIdleTime(ctx context.Context, key string) (val time.Duration, err error) {
+func (r *Client) ObjectIdleTime(ctx context.Context, key any) (val time.Duration, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -426,7 +427,7 @@ func (r *Client) ObjectIdleTime(ctx context.Context, key string) (val time.Durat
 // Persist 移除给定 key 的生存时间，将这个 key 从『易失的』(带生存时间 key )转换成『持久的』(一个不带生存时间、永不过期的 key )。
 // 当生存时间移除成功时，返回 1 .
 // 如果 key 不存在或 key 没有设置生存时间，返回 0 。
-func (r *Client) Persist(ctx context.Context, key string) (val bool, err error) {
+func (r *Client) Persist(ctx context.Context, key any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -439,7 +440,7 @@ func (r *Client) Persist(ctx context.Context, key string) (val bool, err error) 
 }
 
 // PExpire 毫秒为单位设置 key 的生存时间
-func (r *Client) PExpire(ctx context.Context, key string, expiration time.Duration) (val bool, err error) {
+func (r *Client) PExpire(ctx context.Context, key any, expiration time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -453,7 +454,7 @@ func (r *Client) PExpire(ctx context.Context, key string, expiration time.Durati
 
 // PExpireAt 这个命令和 expireat 命令类似，但它以毫秒为单位设置 key 的过期 unix 时间戳，而不是像 expireat 那样，以秒为单位。
 // 如果生存时间设置成功，返回 1 。 当 key 不存在或没办法设置生存时间时，返回 0
-func (r *Client) PExpireAt(ctx context.Context, key string, tm time.Time) (val bool, err error) {
+func (r *Client) PExpireAt(ctx context.Context, key any, tm time.Time) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -465,7 +466,7 @@ func (r *Client) PExpireAt(ctx context.Context, key string, tm time.Time) (val b
 	return
 }
 
-func (r *Client) PExpireTime(ctx context.Context, key string) (val time.Duration, err error) {
+func (r *Client) PExpireTime(ctx context.Context, key any) (val time.Duration, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -481,7 +482,7 @@ func (r *Client) PExpireTime(ctx context.Context, key string) (val time.Duration
 // 当 key 不存在时，返回 -2 。
 // 当 key 存在但没有设置剩余生存时间时，返回 -1 。
 // 否则，以毫秒为单位，返回 key 的剩余生存时间。
-func (r *Client) PTTL(ctx context.Context, key string) (val time.Duration, err error) {
+func (r *Client) PTTL(ctx context.Context, key any) (val time.Duration, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -509,7 +510,7 @@ func (r *Client) RandomKey(ctx context.Context) (val string, err error) {
 // Rename 将 key 改名为 newkey 。
 // 当 key 和 newkey 相同，或者 key 不存在时，返回一个错误。
 // 当 newkey 已经存在时， RENAME 命令将覆盖旧值。
-func (r *Client) Rename(ctx context.Context, key, newkey string) (val string, err error) {
+func (r *Client) Rename(ctx context.Context, key, newkey any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -523,7 +524,7 @@ func (r *Client) Rename(ctx context.Context, key, newkey string) (val string, er
 
 // RenameNX 当且仅当 newkey 不存在时，将 key 改名为 newkey 。
 // 当 key 不存在时，返回一个错误。
-func (r *Client) RenameNX(ctx context.Context, key, newkey string) (val bool, err error) {
+func (r *Client) RenameNX(ctx context.Context, key, newkey any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -538,7 +539,7 @@ func (r *Client) RenameNX(ctx context.Context, key, newkey string) (val bool, er
 // Restore 反序列化给定的序列化值，并将它和给定的 key 关联。
 // 参数 ttl 以毫秒为单位为 key 设置生存时间；如果 ttl 为 0 ，那么不设置生存时间。
 // RESTORE 在执行反序列化之前会先对序列化值的 RDB 版本和数据校验和进行检查，如果 RDB 版本不相同或者数据不完整的话，那么 RESTORE 会拒绝进行反序列化，并返回一个错误。
-func (r *Client) Restore(ctx context.Context, key string, ttl time.Duration, value string) (val string, err error) {
+func (r *Client) Restore(ctx context.Context, key any, ttl time.Duration, value string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -551,7 +552,7 @@ func (r *Client) Restore(ctx context.Context, key string, ttl time.Duration, val
 }
 
 // RestoreReplace -> Restore
-func (r *Client) RestoreReplace(ctx context.Context, key string, ttl time.Duration, value string) (val string, err error) {
+func (r *Client) RestoreReplace(ctx context.Context, key any, ttl time.Duration, value string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -565,7 +566,7 @@ func (r *Client) RestoreReplace(ctx context.Context, key string, ttl time.Durati
 
 // Sort 返回或保存给定列表、集合、有序集合 key 中经过排序的元素。
 // 排序默认以数字作为对象，值被解释为双精度浮点数，然后进行比较。
-func (r *Client) Sort(ctx context.Context, key string, sort *redis.Sort) (val []string, err error) {
+func (r *Client) Sort(ctx context.Context, key any, sort *redis.Sort) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -577,7 +578,7 @@ func (r *Client) Sort(ctx context.Context, key string, sort *redis.Sort) (val []
 	return
 }
 
-func (r *Client) SortRO(ctx context.Context, key string, sort *redis.Sort) (val []string, err error) {
+func (r *Client) SortRO(ctx context.Context, key any, sort *redis.Sort) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -590,7 +591,7 @@ func (r *Client) SortRO(ctx context.Context, key string, sort *redis.Sort) (val 
 }
 
 // SortStore -> Sort
-func (r *Client) SortStore(ctx context.Context, key, store string, sort *redis.Sort) (val int64, err error) {
+func (r *Client) SortStore(ctx context.Context, key, store any, sort *redis.Sort) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -603,7 +604,7 @@ func (r *Client) SortStore(ctx context.Context, key, store string, sort *redis.S
 }
 
 // SortInterfaces -> Sort
-func (r *Client) SortInterfaces(ctx context.Context, key string, sort *redis.Sort) (val []any, err error) {
+func (r *Client) SortInterfaces(ctx context.Context, key any, sort *redis.Sort) (val []any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -616,7 +617,7 @@ func (r *Client) SortInterfaces(ctx context.Context, key string, sort *redis.Sor
 }
 
 // Touch 更改键的上次访问时间。返回指定的现有键的数量。
-func (r *Client) Touch(ctx context.Context, keys ...string) (val int64, err error) {
+func (r *Client) Touch(ctx context.Context, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -632,7 +633,7 @@ func (r *Client) Touch(ctx context.Context, keys ...string) (val int64, err erro
 // 当 key 不存在时，返回 -2 。
 // 当 key 存在但没有设置剩余生存时间时，返回 -1 。
 // 否则，以秒为单位，返回 key 的剩余生存时间。
-func (r *Client) TTL(ctx context.Context, key string) (val time.Duration, err error) {
+func (r *Client) TTL(ctx context.Context, key any) (val time.Duration, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -645,7 +646,7 @@ func (r *Client) TTL(ctx context.Context, key string) (val time.Duration, err er
 }
 
 // Type 返回 key 所储存的值的类型。
-func (r *Client) Type(ctx context.Context, key string) (val string, err error) {
+func (r *Client) Type(ctx context.Context, key any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -659,7 +660,7 @@ func (r *Client) Type(ctx context.Context, key string) (val string, err error) {
 
 // Append 如果 key 已经存在并且是一个字符串， APPEND 命令将 value 追加到 key 原来的值的末尾。
 // 如果 key 不存在， APPEND 就简单地将给定 key 设为 value ，就像执行 SET key value 一样。
-func (r *Client) Append(ctx context.Context, key, value string) (val int64, err error) {
+func (r *Client) Append(ctx context.Context, key any, value string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -677,7 +678,7 @@ func (r *Client) Append(ctx context.Context, key, value string) (val int64, err 
 // 本操作的值限制在 64 位(bit)有符号数字表示之内。
 // 关于递增(increment) / 递减(decrement)操作的更多信息，请参见 INCR 命令。
 // 执行 DECR 命令之后 key 的值。
-func (r *Client) Decr(ctx context.Context, key string) (val int64, err error) {
+func (r *Client) Decr(ctx context.Context, key any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -695,7 +696,7 @@ func (r *Client) Decr(ctx context.Context, key string) (val int64, err error) {
 // 本操作的值限制在 64 位(bit)有符号数字表示之内。
 // 关于更多递增(increment) / 递减(decrement)操作的更多信息，请参见 INCR 命令。
 // 减去 decrement 之后， key 的值。
-func (r *Client) DecrBy(ctx context.Context, key string, value int64) (val int64, err error) {
+func (r *Client) DecrBy(ctx context.Context, key any, value int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -712,7 +713,7 @@ func (r *Client) DecrBy(ctx context.Context, key string, value int64) (val int64
 // 假如 key 储存的值不是字符串类型，返回一个错误，因为 GET 只能用于处理字符串值。
 // 当 key 不存在时，返回 nil ，否则，返回 key 的值。
 // 如果 key 不是字符串类型，那么返回一个错误。
-func (r *Client) Get(ctx context.Context, key string) (val string, err error) {
+func (r *Client) Get(ctx context.Context, key any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -728,7 +729,7 @@ func (r *Client) Get(ctx context.Context, key string) (val string, err error) {
 // 负数偏移量表示从字符串最后开始计数， -1 表示最后一个字符， -2 表示倒数第二个，以此类推。
 // GETRANGE 通过保证子字符串的值域(range)不超过实际字符串的值域来处理超出范围的值域请求。
 // 返回截取得出的子字符串。
-func (r *Client) GetRange(ctx context.Context, key string, start, end int64) (val string, err error) {
+func (r *Client) GetRange(ctx context.Context, key any, start, end int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -744,7 +745,7 @@ func (r *Client) GetRange(ctx context.Context, key string, start, end int64) (va
 // 当 key 存在但不是字符串类型时，返回一个错误。
 // 返回给定 key 的旧值。
 // 当 key 没有旧值时，也即是， key 不存在时，返回 nil 。
-func (r *Client) GetSet(ctx context.Context, key string, value any) (val string, err error) {
+func (r *Client) GetSet(ctx context.Context, key any, value any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -757,7 +758,7 @@ func (r *Client) GetSet(ctx context.Context, key string, value any) (val string,
 }
 
 // GetEx
-func (r *Client) GetEx(ctx context.Context, key string, ts time.Duration) (val string, err error) {
+func (r *Client) GetEx(ctx context.Context, key any, ts time.Duration) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -770,7 +771,7 @@ func (r *Client) GetEx(ctx context.Context, key string, ts time.Duration) (val s
 }
 
 // GetEx
-func (r *Client) GetDel(ctx context.Context, key string) (val string, err error) {
+func (r *Client) GetDel(ctx context.Context, key any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -787,7 +788,7 @@ func (r *Client) GetDel(ctx context.Context, key string) (val string, err error)
 // 如果值包含错误的类型，或字符串类型的值不能表示为数字，那么返回一个错误。
 // 本操作的值限制在 64 位(bit)有符号数字表示之内。
 // 执行 INCR 命令之后 key 的值。
-func (r *Client) Incr(ctx context.Context, key string) (val int64, err error) {
+func (r *Client) Incr(ctx context.Context, key any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -805,7 +806,7 @@ func (r *Client) Incr(ctx context.Context, key string) (val int64, err error) {
 // 本操作的值限制在 64 位(bit)有符号数字表示之内。
 // 关于递增(increment) / 递减(decrement)操作的更多信息，参见 INCR 命令。
 // 加上 increment 之后， key 的值。
-func (r *Client) IncrBy(ctx context.Context, key string, value int64) (val int64, err error) {
+func (r *Client) IncrBy(ctx context.Context, key any, value int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -820,7 +821,7 @@ func (r *Client) IncrBy(ctx context.Context, key string, value int64) (val int64
 // IncrByFloat 为 key 中所储存的值加上浮点数增量 increment 。
 // 如果 key 不存在，那么 INCRBYFLOAT 会先将 key 的值设为 0 ，再执行加法操作。
 // 如果命令执行成功，那么 key 的值会被更新为（执行加法之后的）新值，并且新值会以字符串的形式返回给调用者。
-func (r *Client) IncrByFloat(ctx context.Context, key string, value float64) (val float64, err error) {
+func (r *Client) IncrByFloat(ctx context.Context, key any, value float64) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -835,7 +836,7 @@ func (r *Client) IncrByFloat(ctx context.Context, key string, value float64) (va
 // MGet 返回所有(一个或多个)给定 key 的值。
 // 如果给定的 key 里面，有某个 key 不存在，那么这个 key 返回特殊值 nil 。因此，该命令永不失败。
 // 一个包含所有给定 key 的值的列表。
-func (r *Client) MGet(ctx context.Context, keys ...string) (val []any, err error) {
+func (r *Client) MGet(ctx context.Context, keys ...any) (val []any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -880,7 +881,7 @@ func (r *Client) MSetNX(ctx context.Context, values ...any) (val bool, err error
 // Set 将字符串值 value 关联到 key 。
 // 如果 key 已经持有其他值， SET 就覆写旧值，无视类型。
 // 对于某个原本带有生存时间（TTL）的键来说， 当 SET 命令成功在这个键上执行时， 这个键原有的 TTL 将被清除。
-func (r *Client) Set(ctx context.Context, key string, value any, expiration time.Duration) (val string, err error) {
+func (r *Client) Set(ctx context.Context, key any, value any, expiration time.Duration) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -892,7 +893,7 @@ func (r *Client) Set(ctx context.Context, key string, value any, expiration time
 	return
 }
 
-func (r *Client) SetArgs(ctx context.Context, key string, value any, a redis.SetArgs) (val string, err error) {
+func (r *Client) SetArgs(ctx context.Context, key any, value any, a redis.SetArgs) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -905,7 +906,7 @@ func (r *Client) SetArgs(ctx context.Context, key string, value any, a redis.Set
 }
 
 // SetEX ...
-func (r *Client) SetEx(ctx context.Context, key string, value any, expiration time.Duration) (val string, err error) {
+func (r *Client) SetEx(ctx context.Context, key any, value any, expiration time.Duration) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -920,7 +921,7 @@ func (r *Client) SetEx(ctx context.Context, key string, value any, expiration ti
 // SetNX 将 key 的值设为 value ，当且仅当 key 不存在。
 // 若给定的 key 已经存在，则 SETNX 不做任何动作。
 // SETNX 是『SET if Not eXists』(如果不存在，则 SET)的简写。
-func (r *Client) SetNX(ctx context.Context, key string, value any, expiration time.Duration) (val bool, err error) {
+func (r *Client) SetNX(ctx context.Context, key any, value any, expiration time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -933,7 +934,7 @@ func (r *Client) SetNX(ctx context.Context, key string, value any, expiration ti
 }
 
 // SetXX -> SetNX
-func (r *Client) SetXX(ctx context.Context, key string, value any, expiration time.Duration) (val bool, err error) {
+func (r *Client) SetXX(ctx context.Context, key any, value any, expiration time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -947,7 +948,7 @@ func (r *Client) SetXX(ctx context.Context, key string, value any, expiration ti
 
 // SetRange 用 value 参数覆写(overwrite)给定 key 所储存的字符串值，从偏移量 offset 开始。
 // 不存在的 key 当作空白字符串处理。
-func (r *Client) SetRange(ctx context.Context, key string, offset int64, value string) (val int64, err error) {
+func (r *Client) SetRange(ctx context.Context, key any, offset int64, value string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -961,7 +962,7 @@ func (r *Client) SetRange(ctx context.Context, key string, offset int64, value s
 
 // StrLen 返回 key 所储存的字符串值的长度。
 // 当 key 储存的不是字符串值时，返回一个错误。
-func (r *Client) StrLen(ctx context.Context, key string) (val int64, err error) {
+func (r *Client) StrLen(ctx context.Context, key any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -974,7 +975,7 @@ func (r *Client) StrLen(ctx context.Context, key string) (val int64, err error) 
 }
 
 // Copy
-func (r *Client) Copy(ctx context.Context, sourceKey string, destKey string, db int, replace bool) (val int64, err error) {
+func (r *Client) Copy(ctx context.Context, sourceKey any, destKey any, db int, replace bool) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -989,7 +990,7 @@ func (r *Client) Copy(ctx context.Context, sourceKey string, destKey string, db 
 // GetBit 对 key 所储存的字符串值，获取指定偏移量上的位(bit)。
 // 当 offset 比字符串值的长度大，或者 key 不存在时，返回 0 。
 // 字符串值指定偏移量上的位(bit)。
-func (r *Client) GetBit(ctx context.Context, key string, offset int64) (val int64, err error) {
+func (r *Client) GetBit(ctx context.Context, key any, offset int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1006,7 +1007,7 @@ func (r *Client) GetBit(ctx context.Context, key string, offset int64) (val int6
 // 当 key 不存在时，自动生成一个新的字符串值。
 // 字符串会进行伸展(grown)以确保它可以将 value 保存在指定的偏移量上。当字符串值进行伸展时，空白位置以 0 填充。
 // offset 参数必须大于或等于 0 ，小于 2^32 (bit 映射被限制在 512 MB 之内)。
-func (r *Client) SetBit(ctx context.Context, key string, offset int64, value int) (val int64, err error) {
+func (r *Client) SetBit(ctx context.Context, key any, offset int64, value int) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1022,7 +1023,7 @@ func (r *Client) SetBit(ctx context.Context, key string, offset int64, value int
 // 一般情况下，给定的整个字符串都会被进行计数，通过指定额外的 start 或 end 参数，可以让计数只在特定的位上进行。
 // start 和 end 参数的设置和 GETRANGE 命令类似，都可以使用负数值：比如 -1 表示最后一个位，而 -2 表示倒数第二个位，以此类推。
 // 不存在的 key 被当成是空字符串来处理，因此对一个不存在的 key 进行 BITCOUNT 操作，结果为 0 。
-func (r *Client) BitCount(ctx context.Context, key string, bitCount *redis.BitCount) (val int64, err error) {
+func (r *Client) BitCount(ctx context.Context, key any, bitCount *redis.BitCount) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1035,7 +1036,7 @@ func (r *Client) BitCount(ctx context.Context, key string, bitCount *redis.BitCo
 }
 
 // BitOpAnd -> BitCount
-func (r *Client) BitOpAnd(ctx context.Context, destKey string, keys ...string) (val int64, err error) {
+func (r *Client) BitOpAnd(ctx context.Context, destKey any, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1048,7 +1049,7 @@ func (r *Client) BitOpAnd(ctx context.Context, destKey string, keys ...string) (
 }
 
 // BitOpOr -> BitCount
-func (r *Client) BitOpOr(ctx context.Context, destKey string, keys ...string) (val int64, err error) {
+func (r *Client) BitOpOr(ctx context.Context, destKey any, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1061,7 +1062,7 @@ func (r *Client) BitOpOr(ctx context.Context, destKey string, keys ...string) (v
 }
 
 // BitOpXor -> BitCount
-func (r *Client) BitOpXor(ctx context.Context, destKey string, keys ...string) (val int64, err error) {
+func (r *Client) BitOpXor(ctx context.Context, destKey any, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1074,7 +1075,7 @@ func (r *Client) BitOpXor(ctx context.Context, destKey string, keys ...string) (
 }
 
 // BitOpNot -> BitCount
-func (r *Client) BitOpNot(ctx context.Context, destKey string, key string) (val int64, err error) {
+func (r *Client) BitOpNot(ctx context.Context, destKey any, key any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1087,7 +1088,7 @@ func (r *Client) BitOpNot(ctx context.Context, destKey string, key string) (val 
 }
 
 // BitPos -> BitCount
-func (r *Client) BitPos(ctx context.Context, key string, bit int64, pos ...int64) (val int64, err error) {
+func (r *Client) BitPos(ctx context.Context, key any, bit int64, pos ...int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1100,7 +1101,7 @@ func (r *Client) BitPos(ctx context.Context, key string, bit int64, pos ...int64
 }
 
 // BitField -> BitCount
-func (r *Client) BitField(ctx context.Context, key string, args ...any) (val []int64, err error) {
+func (r *Client) BitField(ctx context.Context, key any, args ...any) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1113,7 +1114,7 @@ func (r *Client) BitField(ctx context.Context, key string, args ...any) (val []i
 }
 
 // Scan 命令及其相关的 SSCAN 命令、 HSCAN 命令和 ZSCAN 命令都用于增量地迭代（incrementally iterate）一集元素
-func (r *Client) ScanIterator(ctx context.Context, cursorIn uint64, match string, count int64) (val *redis.ScanIterator, err error) {
+func (r *Client) ScanIterator(ctx context.Context, cursorIn uint64, match any, count int64) (val *redis.ScanIterator, err error) {
 	// return getRedis(r).Scan(getCtx(ctx), cursor, r.k(match), count)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -1127,7 +1128,7 @@ func (r *Client) ScanIterator(ctx context.Context, cursorIn uint64, match string
 }
 
 // Scan 命令及其相关的 SSCAN 命令、 HSCAN 命令和 ZSCAN 命令都用于增量地迭代（incrementally iterate）一集元素
-func (r *Client) Scan(ctx context.Context, cursorIn uint64, match string, count int64) (val []string, cursor uint64, err error) {
+func (r *Client) Scan(ctx context.Context, cursorIn uint64, match any, count int64) (val []string, cursor uint64, err error) {
 	// return getRedis(r).Scan(getCtx(ctx), cursor, r.k(match), count)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -1140,7 +1141,7 @@ func (r *Client) Scan(ctx context.Context, cursorIn uint64, match string, count 
 	return
 }
 
-func (r *Client) ScanType(ctx context.Context, cursorIn uint64, match string, count int64, keyType string) (val []string, cursor uint64, err error) {
+func (r *Client) ScanType(ctx context.Context, cursorIn uint64, match any, count int64, keyType string) (val []string, cursor uint64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1153,7 +1154,7 @@ func (r *Client) ScanType(ctx context.Context, cursorIn uint64, match string, co
 }
 
 // SScan 详细信息请参考 SCAN 命令。
-func (r *Client) SScan(ctx context.Context, key string, cursorIn uint64, match string, count int64) (val []string, cursor uint64, err error) {
+func (r *Client) SScan(ctx context.Context, key any, cursorIn uint64, match string, count int64) (val []string, cursor uint64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1166,7 +1167,7 @@ func (r *Client) SScan(ctx context.Context, key string, cursorIn uint64, match s
 }
 
 // HScan 详细信息请参考 SCAN 命令。
-func (r *Client) HScan(ctx context.Context, key string, cursorIn uint64, match string, count int64) (val []string, cursor uint64, err error) {
+func (r *Client) HScan(ctx context.Context, key any, cursorIn uint64, match string, count int64) (val []string, cursor uint64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1179,7 +1180,7 @@ func (r *Client) HScan(ctx context.Context, key string, cursorIn uint64, match s
 }
 
 // ZScan 详细信息请参考 SCAN 命令。
-func (r *Client) ZScan(ctx context.Context, key string, cursorIn uint64, match string, count int64) (val []string, cursor uint64, err error) {
+func (r *Client) ZScan(ctx context.Context, key any, cursorIn uint64, match string, count int64) (val []string, cursor uint64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1192,7 +1193,7 @@ func (r *Client) ZScan(ctx context.Context, key string, cursorIn uint64, match s
 }
 
 // HDel 删除哈希表 key 中的一个或多个指定域，不存在的域将被忽略。
-func (r *Client) HDel(ctx context.Context, key string, fields ...string) (val int64, err error) {
+func (r *Client) HDel(ctx context.Context, key any, fields ...string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1205,7 +1206,7 @@ func (r *Client) HDel(ctx context.Context, key string, fields ...string) (val in
 }
 
 // HExists 查看哈希表 key 中，给定域 field 是否存在。
-func (r *Client) HExists(ctx context.Context, key, field string) (val bool, err error) {
+func (r *Client) HExists(ctx context.Context, key any, field string) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1218,7 +1219,7 @@ func (r *Client) HExists(ctx context.Context, key, field string) (val bool, err 
 }
 
 // HGet 返回哈希表 key 中给定域 field 的值。
-func (r *Client) HGet(ctx context.Context, key, field string) (val string, err error) {
+func (r *Client) HGet(ctx context.Context, key any, field string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1232,7 +1233,7 @@ func (r *Client) HGet(ctx context.Context, key, field string) (val string, err e
 
 // HGetAll 返回哈希表 key 中，所有的域和值。
 // 在返回值里，紧跟每个域名(field name)之后是域的值(value)，所以返回值的长度是哈希表大小的两倍。
-func (r *Client) HGetAll(ctx context.Context, key string) (val map[string]string, err error) {
+func (r *Client) HGetAll(ctx context.Context, key any) (val map[string]string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1250,7 +1251,7 @@ func (r *Client) HGetAll(ctx context.Context, key string) (val map[string]string
 // 如果域 field 不存在，那么在执行命令前，域的值被初始化为 0 。
 // 对一个储存字符串值的域 field 执行 HINCRBY 命令将造成一个错误。
 // 本操作的值被限制在 64 位(bit)有符号数字表示之内。
-func (r *Client) HIncrBy(ctx context.Context, key, field string, incr int64) (val int64, err error) {
+func (r *Client) HIncrBy(ctx context.Context, key any, field string, incr int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1265,7 +1266,7 @@ func (r *Client) HIncrBy(ctx context.Context, key, field string, incr int64) (va
 // HIncrByFloat 为哈希表 key 中的域 field 加上浮点数增量 increment 。
 // 如果哈希表中没有域 field ，那么 HINCRBYFLOAT 会先将域 field 的值设为 0 ，然后再执行加法操作。
 // 如果键 key 不存在，那么 HINCRBYFLOAT 会先创建一个哈希表，再创建域 field ，最后再执行加法操作。
-func (r *Client) HIncrByFloat(ctx context.Context, key, field string, incr float64) (val float64, err error) {
+func (r *Client) HIncrByFloat(ctx context.Context, key any, field string, incr float64) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1278,7 +1279,7 @@ func (r *Client) HIncrByFloat(ctx context.Context, key, field string, incr float
 }
 
 // HKeys 返回哈希表 key 中的所有域。
-func (r *Client) HKeys(ctx context.Context, key string) (val []string, err error) {
+func (r *Client) HKeys(ctx context.Context, key any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1291,7 +1292,7 @@ func (r *Client) HKeys(ctx context.Context, key string) (val []string, err error
 }
 
 // HLen 返回哈希表 key 中域的数量。
-func (r *Client) HLen(ctx context.Context, key string) (val int64, err error) {
+func (r *Client) HLen(ctx context.Context, key any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1306,7 +1307,7 @@ func (r *Client) HLen(ctx context.Context, key string) (val int64, err error) {
 // HMGet 返回哈希表 key 中，一个或多个给定域的值。
 // 如果给定的域不存在于哈希表，那么返回一个 nil 值。
 // 因为不存在的 key 被当作一个空哈希表来处理，所以对一个不存在的 key 进行 HMGET 操作将返回一个只带有 nil 值的表。
-func (r *Client) HMGet(ctx context.Context, key string, fields ...string) (val []any, err error) {
+func (r *Client) HMGet(ctx context.Context, key any, fields ...string) (val []any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1321,7 +1322,7 @@ func (r *Client) HMGet(ctx context.Context, key string, fields ...string) (val [
 // HSet 将哈希表 key 中的域 field 的值设为 value 。
 // 如果 key 不存在，一个新的哈希表被创建并进行 HSET 操作。
 // 如果域 field 已经存在于哈希表中，旧值将被覆盖。
-func (r *Client) HSet(ctx context.Context, key string, value ...any) (val int64, err error) {
+func (r *Client) HSet(ctx context.Context, key any, value ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1336,7 +1337,7 @@ func (r *Client) HSet(ctx context.Context, key string, value ...any) (val int64,
 // HMSet 同时将多个 field-value (域-值)对设置到哈希表 key 中。
 // 此命令会覆盖哈希表中已存在的域。
 // 如果 key 不存在，一个空哈希表被创建并执行 HMSET 操作。
-func (r *Client) HMSet(ctx context.Context, key string, value ...any) (val bool, err error) {
+func (r *Client) HMSet(ctx context.Context, key any, value ...any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1351,7 +1352,7 @@ func (r *Client) HMSet(ctx context.Context, key string, value ...any) (val bool,
 // HSetNX 将哈希表 key 中的域 field 的值设置为 value ，当且仅当域 field 不存在。
 // 若域 field 已经存在，该操作无效。
 // 如果 key 不存在，一个新哈希表被创建并执行 HSETNX 命令。
-func (r *Client) HSetNX(ctx context.Context, key, field string, value any) (val bool, err error) {
+func (r *Client) HSetNX(ctx context.Context, key any, field string, value any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1364,7 +1365,7 @@ func (r *Client) HSetNX(ctx context.Context, key, field string, value any) (val 
 }
 
 // HVals 返回哈希表 key 中所有域的值。
-func (r *Client) HVals(ctx context.Context, key string) (val []string, err error) {
+func (r *Client) HVals(ctx context.Context, key any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1375,7 +1376,7 @@ func (r *Client) HVals(ctx context.Context, key string) (val []string, err error
 	}, acceptable)
 	return
 }
-func (r *Client) HRandField(ctx context.Context, key string, count int) (val []string, err error) {
+func (r *Client) HRandField(ctx context.Context, key any, count int) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1386,7 +1387,7 @@ func (r *Client) HRandField(ctx context.Context, key string, count int) (val []s
 	}, acceptable)
 	return
 }
-func (r *Client) HRandFieldWithValues(ctx context.Context, key string, count int) (val []redis.KeyValue, err error) {
+func (r *Client) HRandFieldWithValues(ctx context.Context, key any, count int) (val []redis.KeyValue, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1401,7 +1402,7 @@ func (r *Client) HRandFieldWithValues(ctx context.Context, key string, count int
 // BLPop 是列表的阻塞式(blocking)弹出原语。
 // 它是 LPop 命令的阻塞版本，当给定列表内没有任何元素可供弹出的时候，连接将被 BLPop 命令阻塞，直到等待超时或发现可弹出元素为止。
 // 当给定多个 key 参数时，按参数 key 的先后顺序依次检查各个列表，弹出第一个非空列表的头元素。
-func (r *Client) BLPop(ctx context.Context, timeout time.Duration, keys ...string) (val []string, err error) {
+func (r *Client) BLPop(ctx context.Context, timeout time.Duration, keys ...any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1413,7 +1414,7 @@ func (r *Client) BLPop(ctx context.Context, timeout time.Duration, keys ...strin
 	return
 }
 
-func (r *Client) BLMPop(ctx context.Context, timeout time.Duration, direction string, count int64, keys ...string) (key string, val []string, err error) {
+func (r *Client) BLMPop(ctx context.Context, timeout time.Duration, direction string, count int64, keys ...any) (key string, val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1429,7 +1430,7 @@ func (r *Client) BLMPop(ctx context.Context, timeout time.Duration, direction st
 // 它是 RPOP 命令的阻塞版本，当给定列表内没有任何元素可供弹出的时候，连接将被 BRPOP 命令阻塞，直到等待超时或发现可弹出元素为止。
 // 当给定多个 key 参数时，按参数 key 的先后顺序依次检查各个列表，弹出第一个非空列表的尾部元素。
 // 关于阻塞操作的更多信息，请查看 BLPOP 命令， BRPOP 除了弹出元素的位置和 BLPOP 不同之外，其他表现一致。
-func (r *Client) BRPop(ctx context.Context, timeout time.Duration, keys ...string) (val []string, err error) {
+func (r *Client) BRPop(ctx context.Context, timeout time.Duration, keys ...any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1443,7 +1444,7 @@ func (r *Client) BRPop(ctx context.Context, timeout time.Duration, keys ...strin
 
 // BRPopLPush 是 RPOPLPUSH 的阻塞版本，当给定列表 source 不为空时， BRPOPLPUSH 的表现和 RPOPLPUSH 一样。
 // 当列表 source 为空时， BRPOPLPUSH 命令将阻塞连接，直到等待超时，或有另一个客户端对 source 执行 LPUSH 或 RPUSH 命令为止。
-func (r *Client) BRPopLPush(ctx context.Context, source, destination string, timeout time.Duration) (val string, err error) {
+func (r *Client) BRPopLPush(ctx context.Context, source, destination any, timeout time.Duration) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1471,7 +1472,7 @@ func (r *Client) LCS(ctx context.Context, q *redis.LCSQuery) (val *redis.LCSMatc
 // 下标(index)参数 start 和 stop 都以 0 为底，也就是说，以 0 表示列表的第一个元素，以 1 表示列表的第二个元素，以此类推。
 // 你也可以使用负数下标，以 -1 表示列表的最后一个元素， -2 表示列表的倒数第二个元素，以此类推。
 // 如果 key 不是列表类型，返回一个错误。
-func (r *Client) LIndex(ctx context.Context, key string, index int64) (val string, err error) {
+func (r *Client) LIndex(ctx context.Context, key any, index int64) (val string, err error) {
 	// return getRedis(r).LIndex(getCtx(ctx), r.k(key), index)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -1488,7 +1489,7 @@ func (r *Client) LIndex(ctx context.Context, key string, index int64) (val strin
 // 当 pivot 不存在于列表 key 时，不执行任何操作。
 // 当 key 不存在时， key 被视为空列表，不执行任何操作。
 // 如果 key 不是列表类型，返回一个错误。
-func (r *Client) LInsert(ctx context.Context, key, op string, pivot, value any) (val int64, err error) {
+func (r *Client) LInsert(ctx context.Context, key any, op string, pivot, value any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1501,7 +1502,7 @@ func (r *Client) LInsert(ctx context.Context, key, op string, pivot, value any) 
 }
 
 // LInsertBefore 同 LInsert
-func (r *Client) LInsertBefore(ctx context.Context, key string, pivot, value any) (val int64, err error) {
+func (r *Client) LInsertBefore(ctx context.Context, key any, pivot, value any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1514,7 +1515,7 @@ func (r *Client) LInsertBefore(ctx context.Context, key string, pivot, value any
 }
 
 // LInsertAfter 同 LInsert
-func (r *Client) LInsertAfter(ctx context.Context, key string, pivot, value any) (val int64, err error) {
+func (r *Client) LInsertAfter(ctx context.Context, key any, pivot, value any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1529,7 +1530,7 @@ func (r *Client) LInsertAfter(ctx context.Context, key string, pivot, value any)
 // LLen 返回列表 key 的长度。
 // 如果 key 不存在，则 key 被解释为一个空列表，返回 0 .
 // 如果 key 不是列表类型，返回一个错误。
-func (r *Client) LLen(ctx context.Context, key string) (val int64, err error) {
+func (r *Client) LLen(ctx context.Context, key any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1544,7 +1545,7 @@ func (r *Client) LLen(ctx context.Context, key string) (val int64, err error) {
 // LMPop Pops one or more elements from the first non-empty list key from the list of provided key names.
 // direction: left or right, count: > 0
 // example: client.LMPop(ctx, "left", 3, "key1", "key2")
-func (r *Client) LMPop(ctx context.Context, direction string, count int64, keys ...string) (key string, val []string, err error) {
+func (r *Client) LMPop(ctx context.Context, direction string, count int64, keys ...any) (key string, val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1557,7 +1558,7 @@ func (r *Client) LMPop(ctx context.Context, direction string, count int64, keys 
 }
 
 // LPop 移除并返回列表 key 的头元素。
-func (r *Client) LPop(ctx context.Context, key string) (val string, err error) {
+func (r *Client) LPop(ctx context.Context, key any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1570,7 +1571,7 @@ func (r *Client) LPop(ctx context.Context, key string) (val string, err error) {
 }
 
 // LPopCount 移除并返回列表 key 的头元素。
-func (r *Client) LPopCount(ctx context.Context, key string, count int) (val []string, err error) {
+func (r *Client) LPopCount(ctx context.Context, key any, count int) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1581,7 +1582,7 @@ func (r *Client) LPopCount(ctx context.Context, key string, count int) (val []st
 	}, acceptable)
 	return
 }
-func (r *Client) LPos(ctx context.Context, key string, value string, args redis.LPosArgs) (val int64, err error) {
+func (r *Client) LPos(ctx context.Context, key any, value string, args redis.LPosArgs) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1592,7 +1593,7 @@ func (r *Client) LPos(ctx context.Context, key string, value string, args redis.
 	}, acceptable)
 	return
 }
-func (r *Client) LPosCount(ctx context.Context, key string, value string, count int64, args redis.LPosArgs) (val []int64, err error) {
+func (r *Client) LPosCount(ctx context.Context, key any, value string, count int64, args redis.LPosArgs) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1608,7 +1609,7 @@ func (r *Client) LPosCount(ctx context.Context, key string, value string, count 
 // 如果有多个 value 值，那么各个 value 值按从左到右的顺序依次插入到表头
 // 如果 key 不存在，一个空列表会被创建并执行 LPush 操作。
 // 当 key 存在但不是列表类型时，返回一个错误。
-func (r *Client) LPush(ctx context.Context, key string, values ...any) (val int64, err error) {
+func (r *Client) LPush(ctx context.Context, key any, values ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1622,7 +1623,7 @@ func (r *Client) LPush(ctx context.Context, key string, values ...any) (val int6
 
 // LPushX 将值 value 插入到列表 key 的表头，当且仅当 key 存在并且是一个列表。
 // 和 LPUSH 命令相反，当 key 不存在时， LPUSHX 命令什么也不做。
-func (r *Client) LPushX(ctx context.Context, key string, value any) (val int64, err error) {
+func (r *Client) LPushX(ctx context.Context, key any, value any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1637,7 +1638,7 @@ func (r *Client) LPushX(ctx context.Context, key string, value any) (val int64, 
 // LRange 返回列表 key 中指定区间内的元素，区间以偏移量 start 和 stop 指定。
 // 下标(index)参数 start 和 stop 都以 0 为底，也就是说，以 0 表示列表的第一个元素，以 1 表示列表的第二个元素，以此类推。
 // 你也可以使用负数下标，以 -1 表示列表的最后一个元素， -2 表示列表的倒数第二个元素，以此类推。
-func (r *Client) LRange(ctx context.Context, key string, start, stop int64) (val []string, err error) {
+func (r *Client) LRange(ctx context.Context, key any, start, stop int64) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1650,7 +1651,7 @@ func (r *Client) LRange(ctx context.Context, key string, start, stop int64) (val
 }
 
 // LRem 根据参数 count 的值，移除列表中与参数 value 相等的元素。
-func (r *Client) LRem(ctx context.Context, key string, count int64, value any) (val int64, err error) {
+func (r *Client) LRem(ctx context.Context, key any, count int64, value any) (val int64, err error) {
 
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -1666,7 +1667,7 @@ func (r *Client) LRem(ctx context.Context, key string, count int64, value any) (
 // LSet 将列表 key 下标为 index 的元素的值设置为 value 。
 // 当 index 参数超出范围，或对一个空列表( key 不存在)进行 LSET 时，返回一个错误。
 // 关于列表下标的更多信息，请参考 LINDEX 命令。
-func (r *Client) LSet(ctx context.Context, key string, index int64, value any) (val string, err error) {
+func (r *Client) LSet(ctx context.Context, key any, index int64, value any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1683,7 +1684,7 @@ func (r *Client) LSet(ctx context.Context, key string, index int64, value any) (
 // 下标(index)参数 start 和 stop 都以 0 为底，也就是说，以 0 表示列表的第一个元素，以 1 表示列表的第二个元素，以此类推。
 // 你也可以使用负数下标，以 -1 表示列表的最后一个元素， -2 表示列表的倒数第二个元素，以此类推。
 // 当 key 不是列表类型时，返回一个错误。
-func (r *Client) LTrim(ctx context.Context, key string, start, stop int64) (val string, err error) {
+func (r *Client) LTrim(ctx context.Context, key any, start, stop int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1696,7 +1697,7 @@ func (r *Client) LTrim(ctx context.Context, key string, start, stop int64) (val 
 }
 
 // RPop 移除并返回列表 key 的头元素。
-func (r *Client) RPop(ctx context.Context, key string) (val string, err error) {
+func (r *Client) RPop(ctx context.Context, key any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1709,7 +1710,7 @@ func (r *Client) RPop(ctx context.Context, key string) (val string, err error) {
 }
 
 // RPopCount 移除并返回列表 key 的头元素。
-func (r *Client) RPopCount(ctx context.Context, key string, count int) (val []string, err error) {
+func (r *Client) RPopCount(ctx context.Context, key any, count int) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1727,7 +1728,7 @@ func (r *Client) RPopCount(ctx context.Context, key string, count int) (val []st
 // 举个例子，你有两个列表 source 和 destination ， source 列表有元素 a, b, c ， destination 列表有元素 x, y, z ，执行 RPOPLPUSH source destination 之后， source 列表包含元素 a, b ， destination 列表包含元素 c, x, y, z ，并且元素 c 会被返回给客户端。
 // 如果 source 不存在，值 nil 被返回，并且不执行其他动作。
 // 如果 source 和 destination 相同，则列表中的表尾元素被移动到表头，并返回该元素，可以把这种特殊情况视作列表的旋转(rotation)操作。
-func (r *Client) RPopLPush(ctx context.Context, source, destination string) (val string, err error) {
+func (r *Client) RPopLPush(ctx context.Context, source, destination any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1743,7 +1744,7 @@ func (r *Client) RPopLPush(ctx context.Context, source, destination string) (val
 // 如果有多个 value 值，那么各个 value 值按从左到右的顺序依次插入到表尾：比如对一个空列表 mylist 执行 RPUSH mylist a b c ，得出的结果列表为 a b c ，等同于执行命令 RPUSH mylist a 、 RPUSH mylist b 、 RPUSH mylist c 。
 // 如果 key 不存在，一个空列表会被创建并执行 RPUSH 操作。
 // 当 key 存在但不是列表类型时，返回一个错误。
-func (r *Client) RPush(ctx context.Context, key string, values ...any) (val int64, err error) {
+func (r *Client) RPush(ctx context.Context, key any, values ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1757,7 +1758,7 @@ func (r *Client) RPush(ctx context.Context, key string, values ...any) (val int6
 
 // RPushX 将值 value 插入到列表 key 的表尾，当且仅当 key 存在并且是一个列表。
 // 和 RPUSH 命令相反，当 key 不存在时， RPUSHX 命令什么也不做。
-func (r *Client) RPushX(ctx context.Context, key string, value any) (val int64, err error) {
+func (r *Client) RPushX(ctx context.Context, key any, value any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1768,7 +1769,7 @@ func (r *Client) RPushX(ctx context.Context, key string, value any) (val int64, 
 	}, acceptable)
 	return
 }
-func (r *Client) LMove(ctx context.Context, source, destination, srcpos, destpos string) (val string, err error) {
+func (r *Client) LMove(ctx context.Context, source, destination, srcpos, destpos any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1779,7 +1780,7 @@ func (r *Client) LMove(ctx context.Context, source, destination, srcpos, destpos
 	}, acceptable)
 	return
 }
-func (r *Client) BLMove(ctx context.Context, source, destination, srcpos, destpos string, ts time.Duration) (val string, err error) {
+func (r *Client) BLMove(ctx context.Context, source, destination, srcpos, destpos any, ts time.Duration) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1794,7 +1795,7 @@ func (r *Client) BLMove(ctx context.Context, source, destination, srcpos, destpo
 // SAdd 将一个或多个 member 元素加入到集合 key 当中，已经存在于集合的 member 元素将被忽略。
 // 假如 key 不存在，则创建一个只包含 member 元素作成员的集合。
 // 当 key 不是集合类型时，返回一个错误。
-func (r *Client) SAdd(ctx context.Context, key string, members ...any) (val int64, err error) {
+func (r *Client) SAdd(ctx context.Context, key any, members ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1807,7 +1808,7 @@ func (r *Client) SAdd(ctx context.Context, key string, members ...any) (val int6
 }
 
 // SCard 返回集合 key 的基数(集合中元素的数量)。
-func (r *Client) SCard(ctx context.Context, key string) (val int64, err error) {
+func (r *Client) SCard(ctx context.Context, key any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1821,7 +1822,7 @@ func (r *Client) SCard(ctx context.Context, key string) (val int64, err error) {
 
 // SDiff 返回一个集合的全部成员，该集合是所有给定集合之间的差集。
 // 不存在的 key 被视为空集。
-func (r *Client) SDiff(ctx context.Context, keys ...string) (val []string, err error) {
+func (r *Client) SDiff(ctx context.Context, keys ...any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1836,7 +1837,7 @@ func (r *Client) SDiff(ctx context.Context, keys ...string) (val []string, err e
 // SDiffStore 这个命令的作用和 SDIFF 类似，但它将结果保存到 destination 集合，而不是简单地返回结果集。
 // 如果 destination 集合已经存在，则将其覆盖。
 // destination 可以是 key 本身。
-func (r *Client) SDiffStore(ctx context.Context, destination string, keys ...string) (val int64, err error) {
+func (r *Client) SDiffStore(ctx context.Context, destination any, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1851,7 +1852,7 @@ func (r *Client) SDiffStore(ctx context.Context, destination string, keys ...str
 // SInter 返回一个集合的全部成员，该集合是所有给定集合的交集。
 // 不存在的 key 被视为空集。
 // 当给定集合当中有一个空集时，结果也为空集(根据集合运算定律)。
-func (r *Client) SInter(ctx context.Context, keys ...string) (val []string, err error) {
+func (r *Client) SInter(ctx context.Context, keys ...any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1866,7 +1867,7 @@ func (r *Client) SInter(ctx context.Context, keys ...string) (val []string, err 
 // SInterStore 这个命令类似于 SINTER 命令，但它将结果保存到 destination 集合，而不是简单地返回结果集。
 // 如果 destination 集合已经存在，则将其覆盖。
 // destination 可以是 key 本身。
-func (r *Client) SInterCard(ctx context.Context, limit int64, keys ...string) (val int64, err error) {
+func (r *Client) SInterCard(ctx context.Context, limit int64, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1881,7 +1882,7 @@ func (r *Client) SInterCard(ctx context.Context, limit int64, keys ...string) (v
 // SInterStore 这个命令类似于 SINTER 命令，但它将结果保存到 destination 集合，而不是简单地返回结果集。
 // 如果 destination 集合已经存在，则将其覆盖。
 // destination 可以是 key 本身。
-func (r *Client) SInterStore(ctx context.Context, destination string, keys ...string) (val int64, err error) {
+func (r *Client) SInterStore(ctx context.Context, destination any, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1894,7 +1895,7 @@ func (r *Client) SInterStore(ctx context.Context, destination string, keys ...st
 }
 
 // SIsMember 判断 member 元素是否集合 key 的成员。
-func (r *Client) SIsMember(ctx context.Context, key string, member any) (val bool, err error) {
+func (r *Client) SIsMember(ctx context.Context, key any, member any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1908,7 +1909,7 @@ func (r *Client) SIsMember(ctx context.Context, key string, member any) (val boo
 
 // SMembers 返回集合 key 中的所有成员。
 // 不存在的 key 被视为空集合。
-func (r *Client) SMembers(ctx context.Context, key string) (val []string, err error) {
+func (r *Client) SMembers(ctx context.Context, key any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1921,7 +1922,7 @@ func (r *Client) SMembers(ctx context.Context, key string) (val []string, err er
 }
 
 // SMembersMap -> SMembers
-func (r *Client) SMembersMap(ctx context.Context, key string) (val map[string]struct{}, err error) {
+func (r *Client) SMembersMap(ctx context.Context, key any) (val map[string]struct{}, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1938,7 +1939,7 @@ func (r *Client) SMembersMap(ctx context.Context, key string) (val map[string]st
 // 如果 source 集合不存在或不包含指定的 member 元素，则 SMOVE 命令不执行任何操作，仅返回 0 。否则， member 元素从 source 集合中被移除，并添加到 destination 集合中去。
 // 当 destination 集合已经包含 member 元素时， SMOVE 命令只是简单地将 source 集合中的 member 元素删除。
 // 当 source 或 destination 不是集合类型时，返回一个错误。
-func (r *Client) SMove(ctx context.Context, source, destination string, member any) (val bool, err error) {
+func (r *Client) SMove(ctx context.Context, source, destination any, member any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1952,7 +1953,7 @@ func (r *Client) SMove(ctx context.Context, source, destination string, member a
 
 // SPop 移除并返回集合中的一个随机元素。
 // 如果只想获取一个随机元素，但不想该元素从集合中被移除的话，可以使用 SRANDMEMBER 命令。
-func (r *Client) SPop(ctx context.Context, key string) (val string, err error) {
+func (r *Client) SPop(ctx context.Context, key any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1965,7 +1966,7 @@ func (r *Client) SPop(ctx context.Context, key string) (val string, err error) {
 }
 
 // SPopN -> SPop
-func (r *Client) SPopN(ctx context.Context, key string, count int64) (val []string, err error) {
+func (r *Client) SPopN(ctx context.Context, key any, count int64) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1982,7 +1983,7 @@ func (r *Client) SPopN(ctx context.Context, key string, count int64) (val []stri
 // 如果 count 为正数，且小于集合基数，那么命令返回一个包含 count 个元素的数组，数组中的元素各不相同。如果 count 大于等于集合基数，那么返回整个集合。
 // 如果 count 为负数，那么命令返回一个数组，数组中的元素可能会重复出现多次，而数组的长度为 count 的绝对值。
 // 该操作和 SPOP 相似，但 SPOP 将随机元素从集合中移除并返回，而 SRANDMEMBER 则仅仅返回随机元素，而不对集合进行任何改动。
-func (r *Client) SRandMember(ctx context.Context, key string) (val string, err error) {
+func (r *Client) SRandMember(ctx context.Context, key any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1995,7 +1996,7 @@ func (r *Client) SRandMember(ctx context.Context, key string) (val string, err e
 }
 
 // SRandMemberN -> SRandMember
-func (r *Client) SRandMemberN(ctx context.Context, key string, count int64) (val []string, err error) {
+func (r *Client) SRandMemberN(ctx context.Context, key any, count int64) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2009,7 +2010,7 @@ func (r *Client) SRandMemberN(ctx context.Context, key string, count int64) (val
 
 // SRem 移除集合 key 中的一个或多个 member 元素，不存在的 member 元素会被忽略。
 // 当 key 不是集合类型，返回一个错误。
-func (r *Client) SRem(ctx context.Context, key string, members ...any) (val int64, err error) {
+func (r *Client) SRem(ctx context.Context, key any, members ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2023,7 +2024,7 @@ func (r *Client) SRem(ctx context.Context, key string, members ...any) (val int6
 
 // SUnion 返回一个集合的全部成员，该集合是所有给定集合的并集。
 // 不存在的 key 被视为空集。
-func (r *Client) SUnion(ctx context.Context, keys ...string) (val []string, err error) {
+func (r *Client) SUnion(ctx context.Context, keys ...any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2038,7 +2039,7 @@ func (r *Client) SUnion(ctx context.Context, keys ...string) (val []string, err 
 // SUnionStore 这个命令类似于 SUNION 命令，但它将结果保存到 destination 集合，而不是简单地返回结果集。
 // 如果 destination 已经存在，则将其覆盖。
 // destination 可以是 key 本身。
-func (r *Client) SUnionStore(ctx context.Context, destination string, keys ...string) (val int64, err error) {
+func (r *Client) SUnionStore(ctx context.Context, destination any, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2064,7 +2065,7 @@ func (r *Client) XAdd(ctx context.Context, a *redis.XAddArgs) (val string, err e
 }
 
 // XDel 从指定流中移除指定的条目，并返回成功删除的条目的数量，在传递的ID不存在的情况下， 返回的数量可能与传递的ID数量不同。
-func (r *Client) XDel(ctx context.Context, stream string, ids ...string) (val int64, err error) {
+func (r *Client) XDel(ctx context.Context, stream any, ids ...string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2078,7 +2079,7 @@ func (r *Client) XDel(ctx context.Context, stream string, ids ...string) (val in
 
 // XLen 返回流中的条目数。如果指定的key不存在，则此命令返回0，就好像该流为空。 但是请注意，与其他的Redis类型不同，零长度流是可能的，所以你应该调用TYPE 或者 EXISTS 来检查一个key是否存在。
 // 一旦内部没有任何的条目（例如调用XDEL后），流不会被自动删除，因为可能还存在与其相关联的消费者组。
-func (r *Client) XLen(ctx context.Context, stream string) (val int64, err error) {
+func (r *Client) XLen(ctx context.Context, stream any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2091,7 +2092,7 @@ func (r *Client) XLen(ctx context.Context, stream string) (val int64, err error)
 }
 
 // XRange 此命令返回流中满足给定ID范围的条目。范围由最小和最大ID指定。所有ID在指定的两个ID之间或与其中一个ID相等（闭合区间）的条目将会被返回。
-func (r *Client) XRange(ctx context.Context, stream, start, stop string) (val []redis.XMessage, err error) {
+func (r *Client) XRange(ctx context.Context, stream any, start, stop string) (val []redis.XMessage, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2104,7 +2105,7 @@ func (r *Client) XRange(ctx context.Context, stream, start, stop string) (val []
 }
 
 // XRangeN -> XRange
-func (r *Client) XRangeN(ctx context.Context, stream, start, stop string, count int64) (val []redis.XMessage, err error) {
+func (r *Client) XRangeN(ctx context.Context, stream any, start, stop string, count int64) (val []redis.XMessage, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2117,7 +2118,7 @@ func (r *Client) XRangeN(ctx context.Context, stream, start, stop string, count 
 }
 
 // XRevRange 此命令与XRANGE完全相同，但显著的区别是以相反的顺序返回条目，并以相反的顺序获取开始-结束参数：在XREVRANGE中，你需要先指定结束ID，再指定开始ID，该命令就会从结束ID侧开始生成两个ID之间（或完全相同）的所有元素。
-func (r *Client) XRevRange(ctx context.Context, stream string, start, stop string) (val []redis.XMessage, err error) {
+func (r *Client) XRevRange(ctx context.Context, stream any, start, stop string) (val []redis.XMessage, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2130,7 +2131,7 @@ func (r *Client) XRevRange(ctx context.Context, stream string, start, stop strin
 }
 
 // XRevRangeN -> XRevRange
-func (r *Client) XRevRangeN(ctx context.Context, stream string, start, stop string, count int64) (val []redis.XMessage, err error) {
+func (r *Client) XRevRangeN(ctx context.Context, stream any, start, stop string, count int64) (val []redis.XMessage, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2156,7 +2157,7 @@ func (r *Client) XRead(ctx context.Context, a *redis.XReadArgs) (val []redis.XSt
 }
 
 // XReadStreams -> XRead
-func (r *Client) XReadStreams(ctx context.Context, streams ...string) (val []redis.XStream, err error) {
+func (r *Client) XReadStreams(ctx context.Context, streams ...any) (val []redis.XStream, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2169,7 +2170,7 @@ func (r *Client) XReadStreams(ctx context.Context, streams ...string) (val []red
 }
 
 // XGroupCreate command
-func (r *Client) XGroupCreate(ctx context.Context, stream, group, start string) (val string, err error) {
+func (r *Client) XGroupCreate(ctx context.Context, stream any, group, start string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2182,7 +2183,7 @@ func (r *Client) XGroupCreate(ctx context.Context, stream, group, start string) 
 }
 
 // XGroupCreateMkStream command
-func (r *Client) XGroupCreateMkStream(ctx context.Context, stream, group, start string) (val string, err error) {
+func (r *Client) XGroupCreateMkStream(ctx context.Context, stream any, group, start string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2195,7 +2196,7 @@ func (r *Client) XGroupCreateMkStream(ctx context.Context, stream, group, start 
 }
 
 // XGroupSetID command
-func (r *Client) XGroupSetID(ctx context.Context, stream, group, start string) (val string, err error) {
+func (r *Client) XGroupSetID(ctx context.Context, stream any, group, start string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2208,7 +2209,7 @@ func (r *Client) XGroupSetID(ctx context.Context, stream, group, start string) (
 }
 
 // XGroupDestroy command
-func (r *Client) XGroupDestroy(ctx context.Context, stream, group string) (val int64, err error) {
+func (r *Client) XGroupDestroy(ctx context.Context, stream any, group string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2221,7 +2222,7 @@ func (r *Client) XGroupDestroy(ctx context.Context, stream, group string) (val i
 }
 
 // XGroupDelConsumer command
-func (r *Client) XGroupDelConsumer(ctx context.Context, stream, group, consumer string) (val int64, err error) {
+func (r *Client) XGroupDelConsumer(ctx context.Context, stream any, group, consumer string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2247,7 +2248,7 @@ func (r *Client) XReadGroup(ctx context.Context, a *redis.XReadGroupArgs) (val [
 }
 
 // XAck command
-func (r *Client) XAck(ctx context.Context, stream, group string, ids ...string) (val int64, err error) {
+func (r *Client) XAck(ctx context.Context, stream any, group string, ids ...string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2260,7 +2261,7 @@ func (r *Client) XAck(ctx context.Context, stream, group string, ids ...string) 
 }
 
 // XPending command
-func (r *Client) XPending(ctx context.Context, stream, group string) (val *redis.XPending, err error) {
+func (r *Client) XPending(ctx context.Context, stream any, group string) (val *redis.XPending, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2335,7 +2336,7 @@ func (r *Client) XAutoClaimJustID(ctx context.Context, a *redis.XAutoClaimArgs) 
 	return
 }
 
-func (r *Client) XTrimMaxLen(ctx context.Context, key string, maxLen int64) (val int64, err error) {
+func (r *Client) XTrimMaxLen(ctx context.Context, key any, maxLen int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2347,7 +2348,7 @@ func (r *Client) XTrimMaxLen(ctx context.Context, key string, maxLen int64) (val
 	return
 }
 
-func (r *Client) XTrimMaxLenApprox(ctx context.Context, key string, maxLen, limit int64) (val int64, err error) {
+func (r *Client) XTrimMaxLenApprox(ctx context.Context, key any, maxLen, limit int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2359,7 +2360,7 @@ func (r *Client) XTrimMaxLenApprox(ctx context.Context, key string, maxLen, limi
 	return
 }
 
-func (r *Client) XTrimMinID(ctx context.Context, key string, minID string) (val int64, err error) {
+func (r *Client) XTrimMinID(ctx context.Context, key any, minID string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2371,7 +2372,7 @@ func (r *Client) XTrimMinID(ctx context.Context, key string, minID string) (val 
 	return
 }
 
-func (r *Client) XTrimMinIDApprox(ctx context.Context, key string, minID string, limit int64) (val int64, err error) {
+func (r *Client) XTrimMinIDApprox(ctx context.Context, key any, minID string, limit int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2384,7 +2385,7 @@ func (r *Client) XTrimMinIDApprox(ctx context.Context, key string, minID string,
 }
 
 // XInfoGroups command
-func (r *Client) XInfoGroups(ctx context.Context, key string) (val []redis.XInfoGroup, err error) {
+func (r *Client) XInfoGroups(ctx context.Context, key any) (val []redis.XInfoGroup, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2396,7 +2397,7 @@ func (r *Client) XInfoGroups(ctx context.Context, key string) (val []redis.XInfo
 	return
 }
 
-func (r *Client) XInfoStream(ctx context.Context, key string) (val *redis.XInfoStream, err error) {
+func (r *Client) XInfoStream(ctx context.Context, key any) (val *redis.XInfoStream, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2408,7 +2409,7 @@ func (r *Client) XInfoStream(ctx context.Context, key string) (val *redis.XInfoS
 	return
 }
 
-func (r *Client) XInfoStreamFull(ctx context.Context, key string, count int) (val *redis.XInfoStreamFull, err error) {
+func (r *Client) XInfoStreamFull(ctx context.Context, key any, count int) (val *redis.XInfoStreamFull, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2420,7 +2421,7 @@ func (r *Client) XInfoStreamFull(ctx context.Context, key string, count int) (va
 	return
 }
 
-func (r *Client) XInfoConsumers(ctx context.Context, key string, group string) (val []redis.XInfoConsumer, err error) {
+func (r *Client) XInfoConsumers(ctx context.Context, key any, group string) (val []redis.XInfoConsumer, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2433,7 +2434,7 @@ func (r *Client) XInfoConsumers(ctx context.Context, key string, group string) (
 }
 
 // BZPopMax 是有序集合命令 ZPOPMAX带有阻塞功能的版本。
-func (r *Client) BZPopMax(ctx context.Context, timeout time.Duration, keys ...string) (val *redis.ZWithKey, err error) {
+func (r *Client) BZPopMax(ctx context.Context, timeout time.Duration, keys ...any) (val *redis.ZWithKey, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2446,7 +2447,7 @@ func (r *Client) BZPopMax(ctx context.Context, timeout time.Duration, keys ...st
 }
 
 // BZPopMin 是有序集合命令 ZPOPMIN带有阻塞功能的版本。
-func (r *Client) BZPopMin(ctx context.Context, timeout time.Duration, keys ...string) (val *redis.ZWithKey, err error) {
+func (r *Client) BZPopMin(ctx context.Context, timeout time.Duration, keys ...any) (val *redis.ZWithKey, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2458,7 +2459,7 @@ func (r *Client) BZPopMin(ctx context.Context, timeout time.Duration, keys ...st
 	return
 }
 
-func (r *Client) BZMPop(ctx context.Context, timeout time.Duration, order string, count int64, keys ...string) (val string, ret []redis.Z, err error) {
+func (r *Client) BZMPop(ctx context.Context, timeout time.Duration, order string, count int64, keys ...any) (val string, ret []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2475,7 +2476,7 @@ func (r *Client) BZMPop(ctx context.Context, timeout time.Duration, order string
 // score 值可以是整数值或双精度浮点数。
 // 如果 key 不存在，则创建一个空的有序集并执行 ZADD 操作。
 // 当 key 存在但不是有序集类型时，返回一个错误。
-func (r *Client) ZAdd(ctx context.Context, key string, members ...redis.Z) (val int64, err error) {
+func (r *Client) ZAdd(ctx context.Context, key any, members ...redis.Z) (val int64, err error) {
 	// return getRedis(r).ZAdd(getCtx(ctx), r.k(key), members...)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -2489,7 +2490,7 @@ func (r *Client) ZAdd(ctx context.Context, key string, members ...redis.Z) (val 
 }
 
 // ZAddNX -> ZAdd
-func (r *Client) ZAddNX(ctx context.Context, key string, members ...redis.Z) (val int64, err error) {
+func (r *Client) ZAddNX(ctx context.Context, key any, members ...redis.Z) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2502,7 +2503,7 @@ func (r *Client) ZAddNX(ctx context.Context, key string, members ...redis.Z) (va
 }
 
 // ZAddXX -> ZAdd
-func (r *Client) ZAddXX(ctx context.Context, key string, members ...redis.Z) (val int64, err error) {
+func (r *Client) ZAddXX(ctx context.Context, key any, members ...redis.Z) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2514,7 +2515,7 @@ func (r *Client) ZAddXX(ctx context.Context, key string, members ...redis.Z) (va
 	return
 }
 
-func (r *Client) ZAddArgs(ctx context.Context, key string, args redis.ZAddArgs) (val int64, err error) {
+func (r *Client) ZAddArgs(ctx context.Context, key any, args redis.ZAddArgs) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2525,7 +2526,7 @@ func (r *Client) ZAddArgs(ctx context.Context, key string, args redis.ZAddArgs) 
 	}, acceptable)
 	return
 }
-func (r *Client) ZAddArgsIncr(ctx context.Context, key string, args redis.ZAddArgs) (val float64, err error) {
+func (r *Client) ZAddArgsIncr(ctx context.Context, key any, args redis.ZAddArgs) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2538,7 +2539,7 @@ func (r *Client) ZAddArgsIncr(ctx context.Context, key string, args redis.ZAddAr
 }
 
 // ZCard 返回有序集 key 的基数。
-func (r *Client) ZCard(ctx context.Context, key string) (val int64, err error) {
+func (r *Client) ZCard(ctx context.Context, key any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2552,7 +2553,7 @@ func (r *Client) ZCard(ctx context.Context, key string) (val int64, err error) {
 
 // ZCount 返回有序集 key 中， score 值在 min 和 max 之间(默认包括 score 值等于 min 或 max )的成员的数量。
 // 关于参数 min 和 max 的详细使用方法，请参考 ZRANGEBYSCORE 命令。
-func (r *Client) ZCount(ctx context.Context, key, min, max string) (val int64, err error) {
+func (r *Client) ZCount(ctx context.Context, key any, min, max string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2565,7 +2566,7 @@ func (r *Client) ZCount(ctx context.Context, key, min, max string) (val int64, e
 }
 
 // ZLexCount -> ZCount
-func (r *Client) ZLexCount(ctx context.Context, key, min, max string) (val int64, err error) {
+func (r *Client) ZLexCount(ctx context.Context, key any, min, max string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2582,7 +2583,7 @@ func (r *Client) ZLexCount(ctx context.Context, key, min, max string) (val int64
 // 当 key 不存在，或 member 不是 key 的成员时， ZINCRBY key increment member 等同于 ZADD key increment member 。
 // 当 key 不是有序集类型时，返回一个错误。
 // score 值可以是整数值或双精度浮点数。
-func (r *Client) ZIncrBy(ctx context.Context, key string, increment float64, member string) (val float64, err error) {
+func (r *Client) ZIncrBy(ctx context.Context, key any, increment float64, member string) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2619,7 +2620,7 @@ func (r *Client) ZInterWithScores(ctx context.Context, store *redis.ZStore) (val
 	}, acceptable)
 	return
 }
-func (r *Client) ZInterCard(ctx context.Context, limit int64, keys ...string) (val int64, err error) {
+func (r *Client) ZInterCard(ctx context.Context, limit int64, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2634,7 +2635,7 @@ func (r *Client) ZInterCard(ctx context.Context, limit int64, keys ...string) (v
 // ZInterStore 计算给定的一个或多个有序集的交集，其中给定 key 的数量必须以 numkeys 参数指定，并将该交集(结果集)储存到 destination 。
 // 默认情况下，结果集中某个成员的 score 值是所有给定集下该成员 score 值之和.
 // 关于 WEIGHTS 和 AGGREGATE 选项的描述，参见 ZUNIONSTORE 命令。
-func (r *Client) ZInterStore(ctx context.Context, key string, store *redis.ZStore) (val int64, err error) {
+func (r *Client) ZInterStore(ctx context.Context, key any, store *redis.ZStore) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2646,7 +2647,7 @@ func (r *Client) ZInterStore(ctx context.Context, key string, store *redis.ZStor
 	return
 }
 
-func (r *Client) ZMPop(ctx context.Context, order string, count int64, keys ...string) (key string, ret []redis.Z, err error) {
+func (r *Client) ZMPop(ctx context.Context, order string, count int64, keys ...any) (key string, ret []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2658,7 +2659,7 @@ func (r *Client) ZMPop(ctx context.Context, order string, count int64, keys ...s
 	return
 }
 
-func (r *Client) ZMScore(ctx context.Context, key string, members ...string) (val []float64, err error) {
+func (r *Client) ZMScore(ctx context.Context, key any, members ...string) (val []float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2671,7 +2672,7 @@ func (r *Client) ZMScore(ctx context.Context, key string, members ...string) (va
 }
 
 // ZPopMax 删除并返回有序集合key中的最多count个具有最高得分的成员。
-func (r *Client) ZPopMax(ctx context.Context, key string, count ...int64) (val []redis.Z, err error) {
+func (r *Client) ZPopMax(ctx context.Context, key any, count ...int64) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2684,7 +2685,7 @@ func (r *Client) ZPopMax(ctx context.Context, key string, count ...int64) (val [
 }
 
 // ZPopMin 删除并返回有序集合key中的最多count个具有最低得分的成员。
-func (r *Client) ZPopMin(ctx context.Context, key string, count ...int64) (val []redis.Z, err error) {
+func (r *Client) ZPopMin(ctx context.Context, key any, count ...int64) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2698,7 +2699,7 @@ func (r *Client) ZPopMin(ctx context.Context, key string, count ...int64) (val [
 
 // ZRange 返回有序集 key 中，指定区间内的成员。
 // 其中成员的位置按 score 值递增(从小到大)来排序。
-func (r *Client) ZRange(ctx context.Context, key string, start, stop int64) (val []string, err error) {
+func (r *Client) ZRange(ctx context.Context, key any, start, stop int64) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2711,7 +2712,7 @@ func (r *Client) ZRange(ctx context.Context, key string, start, stop int64) (val
 }
 
 // ZRangeWithScores -> ZRange
-func (r *Client) ZRangeWithScores(ctx context.Context, key string, start, stop int64) (val []redis.Z, err error) {
+func (r *Client) ZRangeWithScores(ctx context.Context, key any, start, stop int64) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2724,7 +2725,7 @@ func (r *Client) ZRangeWithScores(ctx context.Context, key string, start, stop i
 }
 
 // ZRangeByScore 返回有序集 key 中，所有 score 值介于 min 和 max 之间(包括等于 min 或 max )的成员。有序集成员按 score 值递增(从小到大)次序排列。
-func (r *Client) ZRangeByScore(ctx context.Context, key string, opt *redis.ZRangeBy) (val []string, err error) {
+func (r *Client) ZRangeByScore(ctx context.Context, key any, opt *redis.ZRangeBy) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2737,7 +2738,7 @@ func (r *Client) ZRangeByScore(ctx context.Context, key string, opt *redis.ZRang
 }
 
 // ZRangeByLex -> ZRangeByScore
-func (r *Client) ZRangeByLex(ctx context.Context, key string, opt *redis.ZRangeBy) (val []string, err error) {
+func (r *Client) ZRangeByLex(ctx context.Context, key any, opt *redis.ZRangeBy) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2750,7 +2751,7 @@ func (r *Client) ZRangeByLex(ctx context.Context, key string, opt *redis.ZRangeB
 }
 
 // ZRangeByScoreWithScores -> ZRangeByScore
-func (r *Client) ZRangeByScoreWithScores(ctx context.Context, key string, opt *redis.ZRangeBy) (val []redis.Z, err error) {
+func (r *Client) ZRangeByScoreWithScores(ctx context.Context, key any, opt *redis.ZRangeBy) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2783,7 +2784,7 @@ func (r *Client) ZRangeArgsWithScores(ctx context.Context, z redis.ZRangeArgs) (
 	}, acceptable)
 	return
 }
-func (r *Client) ZRangeStore(ctx context.Context, dst string, z redis.ZRangeArgs) (val int64, err error) {
+func (r *Client) ZRangeStore(ctx context.Context, dst any, z redis.ZRangeArgs) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2799,7 +2800,7 @@ func (r *Client) ZRangeStore(ctx context.Context, dst string, z redis.ZRangeArgs
 // ZRank 返回有序集 key 中成员 member 的排名。其中有序集成员按 score 值递增(从小到大)顺序排列。
 // 排名以 0 为底，也就是说， score 值最小的成员排名为 0 。
 // 使用 ZREVRANK 命令可以获得成员按 score 值递减(从大到小)排列的排名。
-func (r *Client) ZRank(ctx context.Context, key, member string) (val int64, err error) {
+func (r *Client) ZRank(ctx context.Context, key any, member string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2810,7 +2811,7 @@ func (r *Client) ZRank(ctx context.Context, key, member string) (val int64, err 
 	}, acceptable)
 	return
 }
-func (r *Client) ZRankWithScore(ctx context.Context, key, member string) (val redis.RankScore, err error) {
+func (r *Client) ZRankWithScore(ctx context.Context, key any, member string) (val redis.RankScore, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2824,7 +2825,7 @@ func (r *Client) ZRankWithScore(ctx context.Context, key, member string) (val re
 
 // ZRem 移除有序集 key 中的一个或多个成员，不存在的成员将被忽略。
 // 当 key 存在但不是有序集类型时，返回一个错误。
-func (r *Client) ZRem(ctx context.Context, key string, members ...any) (val int64, err error) {
+func (r *Client) ZRem(ctx context.Context, key any, members ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2840,7 +2841,7 @@ func (r *Client) ZRem(ctx context.Context, key string, members ...any) (val int6
 // 区间分别以下标参数 start 和 stop 指出，包含 start 和 stop 在内。
 // 下标参数 start 和 stop 都以 0 为底，也就是说，以 0 表示有序集第一个成员，以 1 表示有序集第二个成员，以此类推。
 // 你也可以使用负数下标，以 -1 表示最后一个成员， -2 表示倒数第二个成员，以此类推
-func (r *Client) ZRemRangeByRank(ctx context.Context, key string, start, stop int64) (val int64, err error) {
+func (r *Client) ZRemRangeByRank(ctx context.Context, key any, start, stop int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2854,7 +2855,7 @@ func (r *Client) ZRemRangeByRank(ctx context.Context, key string, start, stop in
 
 // ZRemRangeByScore 移除有序集 key 中，所有 score 值介于 min 和 max 之间(包括等于 min 或 max )的成员。
 // 自版本2.1.6开始， score 值等于 min 或 max 的成员也可以不包括在内，详情请参见 ZRANGEBYSCORE 命令。
-func (r *Client) ZRemRangeByScore(ctx context.Context, key, min, max string) (val int64, err error) {
+func (r *Client) ZRemRangeByScore(ctx context.Context, key any, min, max string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2867,7 +2868,7 @@ func (r *Client) ZRemRangeByScore(ctx context.Context, key, min, max string) (va
 }
 
 // ZRemRangeByLex -> ZRemRangeByScore
-func (r *Client) ZRemRangeByLex(ctx context.Context, key, min, max string) (val int64, err error) {
+func (r *Client) ZRemRangeByLex(ctx context.Context, key any, min, max string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2883,7 +2884,7 @@ func (r *Client) ZRemRangeByLex(ctx context.Context, key, min, max string) (val 
 // 其中成员的位置按 score 值递减(从大到小)来排列。
 // 具有相同 score 值的成员按字典序的逆序(reverse lexicographical order)排列。
 // 除了成员按 score 值递减的次序排列这一点外， ZREVRANGE 命令的其他方面和 ZRANGE 命令一样。
-func (r *Client) ZRevRange(ctx context.Context, key string, start, stop int64) (val []string, err error) {
+func (r *Client) ZRevRange(ctx context.Context, key any, start, stop int64) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2896,7 +2897,7 @@ func (r *Client) ZRevRange(ctx context.Context, key string, start, stop int64) (
 }
 
 // ZRevRangeWithScores -> ZRevRange
-func (r *Client) ZRevRangeWithScores(ctx context.Context, key string, start, stop int64) (val []redis.Z, err error) {
+func (r *Client) ZRevRangeWithScores(ctx context.Context, key any, start, stop int64) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2911,7 +2912,7 @@ func (r *Client) ZRevRangeWithScores(ctx context.Context, key string, start, sto
 // ZRevRangeByScore 返回有序集 key 中， score 值介于 max 和 min 之间(默认包括等于 max 或 min )的所有的成员。有序集成员按 score 值递减(从大到小)的次序排列。
 // 具有相同 score 值的成员按字典序的逆序(reverse lexicographical order )排列。
 // 除了成员按 score 值递减的次序排列这一点外， ZREVRANGEBYSCORE 命令的其他方面和 ZRANGEBYSCORE 命令一样。
-func (r *Client) ZRevRangeByScore(ctx context.Context, key string, opt *redis.ZRangeBy) (val []string, err error) {
+func (r *Client) ZRevRangeByScore(ctx context.Context, key any, opt *redis.ZRangeBy) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2924,7 +2925,7 @@ func (r *Client) ZRevRangeByScore(ctx context.Context, key string, opt *redis.ZR
 }
 
 // ZRevRangeByLex -> ZRevRangeByScore
-func (r *Client) ZRevRangeByLex(ctx context.Context, key string, opt *redis.ZRangeBy) (val []string, err error) {
+func (r *Client) ZRevRangeByLex(ctx context.Context, key any, opt *redis.ZRangeBy) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2937,7 +2938,7 @@ func (r *Client) ZRevRangeByLex(ctx context.Context, key string, opt *redis.ZRan
 }
 
 // ZRevRangeByScoreWithScores -> ZRevRangeByScore
-func (r *Client) ZRevRangeByScoreWithScores(ctx context.Context, key string, opt *redis.ZRangeBy) (val []redis.Z, err error) {
+func (r *Client) ZRevRangeByScoreWithScores(ctx context.Context, key any, opt *redis.ZRangeBy) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2952,7 +2953,7 @@ func (r *Client) ZRevRangeByScoreWithScores(ctx context.Context, key string, opt
 // ZRevRank 返回有序集 key 中成员 member 的排名。其中有序集成员按 score 值递减(从大到小)排序。
 // 排名以 0 为底，也就是说， score 值最大的成员排名为 0 。
 // 使用 ZRANK 命令可以获得成员按 score 值递增(从小到大)排列的排名。
-func (r *Client) ZRevRank(ctx context.Context, key, member string) (val int64, err error) {
+func (r *Client) ZRevRank(ctx context.Context, key any, member string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2963,7 +2964,7 @@ func (r *Client) ZRevRank(ctx context.Context, key, member string) (val int64, e
 	}, acceptable)
 	return
 }
-func (r *Client) ZRevRankWithScore(ctx context.Context, key, member string) (val redis.RankScore, err error) {
+func (r *Client) ZRevRankWithScore(ctx context.Context, key any, member string) (val redis.RankScore, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2977,7 +2978,7 @@ func (r *Client) ZRevRankWithScore(ctx context.Context, key, member string) (val
 
 // ZScore 返回有序集 key 中，成员 member 的 score 值。
 // 如果 member 元素不是有序集 key 的成员，或 key 不存在，返回 nil 。
-func (r *Client) ZScore(ctx context.Context, key, member string) (val float64, err error) {
+func (r *Client) ZScore(ctx context.Context, key any, member string) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -2991,7 +2992,7 @@ func (r *Client) ZScore(ctx context.Context, key, member string) (val float64, e
 
 // ZUnionStore 计算给定的一个或多个有序集的并集，其中给定 key 的数量必须以 numkeys 参数指定，并将该并集(结果集)储存到 destination 。
 // 默认情况下，结果集中某个成员的 score 值是所有给定集下该成员 score 值之 和 。
-func (r *Client) ZUnionStore(ctx context.Context, dest string, store *redis.ZStore) (val int64, err error) {
+func (r *Client) ZUnionStore(ctx context.Context, dest any, store *redis.ZStore) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3002,7 +3003,7 @@ func (r *Client) ZUnionStore(ctx context.Context, dest string, store *redis.ZSto
 	}, acceptable)
 	return
 }
-func (r *Client) ZRandMember(ctx context.Context, key string, count int) (val []string, err error) {
+func (r *Client) ZRandMember(ctx context.Context, key any, count int) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3013,7 +3014,7 @@ func (r *Client) ZRandMember(ctx context.Context, key string, count int) (val []
 	}, acceptable)
 	return
 }
-func (r *Client) ZRandMemberWithScores(ctx context.Context, key string, count int) (val []redis.Z, err error) {
+func (r *Client) ZRandMemberWithScores(ctx context.Context, key any, count int) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3046,7 +3047,7 @@ func (r *Client) ZUnionWithScores(ctx context.Context, store redis.ZStore) (val 
 	}, acceptable)
 	return
 }
-func (r *Client) ZDiff(ctx context.Context, keys ...string) (val []string, err error) {
+func (r *Client) ZDiff(ctx context.Context, keys ...any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3057,7 +3058,7 @@ func (r *Client) ZDiff(ctx context.Context, keys ...string) (val []string, err e
 	}, acceptable)
 	return
 }
-func (r *Client) ZDiffWithScores(ctx context.Context, keys ...string) (val []redis.Z, err error) {
+func (r *Client) ZDiffWithScores(ctx context.Context, keys ...any) (val []redis.Z, err error) {
 	// return getRedis(r).ZDiffWithScores(getCtx(ctx), r.ks(keys...)...)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -3069,7 +3070,7 @@ func (r *Client) ZDiffWithScores(ctx context.Context, keys ...string) (val []red
 	}, acceptable)
 	return
 }
-func (r *Client) ZDiffStore(ctx context.Context, destination string, keys ...string) (val int64, err error) {
+func (r *Client) ZDiffStore(ctx context.Context, destination any, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3082,7 +3083,7 @@ func (r *Client) ZDiffStore(ctx context.Context, destination string, keys ...str
 }
 
 // PFAdd 将指定元素添加到HyperLogLog
-func (r *Client) PFAdd(ctx context.Context, key string, els ...any) (val int64, err error) {
+func (r *Client) PFAdd(ctx context.Context, key any, els ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3095,7 +3096,7 @@ func (r *Client) PFAdd(ctx context.Context, key string, els ...any) (val int64, 
 }
 
 // PFCount 返回HyperlogLog观察到的集合的近似基数。
-func (r *Client) PFCount(ctx context.Context, keys ...string) (val int64, err error) {
+func (r *Client) PFCount(ctx context.Context, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3108,7 +3109,7 @@ func (r *Client) PFCount(ctx context.Context, keys ...string) (val int64, err er
 }
 
 // PFMerge N个不同的HyperLogLog合并为一个。
-func (r *Client) PFMerge(ctx context.Context, dest string, keys ...string) (val string, err error) {
+func (r *Client) PFMerge(ctx context.Context, dest any, keys ...any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3211,7 +3212,7 @@ func (r *Client) ClientKill(ctx context.Context, ipPort string) (val string, err
 
 // ClientKillByFilter is new style synx, while the ClientKill is old
 // CLIENT KILL <option> [value] ... <option> [value]
-func (r *Client) ClientKillByFilter(ctx context.Context, keys ...string) (val int64, err error) {
+func (r *Client) ClientKillByFilter(ctx context.Context, keys ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3491,7 +3492,7 @@ func (r *Client) Time(ctx context.Context) (val time.Time, err error) {
 	return
 }
 
-func (r *Client) DebugObject(ctx context.Context, key string) (val string, err error) {
+func (r *Client) DebugObject(ctx context.Context, key any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3525,7 +3526,7 @@ func (r *Client) ReadWrite(ctx context.Context) (val string, err error) {
 	}, acceptable)
 	return
 }
-func (r *Client) MemoryUsage(ctx context.Context, key string, samples ...int) (val int64, err error) {
+func (r *Client) MemoryUsage(ctx context.Context, key any, samples ...int) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3538,7 +3539,7 @@ func (r *Client) MemoryUsage(ctx context.Context, key string, samples ...int) (v
 }
 
 // Eval 执行 Lua 脚本。
-func (r *Client) Eval(ctx context.Context, script string, keys []string, args ...any) (val any, err error) {
+func (r *Client) Eval(ctx context.Context, script string, keys []any, args ...any) (val any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3551,7 +3552,7 @@ func (r *Client) Eval(ctx context.Context, script string, keys []string, args ..
 }
 
 // EvalSha 执行 Lua 脚本。
-func (r *Client) EvalSha(ctx context.Context, sha1 string, keys []string, args ...any) (val any, err error) {
+func (r *Client) EvalSha(ctx context.Context, sha1 string, keys []any, args ...any) (val any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3564,7 +3565,7 @@ func (r *Client) EvalSha(ctx context.Context, sha1 string, keys []string, args .
 }
 
 // EvalRO 执行 Lua 脚本。
-func (r *Client) EvalRO(ctx context.Context, script string, keys []string, args ...any) (val any, err error) {
+func (r *Client) EvalRO(ctx context.Context, script string, keys []any, args ...any) (val any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3577,7 +3578,7 @@ func (r *Client) EvalRO(ctx context.Context, script string, keys []string, args 
 }
 
 // EvalShaRO 执行 Lua 脚本。
-func (r *Client) EvalShaRO(ctx context.Context, sha1 string, keys []string, args ...any) (val any, err error) {
+func (r *Client) EvalShaRO(ctx context.Context, sha1 string, keys []any, args ...any) (val any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3751,7 +3752,7 @@ func (r *Client) FunctionStats(ctx context.Context) (val redis.FunctionStats, er
 	}, acceptable)
 	return
 }
-func (r *Client) FCall(ctx context.Context, function string, keys []string, args ...interface{}) (val interface{}, err error) {
+func (r *Client) FCall(ctx context.Context, function string, keys []any, args ...interface{}) (val interface{}, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3762,7 +3763,7 @@ func (r *Client) FCall(ctx context.Context, function string, keys []string, args
 	}, acceptable)
 	return
 }
-func (r *Client) FCallRo(ctx context.Context, function string, keys []string, args ...interface{}) (val interface{}, err error) {
+func (r *Client) FCallRo(ctx context.Context, function string, keys []any, args ...interface{}) (val interface{}, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3773,7 +3774,7 @@ func (r *Client) FCallRo(ctx context.Context, function string, keys []string, ar
 	}, acceptable)
 	return
 }
-func (r *Client) FCallRO(ctx context.Context, function string, keys []string, args ...interface{}) (val interface{}, err error) {
+func (r *Client) FCallRO(ctx context.Context, function string, keys []any, args ...interface{}) (val interface{}, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3786,7 +3787,7 @@ func (r *Client) FCallRO(ctx context.Context, function string, keys []string, ar
 }
 
 // Publish 将信息发送到指定的频道。
-func (r *Client) Publish(ctx context.Context, channel string, message any) (val int64, err error) {
+func (r *Client) Publish(ctx context.Context, channel any, message any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3799,7 +3800,7 @@ func (r *Client) Publish(ctx context.Context, channel string, message any) (val 
 }
 
 // SPublish 将信息发送到指定的频道。
-func (r *Client) SPublish(ctx context.Context, channel string, message any) (val int64, err error) {
+func (r *Client) SPublish(ctx context.Context, channel any, message any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3812,7 +3813,7 @@ func (r *Client) SPublish(ctx context.Context, channel string, message any) (val
 }
 
 // PubSubChannels 订阅一个或多个符合给定模式的频道。
-func (r *Client) PubSubChannels(ctx context.Context, pattern string) (val []string, err error) {
+func (r *Client) PubSubChannels(ctx context.Context, pattern any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3824,7 +3825,7 @@ func (r *Client) PubSubChannels(ctx context.Context, pattern string) (val []stri
 	return
 }
 
-func (r *Client) PubSubNumSub(ctx context.Context, channels ...string) (val map[string]int64, err error) {
+func (r *Client) PubSubNumSub(ctx context.Context, channels ...any) (val map[string]int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3850,7 +3851,7 @@ func (r *Client) PubSubNumPat(ctx context.Context) (val int64, err error) {
 }
 
 // PubSubShardChannels 订阅一个或多个符合给定模式的频道。
-func (r *Client) PubSubShardChannels(ctx context.Context, pattern string) (val []string, err error) {
+func (r *Client) PubSubShardChannels(ctx context.Context, pattern any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -3861,7 +3862,7 @@ func (r *Client) PubSubShardChannels(ctx context.Context, pattern string) (val [
 	}, acceptable)
 	return
 }
-func (r *Client) PubSubShardNumSub(ctx context.Context, channels ...string) (val map[string]int64, err error) {
+func (r *Client) PubSubShardNumSub(ctx context.Context, channels ...any) (val map[string]int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -4012,7 +4013,7 @@ func (r *Client) ClusterInfo(ctx context.Context) (val string, err error) {
 }
 
 // ClusterKeySlot Returns the hash slot of the specified key
-func (r *Client) ClusterKeySlot(ctx context.Context, key string) (val int64, err error) {
+func (r *Client) ClusterKeySlot(ctx context.Context, key any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -4155,7 +4156,7 @@ func (r *Client) ClusterAddSlotsRange(ctx context.Context, min, max int) (val st
 }
 
 // GeoAdd 将指定的地理空间位置（纬度、经度、名称）添加到指定的key中
-func (r *Client) GeoAdd(ctx context.Context, key string, geoLocation ...*redis.GeoLocation) (val int64, err error) {
+func (r *Client) GeoAdd(ctx context.Context, key any, geoLocation ...*redis.GeoLocation) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -4168,7 +4169,7 @@ func (r *Client) GeoAdd(ctx context.Context, key string, geoLocation ...*redis.G
 }
 
 // GeoPos 从key里返回所有给定位置元素的位置（经度和纬度）
-func (r *Client) GeoPos(ctx context.Context, key string, members ...string) (val []*redis.GeoPos, err error) {
+func (r *Client) GeoPos(ctx context.Context, key any, members ...string) (val []*redis.GeoPos, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -4181,7 +4182,7 @@ func (r *Client) GeoPos(ctx context.Context, key string, members ...string) (val
 }
 
 // GeoRadius 以给定的经纬度为中心， 找出某一半径内的元素
-func (r *Client) GeoRadius(ctx context.Context, key string, longitude, latitude float64, query *redis.GeoRadiusQuery) (val []redis.GeoLocation, err error) {
+func (r *Client) GeoRadius(ctx context.Context, key any, longitude, latitude float64, query *redis.GeoRadiusQuery) (val []redis.GeoLocation, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -4194,7 +4195,7 @@ func (r *Client) GeoRadius(ctx context.Context, key string, longitude, latitude 
 }
 
 // GeoRadiusStore -> GeoRadius
-func (r *Client) GeoRadiusStore(ctx context.Context, key string, longitude, latitude float64, query *redis.GeoRadiusQuery) (val int64, err error) {
+func (r *Client) GeoRadiusStore(ctx context.Context, key any, longitude, latitude float64, query *redis.GeoRadiusQuery) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -4207,7 +4208,7 @@ func (r *Client) GeoRadiusStore(ctx context.Context, key string, longitude, lati
 }
 
 // GeoRadiusByMember -> GeoRadius
-func (r *Client) GeoRadiusByMember(ctx context.Context, key, member string, query *redis.GeoRadiusQuery) (val []redis.GeoLocation, err error) {
+func (r *Client) GeoRadiusByMember(ctx context.Context, key any, member string, query *redis.GeoRadiusQuery) (val []redis.GeoLocation, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -4220,7 +4221,7 @@ func (r *Client) GeoRadiusByMember(ctx context.Context, key, member string, quer
 }
 
 // GeoRadiusByMemberStore 找出位于指定范围内的元素，中心点是由给定的位置元素决定
-func (r *Client) GeoRadiusByMemberStore(ctx context.Context, key, member string, query *redis.GeoRadiusQuery) (val int64, err error) {
+func (r *Client) GeoRadiusByMemberStore(ctx context.Context, key any, member string, query *redis.GeoRadiusQuery) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -4231,7 +4232,7 @@ func (r *Client) GeoRadiusByMemberStore(ctx context.Context, key, member string,
 	}, acceptable)
 	return
 }
-func (r *Client) GeoSearch(ctx context.Context, key string, q *redis.GeoSearchQuery) (val []string, err error) {
+func (r *Client) GeoSearch(ctx context.Context, key any, q *redis.GeoSearchQuery) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -4242,7 +4243,7 @@ func (r *Client) GeoSearch(ctx context.Context, key string, q *redis.GeoSearchQu
 	}, acceptable)
 	return
 }
-func (r *Client) GeoSearchLocation(ctx context.Context, key string, q *redis.GeoSearchLocationQuery) (val []redis.GeoLocation, err error) {
+func (r *Client) GeoSearchLocation(ctx context.Context, key any, q *redis.GeoSearchLocationQuery) (val []redis.GeoLocation, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -4253,7 +4254,7 @@ func (r *Client) GeoSearchLocation(ctx context.Context, key string, q *redis.Geo
 	}, acceptable)
 	return
 }
-func (r *Client) GeoSearchStore(ctx context.Context, key, store string, q *redis.GeoSearchStoreQuery) (val int64, err error) {
+func (r *Client) GeoSearchStore(ctx context.Context, key any, store string, q *redis.GeoSearchStoreQuery) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -4266,7 +4267,7 @@ func (r *Client) GeoSearchStore(ctx context.Context, key, store string, q *redis
 }
 
 // GeoDist 返回两个给定位置之间的距离
-func (r *Client) GeoDist(ctx context.Context, key string, member1, member2, unit string) (val float64, err error) {
+func (r *Client) GeoDist(ctx context.Context, key any, member1, member2, unit string) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -4280,7 +4281,7 @@ func (r *Client) GeoDist(ctx context.Context, key string, member1, member2, unit
 }
 
 // GeoHash 返回一个或多个位置元素的 Geohash 表示
-func (r *Client) GeoHash(ctx context.Context, key string, members ...string) (val []string, err error) {
+func (r *Client) GeoHash(ctx context.Context, key any, members ...string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {

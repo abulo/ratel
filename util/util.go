@@ -3,7 +3,6 @@ package util
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"html"
 	"html/template"
 	"log"
@@ -19,6 +18,7 @@ import (
 	_ "time/tzdata"
 
 	"github.com/google/uuid"
+	"github.com/spf13/cast"
 )
 
 // MarshalHTML ...
@@ -179,9 +179,9 @@ func NewReplacer(endpoint string, values ...any) string {
 		key := ""
 		for k, v := range values {
 			if k%2 == 0 {
-				key = fmt.Sprint(v)
+				key = cast.ToString(v)
 			} else {
-				params[key] = fmt.Sprint(v)
+				params[key] = cast.ToString(v)
 			}
 		}
 	}

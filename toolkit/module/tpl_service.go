@@ -102,7 +102,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.Table
 // {{.Name}} 创建数据
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.Context,request *{{.Name}}Request) (*{{.Name}}Response,error){
 	req := srv.{{CamelStr .Table.TableName}}Convert(request.GetData())
-	_, err := {{.Pkg}}.{{.Name}}(ctx, req)
+	data, err := {{.Pkg}}.{{.Name}}(ctx, req)
 	if err != nil {
 		if sql.ResultAccept(err) != nil {
 			globalLogger.Logger.WithFields(logrus.Fields{
@@ -115,6 +115,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.C
 	return &{{.Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
+		Data: data,
 	}, err
 }
 {{- else if eq .Type "Update"}}

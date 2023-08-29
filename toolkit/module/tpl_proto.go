@@ -114,6 +114,7 @@ message {{.Name}}Request {
 message {{.Name}}Response {
 	int64 code = 1;
 	string msg = 2;
+	int64 data = 3;
 }
 {{- else if eq .Type "Update"}}
 // {{.Name}}Request 更新数据请求
