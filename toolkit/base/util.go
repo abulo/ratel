@@ -248,7 +248,7 @@ func ProtoRequest(condition []Column) string {
 	return builder.String()
 }
 
-func ApiToProto(Condition []Column, res, request string) string {
+func ApiToProto(Condition []Column, res, request string, page bool) string {
 	builder := strings.Builder{}
 	builder.WriteString("\n")
 	for _, item := range Condition {
@@ -259,6 +259,10 @@ func ApiToProto(Condition []Column, res, request string) string {
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.Int32(cast.ToInt32(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
+			if page {
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s =  proto.Int32(cast.ToInt32(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.Int64":
@@ -267,6 +271,10 @@ func ApiToProto(Condition []Column, res, request string) string {
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.Int64(cast.ToInt64(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
+			if page {
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s =  proto.Int64(cast.ToInt64(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.Float32":
@@ -283,6 +291,10 @@ func ApiToProto(Condition []Column, res, request string) string {
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.Float64(cast.ToFloat64(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
+			if page {
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s =  proto.Float64(cast.ToFloat64(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.String":
@@ -291,6 +303,10 @@ func ApiToProto(Condition []Column, res, request string) string {
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("		%s.%s =  proto.String(val) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
+			if page {
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s =  proto.String(val) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.Bytes":
@@ -305,6 +321,10 @@ func ApiToProto(Condition []Column, res, request string) string {
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToString(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
+			if page {
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s = cast.ToString(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.Bool":
@@ -313,6 +333,10 @@ func ApiToProto(Condition []Column, res, request string) string {
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToBool(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
+			if page {
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s = cast.ToBool(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.CTime":
@@ -327,6 +351,10 @@ func ApiToProto(Condition []Column, res, request string) string {
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(cast.ToTime(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
+			if page {
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s = timestamppb.New(cast.ToTime(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.DateTime":
@@ -341,6 +369,10 @@ func ApiToProto(Condition []Column, res, request string) string {
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(cast.ToTime(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
+			if page {
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s = timestamppb.New(cast.ToTime(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		}

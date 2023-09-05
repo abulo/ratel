@@ -274,7 +274,7 @@ func {{.Name}}(ctx context.Context, newCtx *app.RequestContext) {
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
 	request := &{{.Pkg}}.{{.Name}}Request{}
 	// 构造查询条件
-	{{ApiToProto .Condition "request" "newCtx.GetQuery"}}
+	{{ApiToProto .Condition "request" "newCtx.GetQuery" false}}
 	// 执行服务
 	res, err := client.{{.Name}}(ctx, request)
 	if err != nil {
@@ -311,12 +311,16 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 	}
 	//链接服务
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
-	request := &{{.Pkg}}.{{.Name}}Request{}
 	// 构造查询条件
-	{{ApiToProto .Condition "request" "newCtx.GetQuery"}}
+	request := &{{.Pkg}}.{{.Name}}Request{}
 	{{- if .Page}}
 	requestTotal := &{{.Pkg}}.{{.Name}}TotalRequest{}
-	{{ApiToProto .Condition "requestTotal" "newCtx.GetQuery"}}
+	{{ApiToProto .Condition "request" "newCtx.GetQuery" true}}
+	{{- else}}
+	{{ApiToProto .Condition "request" "newCtx.GetQuery" false}}
+	{{- end}}
+
+	{{- if .Page}}
 	// 执行服务,获取数据量
 	resTotal, err := client.{{.Name}}Total(ctx, requestTotal)
 	if err != nil {

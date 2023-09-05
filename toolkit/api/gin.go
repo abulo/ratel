@@ -279,7 +279,7 @@ func {{.Name}}(newCtx *gin.Context){
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
 	request := &{{.Pkg}}.{{.Name}}Request{}
 	// 构造查询条件
-	{{ApiToProto .Condition "request" "newCtx.GetQuery"}}
+	{{ApiToProto .Condition "request" "newCtx.GetQuery" false}}
 	// 执行服务
 	ctx := newCtx.Request.Context()
 	res, err := client.{{.Name}}(ctx, request)
@@ -320,10 +320,13 @@ func {{.Name}}(newCtx *gin.Context){
 	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
 	request := &{{.Pkg}}.{{.Name}}Request{}
 	// 构造查询条件
-	{{ApiToProto .Condition "request" "newCtx.GetQuery"}}
 	{{- if .Page}}
 	requestTotal := &{{.Pkg}}.{{.Name}}TotalRequest{}
-	{{ApiToProto .Condition "requestTotal" "newCtx.GetQuery"}}
+	{{ApiToProto .Condition "request" "newCtx.GetQuery" true}}
+	{{- else}}
+	{{ApiToProto .Condition "request" "newCtx.GetQuery" false}}
+	{{- end}}
+	{{- if .Page}}
 	// 执行服务,获取数据量
 	resTotal, err := client.{{.Name}}Total(ctx, requestTotal)
 	if err != nil {
@@ -346,7 +349,6 @@ func {{.Name}}(newCtx *gin.Context){
 	}
 	{{- end}}
 	// 执行服务
-	
 	res, err := client.{{.Name}}(ctx, request)
 	if err != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
