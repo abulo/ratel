@@ -138,6 +138,8 @@ func WithMasterName(MasterName string) Option {
 // RedisNode interface represents a redis node.
 type RedisNode interface {
 	redis.Cmdable
+	redis.BitMapCmdable
+	redis.StreamCmdable
 }
 
 // getRedis new redis client
@@ -182,7 +184,7 @@ func getClient(r *Client) (RedisNode, error) {
 	return val.(*redis.Client), nil
 }
 
-var clusterManager = resource.NewResourceManager()
+// var clusterManager = resource.NewResourceManager()
 
 // getCluster new redis  cluster client
 func getCluster(r *Client) (RedisNode, error) {
@@ -206,7 +208,7 @@ func getCluster(r *Client) (RedisNode, error) {
 	return val.(*redis.Client), nil
 }
 
-var failoverManager = resource.NewResourceManager()
+// var failoverManager = resource.NewResourceManager()
 
 // getFailover new redis  failover client
 func getFailover(r *Client) (RedisNode, error) {
@@ -230,7 +232,7 @@ func getFailover(r *Client) (RedisNode, error) {
 	return val.(*redis.Client), nil
 }
 
-var ringManager = resource.NewResourceManager()
+// var ringManager = resource.NewResourceManager()
 
 // getRing new redis  ring client
 func getRing(r *Client) (RedisNode, error) {
