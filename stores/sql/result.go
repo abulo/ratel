@@ -83,6 +83,7 @@ func (r *Row) ToStruct(st any) error {
 		}
 	}
 	if !r.rows.rows.Next() {
+		// return nil
 		return sql.ErrNoRows
 	}
 	if err := r.rows.rows.Scan(refs...); err != nil {
