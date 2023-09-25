@@ -29,8 +29,8 @@ import (
 // {{.Table.TableName}} {{.Table.TableComment}}
 
 // {{CamelStr .Table.TableName}}Dao 数据转换
-func {{CamelStr .Table.TableName}}Dao(item *{{.Pkg}}.{{CamelStr .Table.TableName}}Object) dao.{{CamelStr .Table.TableName}} {
-	daoItem := dao.{{CamelStr .Table.TableName}}{}
+func {{CamelStr .Table.TableName}}Dao(item *{{.Pkg}}.{{CamelStr .Table.TableName}}Object) *dao.{{CamelStr .Table.TableName}} {
+	daoItem := &dao.{{CamelStr .Table.TableName}}{}
 	{{ModuleProtoConvertDao .TableColumn "daoItem" "item"}}
 	return daoItem
 }
@@ -362,7 +362,7 @@ func {{.Name}}(newCtx *gin.Context){
 		})
 		return
 	}
-	var list []dao.{{CamelStr .Table.TableName}}
+	var list []*dao.{{CamelStr .Table.TableName}}
 
 	if res.GetCode() == code.Success {
 		rpcList := res.GetData()

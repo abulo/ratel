@@ -150,22 +150,46 @@ func ModuleDaoConvertProto(Condition []Column, res, resItem string) string {
 		} else {
 			switch item.DataTypeMap.Default {
 			case "int32":
-				builder.WriteString(fmt.Sprintf("	%s.%s = %s.%s", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString(fmt.Sprintf("	if %s.%s != nil {", resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
+				builder.WriteString(fmt.Sprintf("		%s.%s = %s.%s", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
+				builder.WriteString("		}")
 				builder.WriteString("\n")
 			case "int64":
+				builder.WriteString(fmt.Sprintf("	if %s.%s != nil {", resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("	%s.%s = %s.%s", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
+				builder.WriteString("		}")
 				builder.WriteString("\n")
 			case "float32":
+				builder.WriteString(fmt.Sprintf("	if %s.%s != nil {", resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("	%s.%s = %s.%s", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
+				builder.WriteString("		}")
 				builder.WriteString("\n")
 			case "float64":
+				builder.WriteString(fmt.Sprintf("	if %s.%s != nil {", resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("	%s.%s = %s.%s", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
+				builder.WriteString("		}")
 				builder.WriteString("\n")
 			case "string":
+				builder.WriteString(fmt.Sprintf("	if %s.%s != nil {", resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("	%s.%s = %s.%s", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
+				builder.WriteString("		}")
+				builder.WriteString("\n")
 			case "bool":
+				builder.WriteString(fmt.Sprintf("	if %s.%s != nil {", resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("	%s.%s = %s.%s", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
+				builder.WriteString("		}")
 				builder.WriteString("\n")
 			case "null.Bytes":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))

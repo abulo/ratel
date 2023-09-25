@@ -103,20 +103,18 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.Table
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.Context,request *{{.Name}}Request) (*{{.Name}}Response,error){
 	req := srv.{{CamelStr .Table.TableName}}Convert(request.GetData())
 	data, err := {{.Pkg}}.{{.Name}}(ctx, req)
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": req,
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		}
+	if sql.ResultAccept(err) != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": req,
+			"err": err,
+		}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
 	}
 	return &{{.Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
 		Data: data,
-	}, err
+	}, nil
 }
 {{- else if eq .Type "Update"}}
 // {{.Name}} 更新数据
@@ -127,19 +125,17 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.C
 	}
 	req := srv.{{CamelStr .Table.TableName}}Convert(request.GetData())
 	_, err := {{.Pkg}}.{{.Name}}(ctx, {{Helper .Primary.AlisaColumnName}}, req)
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": req,
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		}
+	if sql.ResultAccept(err) != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": req,
+			"err": err,
+		}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
 	}
 	return &{{.Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
-	}, err
+	}, nil
 }
 {{- else if eq .Type "Delete"}}
 // {{.Name}} 删除数据
@@ -149,19 +145,17 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Co
 		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.ParamInvalid), code.StatusText(code.ParamInvalid))
 	}
 	_, err := {{.Pkg}}.{{.Name}}(ctx, {{Helper .Primary.AlisaColumnName}})
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": {{Helper .Primary.AlisaColumnName}},
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		}
+	if sql.ResultAccept(err) != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": {{Helper .Primary.AlisaColumnName}},
+			"err": err,
+		}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
 	}
 	return &{{.Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
-	}, err
+	}, nil
 }
 {{- else if eq .Type "Recover"}}
 // {{.Name}} 恢复数据
@@ -171,19 +165,17 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Co
 		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.ParamInvalid), code.StatusText(code.ParamInvalid))
 	}
 	_, err := {{.Pkg}}.{{.Name}}(ctx, {{Helper .Primary.AlisaColumnName}})
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": {{Helper .Primary.AlisaColumnName}},
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		}
+	if sql.ResultAccept(err) != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": {{Helper .Primary.AlisaColumnName}},
+			"err": err,
+		}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
 	}
 	return &{{.Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
-	}, err
+	}, nil
 }
 {{- else if eq .Type "Show"}}
 // {{.Name}} 查询单条数据
@@ -193,20 +185,18 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.C
 		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.ParamInvalid), code.StatusText(code.ParamInvalid))
 	}
 	res,err := {{.Pkg}}.{{.Name}}(ctx ,{{Helper .Primary.AlisaColumnName}})
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": {{Helper .Primary.AlisaColumnName}},
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		}
+	if sql.ResultAccept(err) != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": {{Helper .Primary.AlisaColumnName}},
+			"err": err,
+		}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
 	}
 	return &{{.Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
 		Data: srv.{{.Name}}Result(res),
-	}, err
+	}, nil
 }
 {{- else if eq .Type "Item"}}
 // {{.Name}} 查询单条数据
@@ -224,20 +214,18 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.C
 		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
 	}
 	res,err := {{.Pkg}}.{{.Name}}(ctx ,condition)
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": condition,
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		}
+	if sql.ResultAccept(err) != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": condition,
+			"err": err,
+		}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
 	}
 	return &{{.Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
 		Data:  srv.{{CamelStr .Table.TableName}}Result(res),
-	}, err
+	}, nil
 }
 {{- else if eq .Type "List"}}
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Context,request *{{.Name}}Request)(*{{.Name}}Response,error){
@@ -263,13 +251,11 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Co
 	{{- end}}
 	// 获取数据集合
 	list, err := {{.Pkg}}.{{.Name}}(ctx, condition)
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": condition,
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		}
+	if sql.ResultAccept(err) != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": condition,
+			"err": err,
+		}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
 	}
 	var res []*{{CamelStr .Table.TableName}}Object
@@ -291,13 +277,11 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}Total(ctx conte
 	{{ModuleProtoConvertMap .Condition "request"}}
 	// 获取数据集合
 	total, err := {{.Pkg}}.{{.Name}}Total(ctx, condition)
-	if err != nil {
-		if sql.ResultAccept(err) != nil {
-			globalLogger.Logger.WithFields(logrus.Fields{
-				"req": condition,
-				"err": err,
-			}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}Total")
-		}
+	if sql.ResultAccept(err) != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": condition,
+			"err": err,
+		}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}Total")
 		return &{{CamelStr .Table.TableName}}TotalResponse{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
 	}
 	return &{{CamelStr .Table.TableName}}TotalResponse{
