@@ -460,13 +460,13 @@ func (builder *Builder) setData(data ...map[string]any) {
 
 func (builder *Builder) getInsertMap(data any) (columns []string, values map[string][]any, err error) {
 	stValue := reflect.Indirect(reflect.ValueOf(data))
-
 	values = make(map[string][]any, 0)
 	switch stValue.Kind() {
 	case reflect.Struct:
 		var ignore bool
 		for i := 0; i < stValue.NumField(); i++ {
-			v := reflect.Indirect(stValue.Field(i))
+			// v := reflect.Indirect(stValue.Field(i))
+			v := stValue.Field(i)
 			//处理嵌套的struct中的db映射字段
 			if v.Kind() == reflect.Struct {
 				var ignore bool
