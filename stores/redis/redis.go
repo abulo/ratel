@@ -139,7 +139,6 @@ func WithMasterName(MasterName string) Option {
 type RedisNode interface {
 	redis.Cmdable
 	redis.BitMapCmdable
-	redis.StreamCmdable
 }
 
 // getRedis new redis client

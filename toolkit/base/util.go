@@ -334,10 +334,14 @@ func ApiToProto(Condition []Column, res, request string, page bool) string {
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.Bytes":
-			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = util.StringToBytes(cast.ToString(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("		%s.%s =  util.StringToBytes(cast.ToString(val) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
+			if page {
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s =  util.StringToBytes(cast.ToString(val) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.JSON":
