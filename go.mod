@@ -12,19 +12,19 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/fatih/color v1.15.0
 	github.com/fatih/structs v1.1.0
-	github.com/fsnotify/fsnotify v1.6.0
+	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.5.3
 	github.com/google/uuid v1.3.1
-	github.com/gookit/goutil v0.6.12
+	github.com/gookit/goutil v0.6.14
 	github.com/gookit/ini/v2 v2.2.2
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.9
 	github.com/hashicorp/hcl v1.0.0
-	github.com/hashicorp/hcl/v2 v2.18.1
+	github.com/hashicorp/hcl/v2 v2.19.1
 	github.com/issue9/term/v3 v3.2.3
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/json-iterator/go v1.1.12
@@ -55,8 +55,8 @@ require (
 	golang.org/x/mod v0.13.0
 	golang.org/x/sync v0.4.0
 	golang.org/x/text v0.13.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231012201019-e917dd12ba7a
-	google.golang.org/grpc v1.58.3
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231016165738-49dd2c1f3d0b
+	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -146,6 +146,6 @@ require (
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
-	google.golang.org/genproto v0.0.0-20231002182017-d307bd883b97 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20230920204549-e6e6cdab5c13 // indirect
+	google.golang.org/genproto v0.0.0-20231012201019-e917dd12ba7a // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97 // indirect
 )
