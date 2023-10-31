@@ -77,7 +77,7 @@ const (
 	starBit = 1 << 63
 )
 
-// Schedule time taks schedule
+// Schedule time task schedule
 type Schedule struct {
 	Second uint64
 	Minute uint64
