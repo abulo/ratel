@@ -2,6 +2,9 @@
 ## [Unreleased]
 
 
+<a name="v3.6.17"></a>
+## [v3.6.17] - 2023-10-31
+
 <a name="v3.6.16"></a>
 ## [v3.6.16] - 2023-10-25
 
@@ -1298,7 +1301,8 @@
 <a name="v1.0.0"></a>
 ## v1.0.0 - 2020-08-11
 
-[Unreleased]: https://github.com/abulo/ratel/compare/v3.6.16...HEAD
+[Unreleased]: https://github.com/abulo/ratel/compare/v3.6.17...HEAD
+[v3.6.17]: https://github.com/abulo/ratel/compare/v3.6.16...v3.6.17
 [v3.6.16]: https://github.com/abulo/ratel/compare/v3.6.15...v3.6.16
 [v3.6.15]: https://github.com/abulo/ratel/compare/v3.6.14...v3.6.15
 [v3.6.14]: https://github.com/abulo/ratel/compare/v3.6.13...v3.6.14
