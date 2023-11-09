@@ -60,23 +60,7 @@ type (
 		addr           string
 	}
 
-	beginnable func() (trans, error)
-
-	trans interface {
-		Session
-		Commit() error
-		Rollback() error
-	}
-
-	txSession struct {
-		*sql.Tx
-		disableMetric  bool   // 关闭指标采集
-		disableTrace   bool   // 关闭链路追踪
-		disablePrepare bool   // 关闭预处理
-		driverName     string // 驱动
-		dbName         string
-		addr           string
-	}
+	// beginnable func(*sql.DB) (trans, error)
 
 	// sessionConn interface {
 	// 	Exec(query string, args ...any) (sql.Result, error)
@@ -97,26 +81,27 @@ func NewSqlConn(driverName, dns string, pool *pool, opts ...SqlOption) SqlConn {
 		connProv: func() (*sql.DB, error) {
 			return getSqlConn(driverName, dns, pool)
 		},
+		beginTx: begin,
 		// 事务处理
-		beginTx: func() (trans, error) {
-			db, err := getSqlConn(driverName, dns, pool)
-			if err != nil {
-				return nil, err
-			}
-			tx, err := db.Begin()
-			if err != nil {
-				return nil, err
-			}
-			return txSession{
-				Tx:             tx,
-				disableTrace:   pool.DisableTrace,
-				disableMetric:  pool.DisableMetric,
-				disablePrepare: pool.DisablePrepare,
-				driverName:     pool.DriverName,
-				dbName:         pool.DbName,
-				addr:           pool.Addr,
-			}, nil
-		},
+		// beginTx: func(*sql.DB) (trans, error) {
+		// 	db, err := getSqlConn(driverName, dns, pool)
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+		// 	tx, err := db.Begin()
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+		// 	return txSession{
+		// 		Tx:             tx,
+		// 		disableTrace:   pool.DisableTrace,
+		// 		disableMetric:  pool.DisableMetric,
+		// 		disablePrepare: pool.DisablePrepare,
+		// 		driverName:     pool.DriverName,
+		// 		dbName:         pool.DbName,
+		// 		addr:           pool.Addr,
+		// 	}, nil
+		// },
 		brk: resource.NewBreaker(),
 	}
 	for _, opt := range opts {

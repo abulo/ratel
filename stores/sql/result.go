@@ -20,6 +20,11 @@ func (r *Row) ToAny() (result map[string]any, err error) {
 		err = r.rows.err
 		return
 	}
+	defer func() {
+		if err := r.rows.rows.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
 	items, err := r.rows.ToAny()
 	if err != nil {
 		r.err = err
@@ -37,6 +42,11 @@ func (r *Row) ToMap() (result map[string]string, err error) {
 		err = r.rows.err
 		return
 	}
+	defer func() {
+		if err := r.rows.rows.Close(); err != nil {
+			logger.Logger.Error("Error closing rs: ", err)
+		}
+	}()
 	items, err := r.rows.ToMap()
 	if err != nil {
 		r.err = err

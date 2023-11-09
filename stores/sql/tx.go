@@ -14,7 +14,84 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
+	"github.com/pkg/errors"
 )
+
+var (
+	// ErrNotFound is an alias of sql.ErrNoRows
+	// ErrNotFound = sql.ErrNoRows
+
+	errCantNestTx    = errors.New("cannot nest transactions")
+	errNoRawDBFromTx = errors.New("cannot get raw db from transaction")
+)
+
+type (
+	beginnable func(*sql.DB, *pool) (trans, error)
+
+	// trans interface {
+	// 	Session
+	// 	Commit() error
+	// 	Rollback() error
+	// }
+
+	txConn struct {
+		Session
+	}
+
+	// txSession struct {
+	// 	*sql.Tx
+	// }
+
+	trans interface {
+		Session
+		Commit() error
+		Rollback() error
+	}
+
+	txSession struct {
+		*sql.Tx
+		disableMetric  bool   // 关闭指标采集
+		disableTrace   bool   // 关闭链路追踪
+		disablePrepare bool   // 关闭预处理
+		driverName     string // 驱动
+		dbName         string
+		addr           string
+	}
+)
+
+func begin(db *sql.DB, pool *pool) (trans, error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	return txSession{
+		Tx:             tx,
+		disableTrace:   pool.DisableTrace,
+		disableMetric:  pool.DisableMetric,
+		disablePrepare: pool.DisablePrepare,
+		driverName:     pool.DriverName,
+		dbName:         pool.DbName,
+		addr:           pool.Addr,
+	}, nil
+}
+
+func (s txConn) RawDB() (*sql.DB, error) {
+	return nil, errNoRawDBFromTx
+}
+
+func (s txConn) Transact(_ func(Session) error) error {
+	return errCantNestTx
+}
+
+func (s txConn) TransactCtx(_ context.Context, _ func(context.Context, Session) error) error {
+	return errCantNestTx
+}
+
+// NewSessionFromTx returns a Session with the given sql.Tx.
+// Use it with caution, it's provided for other ORM to interact with.
+func NewSessionFromTx(tx *sql.Tx) Session {
+	return txSession{Tx: tx}
+}
 
 func transact(ctx context.Context, db *commonSqlConn, pool *pool, b beginnable,
 	fn func(context.Context, Session) error) (err error) {
@@ -28,20 +105,10 @@ func transact(ctx context.Context, db *commonSqlConn, pool *pool, b beginnable,
 func transactOnConn(ctx context.Context, conn *sql.DB, pool *pool, b beginnable,
 	fn func(context.Context, Session) error) (err error) {
 	var tx trans
-	begin, err := conn.Begin()
+	tx, err = b(conn, pool)
 	if err != nil {
 		return err
 	}
-	tx = txSession{
-		Tx:             begin,
-		disableTrace:   pool.DisableTrace,
-		disableMetric:  pool.DisableMetric,
-		disablePrepare: pool.DisablePrepare,
-		driverName:     pool.DriverName,
-		dbName:         pool.DbName,
-		addr:           pool.Addr,
-	}
-
 	defer func() {
 		if p := recover(); p != nil {
 			if e := tx.Rollback(); e != nil {
@@ -172,7 +239,6 @@ func (db txSession) ExecCtx(ctx context.Context, query string, args ...any) (res
 	ctx = getCtx(ctx)
 	start := time.Now()
 	conn := db.Tx
-
 	if !db.disableTrace {
 		call := Caller(11)
 		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
@@ -258,7 +324,9 @@ func (db txSession) QueryCtx(ctx context.Context, query string, args ...any) (re
 		}
 		defer func() {
 			if err := stmt.Close(); err != nil {
+				// call := Caller(12)
 				logger.Logger.Error("Error closing stmt: ", err)
+				// fmt.Println(Format(query, args...))
 			}
 		}()
 		result, err = stmt.QueryContext(ctx, args...)
