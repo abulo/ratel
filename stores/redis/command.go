@@ -568,6 +568,16 @@ func (r *Client) ModuleLoadex(ctx context.Context, conf *redis.ModuleLoadexConfi
 	return
 }
 
+// func (r *Client) Process(ctx context.Context, cmd redis.Cmder) error {
+// 	return r.brk.DoWithAcceptable(func() error {
+// 		conn, err := getRedis(r)
+// 		if err != nil {
+// 			return err
+// 		}
+// 		return conn.Process(getCtx(ctx), cmd)
+// 	}, acceptable)
+// }
+
 // MGetByPipeline gets multiple values from keys,Pipeline is used when
 // redis is a cluster,This means higher IO performance
 // params: keys ...string

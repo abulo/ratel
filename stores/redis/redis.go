@@ -137,8 +137,10 @@ func WithMasterName(MasterName string) Option {
 
 // RedisNode interface represents a redis node.
 type RedisNode interface {
+	redis.UniversalClient
 	redis.Cmdable
 	redis.BitMapCmdable
+	// FTList(ctx context.Context) *redis.StringSliceCmd
 }
 
 // getRedis new redis client
