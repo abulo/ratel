@@ -597,8 +597,8 @@ func (r *Client) FTAliasUpdate(ctx context.Context, index, alias string) (val st
 // The 'definition' parameter specifies the new definition for the index.
 // For more information, please refer to the Redis documentation:
 // [FT.ALTER]: (https://redis.io/commands/ft.alter/)
-func (r *Client) FTAlter(ctx context.Context, index string, skipInitalScan bool, definition []interface{}) (val string, err error) {
-	args := []interface{}{"FT.ALTER", index}
+func (r *Client) FTAlter(ctx context.Context, index string, skipInitalScan bool, definition []any) (val string, err error) {
+	args := []any{"FT.ALTER", index}
 	if skipInitalScan {
 		args = append(args, "SKIPINITIALSCAN")
 	}
@@ -620,7 +620,7 @@ func (r *Client) FTAlter(ctx context.Context, index string, skipInitalScan bool,
 // For more information, please refer to the Redis documentation:
 // [FT.CONFIG GET]: (https://redis.io/commands/ft.config-get/)
 func (r *Client) FTConfigGet(ctx context.Context, option string) (val map[string]any, err error) {
-	args := []interface{}{"FT.CONFIG", "GET", option}
+	args := []any{"FT.CONFIG", "GET", option}
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -638,8 +638,8 @@ func (r *Client) FTConfigGet(ctx context.Context, option string) (val map[string
 // The 'option' parameter specifies the configuration parameter to set, and the 'value' parameter specifies the new value.
 // For more information, please refer to the Redis documentation:
 // [FT.CONFIG SET]: (https://redis.io/commands/ft.config-set/)
-func (r *Client) FTConfigSet(ctx context.Context, option string, value interface{}) (val string, err error) {
-	args := []interface{}{"FT.CONFIG", "SET", option, value}
+func (r *Client) FTConfigSet(ctx context.Context, option string, value any) (val string, err error) {
+	args := []any{"FT.CONFIG", "SET", option, value}
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -659,7 +659,7 @@ func (r *Client) FTConfigSet(ctx context.Context, option string, value interface
 // For more information, please refer to the Redis documentation:
 // [FT.CREATE]: (https://redis.io/commands/ft.create/)
 func (r *Client) FTCreate(ctx context.Context, index string, options *FTCreateOptions, schema ...*FieldSchema) (val string, err error) {
-	args := []interface{}{"FT.CREATE", index}
+	args := []any{"FT.CREATE", index}
 	if options != nil {
 		if options.OnHash && !options.OnJSON {
 			args = append(args, "ON", "HASH")
@@ -743,7 +743,7 @@ func (r *Client) FTCreate(ctx context.Context, index string, options *FTCreateOp
 				if schema.VectorArgs.FlatOptions.Type == "" || schema.VectorArgs.FlatOptions.Dim == 0 || schema.VectorArgs.FlatOptions.DistanceMetric == "" {
 					panic("FT.CREATE: Type, Dim and DistanceMetric are required for VECTOR FLAT")
 				}
-				flatArgs := []interface{}{
+				flatArgs := []any{
 					"TYPE", schema.VectorArgs.FlatOptions.Type,
 					"DIM", schema.VectorArgs.FlatOptions.Dim,
 					"DISTANCE_METRIC", schema.VectorArgs.FlatOptions.DistanceMetric,
@@ -762,7 +762,7 @@ func (r *Client) FTCreate(ctx context.Context, index string, options *FTCreateOp
 				if schema.VectorArgs.HNSWOptions.Type == "" || schema.VectorArgs.HNSWOptions.Dim == 0 || schema.VectorArgs.HNSWOptions.DistanceMetric == "" {
 					panic("FT.CREATE: Type, Dim and DistanceMetric are required for VECTOR HNSW")
 				}
-				hnswArgs := []interface{}{
+				hnswArgs := []any{
 					"TYPE", schema.VectorArgs.HNSWOptions.Type,
 					"DIM", schema.VectorArgs.HNSWOptions.Dim,
 					"DISTANCE_METRIC", schema.VectorArgs.HNSWOptions.DistanceMetric,
@@ -836,7 +836,7 @@ func (r *Client) FTCreate(ctx context.Context, index string, options *FTCreateOp
 // For more information, please refer to the Redis documentation:
 // [FT.CURSOR DEL]: (https://redis.io/commands/ft.cursor-del/)
 func (r *Client) FTCursorDel(ctx context.Context, index string, cursorId int) (val string, err error) {
-	args := []interface{}{"FT.CURSOR", "DEL", index, cursorId}
+	args := []any{"FT.CURSOR", "DEL", index, cursorId}
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -853,7 +853,7 @@ func (r *Client) FTCursorDel(ctx context.Context, index string, cursorId int) (v
 // For more information, please refer to the Redis documentation:
 // [FT.CURSOR READ]: (https://redis.io/commands/ft.cursor-read/)
 func (r *Client) FTCursorRead(ctx context.Context, index string, cursorId int, count int) (val map[string]any, err error) {
-	args := []interface{}{"FT.CURSOR", "READ", index, cursorId}
+	args := []any{"FT.CURSOR", "READ", index, cursorId}
 	if count > 0 {
 		args = append(args, "COUNT", count)
 	}
@@ -874,8 +874,8 @@ func (r *Client) FTCursorRead(ctx context.Context, index string, cursorId int, c
 // The 'dict' parameter specifies the dictionary to which to add the terms, and the 'term' parameter specifies the terms to add.
 // For more information, please refer to the Redis documentation:
 // [FT.DICTADD]: (https://redis.io/commands/ft.dictadd/)
-func (r *Client) FTDictAdd(ctx context.Context, dict string, term []interface{}) (val int64, err error) {
-	args := []interface{}{"FT.DICTADD", dict}
+func (r *Client) FTDictAdd(ctx context.Context, dict string, term []any) (val int64, err error) {
+	args := []any{"FT.DICTADD", dict}
 	args = append(args, term...)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -892,8 +892,8 @@ func (r *Client) FTDictAdd(ctx context.Context, dict string, term []interface{})
 // The 'dict' parameter specifies the dictionary from which to delete the terms, and the 'term' parameter specifies the terms to delete.
 // For more information, please refer to the Redis documentation:
 // [FT.DICTDEL]: (https://redis.io/commands/ft.dictdel/)
-func (r *Client) FTDictDel(ctx context.Context, dict string, term []interface{}) (val int64, err error) {
-	args := []interface{}{"FT.DICTDEL", dict}
+func (r *Client) FTDictDel(ctx context.Context, dict string, term []any) (val int64, err error) {
+	args := []any{"FT.DICTDEL", dict}
 	args = append(args, term...)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -911,7 +911,7 @@ func (r *Client) FTDictDel(ctx context.Context, dict string, term []interface{})
 // For more information, please refer to the Redis documentation:
 // [FT.DICTDUMP]: (https://redis.io/commands/ft.dictdump/)
 func (r *Client) FTDictDump(ctx context.Context, dict string) (val map[string]any, err error) {
-	args := []interface{}{"FT.DICTDUMP", dict}
+	args := []any{"FT.DICTDUMP", dict}
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -930,7 +930,7 @@ func (r *Client) FTDictDump(ctx context.Context, dict string) (val map[string]an
 // For more information, please refer to the Redis documentation:
 // [FT.DROPINDEX]: (https://redis.io/commands/ft.dropindex/)
 func (r *Client) FTDropIndex(ctx context.Context, index string) (val string, err error) {
-	args := []interface{}{"FT.DROPINDEX", index}
+	args := []any{"FT.DROPINDEX", index}
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -947,7 +947,7 @@ func (r *Client) FTDropIndex(ctx context.Context, index string) (val string, err
 // For more information, please refer to the Redis documentation:
 // [FT.DROPINDEX]: (https://redis.io/commands/ft.dropindex/)
 func (r *Client) FTDropIndexWithArgs(ctx context.Context, index string, options *FTDropIndexOptions) (val string, err error) {
-	args := []interface{}{"FT.DROPINDEX", index}
+	args := []any{"FT.DROPINDEX", index}
 	if options != nil {
 		if options.DeleteDocs {
 			args = append(args, "DD")
@@ -969,7 +969,7 @@ func (r *Client) FTDropIndexWithArgs(ctx context.Context, index string, options 
 // For more information, please refer to the Redis documentation:
 // [FT.EXPLAIN]: (https://redis.io/commands/ft.explain/)
 func (r *Client) FTExplain(ctx context.Context, index string, query string) (val int64, err error) {
-	args := []interface{}{"FT.EXPLAIN", index, query}
+	args := []any{"FT.EXPLAIN", index, query}
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -986,7 +986,7 @@ func (r *Client) FTExplain(ctx context.Context, index string, query string) (val
 // For more information, please refer to the Redis documentation:
 // [FT.EXPLAIN]: (https://redis.io/commands/ft.explain/)
 func (r *Client) FTExplainWithArgs(ctx context.Context, index string, query string, options *FTExplainOptions) (val int64, err error) {
-	args := []interface{}{"FT.EXPLAIN", index, query}
+	args := []any{"FT.EXPLAIN", index, query}
 	if options.Dialect != "" {
 		args = append(args, "DIALECT", options.Dialect)
 	}
@@ -1012,7 +1012,7 @@ func (r *Client) FTExplainCli(ctx context.Context, key, path string) error {
 // For more information, please refer to the Redis documentation:
 // [FT.INFO]: (https://redis.io/commands/ft.info/)
 func (r *Client) FTInfo(ctx context.Context, index string) (val map[string]any, err error) {
-	args := []interface{}{"FT.INFO", index}
+	args := []any{"FT.INFO", index}
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1031,9 +1031,9 @@ func (r *Client) FTInfo(ctx context.Context, index string) (val map[string]any, 
 // and the 'query' parameter specifies the search / aggreagte query. Please notice that you must either pass a SearchQuery or an AggregateQuery.
 // For more information, please refer to the Redis documentation:
 // [FT.PROFILE SEARCH]: (https://redis.io/commands/ft.profile/)
-func (r *Client) FTProfile(ctx context.Context, index string, limited bool, query interface{}) (val map[string]any, err error) {
+func (r *Client) FTProfile(ctx context.Context, index string, limited bool, query any) (val map[string]any, err error) {
 	queryType := ""
-	var argsQuery []interface{}
+	var argsQuery []any
 
 	switch v := query.(type) {
 	case AggregateQuery:
@@ -1046,7 +1046,7 @@ func (r *Client) FTProfile(ctx context.Context, index string, limited bool, quer
 		panic("FT.PROFILE: query must be either AggregateQuery or SearchQuery")
 	}
 
-	args := []interface{}{"FT.PROFILE", index, queryType}
+	args := []any{"FT.PROFILE", index, queryType}
 
 	if limited {
 		args = append(args, "LIMITED")
@@ -1073,7 +1073,7 @@ func (r *Client) FTProfile(ctx context.Context, index string, limited bool, quer
 // For more information, please refer to the Redis documentation:
 // [FT.SPELLCHECK]: (https://redis.io/commands/ft.spellcheck/)
 func (r *Client) FTSpellCheck(ctx context.Context, index string, query string) (val map[string]any, err error) {
-	args := []interface{}{"FT.SPELLCHECK", index, query}
+	args := []any{"FT.SPELLCHECK", index, query}
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1093,7 +1093,7 @@ func (r *Client) FTSpellCheck(ctx context.Context, index string, query string) (
 // For more information, please refer to the Redis documentation:
 // [FT.SPELLCHECK]: (https://redis.io/commands/ft.spellcheck/)
 func (r *Client) FTSpellCheckWithArgs(ctx context.Context, index string, query string, options *FTSpellCheckOptions) (val map[string]any, err error) {
-	args := []interface{}{"FT.SPELLCHECK", index, query}
+	args := []any{"FT.SPELLCHECK", index, query}
 	if options != nil {
 		if options.Distance > 4 {
 			panic("FT.SPELLCHECK: DISTANCE must be between 0 and 4")
@@ -1135,7 +1135,7 @@ func (r *Client) FTSpellCheckWithArgs(ctx context.Context, index string, query s
 // For more information, please refer to the Redis documentation:
 // [FT.SEARCH]: (https://redis.io/commands/ft.search/)
 func (r *Client) FTSearch(ctx context.Context, index string, query string) (val any, err error) {
-	args := []interface{}{"FT.SEARCH", index, query}
+	args := []any{"FT.SEARCH", index, query}
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1147,10 +1147,10 @@ func (r *Client) FTSearch(ctx context.Context, index string, query string) (val 
 	return
 }
 
-type SearchQuery []interface{}
+type SearchQuery []any
 
 func FTSearchQuery(query string, options *FTSearchOptions) SearchQuery {
-	queryArgs := []interface{}{query}
+	queryArgs := []any{query}
 	if options != nil {
 		if options.NoContent {
 			queryArgs = append(queryArgs, "NOCONTENT")
@@ -1190,7 +1190,7 @@ func FTSearchQuery(query string, options *FTSearchOptions) SearchQuery {
 		}
 		if options.Return != nil {
 			queryArgs = append(queryArgs, "RETURN")
-			queryArgsReturn := []interface{}{}
+			queryArgsReturn := []any{}
 			for _, ret := range options.Return {
 				queryArgsReturn = append(queryArgsReturn, ret.FieldName)
 				if ret.As != "" {
@@ -1264,7 +1264,7 @@ func FTSearchQuery(query string, options *FTSearchOptions) SearchQuery {
 // For more information, please refer to the Redis documentation:
 // [FT.SEARCH]: (https://redis.io/commands/ft.search/)
 func (r *Client) FTSearchWithArgs(ctx context.Context, index string, query string, options *FTSearchOptions) (val any, err error) {
-	args := []interface{}{"FT.SEARCH", index, query}
+	args := []any{"FT.SEARCH", index, query}
 	if options != nil {
 		if options.NoContent {
 			args = append(args, "NOCONTENT")
@@ -1304,7 +1304,7 @@ func (r *Client) FTSearchWithArgs(ctx context.Context, index string, query strin
 		}
 		if options.Return != nil {
 			args = append(args, "RETURN")
-			argsReturn := []interface{}{}
+			argsReturn := []any{}
 			for _, ret := range options.Return {
 				argsReturn = append(argsReturn, ret.FieldName)
 				if ret.As != "" {
@@ -1385,7 +1385,7 @@ func (r *Client) FTSearchWithArgs(ctx context.Context, index string, query strin
 // For more information, please refer to the Redis documentation:
 // [FT.SYNDUMP]: (https://redis.io/commands/ft.syndump/)
 func (r *Client) FTSynDump(ctx context.Context, index string) (val map[string]any, err error) {
-	args := []interface{}{"FT.SYNDUMP", index}
+	args := []any{"FT.SYNDUMP", index}
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -1403,8 +1403,8 @@ func (r *Client) FTSynDump(ctx context.Context, index string) (val map[string]an
 // The 'index' parameter specifies the index to update, the 'synGroupId' parameter specifies the synonym group id, and the 'terms' parameter specifies the additional terms.
 // For more information, please refer to the Redis documentation:
 // [FT.SYNUPDATE]: (https://redis.io/commands/ft.synupdate/)
-func (r *Client) FTSynUpdate(ctx context.Context, index string, synGroupId interface{}, terms []interface{}) (val string, err error) {
-	args := []interface{}{"FT.SYNUPDATE", index, synGroupId}
+func (r *Client) FTSynUpdate(ctx context.Context, index string, synGroupId any, terms []any) (val string, err error) {
+	args := []any{"FT.SYNUPDATE", index, synGroupId}
 	args = append(args, terms...)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -1421,8 +1421,8 @@ func (r *Client) FTSynUpdate(ctx context.Context, index string, synGroupId inter
 // The 'index' parameter specifies the index to update, the 'synGroupId' parameter specifies the synonym group id, the 'options' parameter specifies additional options for the update, and the 'terms' parameter specifies the additional terms.
 // For more information, please refer to the Redis documentation:
 // [FT.SYNUPDATE]: (https://redis.io/commands/ft.synupdate/)
-func (r *Client) FTSynUpdateWithArgs(ctx context.Context, index string, synGroupId interface{}, options *FTSynUpdateOptions, terms []interface{}) (val string, err error) {
-	args := []interface{}{"FT.SYNUPDATE", index, synGroupId}
+func (r *Client) FTSynUpdateWithArgs(ctx context.Context, index string, synGroupId any, options *FTSynUpdateOptions, terms []any) (val string, err error) {
+	args := []any{"FT.SYNUPDATE", index, synGroupId}
 	if options.SkipInitialScan {
 		args = append(args, "SKIPINITIALSCAN")
 	}
@@ -1443,7 +1443,7 @@ func (r *Client) FTSynUpdateWithArgs(ctx context.Context, index string, synGroup
 // For more information, please refer to the Redis documentation:
 // [FT.TAGVALS]: (https://redis.io/commands/ft.tagvals/)
 func (r *Client) FTTagVals(ctx context.Context, index string, field string) (val map[string]any, err error) {
-	args := []interface{}{"FT.TAGVALS", index, field}
+	args := []any{"FT.TAGVALS", index, field}
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
