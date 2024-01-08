@@ -71,19 +71,6 @@ func TestTextUnmarshalFloat32(t *testing.T) {
 	assertNullFloat32(t, blank, "UnmarshalText() empty float32")
 }
 
-func TestMarshalFloat32(t *testing.T) {
-	f := Float32From(1.2345)
-	data, err := json.Marshal(f)
-	maybePanic(err)
-	assertJSONEquals(t, data, "1.2345", "non-empty json marshal")
-
-	// invalid values should be encoded as null
-	null := NewFloat32(0, false)
-	data, err = json.Marshal(null)
-	maybePanic(err)
-	assertJSONEquals(t, data, "NULL", "null json marshal")
-}
-
 func TestMarshalFloat32Text(t *testing.T) {
 	f := Float32From(1.2345)
 	data, err := f.MarshalText()

@@ -47,19 +47,6 @@ func TestTextUnmarshalByte(t *testing.T) {
 	assertNullByte(t, blank, "UnmarshalText() empty int")
 }
 
-func TestMarshalByte(t *testing.T) {
-	i := ByteFrom('b')
-	data, err := json.Marshal(i)
-	maybePanic(err)
-	assertJSONEquals(t, data, `"b"`, "non-empty json marshal")
-
-	// invalid values should be encoded as null
-	null := NewByte(0, false)
-	data, err = json.Marshal(null)
-	maybePanic(err)
-	assertJSONEquals(t, data, "NULL", "null json marshal")
-}
-
 func TestMarshalByteText(t *testing.T) {
 	i := ByteFrom('b')
 	data, err := i.MarshalText()

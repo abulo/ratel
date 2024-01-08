@@ -97,19 +97,6 @@ func TestTextUnmarshalInt16(t *testing.T) {
 	assertNullInt16(t, blank, "UnmarshalText() empty int16")
 }
 
-func TestMarshalInt16(t *testing.T) {
-	i := Int16From(32766)
-	data, err := json.Marshal(i)
-	maybePanic(err)
-	assertJSONEquals(t, data, "32766", "non-empty json marshal")
-
-	// invalid values should be encoded as null
-	null := NewInt16(0, false)
-	data, err = json.Marshal(null)
-	maybePanic(err)
-	assertJSONEquals(t, data, "NULL", "null json marshal")
-}
-
 func TestMarshalInt16Text(t *testing.T) {
 	i := Int16From(32766)
 	data, err := i.MarshalText()

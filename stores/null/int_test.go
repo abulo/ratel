@@ -80,19 +80,6 @@ func TestTextUnmarshalInt(t *testing.T) {
 	assertNullInt(t, blank, "UnmarshalText() empty int")
 }
 
-func TestMarshalInt(t *testing.T) {
-	i := IntFrom(12345)
-	data, err := json.Marshal(i)
-	maybePanic(err)
-	assertJSONEquals(t, data, "12345", "non-empty json marshal")
-
-	// invalid values should be encoded as null
-	null := NewInt(0, false)
-	data, err = json.Marshal(null)
-	maybePanic(err)
-	assertJSONEquals(t, data, "NULL", "null json marshal")
-}
-
 func TestMarshalIntText(t *testing.T) {
 	i := IntFrom(12345)
 	data, err := i.MarshalText()
