@@ -195,19 +195,6 @@ func Run(cmd *cobra.Command, args []string) {
 	}, base.Method{
 		Table:          tableItem,
 		TableColumn:    tableColumn,
-		Type:           "Recover",
-		Name:           base.CamelStr(tableItem.TableName) + "Recover",
-		Condition:      nil,
-		ConditionTotal: 0,
-		Primary:        tablePrimary,
-		Pkg:            dir[strLen+1:],
-		PkgPath:        dir,
-		ModName:        mod,
-		Page:           pageBool,
-		SoftDelete:     deleteBool,
-	}, base.Method{
-		Table:          tableItem,
-		TableColumn:    tableColumn,
 		Type:           "Show",
 		Name:           base.CamelStr(tableItem.TableName),
 		Condition:      nil,
@@ -224,9 +211,30 @@ func Run(cmd *cobra.Command, args []string) {
 		base.CamelStr(tableItem.TableName)+"Create",
 		base.CamelStr(tableItem.TableName)+"Update",
 		base.CamelStr(tableItem.TableName)+"Delete",
-		base.CamelStr(tableItem.TableName)+"Recover",
 		base.CamelStr(tableItem.TableName),
 	)
+
+	if deleteBool {
+		methodList = append(methodList,
+			base.Method{
+				Table:          tableItem,
+				TableColumn:    tableColumn,
+				Type:           "Recover",
+				Name:           base.CamelStr(tableItem.TableName) + "Recover",
+				Condition:      nil,
+				ConditionTotal: 0,
+				Primary:        tablePrimary,
+				Pkg:            dir[strLen+1:],
+				PkgPath:        dir,
+				ModName:        mod,
+				Page:           pageBool,
+				SoftDelete:     deleteBool,
+			},
+		)
+		multiSelect = append(multiSelect,
+			base.CamelStr(tableItem.TableName)+"Recover",
+		)
+	}
 	//获取的索引信息没有
 	if err != nil {
 		methodName := base.CamelStr(tableItem.TableName) + "List"
@@ -250,6 +258,7 @@ func Run(cmd *cobra.Command, args []string) {
 	} else {
 		//存储条件信息
 		field := make([]string, 0)
+		idx := []string{"item", "list"}
 		//有索引信息
 		for _, v := range tableIndex {
 			//查询条件
@@ -280,6 +289,9 @@ func Run(cmd *cobra.Command, args []string) {
 			// 自定义函数名称和索引信息
 			customIndexType := util.UCWords(indexNameSlice[0])
 			customIndexName := util.UCWords(indexNameSlice[1])
+			if !util.InArray(customIndexType, idx) {
+				continue
+			}
 			methodName := base.CamelStr(tableItem.TableName) + base.CamelStr(customIndexName)
 			method := base.Method{
 				Table:          tableItem,
