@@ -129,7 +129,7 @@ type {{CamelStr .Table.TableName}} struct {
 	{{CamelStr .ColumnName}}	{{Pointer .DataTypeMap.Empty}}{{.DataTypeMap.Empty}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
 	{{- else }}
 	{{- if eq .ColumnKey "PRI" }}
-	{{CamelStr .ColumnName}}	*{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}},-" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}},PRI
+	{{CamelStr .ColumnName}}	*{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}},PRI
 	{{- else }}
 	{{CamelStr .ColumnName}}	{{Pointer .DataTypeMap.Default}}{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
 	{{- end}}
