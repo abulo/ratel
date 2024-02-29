@@ -2,6 +2,7 @@ package module
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -256,9 +257,11 @@ func Run(cmd *cobra.Command, args []string) {
 		methodList = append(methodList, method)
 		needPageMethodList = append(needPageMethodList, methodName)
 	} else {
+		js, _ := json.Marshal(tableIndex)
+		fmt.Println(string(js))
 		//存储条件信息
 		field := make([]string, 0)
-		idx := []string{"item", "list"}
+		idx := []string{"Item", "List"}
 		//有索引信息
 		for _, v := range tableIndex {
 			//查询条件
@@ -281,6 +284,7 @@ func Run(cmd *cobra.Command, args []string) {
 			}
 			// 数据库中的索引名称
 			indexName := v.IndexName
+
 			// 拆分字符串,得到索引类型和索引名称
 			indexNameSlice := util.Explode(":", indexName)
 			if len(indexNameSlice) < 2 {

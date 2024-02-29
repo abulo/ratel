@@ -84,7 +84,8 @@ func (t *DateTime) UnmarshalJSON(data []byte) error {
 	// customize from golang time/time.go
 	// Fractional seconds are handled implicitly by Parse.
 	var err error
-	t.DateTime, err = time.Parse(`"`+DateTimeSQL+`"`, string(data))
+	// t.DateTime, err = time.Parse(`"`+DateTimeSQL+`"`, string(data))
+	t.DateTime, err = time.ParseInLocation(`"`+DateTimeSQL+`"`, string(data), time.Local)
 	if err != nil {
 		return err
 	}
@@ -119,7 +120,8 @@ func (t *DateTime) UnmarshalText(text []byte) error {
 	// customize from golang time/time.go
 	// Fractional seconds are handled implicitly by Parse.
 	var err error
-	t.DateTime, err = time.Parse(DateTimeSQL, string(text))
+	// t.DateTime, err = time.Parse(DateTimeSQL, string(text))
+	t.DateTime, err = time.ParseInLocation(DateTimeSQL, string(text), time.Local)
 	if err != nil {
 		return err
 	}

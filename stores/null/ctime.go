@@ -80,7 +80,8 @@ func (t *CTime) UnmarshalJSON(data []byte) error {
 	// customize from golang time/time.go
 	// Fractional seconds are handled implicitly by Parse.
 	var err error
-	t.CTime, err = time.Parse(`"`+RFC3339TimeOnly+`"`, string(data))
+	// t.CTime, err = time.Parse(`"`+RFC3339TimeOnly+`"`, string(data))
+	t.CTime, err = time.ParseInLocation(`"`+RFC3339TimeOnly+`"`, string(data), util.TimeZone())
 	if err != nil {
 		return err
 	}
@@ -112,7 +113,8 @@ func (t *CTime) UnmarshalText(text []byte) error {
 	// customize from golang time/time.go
 	// Fractional seconds are handled implicitly by Parse.
 	var err error
-	t.CTime, err = time.Parse(RFC3339TimeOnly, string(text))
+	// t.CTime, err = time.Parse(RFC3339TimeOnly, string(text))
+	t.CTime, err = time.ParseInLocation(RFC3339TimeOnly, string(text), util.TimeZone())
 	if err != nil {
 		return err
 	}

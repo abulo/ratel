@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/abulo/ratel/v3/util"
 	"github.com/pkg/errors"
 )
 
@@ -85,7 +86,7 @@ func (t *TimeStamp) UnmarshalJSON(data []byte) error {
 	// customize from golang time/time.go
 	// Fractional seconds are handled implicitly by Parse.
 	var err error
-	t.TimeStamp, err = time.Parse(`"`+TimeStampSQL+`"`, string(data))
+	t.TimeStamp, err = time.ParseInLocation(`"`+TimeStampSQL+`"`, string(data), util.TimeZone())
 	if err != nil {
 		return err
 	}
@@ -122,7 +123,8 @@ func (t *TimeStamp) UnmarshalText(text []byte) error {
 	// customize from golang time/time.go
 	// Fractional seconds are handled implicitly by Parse.
 	var err error
-	t.TimeStamp, err = time.Parse(TimeStampSQL, string(text))
+	// t.TimeStamp, err = time.Parse(TimeStampSQL, string(text))
+	t.TimeStamp, err = time.ParseInLocation(TimeStampSQL, string(text), util.TimeZone())
 	if err != nil {
 		return err
 	}
