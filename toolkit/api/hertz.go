@@ -28,20 +28,6 @@ import (
 
 // {{.Table.TableName}} {{.Table.TableComment}}
 
-// {{CamelStr .Table.TableName}}Dao 数据转换
-func {{CamelStr .Table.TableName}}Dao(item *{{.Pkg}}.{{CamelStr .Table.TableName}}Object) *dao.{{CamelStr .Table.TableName}} {
-	daoItem := &dao.{{CamelStr .Table.TableName}}{}
-	{{ModuleProtoConvertDao .TableColumn "daoItem" "item"}}
-	return daoItem
-}
-
-// {{CamelStr .Table.TableName}}Proto 数据绑定
-func {{CamelStr .Table.TableName}}Proto(item dao.{{CamelStr .Table.TableName}}) *{{.Pkg}}.{{CamelStr .Table.TableName}}Object {
-	res := &{{.Pkg}}.{{CamelStr .Table.TableName}}Object{}
-	{{ModuleDaoConvertProto .TableColumn "res" "item"}}
-	return res
-}
-
 {{- range .Method}}
 {{- if eq .Type "Create"}}
 // {{.Name}} 创建数据
@@ -70,7 +56,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext) {
 		})
 		return
 	}
-	request.Data = {{CamelStr .Table.TableName}}Proto(reqInfo)
+	request.Data = {{.Pkg}}.{{CamelStr .Table.TableName}}Proto(reqInfo)
 	// 执行服务
 	res, err := client.{{.Name}}(ctx, request)
 	if err != nil {
@@ -119,7 +105,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext) {
 		})
 		return
 	}
-	request.Data = {{CamelStr .Table.TableName}}Proto(reqInfo)
+	request.Data = {{.Pkg}}.{{CamelStr .Table.TableName}}Proto(reqInfo)
 	// 执行服务
 	res, err := client.{{.Name}}(ctx, request)
 	if err != nil {
@@ -176,7 +162,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 	newCtx.JSON(consts.StatusOK, utils.H{
 		"code": res.GetCode(),
 		"msg":  res.GetMsg(),
-		"data": {{CamelStr .Table.TableName}}Dao(res.GetData()),
+		"data": {{.Pkg}}.{{CamelStr .Table.TableName}}Dao(res.GetData()),
 	})
 }
 {{- else if eq .Type "Delete"}}
@@ -292,7 +278,7 @@ func {{.Name}}(ctx context.Context, newCtx *app.RequestContext) {
 	newCtx.JSON(consts.StatusOK, utils.H{
 		"code": res.GetCode(),
 		"msg":  res.GetMsg(),
-		"data": {{CamelStr .Table.TableName}}Dao(res.GetData()),
+		"data": {{.Pkg}}.{{CamelStr .Table.TableName}}Dao(res.GetData()),
 	})
 }
 {{- else if eq .Type "List"}}
@@ -360,7 +346,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 	if res.GetCode() == code.Success {
 		rpcList := res.GetData()
 		for _, item := range rpcList {
-			list = append(list, {{CamelStr .Table.TableName}}Dao(item))
+			list = append(list, {{.Pkg}}.{{CamelStr .Table.TableName}}Dao(item))
 		}
 	}
 	newCtx.JSON(consts.StatusOK, utils.H{

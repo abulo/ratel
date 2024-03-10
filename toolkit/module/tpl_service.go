@@ -59,19 +59,15 @@ package {{.Pkg}}
 
 import (
 	"{{.ModName}}/code"
-	"{{.ModName}}/dao"
 	"{{.ModName}}/module/{{.PkgPath}}"
 	"context"
 
 	globalLogger "github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/server/xgrpc"
-	"github.com/abulo/ratel/v3/stores/null"
 	"github.com/abulo/ratel/v3/stores/sql"
-	"github.com/abulo/ratel/v3/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 // {{.Table.TableName}} {{.Table.TableComment}}
 
@@ -82,27 +78,12 @@ type Srv{{CamelStr .Table.TableName}}ServiceServer struct {
 	Server *xgrpc.Server
 }
 
-
-
-func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}Convert(request *{{CamelStr .Table.TableName}}Object) dao.{{CamelStr .Table.TableName}} {
-	var res dao.{{CamelStr .Table.TableName}}
-	{{ModuleProtoConvertDao .TableColumn "res" "request"}}
-	return res
-}
-
-
-func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{CamelStr .Table.TableName}}Result(item dao.{{CamelStr .Table.TableName}}) *{{CamelStr .Table.TableName}}Object {
-	res := &{{CamelStr .Table.TableName}}Object{}
-	{{ModuleDaoConvertProto .TableColumn "res" "item"}}
-	return res
-}
-
 {{- range .Method}}
 {{- if eq .Type "Create"}}
 // {{.Name}} 创建数据
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.Context,request *{{.Name}}Request) (*{{.Name}}Response,error){
-	req := srv.{{CamelStr .Table.TableName}}Convert(request.GetData())
-	data, err := {{.Pkg}}.{{.Name}}(ctx, req)
+	req := {{CamelStr .Table.TableName}}Dao(request.GetData())
+	data, err := {{.Pkg}}.{{.Name}}(ctx, *req)
 	if sql.ResultAccept(err) != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"req": req,
@@ -123,8 +104,8 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.C
 	if {{Helper .Primary.AlisaColumnName}} < 1 {
 		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.ParamInvalid), code.StatusText(code.ParamInvalid))
 	}
-	req := srv.{{CamelStr .Table.TableName}}Convert(request.GetData())
-	_, err := {{.Pkg}}.{{.Name}}(ctx, {{Helper .Primary.AlisaColumnName}}, req)
+	req := {{CamelStr .Table.TableName}}Dao(request.GetData())
+	_, err := {{.Pkg}}.{{.Name}}(ctx, {{Helper .Primary.AlisaColumnName}}, *req)
 	if sql.ResultAccept(err) != nil {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"req": req,
@@ -195,7 +176,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.C
 	return &{{.Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
-		Data: srv.{{.Name}}Result(res),
+		Data: {{CamelStr .Table.TableName}}Proto(res),
 	}, nil
 }
 {{- else if eq .Type "Item"}}
@@ -224,7 +205,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.C
 	return &{{.Name}}Response{
 		Code: code.Success,
 		Msg:  code.StatusText(code.Success),
-		Data:  srv.{{CamelStr .Table.TableName}}Result(res),
+		Data:  {{CamelStr .Table.TableName}}Proto(res),
 	}, nil
 }
 {{- else if eq .Type "List"}}
@@ -260,7 +241,7 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Co
 	}
 	var res []*{{CamelStr .Table.TableName}}Object
 	for _, item := range list {
-		res = append(res, srv.{{CamelStr .Table.TableName}}Result(item))
+		res = append(res, {{CamelStr .Table.TableName}}Proto(item))
 	}
 	return &{{.Name}}Response{
 		Code: code.Success,

@@ -77,6 +77,9 @@ func Run(cmd *cobra.Command, args []string) {
 	fullServiceDir := path.Join(base.Path, "service", dir)
 	_ = os.MkdirAll(fullServiceDir, os.ModePerm)
 
+	fullConvertDir := path.Join(base.Path, "service", dir)
+	_ = os.MkdirAll(fullConvertDir, os.ModePerm)
+
 	// 初始化上下文
 	timeout := "60s"
 	t, err := time.ParseDuration(timeout)
@@ -365,7 +368,7 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	tpl := make([]string, 0)
-	tpl = append(tpl, "module", "proto", "service")
+	tpl = append(tpl, "module", "proto", "service", "convert")
 
 	tplSelected := make([]string, 0)
 	if err := survey.AskOne(&survey.MultiSelect{
@@ -409,7 +412,9 @@ func Run(cmd *cobra.Command, args []string) {
 	if util.InArray("proto", tplSelected) {
 		GenerateProto(moduleParam, fullProtoDir, fullServiceDir, tableName)
 	}
-
+	if util.InArray("convert", tplSelected) {
+		GenerateConvert(moduleParam, fullConvertDir, tableName)
+	}
 	if util.InArray("service", tplSelected) {
 		GenerateService(moduleParam, fullServiceDir, tableName)
 		strLenSlot := util.Explode("/", dir)
