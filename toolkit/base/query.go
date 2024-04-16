@@ -185,7 +185,7 @@ func TablePrimary(ctx context.Context, DbName, TableName string) (Column, error)
 		dataType := NewDataType()
 		res.DataTypeMap = dataType[res.DataType]
 		res.PosiTion = 1
-		res.AlisaColumnName = TableName + "_id"
+		res.AlisaColumnName = "id"
 	}
 	return res, err
 }
