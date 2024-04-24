@@ -20,8 +20,8 @@ type Config struct {
 	DisableTrace bool
 	// DisableMetric disable Metric Interceptor, false by default
 	DisableMetric bool
-	// SlowQueryThresholdInMilli, request will be colored if cost over this threshold value
-	SlowQueryThresholdInMilli int64
+	// SlowQueryThresholdInMill, request will be colored if cost over this threshold value
+	SlowQueryThresholdInMill int64
 	// ServiceAddress service address in registry info, default to 'Host:Port'
 	ServiceAddress string
 	// EnableTLS
@@ -41,15 +41,15 @@ type Config struct {
 // New ...
 func New() *Config {
 	return &Config{
-		Network:                   "tcp4",
-		Deployment:                constant.DefaultDeployment,
-		DisableMetric:             false,
-		DisableTrace:              false,
-		EnableTLS:                 false,
-		SlowQueryThresholdInMilli: 500,
-		serverOptions:             []grpc.ServerOption{},
-		streamInterceptors:        []grpc.StreamServerInterceptor{},
-		unaryInterceptors:         []grpc.UnaryServerInterceptor{},
+		Network:                  "tcp4",
+		Deployment:               constant.DefaultDeployment,
+		DisableMetric:            false,
+		DisableTrace:             false,
+		EnableTLS:                false,
+		SlowQueryThresholdInMill: 500,
+		serverOptions:            []grpc.ServerOption{},
+		streamInterceptors:       []grpc.StreamServerInterceptor{},
+		unaryInterceptors:        []grpc.UnaryServerInterceptor{},
 	}
 }
 

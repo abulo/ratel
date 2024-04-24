@@ -7,22 +7,33 @@ import (
 // ModName ..
 const ModName = "server.hertz"
 
+const (
+	// DebugMode indicates gin mode is debug.
+	DebugMode = "debug"
+	// ReleaseMode indicates gin mode is release.
+	ReleaseMode = "release"
+	// TestMode indicates gin mode is test.
+	TestMode = "test"
+)
+
 // Config HTTP config
 type Config struct {
-	Host                      string
-	Port                      int
-	Deployment                string
-	DisableMetric             bool
-	DisableTrace              bool
-	DisableSlowQuery          bool
-	ServiceAddress            string
-	SlowQueryThresholdInMilli int64
+	Host                     string
+	Port                     int
+	Mode                     string
+	Deployment               string
+	DisableMetric            bool
+	DisableTrace             bool
+	DisableSlowQuery         bool
+	ServiceAddress           string
+	SlowQueryThresholdInMill int64
 }
 
 // New ...
 func New() *Config {
 	return &Config{
-		SlowQueryThresholdInMilli: 500, // 500ms
+		SlowQueryThresholdInMill: 500, // 500ms
+		Mode:                     DebugMode,
 	}
 }
 
@@ -70,7 +81,13 @@ func (config *Config) WithServiceAddress(serviceAddress string) *Config {
 
 // WithSlowQueryThresholdInMilli WithPort ...
 func (config *Config) WithSlowQueryThresholdInMilli(milli int64) *Config {
-	config.SlowQueryThresholdInMilli = milli
+	config.SlowQueryThresholdInMill = milli
+	return config
+}
+
+// WithMode ...
+func (config *Config) WithMode(mode string) *Config {
+	config.Mode = mode
 	return config
 }
 
@@ -79,7 +96,7 @@ func (config *Config) Build() *Server {
 	serverInstance := newServer(config)
 	if !config.DisableSlowQuery {
 		//慢日志查询
-		serverInstance.Use(recoverMiddleware(config.SlowQueryThresholdInMilli))
+		serverInstance.Use(recoverMiddleware(config.SlowQueryThresholdInMill))
 	}
 	if !config.DisableMetric {
 		serverInstance.Use(metricServerInterceptor())

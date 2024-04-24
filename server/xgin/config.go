@@ -11,22 +11,22 @@ const ModName = "server.gin"
 
 // Config HTTP config
 type Config struct {
-	Host                      string
-	Port                      int
-	Deployment                string
-	Mode                      string
-	DisableMetric             bool
-	DisableTrace              bool
-	DisableSlowQuery          bool
-	ServiceAddress            string // ServiceAddress service address in registry info, default to 'Host:Port'
-	SlowQueryThresholdInMilli int64
+	Host                     string
+	Port                     int
+	Deployment               string
+	Mode                     string
+	DisableMetric            bool
+	DisableTrace             bool
+	DisableSlowQuery         bool
+	ServiceAddress           string // ServiceAddress service address in registry info, default to 'Host:Port'
+	SlowQueryThresholdInMill int64
 }
 
 // New ...
 func New() *Config {
 	return &Config{
-		Mode:                      gin.ReleaseMode,
-		SlowQueryThresholdInMilli: 500, // 500ms
+		Mode:                     gin.ReleaseMode,
+		SlowQueryThresholdInMill: 500, // 500ms
 	}
 }
 
@@ -80,7 +80,7 @@ func (config *Config) WithServiceAddress(serviceAddress string) *Config {
 
 // WithSlowQueryThresholdInMilli WithPort ...
 func (config *Config) WithSlowQueryThresholdInMilli(milli int64) *Config {
-	config.SlowQueryThresholdInMilli = milli
+	config.SlowQueryThresholdInMill = milli
 	return config
 }
 
@@ -93,7 +93,7 @@ func (config *Config) Build() *Server {
 	server.Use(gin.Recovery())
 	if !config.DisableSlowQuery {
 		//慢日志查询
-		server.Use(recoverMiddleware(config.SlowQueryThresholdInMilli))
+		server.Use(recoverMiddleware(config.SlowQueryThresholdInMill))
 	}
 	if !config.DisableMetric {
 		server.Use(metricServerInterceptor())

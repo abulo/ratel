@@ -18,6 +18,7 @@ func newServer(config *Config) *Server {
 	return &Server{
 		Hertz: hserver.New(
 			hserver.WithHostPorts(config.Address()),
+			hserver.WithDisablePrintRoute(config.Mode == ReleaseMode),
 		),
 		config: config,
 	}
