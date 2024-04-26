@@ -6,7 +6,7 @@ require (
 	dario.cat/mergo v1.0.0
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/BurntSushi/toml v1.3.2
-	github.com/ClickHouse/clickhouse-go/v2 v2.23.1
+	github.com/ClickHouse/clickhouse-go/v2 v2.23.2
 	github.com/cloudwego/hertz v0.8.1
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
@@ -43,7 +43,7 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/streadway/amqp v1.1.0
 	github.com/stretchr/testify v1.9.0
-	github.com/tdewolff/parse/v2 v2.7.12
+	github.com/tdewolff/parse/v2 v2.7.13
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/yosuke-furukawa/json5 v0.1.1
 	go.etcd.io/etcd/api/v3 v3.5.13
