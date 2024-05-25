@@ -23,6 +23,10 @@
     DisableTrace = false
     # 驱动名称
     DriverName = "mysql"
+[vue]
+    ModulesDir = "src/api/modules"
+    InterfaceDir = "src/api/interface"
+    PageDir = "src/views"
 [watch]
     # 在 go.mod 发生变化自动运行 go mod tidy
     AutoTidy = false

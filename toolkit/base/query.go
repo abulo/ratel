@@ -36,6 +36,8 @@ type DataType struct {
 	Empty       string // 为空时
 	Proto       string // Grpc 协议
 	OptionProto bool   // Grpc 协议
+	TypeScript  string // TypeScript
+	Json        string // Json
 }
 
 // Index 索引信息
@@ -54,6 +56,7 @@ type ModuleParam struct {
 	ModName     string   // go.mod 信息
 	Page        bool     // 是否分页
 	SoftDelete  bool     // 是否删除
+	Condition   []Column // 函数需要的条件信息
 }
 
 // Method 构造的函数
@@ -75,43 +78,43 @@ type Method struct {
 
 func NewDataType() map[string]DataType {
 	res := make(map[string]DataType)
-	res["numeric"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true}
-	res["integer"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true}
-	res["int"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true}
-	res["smallint"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true}
-	res["mediumint"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true}
-	res["tinyint"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true}
-	res["bigint"] = DataType{Default: "int64", Empty: "null.Int64", Proto: "int64", OptionProto: true}
+	res["numeric"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true, TypeScript: "number", Json: "0"}
+	res["integer"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true, TypeScript: "number", Json: "0"}
+	res["int"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true, TypeScript: "number", Json: "0"}
+	res["smallint"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true, TypeScript: "number", Json: "0"}
+	res["mediumint"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true, TypeScript: "number", Json: "0"}
+	res["tinyint"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true, TypeScript: "number", Json: "0"}
+	res["bigint"] = DataType{Default: "int64", Empty: "null.Int64", Proto: "int64", OptionProto: true, TypeScript: "number", Json: "0"}
 
-	res["float"] = DataType{Default: "float32", Empty: "null.Float32", Proto: "float", OptionProto: true}
-	res["real"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double", OptionProto: true}
-	res["double"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double", OptionProto: true}
-	res["decimal"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double", OptionProto: true}
+	res["float"] = DataType{Default: "float32", Empty: "null.Float32", Proto: "float", OptionProto: true, TypeScript: "number", Json: "0"}
+	res["real"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double", OptionProto: true, TypeScript: "number", Json: "0"}
+	res["double"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double", OptionProto: true, TypeScript: "number", Json: "0"}
+	res["decimal"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double", OptionProto: true, TypeScript: "number", Json: "0"}
 
-	res["char"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true}
-	res["varchar"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true}
-	res["tinytext"] = DataType{Default: "string", Empty: "null.String", Proto: "string"}
-	res["mediumtext"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true}
-	res["longtext"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true}
-	res["text"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true}
-	res["json"] = DataType{Default: "null.JSON", Empty: "null.JSON", Proto: "bytes", OptionProto: true}
-	res["enum"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true}
+	res["char"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true, TypeScript: "string", Json: ""}
+	res["varchar"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true, TypeScript: "string", Json: ""}
+	res["tinytext"] = DataType{Default: "string", Empty: "null.String", Proto: "string", TypeScript: "string", Json: ""}
+	res["mediumtext"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true, TypeScript: "string", Json: ""}
+	res["longtext"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true, TypeScript: "string", Json: ""}
+	res["text"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true, TypeScript: "string", Json: ""}
+	res["json"] = DataType{Default: "null.JSON", Empty: "null.JSON", Proto: "bytes", OptionProto: true, TypeScript: "any", Json: "{}"}
+	res["enum"] = DataType{Default: "string", Empty: "null.String", Proto: "string", OptionProto: true, TypeScript: "string", Json: ""}
 
-	res["binary"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true}
-	res["varbinary"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true}
-	res["tinyblob"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true}
-	res["blob"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true}
-	res["mediumblob"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true}
-	res["longblob"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true}
+	res["binary"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true, TypeScript: "string", Json: ""}
+	res["varbinary"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true, TypeScript: "string", Json: ""}
+	res["tinyblob"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true, TypeScript: "string", Json: ""}
+	res["blob"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true, TypeScript: "string", Json: ""}
+	res["mediumblob"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true, TypeScript: "string", Json: ""}
+	res["longblob"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true, TypeScript: "string", Json: ""}
 
-	res["time"] = DataType{Default: "null.CTime", Empty: "null.CTime", Proto: "google.protobuf.Timestamp", OptionProto: false}
-	res["date"] = DataType{Default: "null.Date", Empty: "null.Date", Proto: "google.protobuf.Timestamp", OptionProto: false}
-	res["datetime"] = DataType{Default: "null.DateTime", Empty: "null.DateTime", Proto: "google.protobuf.Timestamp", OptionProto: false}
-	res["timestamp"] = DataType{Default: "null.TimeStamp", Empty: "null.TimeStamp", Proto: "google.protobuf.Timestamp", OptionProto: false}
-	res["year"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true}
+	res["time"] = DataType{Default: "null.CTime", Empty: "null.CTime", Proto: "google.protobuf.Timestamp", OptionProto: false, TypeScript: "string", Json: ""}
+	res["date"] = DataType{Default: "null.Date", Empty: "null.Date", Proto: "google.protobuf.Timestamp", OptionProto: false, TypeScript: "string", Json: ""}
+	res["datetime"] = DataType{Default: "null.DateTime", Empty: "null.DateTime", Proto: "google.protobuf.Timestamp", OptionProto: false, TypeScript: "string", Json: ""}
+	res["timestamp"] = DataType{Default: "null.TimeStamp", Empty: "null.TimeStamp", Proto: "google.protobuf.Timestamp", OptionProto: false, TypeScript: "string", Json: ""}
+	res["year"] = DataType{Default: "int32", Empty: "null.Int32", Proto: "int32", OptionProto: true, TypeScript: "number", Json: "0"}
 
-	res["bit"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true}
-	res["boolean"] = DataType{Default: "bool", Empty: "null.Bool", Proto: "bool", OptionProto: true}
+	res["bit"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true, TypeScript: "string", Json: ""}
+	res["boolean"] = DataType{Default: "bool", Empty: "null.Bool", Proto: "bool", OptionProto: true, TypeScript: "boolean", Json: "false"}
 
 	return res
 }

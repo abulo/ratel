@@ -11,6 +11,7 @@ import (
 	"github.com/abulo/ratel/v3/toolkit/frontend"
 	"github.com/abulo/ratel/v3/toolkit/module"
 	"github.com/abulo/ratel/v3/toolkit/upgrade"
+	"github.com/abulo/ratel/v3/toolkit/vue"
 	"github.com/spf13/cobra"
 )
 
@@ -41,6 +42,7 @@ func init() {
 	rootCmd.AddCommand(upgrade.CmdNew)
 	rootCmd.AddCommand(upgrade.CmdInit)
 	rootCmd.AddCommand(api.CmdNew)
+	rootCmd.AddCommand(vue.Vue)
 }
 
 func main() {

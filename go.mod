@@ -5,7 +5,7 @@ go 1.22
 require (
 	dario.cat/mergo v1.0.0
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/BurntSushi/toml v1.3.2
+	github.com/BurntSushi/toml v1.4.0
 	github.com/ClickHouse/clickhouse-go/v2 v2.24.0
 	github.com/cloudwego/hertz v0.9.0
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
@@ -55,7 +55,7 @@ require (
 	golang.org/x/mod v0.17.0
 	golang.org/x/sync v0.7.0
 	golang.org/x/text v0.15.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240513163218-0867130af1f8
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240521202816-d264139d666e
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.1
 	gopkg.in/yaml.v2 v2.4.0

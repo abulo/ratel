@@ -1,9 +1,8 @@
-package module
+package vue
 
 import (
 	"context"
 	"fmt"
-	"os"
 	"path"
 	"strings"
 	"time"
@@ -16,15 +15,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	// CmdNew represents the new command.
-	CmdNew = &cobra.Command{
-		Use:   "mp",
-		Short: "数据模型层",
-		Long:  "创建数据库模型层: toolkit mp dir table_name",
-		Run:   Run,
-	}
-)
+// Vue represents the upgrade command.
+var Vue = &cobra.Command{
+	Use:   "vue",
+	Short: "前端指令",
+	Long:  "前端手架命令 : toolkit vue",
+	Run:   Run,
+}
 
 func Run(cmd *cobra.Command, args []string) {
 	// 数据初始化
@@ -33,24 +30,11 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// 创建文件夹
-	dirModule := path.Join(base.Path, "module")
-	_ = os.MkdirAll(dirModule, os.ModePerm)
-	// 创建文件夹
-	dirProto := path.Join(base.Path, "proto")
-	_ = os.MkdirAll(dirProto, os.ModePerm)
-
-	//创建数据
-	dir := ""
 	tableName := ""
-	multiSelect := make([]string, 0)
 	delete := ""
-	if err := survey.AskOne(&survey.Input{
-		Message: "模型路径",
-		Help:    "文件夹路径",
-	}, &dir); err != nil || dir == "" {
-		return
-	}
+	dir := ""
+
+	multiSelect := make([]string, 0)
 	if err := survey.AskOne(&survey.Input{
 		Message: "表名称",
 		Help:    "数据库中某个表名称",
@@ -64,20 +48,12 @@ func Run(cmd *cobra.Command, args []string) {
 	}, &delete); err != nil || delete == "" {
 		return
 	}
-	// 文件夹的路径
-	fullModuleDir := path.Join(base.Path, "module", dir)
-	_ = os.MkdirAll(fullModuleDir, os.ModePerm)
-
-	// 文件夹的路径
-	fullProtoDir := path.Join(base.Path, "proto", dir)
-	_ = os.MkdirAll(fullProtoDir, os.ModePerm)
-
-	// 文件夹的路径
-	fullServiceDir := path.Join(base.Path, "service", dir)
-	_ = os.MkdirAll(fullServiceDir, os.ModePerm)
-
-	fullConvertDir := path.Join(base.Path, "service", dir)
-	_ = os.MkdirAll(fullConvertDir, os.ModePerm)
+	if err := survey.AskOne(&survey.Input{
+		Message: "模型路径",
+		Help:    "文件夹路径",
+	}, &dir); err != nil || dir == "" {
+		return
+	}
 
 	// 初始化上下文
 	timeout := "60s"
@@ -99,6 +75,7 @@ func Run(cmd *cobra.Command, args []string) {
 	for _, item := range tableColumn {
 		tableColumnMap[item.ColumnName] = item
 	}
+
 	// 表信息
 	tableItem, err := base.TableItem(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
@@ -129,20 +106,12 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 	useIndex := make([]string, 0)
 	if err := survey.AskOne(&survey.MultiSelect{
-		Message: "选择索引",
-		Help:    "索引列表",
+		Message: "查询条件",
+		Help:    "条件",
 		Options: selectIndex,
 	}, &useIndex); err != nil {
 		return
 	}
-	//获取 go.mod
-	mod, err := base.ModulePath(path.Join(base.Path, "go.mod"))
-	if err != nil {
-		fmt.Println("go.mod文件不存在:", color.RedString(err.Error()))
-		return
-	}
-	// 数字长度
-	strLen := strings.LastIndex(dir, "/")
 
 	var methodList []base.Method
 	needPageMethodList := make([]string, 0)
@@ -154,6 +123,11 @@ func Run(cmd *cobra.Command, args []string) {
 	if delete == "yes" {
 		deleteBool = true
 	}
+	//查询条件
+	AllCondition := make([]base.Column, 0)
+
+	// 数字长度
+	strLen := strings.LastIndex(dir, "/")
 
 	//添加默认方法
 	methodList = append(methodList, base.Method{
@@ -163,10 +137,8 @@ func Run(cmd *cobra.Command, args []string) {
 		Name:           base.CamelStr(tableItem.TableName) + "Create",
 		Condition:      nil,
 		ConditionTotal: 0,
-		Primary:        tablePrimary,
 		Pkg:            dir[strLen+1:],
-		PkgPath:        dir,
-		ModName:        mod,
+		Primary:        tablePrimary,
 		Page:           pageBool,
 		SoftDelete:     deleteBool,
 	}, base.Method{
@@ -176,10 +148,8 @@ func Run(cmd *cobra.Command, args []string) {
 		Name:           base.CamelStr(tableItem.TableName) + "Update",
 		Condition:      nil,
 		ConditionTotal: 0,
-		Primary:        tablePrimary,
 		Pkg:            dir[strLen+1:],
-		PkgPath:        dir,
-		ModName:        mod,
+		Primary:        tablePrimary,
 		Page:           pageBool,
 		SoftDelete:     deleteBool,
 	}, base.Method{
@@ -189,10 +159,8 @@ func Run(cmd *cobra.Command, args []string) {
 		Name:           base.CamelStr(tableItem.TableName) + "Delete",
 		Condition:      nil,
 		ConditionTotal: 0,
-		Primary:        tablePrimary,
 		Pkg:            dir[strLen+1:],
-		PkgPath:        dir,
-		ModName:        mod,
+		Primary:        tablePrimary,
 		Page:           pageBool,
 		SoftDelete:     deleteBool,
 	}, base.Method{
@@ -202,10 +170,8 @@ func Run(cmd *cobra.Command, args []string) {
 		Name:           base.CamelStr(tableItem.TableName),
 		Condition:      nil,
 		ConditionTotal: 0,
-		Primary:        tablePrimary,
 		Pkg:            dir[strLen+1:],
-		PkgPath:        dir,
-		ModName:        mod,
+		Primary:        tablePrimary,
 		Page:           pageBool,
 		SoftDelete:     deleteBool,
 	})
@@ -226,10 +192,8 @@ func Run(cmd *cobra.Command, args []string) {
 				Name:           base.CamelStr(tableItem.TableName) + "Recover",
 				Condition:      nil,
 				ConditionTotal: 0,
-				Primary:        tablePrimary,
 				Pkg:            dir[strLen+1:],
-				PkgPath:        dir,
-				ModName:        mod,
+				Primary:        tablePrimary,
 				Page:           pageBool,
 				SoftDelete:     deleteBool,
 			},
@@ -248,10 +212,8 @@ func Run(cmd *cobra.Command, args []string) {
 			Name:           methodName,
 			Condition:      nil,
 			ConditionTotal: 0,
-			Primary:        tablePrimary,
 			Pkg:            dir[strLen+1:],
-			PkgPath:        dir,
-			ModName:        mod,
+			Primary:        tablePrimary,
 			Page:           pageBool,
 			SoftDelete:     deleteBool,
 		}
@@ -305,14 +267,13 @@ func Run(cmd *cobra.Command, args []string) {
 				Type:           customIndexType,
 				Name:           methodName,
 				Condition:      condition,
+				Pkg:            dir[strLen+1:],
 				ConditionTotal: len(condition),
 				Primary:        tablePrimary,
-				Pkg:            dir[strLen+1:],
-				PkgPath:        dir,
-				ModName:        mod,
 				Page:           pageBool,
 				SoftDelete:     deleteBool,
 			}
+			AllCondition = append(AllCondition, condition...)
 			multiSelect = append(multiSelect, methodName)
 			//添加到集合中
 			methodList = append(methodList, method)
@@ -334,15 +295,14 @@ func Run(cmd *cobra.Command, args []string) {
 			TableColumn:    tableColumn,
 			Type:           "List",
 			Name:           methodName,
+			Pkg:            dir[strLen+1:],
 			Condition:      condition,
 			ConditionTotal: len(condition),
 			Primary:        tablePrimary,
-			Pkg:            dir[strLen+1:],
-			PkgPath:        dir,
-			ModName:        mod,
 			Page:           pageBool,
 			SoftDelete:     deleteBool,
 		}
+		AllCondition = append(AllCondition, condition...)
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
 		needPageMethodList = append(needPageMethodList, methodName)
@@ -367,7 +327,7 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	tpl := make([]string, 0)
-	tpl = append(tpl, "module", "proto", "service", "convert")
+	tpl = append(tpl, "module", "interface", "page")
 
 	tplSelected := make([]string, 0)
 	if err := survey.AskOne(&survey.MultiSelect{
@@ -392,60 +352,47 @@ func Run(cmd *cobra.Command, args []string) {
 	if len(multiPageSelected) > 0 {
 		pageBool = true
 	}
+
 	// 数据模型
 	moduleParam := base.ModuleParam{
 		Pkg:         dir[strLen+1:],
-		PkgPath:     dir,
-		ModName:     mod,
 		Primary:     tablePrimary,
 		Table:       tableItem,
 		TableColumn: tableColumn,
 		Method:      newMethodList,
 		Page:        pageBool,
 		SoftDelete:  deleteBool,
+		Condition:   AllCondition,
+	}
+	apiUrl := ""
+	if util.InArray("interface", tplSelected) {
+		if err := survey.AskOne(&survey.Input{
+			Message: "接口地址",
+			Help:    "地址",
+		}, &apiUrl); err != nil || apiUrl == "" {
+			return
+		}
+	}
+	viewUrl := ""
+	if util.InArray("page", tplSelected) {
+		if err := survey.AskOne(&survey.Input{
+			Message: "Vue页面地址",
+			Help:    "地址",
+		}, &viewUrl); err != nil || viewUrl == "" {
+			return
+		}
+	}
+
+	if util.InArray("interface", tplSelected) {
+		interfaceDir := path.Join(base.Path, base.Config.String("vue.InterfaceDir"))
+		GenerateInterface(moduleParam, interfaceDir, tableName)
 	}
 	if util.InArray("module", tplSelected) {
-		GenerateModule(moduleParam, fullModuleDir, tableName)
+		methodDir := path.Join(base.Path, base.Config.String("vue.ModulesDir"))
+		GenerateMethod(moduleParam, apiUrl, methodDir, tableName)
 	}
-
-	if util.InArray("proto", tplSelected) {
-		GenerateProto(moduleParam, fullProtoDir, fullServiceDir, tableName)
-	}
-	if util.InArray("convert", tplSelected) {
-		GenerateConvert(moduleParam, fullConvertDir, tableName)
-	}
-	if util.InArray("service", tplSelected) {
-		GenerateService(moduleParam, fullServiceDir, tableName)
-		strLenSlot := util.Explode("/", dir)
-		pkgName := strLenSlot[len(strLenSlot)-1]
-		if len(strLenSlot) > 1 {
-			pkgName = strLenSlot[len(strLenSlot)-2]
-		}
-
-		builder := strings.Builder{}
-		builder.WriteString("\n")
-		builder.WriteString(fmt.Sprintf("package %s", pkgName))
-		builder.WriteString("\n")
-		builder.WriteString("import (")
-		builder.WriteString("\n")
-		builder.WriteString(fmt.Sprintf("	\"%s/service/%s\"", moduleParam.ModName, moduleParam.PkgPath))
-		builder.WriteString("\n")
-		builder.WriteString("\n")
-		builder.WriteString("	\"github.com/abulo/ratel/v3/server/xgrpc\"")
-		builder.WriteString("\n")
-		builder.WriteString(")")
-		builder.WriteString("\n")
-		builder.WriteString("func Registry(server *xgrpc.Server) {")
-		builder.WriteString("\n")
-		builder.WriteString(fmt.Sprintf("	// %s->%s", moduleParam.Table.TableComment, moduleParam.Table.TableName))
-		builder.WriteString("\n")
-		builder.WriteString(fmt.Sprintf("	%s.Register%sServiceServer(server.Server, &%s.Srv%sServiceServer{", moduleParam.Pkg, base.CamelStr(moduleParam.Table.TableName), moduleParam.Pkg, base.CamelStr(moduleParam.Table.TableName)))
-		builder.WriteString("\n")
-		builder.WriteString("		Server: server,")
-		builder.WriteString("\n")
-		builder.WriteString("	})")
-		builder.WriteString("\n")
-		builder.WriteString("}")
-		fmt.Println(builder.String())
+	if util.InArray("page", tplSelected) {
+		pageDir := path.Join(base.Path, base.Config.String("vue.PageDir"))
+		GeneratePage(moduleParam, pageDir, viewUrl, tableName)
 	}
 }

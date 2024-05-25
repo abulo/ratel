@@ -42,6 +42,18 @@ func Add(numberOne, numberTwo any) int {
 	return cast.ToInt(numberOne) + cast.ToInt(numberTwo)
 }
 
+// 查询数组中是否包含某个元素
+func InMethod(arr []Method, target ...string) bool {
+	ret := false
+	for _, item := range arr {
+		if util.InArray(item.Type, target) {
+			ret = true
+			break
+		}
+	}
+	return ret
+}
+
 // 函数转换
 func Convert(Condition []Column) string {
 	builder := strings.Builder{}
@@ -272,6 +284,57 @@ func ProtoRequest(condition []Column) string {
 	return builder.String()
 }
 
+func TypeScriptCondition(Condition []Column) string {
+	builder := strings.Builder{}
+	for _, item := range Condition {
+		switch item.DataTypeMap.Default {
+		case "null.Int32":
+		case "int32":
+			builder.WriteString(fmt.Sprintf("		%s?: number; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		case "null.Int64":
+		case "int64":
+			builder.WriteString(fmt.Sprintf("		%s?: number; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		case "null.Float32":
+		case "float32":
+			builder.WriteString(fmt.Sprintf("		%s?: number; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		case "null.Float64":
+		case "float64":
+			builder.WriteString(fmt.Sprintf("		%s?: number; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		case "null.String":
+		case "string":
+			builder.WriteString(fmt.Sprintf("		%s?: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		case "null.Bytes":
+			builder.WriteString(fmt.Sprintf("		%s?: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		case "null.JSON":
+			builder.WriteString(fmt.Sprintf("		%s?: any; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		case "null.Bool":
+		case "bool":
+			builder.WriteString(fmt.Sprintf("		%s?: boolean; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		case "null.CTime":
+			builder.WriteString(fmt.Sprintf("		%s?: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		case "null.Date":
+			builder.WriteString(fmt.Sprintf("		%s?: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		case "null.DateTime":
+			builder.WriteString(fmt.Sprintf("		%s?: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		case "null.TimeStamp":
+			builder.WriteString(fmt.Sprintf("		%s?: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		}
+	}
+	return builder.String()
+}
+
 func ApiToProto(Condition []Column, res, request string, page bool) string {
 	builder := strings.Builder{}
 	builder.WriteString("\n")
@@ -417,6 +480,208 @@ func ModuleProtoConvertMap(Condition []Column, request string) string {
 		builder.WriteString(fmt.Sprintf("		condition[\"%s\"] = %s.Get%s()", Helper(item.ColumnName), request, CamelStr(item.ColumnName)))
 		builder.WriteString("	}")
 		builder.WriteString("\n")
+	}
+	return builder.String()
+}
+
+func Rule(table []Column) string {
+	builder := strings.Builder{}
+	for _, item := range table {
+		if item.IsNullable == "NO" {
+			builder.WriteString(fmt.Sprintf("	%s: [{ required: true, message: \"%s不能为空\", trigger: \"blur\" }],", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		}
+	}
+	return builder.String()
+}
+
+func Props(table, condition []Column) string {
+	var conditionList []string
+	for _, item := range condition {
+		conditionList = append(conditionList, item.ColumnName)
+	}
+	builder := strings.Builder{}
+	for _, item := range table {
+		if util.InArray(item.ColumnName, conditionList) {
+			builder.WriteString(fmt.Sprintf("	{ prop: \"%s\", label: \"%s\", search: { el: \"input\", span: 2, props: { placeholder: \"请输入%s\" } } },", Helper(item.ColumnName), item.ColumnComment, item.ColumnComment))
+		} else {
+			builder.WriteString(fmt.Sprintf("	{ prop: \"%s\", label: \"%s\" },", Helper(item.ColumnName), item.ColumnComment))
+		}
+		builder.WriteString("\n")
+
+	}
+	return builder.String()
+}
+
+func Json(Condition []Column) string {
+	builder := strings.Builder{}
+	for _, item := range Condition {
+		if item.IsNullable == "YES" {
+			switch item.DataTypeMap.Empty {
+			case "null.Int32":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Int64":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Float32":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Float64":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.String":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Bytes":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.JSON":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Bool":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.CTime":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Date":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.DateTime":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.TimeStamp":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
+		} else {
+			switch item.DataTypeMap.Default {
+			case "int32":
+				builder.WriteString(fmt.Sprintf("		%s: 0, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "int64":
+				builder.WriteString(fmt.Sprintf("		%s: 0, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "float32":
+				builder.WriteString(fmt.Sprintf("		%s: 0, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "float64":
+				builder.WriteString(fmt.Sprintf("		%s: 0, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "string":
+				builder.WriteString(fmt.Sprintf("		%s: \"\", // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Bytes":
+				builder.WriteString(fmt.Sprintf("		%s: \"\", // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.JSON":
+				builder.WriteString(fmt.Sprintf("		%s: {}, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.CTime":
+				builder.WriteString(fmt.Sprintf("		%s: \"\", // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Date":
+				builder.WriteString(fmt.Sprintf("		%s: \"\", // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.DateTime":
+				builder.WriteString(fmt.Sprintf("		%s: \"\", // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.TimeStamp":
+				builder.WriteString(fmt.Sprintf("		%s: \"\", // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "bool":
+				builder.WriteString(fmt.Sprintf("		%s: false, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
+		}
+	}
+	return builder.String()
+}
+
+// TypeScript 条件转换
+func TypeScript(Condition []Column) string {
+	builder := strings.Builder{}
+	for _, item := range Condition {
+		if item.IsNullable == "YES" {
+			switch item.DataTypeMap.Empty {
+			case "null.Int32":
+				builder.WriteString(fmt.Sprintf("		%s: number | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Int64":
+				builder.WriteString(fmt.Sprintf("		%s: number | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Float32":
+				builder.WriteString(fmt.Sprintf("		%s: number | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Float64":
+				builder.WriteString(fmt.Sprintf("		%s: number | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.String":
+				builder.WriteString(fmt.Sprintf("		%s: string | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Bytes":
+				builder.WriteString(fmt.Sprintf("		%s: string | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.JSON":
+				builder.WriteString(fmt.Sprintf("		%s: any | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Bool":
+				builder.WriteString(fmt.Sprintf("		%s: boolean | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.CTime":
+				builder.WriteString(fmt.Sprintf("		%s: string | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Date":
+				builder.WriteString(fmt.Sprintf("		%s: string | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.DateTime":
+				builder.WriteString(fmt.Sprintf("		%s: string | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.TimeStamp":
+				builder.WriteString(fmt.Sprintf("		%s: string | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
+		} else {
+			switch item.DataTypeMap.Default {
+			case "int32":
+				builder.WriteString(fmt.Sprintf("		%s: number; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "int64":
+				builder.WriteString(fmt.Sprintf("		%s: number; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "float32":
+				builder.WriteString(fmt.Sprintf("		%s: number; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "float64":
+				builder.WriteString(fmt.Sprintf("		%s: number; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "string":
+				builder.WriteString(fmt.Sprintf("		%s: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Bytes":
+				builder.WriteString(fmt.Sprintf("		%s: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.JSON":
+				builder.WriteString(fmt.Sprintf("		%s: any; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.CTime":
+				builder.WriteString(fmt.Sprintf("		%s: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Date":
+				builder.WriteString(fmt.Sprintf("		%s: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.DateTime":
+				builder.WriteString(fmt.Sprintf("		%s: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.TimeStamp":
+				builder.WriteString(fmt.Sprintf("		%s: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "bool":
+				builder.WriteString(fmt.Sprintf("		%s: boolean; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
+		}
 	}
 	return builder.String()
 }
