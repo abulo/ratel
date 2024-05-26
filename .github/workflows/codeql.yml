@@ -41,7 +41,7 @@ jobs:
     - name: Autobuild
       run: |
           echo "Custom build steps"
-          go build ./... # Adjust this to your build command
+          go build toolkit/main.go
       # uses: github/codeql-action/autobuild@v3
 
     # ℹ️ Command-line programs to run using the OS shell.
