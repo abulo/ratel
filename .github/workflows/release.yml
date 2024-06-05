@@ -11,78 +11,50 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 获取当前和上一个标签
-        id: getTags
+      - name: 提取信息
+        id: extractInfo
         run: |
+          #获取当前和上一个标签
           git fetch --prune --unshallow
           tags=($(git tag -l --sort=-version:refname))
           currentTag=${tags[0]}
           previousTag=${tags[1]}
-          echo "currentTag=$currentTag" >> $GITHUB_ENV
-          echo "previousTag=$previousTag" >> $GITHUB_ENV
-
-      - name: 提取并分类提交消息
-        id: extractCommitMessages
-        run: |
-          set -e
-          currentTag="${{ env.currentTag }}"
-          previousTag="${{ env.previousTag }}"
-          commitMessages=$(git log --pretty=format:"%s %h" "$previousTag".."$currentTag" | grep -E 'feat|fix|docs|perf')
+          #提取并分类提交消息
+          commitMessages=$(git log --pretty=format:"- %s %h" "$previousTag".."$currentTag" | grep -E 'feat|fix|docs|perf')
           featMessages=$(echo "$commitMessages" | grep 'feat' || true)
           fixMessages=$(echo "$commitMessages" | grep 'fix' || true)
           docsMessages=$(echo "$commitMessages" | grep 'docs' || true)
           perfMessages=$(echo "$commitMessages" | grep 'perf' || true)
-          echo "featMessages=$featMessages" >> $GITHUB_ENV
-          echo "fixMessages=$fixMessages" >> $GITHUB_ENV
-          echo "docsMessages=$docsMessages" >> $GITHUB_ENV
-          echo "perfMessages=$perfMessages" >> $GITHUB_ENV
-
-      - name: 获取当前分支名
-        id: getBranchName
-        run: |
+          #获取当前分支名
           branchName=$(git rev-parse --abbrev-ref HEAD)
-          echo "branchName=$branchName" >> $GITHUB_ENV
-
-      - name: 发布说明
-        id: generateReleaseNotes
-        run: |
-            # 提取提交消息分类
-            featMessages="${{ env.featMessages }}"
-            fixMessages="${{ env.fixMessages }}"
-            docsMessages="${{ env.docsMessages }}"
-            perfMessages="${{ env.perfMessages }}"
-            # 生成发布说明的Markdown字符串
-            releaseNotes="## 更新内容：  \n"
-            if [[ -n "$featMessages" ]]; then
-              releaseNotes="$releaseNotes\n### ✨ Features | 新功能:  \n"
-              for message in "${featMessages[@]}"; do
-                releaseNotes="$releaseNotes\n- $message"
-              done
-            fi
-            if [[ -n "$fixMessages" ]]; then
-              releaseNotes="$releaseNotes\n### 🐛 Bug Fixes | Bug 修复:  \n"
-              for message in "${fixMessages[@]}"; do
-                releaseNotes="$releaseNotes\n- $message"
-              done
-            fi
-            if [[ -n "$docsMessages" ]]; then
-              releaseNotes="$releaseNotes\n### ✏️ Documentation | 文档:  \n"
-              for message in "${docsMessages[@]}"; do
-                releaseNotes="$releaseNotes\n- $message"
-              done
-            fi
-            if [[ -n "$perfMessages" ]]; then
-              releaseNotes="$releaseNotes\n### ⚡ Performance Improvements | 性能优化:  \n"
-              for message in "${perfMessages[@]}"; do
-                releaseNotes="$releaseNotes\n- $message"
-              done
-            fi
-            echo "releaseNotes=$releaseNotes" >> $GITHUB_ENV
-
-      - name: 写入生成的发布说明到 changelog.md
-        run: |
-              echo -e "${{ env.releaseNotes }}" > changelog.md
-              cat changelog.md
+          # 生成发布说明的Markdown字符串
+          releaseNotes="## 更新内容：  \n"
+          if [[ -n "$featMessages" ]]; then
+            releaseNotes="$releaseNotes\n### ✨ Features | 新功能:  \n"
+            for message in "${featMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+            done
+          fi
+          if [[ -n "$fixMessages" ]]; then
+            releaseNotes="$releaseNotes\n### 🐛 Bug Fixes | Bug 修复:  \n"
+            for message in "${fixMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+            done
+          fi
+          if [[ -n "$docsMessages" ]]; then
+            releaseNotes="$releaseNotes\n### ✏️ Documentation | 文档:  \n"
+            for message in "${docsMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+            done
+          fi
+          if [[ -n "$perfMessages" ]]; then
+            releaseNotes="$releaseNotes\n### ⚡ Performance Improvements | 性能优化:  \n"
+            for message in "${perfMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+            done
+          fi
+          echo -e "$releaseNotes" > changelog.md
+          cat changelog.md
 
       - name: 创建标签的发布
         id: releaseTag
