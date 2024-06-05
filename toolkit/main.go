@@ -7,6 +7,7 @@ import (
 	"github.com/abulo/ratel/v3/toolkit/api"
 	"github.com/abulo/ratel/v3/toolkit/backend"
 	"github.com/abulo/ratel/v3/toolkit/build"
+	"github.com/abulo/ratel/v3/toolkit/change"
 	"github.com/abulo/ratel/v3/toolkit/dao"
 	"github.com/abulo/ratel/v3/toolkit/frontend"
 	"github.com/abulo/ratel/v3/toolkit/module"
@@ -43,6 +44,7 @@ func init() {
 	rootCmd.AddCommand(upgrade.CmdInit)
 	rootCmd.AddCommand(api.CmdNew)
 	rootCmd.AddCommand(vue.Vue)
+	rootCmd.AddCommand(change.CmdNew)
 }
 
 func main() {
