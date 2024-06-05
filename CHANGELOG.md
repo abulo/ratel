@@ -1,5 +1,17 @@
 # 更新日志
 
+## [v3.7.24](https://github.com/abulo/ratel/compare/v3.7.23...v3.7.24) (2024-06-05)
+### feat✨:引入新功能
+- feat✨: 新增 toolkit changelog 指令  ([3b4ad34](https://github.com/abulo/ratel/commit/3b4ad34))
+
+### docs📝:添加/更新文档
+- docs📝: 更新日志  ([a035b12](https://github.com/abulo/ratel/commit/a035b12))
+
+### config🔧:修改配置文件
+- config🔧: 修改版本号  ([f83a3d8](https://github.com/abulo/ratel/commit/f83a3d8))
+- config🔧: CI/CD  ([4d0a1d1](https://github.com/abulo/ratel/commit/4d0a1d1))
+
+
 ## [v3.7.23](https://github.com/abulo/ratel/compare/v3.7.22...v3.7.23) (2024-06-03)
 ### perf👌:提高性能/优化
 - perf👌: 升级 http 框架  ([64c4b61](https://github.com/abulo/ratel/commit/64c4b61))
