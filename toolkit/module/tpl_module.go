@@ -174,8 +174,8 @@ func {{.Name}}(ctx context.Context,condition map[string]any)(res []dao.{{CamelSt
 	builder.Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
 	{{- if .Page}}
-	if !util.Empty(pagination) {
-		pagination := condition["pagination"].(*sql.Pagination)
+	if val, ok := condition["pagination"]; ok {
+		pagination := val.(*sql.Pagination)
 		if pagination != nil {
 			builder.Offset(pagination.GetOffset())
 			builder.Limit(pagination.GetLimit())
