@@ -399,69 +399,77 @@ func ApiToProto(Condition []Column, res, request string, page bool) string {
 		case "null.Bytes":
 			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s =  util.StringToBytes(cast.ToString(val) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("		%s.%s =  util.StringToBytes(cast.ToString(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
 			if page {
-				builder.WriteString(fmt.Sprintf("		%sTotal.%s =  util.StringToBytes(cast.ToString(val) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s =  util.StringToBytes(cast.ToString(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
 			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.JSON":
-			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToString(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("		%s.%s =  util.StringToBytes(cast.ToString(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
 			if page {
-				builder.WriteString(fmt.Sprintf("		%sTotal.%s = cast.ToString(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s =  util.StringToBytes(cast.ToString(val)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
 			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.Bool":
 		case "bool":
-			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = cast.ToBool(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("		%s.%s =  cast.ToBool(val) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
 			if page {
-				builder.WriteString(fmt.Sprintf("		%sTotal.%s = cast.ToBool(%s(\"%s\")) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s =  cast.ToBool(val) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
 			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.CTime":
-			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(cast.ToTime(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(cast.ToTimeInDefaultLocation(val, time.Local)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
+			if page {
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s = timestamppb.New(cast.ToTimeInDefaultLocation(val, time.Local)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.Date":
-			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(cast.ToTime(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(cast.ToTimeInDefaultLocation(val, time.Local)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
 			if page {
-				builder.WriteString(fmt.Sprintf("		%sTotal.%s = timestamppb.New(cast.ToTime(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s = timestamppb.New(cast.ToTimeInDefaultLocation(val, time.Local)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
 			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.DateTime":
-			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(cast.ToTime(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(cast.ToTimeInDefaultLocation(val, time.Local)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
+			if page {
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s = timestamppb.New(cast.ToTimeInDefaultLocation(val, time.Local)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
 		case "null.TimeStamp":
-			builder.WriteString(fmt.Sprintf("	if !util.Empty(%s(\"%s\")){", request, Helper(item.ColumnName)))
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
-			builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(cast.ToTime(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(cast.ToTimeInDefaultLocation(val, time.Local)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
 			if page {
-				builder.WriteString(fmt.Sprintf("		%sTotal.%s = timestamppb.New(cast.ToTime(%s(\"%s\"))) // %s", res, CamelStr(item.ColumnName), request, Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s = timestamppb.New(cast.ToTimeInDefaultLocation(val, time.Local)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
 			}
 			builder.WriteString("	}")

@@ -69,7 +69,7 @@ func Run(cmd *cobra.Command, args []string) {
 	_ = os.MkdirAll(fullModuleDir, os.ModePerm)
 
 	// 文件夹的路径
-	fullProtoDir := path.Join(base.Path, "proto", dir)
+	fullProtoDir := path.Join(base.Path, "proto")
 	_ = os.MkdirAll(fullProtoDir, os.ModePerm)
 
 	// 文件夹的路径
@@ -145,7 +145,7 @@ func Run(cmd *cobra.Command, args []string) {
 	strLen := strings.LastIndex(dir, "/")
 
 	var methodList []base.Method
-	needPageMethodList := make([]string, 0)
+	// needPageMethodList := make([]string, 0)
 
 	// 是否需要分页
 	pageBool := false
@@ -257,7 +257,7 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
-		needPageMethodList = append(needPageMethodList, methodName)
+		// needPageMethodList = append(needPageMethodList, methodName)
 	} else {
 		// js, _ := json.Marshal(tableIndex)
 		// fmt.Println(string(js))
@@ -316,9 +316,9 @@ func Run(cmd *cobra.Command, args []string) {
 			multiSelect = append(multiSelect, methodName)
 			//添加到集合中
 			methodList = append(methodList, method)
-			if base.CamelStr(customIndexType) == "List" {
-				needPageMethodList = append(needPageMethodList, methodName)
-			}
+			// if base.CamelStr(customIndexType) == "List" {
+			// 	needPageMethodList = append(needPageMethodList, methodName)
+			// }
 		}
 		condition := make([]base.Column, 0)
 		for _, fieldValue := range field {
@@ -345,7 +345,7 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
-		needPageMethodList = append(needPageMethodList, methodName)
+		// needPageMethodList = append(needPageMethodList, methodName)
 	}
 
 	multiSelected := make([]string, 0)
@@ -354,15 +354,6 @@ func Run(cmd *cobra.Command, args []string) {
 		Help:    "方法列表",
 		Options: multiSelect,
 	}, &multiSelected); err != nil || len(multiSelected) == 0 {
-		return
-	}
-
-	multiPageSelected := make([]string, 0)
-	if err := survey.AskOne(&survey.MultiSelect{
-		Message: "分页方法",
-		Help:    "方法列表",
-		Options: needPageMethodList,
-	}, &multiPageSelected); err != nil {
 		return
 	}
 
@@ -382,16 +373,10 @@ func Run(cmd *cobra.Command, args []string) {
 	for _, val := range methodList {
 		newMethod := val
 		// 判断是否分页
-		if util.InArray(newMethod.Name, multiPageSelected) {
-			newMethod.Page = true
-		}
-		if util.InArray(newMethod.Name, multiSelected) {
-			newMethodList = append(newMethodList, newMethod)
-		}
+		newMethod.Page = true
+		newMethodList = append(newMethodList, newMethod)
 	}
-	if len(multiPageSelected) > 0 {
-		pageBool = true
-	}
+	pageBool = true
 	// 数据模型
 	moduleParam := base.ModuleParam{
 		Pkg:         dir[strLen+1:],

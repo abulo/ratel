@@ -12,6 +12,9 @@ import (
 	"{{.ModName}}/dao"
 	"{{.ModName}}/initial"
 	"{{.ModName}}/service/{{.PkgPath}}"
+	{{- if .Page}}
+	"{{.ModName}}/service/pagination"
+	{{- end}}
 
 	globalLogger "github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/stores/null"
@@ -322,8 +325,10 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 		return
 	}
 	var total int64
-	request.PageNum = proto.Int64(cast.ToInt64(newCtx.Query("pageNum")))
-	request.PageSize = proto.Int64(cast.ToInt64(newCtx.Query("pageSize")))
+	paginationRequest := &pagination.PaginationRequest{}
+	paginationRequest.PageNum = proto.Int64(cast.ToInt64(newCtx.Query("pageNum")))
+	paginationRequest.PageSize = proto.Int64(cast.ToInt64(newCtx.Query("pageSize")))
+	request.Pagination = paginationRequest
 	if resTotal.GetCode() == code.Success {
 		total = resTotal.GetData()
 	}

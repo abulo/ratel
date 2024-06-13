@@ -14,7 +14,6 @@ import (
 )
 
 func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, tableName string) {
-	//protoc --go-grpc_out=../../api/v1 --go_out=../../api/v1 *proto
 	// 模板变量
 	tpl := template.Must(template.New("proto").Funcs(template.FuncMap{
 		"Convert":               base.Convert,
@@ -47,30 +46,30 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 	}
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(outProtoFile))
 	//生成 grpc 代码
-	serviceParentDir := util.GetParentDirectory(fullServiceDir)
+	// serviceParentDir := util.GetParentDirectory(fullServiceDir)
 	protoParentDir := util.GetParentDirectory(fullProtoDir)
 	_ = os.Chdir(protoParentDir)
-	strLen := strings.LastIndex(fullProtoDir, "/")
-	currentDir := fullProtoDir[strLen+1:]
-	cmdImportGrpc := exec.Command("protoc", "--go-grpc_out="+serviceParentDir, "--go_out="+serviceParentDir, currentDir+"/"+tableName+".proto")
+	// strLen := strings.LastIndex(fullProtoDir, "/")
+	// currentDir := fullProtoDir[strLen+1:]
+	cmdImportGrpc := exec.Command("protoc", "-I=proto", "--go-grpc_out=../", "--go_out=../", tableName+".proto")
 	cmdImportGrpc.CombinedOutput()
 	//修改自定义 tag
+	// 替换fullServiceDir中 aa 替换成  bb 字符串
+	fullServiceDir = strings.Replace(fullServiceDir, base.Path+"/", "", -1)
 	cmdImportTag := exec.Command("protoc-go-inject-tag", "-input="+fullServiceDir+"/"+tableName+".pb.go")
 	cmdImportTag.CombinedOutput()
 
 	builder := strings.Builder{}
 	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("cd %s;", protoParentDir))
+	// builder.WriteString(fmt.Sprintf("cd %s;", protoParentDir))
 	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("protoc  --go-grpc_out=%s  --go_out=%s  %s/%s.proto;", serviceParentDir, serviceParentDir, currentDir, tableName))
+	builder.WriteString(fmt.Sprintf("protoc  -I=proto  --go-grpc_out=../  --go_out=../  %s.proto ", tableName))
 	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("protoc-go-inject-tag -input=%s/%s.pb.go;", fullServiceDir, tableName))
-	// return builder.String()
-	shell := path.Join(fullProtoDir, tableName+".sh")
-	if util.FileExists(shell) {
-		util.Delete(shell)
-	}
-	_ = os.WriteFile(shell, []byte(builder.String()), os.ModePerm)
+	builder.WriteString("\n")
+	builder.WriteString(fmt.Sprintf("protoc-go-inject-tag -input=%s/%s.pb.go", fullServiceDir, tableName))
+	builder.WriteString("\n")
+	builder.WriteString("\n")
+	fmt.Printf("\n🍺 Command   %s\n", color.GreenString(builder.String()))
 }
 
 // @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"
@@ -79,8 +78,11 @@ func ProtoTemplate() string {
 syntax = "proto3";
 // {{.Table.TableName}} {{.Table.TableComment}}
 package {{.Pkg}};
-option go_package = "./{{.Pkg}}";
+option go_package = "{{.ModName}}/service/{{.PkgPath}};{{.Pkg}}";
 import "google/protobuf/timestamp.proto";
+{{- if .Page}}
+import "pagination.proto";
+{{- end}}
 
 // {{CamelStr .Table.TableName}}Object 数据对象
 message {{CamelStr .Table.TableName}}Object {
@@ -178,10 +180,8 @@ message {{.Name}}Response {
 message {{.Name}}Request {
 	{{ProtoRequest .Condition}}
 	{{- if .Page}}
-	// @inject_tag: db:"page_num" json:"pageNum"
-	optional int64 page_num = {{Add .ConditionTotal 1}};
-	// @inject_tag: db:"page_size" json:"pageSize"
-	optional int64 page_size = {{Add .ConditionTotal 2}};
+	// @inject_tag: db:"pagination" json:"pagination"
+	optional pagination.PaginationRequest pagination = {{Add .ConditionTotal 1}}; // 分页
 	{{- end}}
 }
 
@@ -212,7 +212,6 @@ service {{CamelStr .Table.TableName}}Service{
 	{{- end}}
 	{{- end}}
 	{{- end}}
-}
-`
+}`
 	return outString
 }

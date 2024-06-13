@@ -68,6 +68,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/status"
+	{{- if .Page}}
+	"{{.ModName}}/service/pagination"
+	{{- end}}
 )
 // {{.Table.TableName}} {{.Table.TableComment}}
 
@@ -215,20 +218,26 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Co
 	// 构造查询条件
 	{{ModuleProtoConvertMap .Condition "request"}}
 	{{- if .Page}}
-	// 当前页面
-	pageNum := request.GetPageNum()
-	// 每页多少数据
-	pageSize := request.GetPageSize()
-	if pageNum < 1 {
-		pageNum = 1
+	paginationRequest := request.GetPagination()
+	if paginationRequest != nil {
+		// 当前页面
+		pageNum := paginationRequest.GetPageNum()
+		// 每页多少数据
+		pageSize := paginationRequest.GetPageSize()
+		if pageNum < 1 {
+			pageNum = 1
+		}
+		if pageSize < 1 {
+			pageSize = 10
+		}
+		// 分页数据
+		offset := pageSize * (pageNum - 1)
+		pagination := &sql.Pagination{
+			Offset: &offset,
+			Limit:  &pageSize,
+		}
+		condition["pagination"] = pagination
 	}
-	if pageSize < 1 {
-		pageSize = 10
-	}
-	// 分页数据
-	offset := pageSize * (pageNum - 1)
-	condition["offset"] = offset
-	condition["limit"] = pageSize
 	{{- end}}
 	// 获取数据集合
 	list, err := {{.Pkg}}.{{.Name}}(ctx, condition)

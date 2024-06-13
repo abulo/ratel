@@ -174,11 +174,12 @@ func {{.Name}}(ctx context.Context,condition map[string]any)(res []dao.{{CamelSt
 	builder.Table("{{Char .Table.TableName}}")
 	{{Convert .Condition}}
 	{{- if .Page}}
-	if !util.Empty(condition["offset"]) {
-		builder.Offset(cast.ToInt64(condition["offset"]))
-	}
-	if !util.Empty(condition["limit"]) {
-		builder.Limit(cast.ToInt64(condition["limit"]))
+	if !util.Empty(pagination) {
+		pagination := condition["pagination"].(*sql.Pagination)
+		if pagination != nil {
+			builder.Offset(pagination.GetOffset())
+			builder.Limit(pagination.GetLimit())
+		}
 	}
 	{{- end}}
 	builder.OrderBy("{{Char .Primary.ColumnName}}", sql.DESC)
