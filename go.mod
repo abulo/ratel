@@ -20,11 +20,11 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gookit/goutil v0.6.15
 	github.com/gookit/ini/v2 v2.2.3
-	github.com/gorilla/websocket v1.5.2
+	github.com/gorilla/websocket v1.5.3
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.9
 	github.com/hashicorp/hcl v1.0.0
-	github.com/hashicorp/hcl/v2 v2.20.1
+	github.com/hashicorp/hcl/v2 v2.21.0
 	github.com/issue9/term/v3 v3.2.9
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/json-iterator/go v1.1.12
@@ -40,7 +40,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/smallnest/weighted v0.0.0-20230419055410-36b780e40a7a
 	github.com/spf13/cast v1.6.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/streadway/amqp v1.1.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tdewolff/parse/v2 v2.7.15
@@ -48,14 +48,14 @@ require (
 	github.com/yosuke-furukawa/json5 v0.1.1
 	go.etcd.io/etcd/api/v3 v3.5.14
 	go.etcd.io/etcd/client/v3 v3.5.14
-	go.mongodb.org/mongo-driver v1.15.0
+	go.mongodb.org/mongo-driver v1.15.1
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.24.0
 	golang.org/x/image v0.17.0
 	golang.org/x/mod v0.18.0
 	golang.org/x/sync v0.7.0
 	golang.org/x/text v0.16.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240610135401-a8a62080eff3
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240617180043-68d350f18fd4
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v2 v2.4.0

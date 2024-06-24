@@ -371,10 +371,12 @@ func Run(cmd *cobra.Command, args []string) {
 
 	var newMethodList []base.Method
 	for _, val := range methodList {
-		newMethod := val
-		// 判断是否分页
-		newMethod.Page = true
-		newMethodList = append(newMethodList, newMethod)
+		if util.InArray(val.Name, multiSelected) {
+			newMethod := val
+			// 判断是否分页
+			newMethod.Page = true
+			newMethodList = append(newMethodList, newMethod)
+		}
 	}
 	pageBool = true
 	// 数据模型

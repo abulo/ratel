@@ -361,8 +361,8 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 		"data": utils.H{
 			"total": total,
 			"list":  list,
-			"pageNum": request.PageNum,
-			"pageSize": request.PageSize,
+			"pageNum": paginationRequest.PageNum,
+			"pageSize": paginationRequest.PageSize,
 		},
 		{{- else}}
 		"data": list,

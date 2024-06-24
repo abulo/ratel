@@ -368,8 +368,8 @@ func {{.Name}}(newCtx *gin.Context){
 		"data": gin.H{
 			"total": total,
 			"list":  list,
-			"pageNum": request.PageNum,
-			"pageSize": request.PageSize,
+			"pageNum": paginationRequest.PageNum,
+			"pageSize": paginationRequest.PageSize,
 		},
 		{{- else}}
 		"data": list,
