@@ -1,11 +1,20 @@
 # 更新日志
 
+## [v3.7.26](https://github.com/abulo/ratel/compare/v3.7.25...v3.7.26) (2024-06-24)
+### fix🐛:修复 bug
+- fix🐛: 脚手架 bug 修复  ([68e7397](https://github.com/abulo/ratel/commit/68e7397))
+
+
 ## [v3.7.25](https://github.com/abulo/ratel/compare/v3.7.24...v3.7.25) (2024-06-13)
 ### feat✨:引入新功能
 - feat✨: sql 添加分页参数,用于代码生成  ([c8912bb](https://github.com/abulo/ratel/commit/c8912bb))
 
 ### fix🐛:修复 bug
+- fix🐛: sql condition 参数  ([594f084](https://github.com/abulo/ratel/commit/594f084))
 - fix🐛: 修改命令行代码生成功能  ([2570d8d](https://github.com/abulo/ratel/commit/2570d8d))
+
+### docs📝:添加/更新文档
+- docs📝: 更新文档  ([6e40e45](https://github.com/abulo/ratel/commit/6e40e45))
 
 ### perf👌:提高性能/优化
 - perf👌: 升级框架  ([f1b6978](https://github.com/abulo/ratel/commit/f1b6978))
