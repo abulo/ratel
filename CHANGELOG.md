@@ -1,5 +1,14 @@
 # 更新日志
 
+## [v3.7.27](https://github.com/abulo/ratel/compare/v3.7.26...v3.7.27) (2024-06-29)
+### docs📝:添加/更新文档
+- docs📝:更新文档  ([a7c36d0](https://github.com/abulo/ratel/commit/a7c36d0))
+
+### perf👌:提高性能/优化
+- perf👌: 升级第三方库  ([e003a2f](https://github.com/abulo/ratel/commit/e003a2f))
+- perf👌: 升级第三方库  ([3a72372](https://github.com/abulo/ratel/commit/3a72372))
+
+
 ## [v3.7.26](https://github.com/abulo/ratel/compare/v3.7.25...v3.7.26) (2024-06-24)
 ### fix🐛:修复 bug
 - fix🐛: 脚手架 bug 修复  ([68e7397](https://github.com/abulo/ratel/commit/68e7397))
