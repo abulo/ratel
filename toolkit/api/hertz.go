@@ -12,6 +12,7 @@ import (
 	"{{.ModName}}/dao"
 	"{{.ModName}}/initial"
 	"{{.ModName}}/service/{{.PkgPath}}"
+	"{{.ModName}}/internal/response"
 	{{- if .Page}}
 	"{{.ModName}}/service/pagination"
 	{{- end}}
@@ -41,7 +42,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext) {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  code.StatusText(code.RPCError),
 		})
@@ -53,7 +54,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext) {
 	// 数据绑定
 	var reqInfo dao.{{CamelStr .Table.TableName}}
 	if err := newCtx.BindAndValidate(&reqInfo); err != nil {
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.ParamInvalid,
 			"msg":  code.StatusText(code.ParamInvalid),
 		})
@@ -68,13 +69,13 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext) {
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
 			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
 		return
 	}
-	newCtx.JSON(consts.StatusOK, utils.H{
+	response.JSON(newCtx,consts.StatusOK, utils.H{
 		"code": res.GetCode(),
 		"msg":  res.GetMsg(),
 	})
@@ -88,7 +89,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext) {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  code.StatusText(code.RPCError),
 		})
@@ -102,12 +103,13 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext) {
 	// 数据绑定
 	var reqInfo dao.{{CamelStr .Table.TableName}}
 	if err := newCtx.BindAndValidate(&reqInfo); err != nil {
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.ParamInvalid,
 			"msg":  code.StatusText(code.ParamInvalid),
 		})
 		return
 	}
+	reqInfo.Id = nil
 	request.Data = {{.Pkg}}.{{CamelStr .Table.TableName}}Proto(reqInfo)
 	// 执行服务
 	res, err := client.{{.Name}}(ctx, request)
@@ -117,13 +119,13 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext) {
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
 			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
 		return
 	}
-	newCtx.JSON(consts.StatusOK, utils.H{
+	response.JSON(newCtx,consts.StatusOK, utils.H{
 		"code": res.GetCode(),
 		"msg":  res.GetMsg(),
 	})
@@ -137,7 +139,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  code.StatusText(code.RPCError),
 		})
@@ -156,13 +158,13 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
 			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
 		return
 	}
-	newCtx.JSON(consts.StatusOK, utils.H{
+	response.JSON(newCtx,consts.StatusOK, utils.H{
 		"code": res.GetCode(),
 		"msg":  res.GetMsg(),
 		"data": {{.Pkg}}.{{CamelStr .Table.TableName}}Dao(res.GetData()),
@@ -176,7 +178,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  code.StatusText(code.RPCError),
 		})
@@ -195,13 +197,13 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
 			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
 		return
 	}
-	newCtx.JSON(consts.StatusOK, utils.H{
+	response.JSON(newCtx,consts.StatusOK, utils.H{
 		"code": res.GetCode(),
 		"msg":  res.GetMsg(),
 	})
@@ -214,7 +216,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  code.StatusText(code.RPCError),
 		})
@@ -233,13 +235,13 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
 			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
 		return
 	}
-	newCtx.JSON(consts.StatusOK, utils.H{
+	response.JSON(newCtx,consts.StatusOK, utils.H{
 		"code": res.GetCode(),
 		"msg":  res.GetMsg(),
 	})
@@ -253,7 +255,7 @@ func {{.Name}}(ctx context.Context, newCtx *app.RequestContext) {
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  code.StatusText(code.RPCError),
 		})
@@ -272,13 +274,13 @@ func {{.Name}}(ctx context.Context, newCtx *app.RequestContext) {
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
 			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
 		return
 	}
-	newCtx.JSON(consts.StatusOK, utils.H{
+	response.JSON(newCtx,consts.StatusOK, utils.H{
 		"code": res.GetCode(),
 		"msg":  res.GetMsg(),
 		"data": {{.Pkg}}.{{CamelStr .Table.TableName}}Dao(res.GetData()),
@@ -292,7 +294,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 		globalLogger.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.RPCError,
 			"msg":  code.StatusText(code.RPCError),
 		})
@@ -318,7 +320,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
 			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
@@ -341,7 +343,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 			"err": err,
 		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
 		fromError := status.Convert(err)
-		newCtx.JSON(consts.StatusOK, utils.H{
+		response.JSON(newCtx,consts.StatusOK, utils.H{
 			"code": code.ConvertToHttp(fromError.Code()),
 			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
 		})
@@ -354,7 +356,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext){
 			list = append(list, {{.Pkg}}.{{CamelStr .Table.TableName}}Dao(item))
 		}
 	}
-	newCtx.JSON(consts.StatusOK, utils.H{
+	response.JSON(newCtx,consts.StatusOK, utils.H{
 		"code": res.GetCode(),
 		"msg":  res.GetMsg(),
 		{{- if .Page}}
