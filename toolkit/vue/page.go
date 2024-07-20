@@ -86,45 +86,70 @@ func PageTemplate() string {
 	  {{- end}}
 	  <!-- 菜单操作 -->
 	  <template #operation="scope">
-	  	{{- if InMethod .Method "Update"}}
-        <el-button v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}Update'" type="primary" link :icon="EditPen" @click="handleUpdate(scope.row)">
-          编辑
-        </el-button>
-		{{- end}}
-		{{- if InMethod .Method "Delete"}}
+      {{- if InMethod .Method "Show"}}
+      <el-button v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}Item'" type="primary" link :icon="View" @click="handleItem(scope.row)">
+        查看
+      </el-button>
+      {{- end}}
+      <el-dropdown trigger="click">
         <el-button
-          v-if="scope.row.deleted === 0"
-          v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}Delete'"
-          type="primary"
-          link
-          :icon="Delete"
-          @click="handleDelete(scope.row)">
-          删除
+              v-auth="[
+                {{- if InMethod .Method "Update"}}
+                '{{.Pkg}}.{{CamelStr .Table.TableName}}Update',
+                {{- end}}
+                {{- if InMethod .Method "Delete"}}
+                '{{.Pkg}}.{{CamelStr .Table.TableName}}Delete',
+                {{- end}}
+                {{- if InMethod .Method "Recover"}}
+                '{{.Pkg}}.{{CamelStr .Table.TableName}}Recover',
+                {{- end}}
+                {{- if InMethod .Method "Drop"}}
+                '{{.Pkg}}.{{CamelStr .Table.TableName}}Drop',
+                {{- end}}
+              ]"
+              type="primary"
+              link
+              :icon="DArrowRight">
+              更多
         </el-button>
-		{{- end}}
-		{{- if InMethod .Method "Recover"}}
-        <el-button
-          v-if="scope.row.deleted === 1"
-          v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}Recover'"
-          type="primary"
-          link
-          :icon="Refresh"
-          @click="handleRecover(scope.row)">
-          恢复
-        </el-button>
-		{{- end}}
-		{{- if InMethod .Method "Drop"}}
-        <el-button
-          v-if="scope.row.deleted === 1"
-          v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}Drop'"
-          type="primary"
-          link
-          :icon="DeleteFilled"
-          @click="handleDrop(scope.row)">
-          清理
-        </el-button>
-		{{- end}}
-      </template>
+        <template #dropdown>
+          <el-dropdown-menu>
+            {{- if InMethod .Method "Update"}}
+            <el-dropdown-item v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}Update'" :icon="EditPen" @click="handleUpdate(scope.row)">
+              编辑
+            </el-dropdown-item>
+            {{- end}}
+            {{- if InMethod .Method "Delete"}}
+            <el-dropdown-item
+              v-if="scope.row.deleted === 0"
+              v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}Delete'"
+              :icon="Delete"
+              @click="handleDelete(scope.row)">
+              删除
+            </el-dropdown-item>
+            {{- end}}
+            {{- if InMethod .Method "Recover"}}
+            <el-dropdown-item
+              v-if="scope.row.deleted === 1"
+              v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}Recover'"
+              :icon="Refresh"
+              @click="handleRecover(scope.row)">
+              恢复
+            </el-dropdown-item>
+            {{- end}}
+            {{- if InMethod .Method "Drop"}}
+            <el-dropdown-item
+              v-if="scope.row.deleted === 1"
+              v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}Drop'"
+              :icon="DeleteFilled"
+              @click="handleDrop(scope.row)">
+              清理
+            </el-dropdown-item>
+            {{- end}}
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </template>
 	</ProTable>
 	<el-dialog
       v-model="centerDialogVisible"
@@ -140,11 +165,11 @@ func PageTemplate() string {
 	  <el-form ref="ref{{CamelStr .Table.TableName}}ItemFrom" :model="{{Helper .Table.TableName}}ItemFrom" :rules="rules{{CamelStr .Table.TableName}}ItemFrom" label-width="100px">
 		{{- range .TableColumn}}
 		<el-form-item label="{{.ColumnComment}}" prop="{{Helper .ColumnName}}">
-          <el-input v-model="{{Helper $.Table.TableName}}ItemFrom.{{Helper .ColumnName}}" />
+          <el-input v-model="{{Helper $.Table.TableName}}ItemFrom.{{Helper .ColumnName}}" :disabled="disabled" />
         </el-form-item>
 		{{- end}}
 	  </el-form>
-	  <template #footer>
+	  <template #footer v-if="!disabled">
 		<span class="dialog-footer">
 		  <el-button @click="resetForm(ref{{CamelStr .Table.TableName}}ItemFrom)">取消</el-button>
 		  <el-button type="primary" :loading="loading" @click="submitForm(ref{{CamelStr .Table.TableName}}ItemFrom)">确定</el-button>
@@ -172,6 +197,10 @@ import {
 	{{- if InMethod .Method "Drop"}}
 	DeleteFilled,
 	{{- end}}
+	{{- if InMethod .Method "Show"}}
+	View,
+	{{- end}}
+	DArrowRight,
 	} from "@element-plus/icons-vue";
 import ProTable from "@/components/ProTable/index.vue";
 import { {{CamelStr .Table.TableName}} } from "@/api/interface/{{Helper .Table.TableName}}";
@@ -205,6 +234,7 @@ import { DictTag } from "@/components/DictTag";
 {{- end}}
 import { useHandleData, useHandleSet } from "@/hooks/useHandleData";
 import { HasPermission } from "@/utils/permission";
+const disabled = ref(true);
 //加载
 const loading = ref(false);
 //弹出层标题
@@ -232,7 +262,11 @@ const deleteSearch = reactive<SearchProps>(
   HasPermission("{{.Pkg}}.{{CamelStr .Table.TableName}}Delete")
     ? {
         el: "switch",
-        span: 2
+        span: 2,
+		    props: {
+          activeValue: 1,
+          inactiveValue: 0
+        }
       }
     : {}
 );
@@ -255,6 +289,7 @@ const reset = () => {
   {{Helper .Table.TableName}}ItemFrom.value = {
     {{Json .TableColumn}}
   };
+  disabled.value = true;
 };
 
 // resetForm
@@ -316,6 +351,7 @@ const handleAdd = () => {
   title.value = "新增{{.Table.TableComment}}";
   centerDialogVisible.value = true;
   reset();
+  disabled.value = false;
 };
 {{- end}}
 
@@ -326,6 +362,17 @@ const handleUpdate = async (row: {{CamelStr .Table.TableName}}.Res{{CamelStr .Ta
   reset();
   const { data } = await get{{CamelStr .Table.TableName}}ItemApi(Number(row.id));
   {{Helper .Table.TableName}}ItemFrom.value = data;
+  disabled.value = false;
+};
+
+// 查看按钮
+const handleItem = async (row: {{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item) => {
+  title.value = "查看{{.Table.TableComment}}";
+  centerDialogVisible.value = true;
+  reset();
+  const { data } = await get{{CamelStr .Table.TableName}}ItemApi(Number(row.id));
+  {{Helper .Table.TableName}}ItemFrom.value = data;
+  disabled.value = true;
 };
 </script>
 <style lang="scss">
