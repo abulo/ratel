@@ -36,7 +36,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.6
 	github.com/prometheus/client_golang v1.19.1
-	github.com/redis/go-redis/v9 v9.5.4
+	github.com/redis/go-redis/v9 v9.6.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/smallnest/weighted v0.0.0-20230419055410-36b780e40a7a
 	github.com/spf13/cast v1.6.0
@@ -46,8 +46,8 @@ require (
 	github.com/tdewolff/parse/v2 v2.7.15
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/yosuke-furukawa/json5 v0.1.1
-	go.etcd.io/etcd/api/v3 v3.5.14
-	go.etcd.io/etcd/client/v3 v3.5.14
+	go.etcd.io/etcd/api/v3 v3.5.15
+	go.etcd.io/etcd/client/v3 v3.5.15
 	go.mongodb.org/mongo-driver v1.16.0
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.25.0
@@ -138,7 +138,7 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	github.com/zclconf/go-cty v1.13.0 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.5.14 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.5.15 // indirect
 	go.opentelemetry.io/otel v1.26.0 // indirect
 	go.opentelemetry.io/otel/trace v1.26.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
