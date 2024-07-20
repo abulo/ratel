@@ -237,6 +237,25 @@ func Run(cmd *cobra.Command, args []string) {
 		multiSelect = append(multiSelect,
 			base.CamelStr(tableItem.TableName)+"Recover",
 		)
+		methodList = append(methodList,
+			base.Method{
+				Table:          tableItem,
+				TableColumn:    tableColumn,
+				Type:           "Drop",
+				Name:           base.CamelStr(tableItem.TableName) + "Drop",
+				Condition:      nil,
+				ConditionTotal: 0,
+				Primary:        tablePrimary,
+				Pkg:            dir[strLen+1:],
+				PkgPath:        dir,
+				ModName:        mod,
+				Page:           pageBool,
+				SoftDelete:     deleteBool,
+			},
+		)
+		multiSelect = append(multiSelect,
+			base.CamelStr(tableItem.TableName)+"Drop",
+		)
 	}
 	//获取的索引信息没有
 	if err != nil {

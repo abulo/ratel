@@ -83,6 +83,11 @@ export const get{{CamelStr .Table.TableName}}ItemApi = (id: number) => {
 export const delete{{CamelStr .Table.TableName}}Api = (id: number) => {
   return http.delete(PORT + ` + deleteApiUrl + `);
 };
+{{- else if eq .Type "Drop"}}
+// {{.Table.TableComment}}清理数据
+export const drop{{CamelStr .Table.TableName}}Api = (id: number) => {
+  return http.delete(PORT + ` + deleteApiUrl + `);
+};
 {{- else if eq .Type "Recover"}}
 // {{.Table.TableComment}}恢复数据
 export const recover{{CamelStr .Table.TableName}}Api = (id: number) => {

@@ -121,6 +121,26 @@ func (srv Srv{{CamelStr .Table.TableName}}ServiceServer) {{.Name}}(ctx context.C
 		Msg:  code.StatusText(code.Success),
 	}, nil
 }
+{{- else if eq .Type "Drop"}}
+// {{.Name}} 清理数据
+func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Context,request *{{.Name}}Request)(*{{.Name}}Response,error){
+	{{Helper .Primary.AlisaColumnName}} := request.Get{{CamelStr .Primary.AlisaColumnName}}()
+	if {{Helper .Primary.AlisaColumnName}} < 1 {
+		return &{{.Name}}Response{}, status.Error(code.ConvertToGrpc(code.ParamInvalid), code.StatusText(code.ParamInvalid))
+	}
+	_, err := {{.Pkg}}.{{.Name}}(ctx, {{Helper .Primary.AlisaColumnName}})
+	if sql.ResultAccept(err) != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": {{Helper .Primary.AlisaColumnName}},
+			"err": err,
+		}).Error("Sql:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		return &{{.Name}}Response{},  status.Error(code.ConvertToGrpc(code.SqlError), err.Error())
+	}
+	return &{{.Name}}Response{
+		Code: code.Success,
+		Msg:  code.StatusText(code.Success),
+	}, nil
+}
 {{- else if eq .Type "Delete"}}
 // {{.Name}} 删除数据
 func (srv Srv{{CamelStr .Table.TableName}}ServiceServer){{.Name}}(ctx context.Context,request *{{.Name}}Request)(*{{.Name}}Response,error){

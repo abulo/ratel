@@ -173,6 +173,45 @@ func {{.Name}}(newCtx *gin.Context){
 		"data": {{.Pkg}}.{{CamelStr .Table.TableName}}Dao(res.GetData()),
 	})
 }
+{{- else if eq .Type "Drop"}}
+// {{.Name}} 清理数据
+func {{.Name}}(newCtx *gin.Context){
+	grpcClient, err := initial.Core.Client.LoadGrpc("grpc").Singleton()
+	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Grpc:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		response.JSON(newCtx,http.StatusOK, gin.H{
+			"code": code.RPCError,
+			"msg":  code.StatusText(code.RPCError),
+		})
+		return
+	}
+	//链接服务
+	client := {{.Pkg}}.New{{CamelStr .Table.TableName}}ServiceClient(grpcClient)
+	{{Helper .Primary.AlisaColumnName }} := cast.ToInt64(newCtx.Param("{{Helper .Primary.AlisaColumnName }}"))
+	request := &{{.Pkg}}.{{.Name}}Request{}
+	request.{{CamelStr .Primary.AlisaColumnName }} = {{Helper .Primary.AlisaColumnName }}
+	// 执行服务
+	ctx := newCtx.Request.Context()
+	res, err := client.{{.Name}}(ctx, request)
+	if err != nil {
+		globalLogger.Logger.WithFields(logrus.Fields{
+			"req": request,
+			"err": err,
+		}).Error("GrpcCall:{{.Table.TableComment}}:{{.Table.TableName}}:{{.Name}}")
+		fromError := status.Convert(err)
+		response.JSON(newCtx,http.StatusOK, gin.H{
+			"code": code.ConvertToHttp(fromError.Code()),
+			"msg":  code.StatusText(code.ConvertToHttp(fromError.Code())),
+		})
+		return
+	}
+	response.JSON(newCtx,http.StatusOK, gin.H{
+		"code": res.GetCode(),
+		"msg":  res.GetMsg(),
+	})
+}
 {{- else if eq .Type "Delete"}}
 // {{.Name}} 删除数据
 func {{.Name}}(newCtx *gin.Context){

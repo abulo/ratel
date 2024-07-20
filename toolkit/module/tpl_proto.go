@@ -130,6 +130,17 @@ message {{.Name}}Response {
 	int64 code = 1;
 	string msg = 2;
 }
+{{- else if eq .Type "Drop"}}
+// {{.Name}}Request 清理数据请求
+message {{.Name}}Request {
+	// @inject_tag: db:"{{.Primary.AlisaColumnName}}" json:"{{Helper .Primary.AlisaColumnName}}"
+	{{.Primary.DataTypeMap.Proto}} {{ .Primary.AlisaColumnName}} = 1; //{{.Primary.ColumnComment}}
+}
+// {{.Name}}Response 清理数据响应
+message {{.Name}}Response {
+	int64 code = 1;
+	string msg = 2;
+}
 {{- else if eq .Type "Delete"}}
 // {{.Name}}Request 删除数据请求
 message {{.Name}}Request {

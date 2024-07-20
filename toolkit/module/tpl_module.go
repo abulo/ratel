@@ -110,6 +110,18 @@ func {{.Name}}(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primar
 	err = db.QueryRow(ctx ,query,args...).ToStruct(&res)
 	return
 }
+{{- else if eq .Type "Drop"}}
+// {{.Name}} 清理数据
+func {{.Name}}(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}})(res int64,err error){
+	db := initial.Core.Store.LoadSQL("mysql").Write()
+	builder := sql.NewBuilder()
+	query,args,err := builder.Table("{{Char .Table.TableName}}").Where("{{Char .Primary.ColumnName}}",{{Helper .Primary.AlisaColumnName}}).Delete()
+	if err != nil {
+		return
+	}
+	res, err = db.Delete(ctx ,query,args...)
+	return
+}
 {{- else if eq .Type "Delete"}}
 // {{.Name}} 删除数据
 func {{.Name}}(ctx context.Context,{{Helper .Primary.AlisaColumnName}} {{.Primary.DataTypeMap.Default}})(res int64,err error){

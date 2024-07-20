@@ -113,6 +113,17 @@ func PageTemplate() string {
           恢复
         </el-button>
 		{{- end}}
+		{{- if InMethod .Method "Drop"}}
+        <el-button
+          v-if="scope.row.deleted === 1"
+          v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}Drop'"
+          type="primary"
+          link
+          :icon="DeleteFilled"
+          @click="handleDrop(scope.row)">
+          清理
+        </el-button>
+		{{- end}}
       </template>
 	</ProTable>
 	<el-dialog
@@ -158,6 +169,9 @@ import {
 	{{- if InMethod .Method "Recover"}}
 	Refresh,
 	{{- end}}
+	{{- if InMethod .Method "Drop"}}
+	DeleteFilled,
+	{{- end}}
 	} from "@element-plus/icons-vue";
 import ProTable from "@/components/ProTable/index.vue";
 import { {{CamelStr .Table.TableName}} } from "@/api/interface/{{Helper .Table.TableName}}";
@@ -167,6 +181,9 @@ import {
   {{- end}}
   {{- if InMethod .Method "Delete"}}
   delete{{CamelStr .Table.TableName}}Api,
+  {{- end}}
+  {- if InMethod .Method "Drop"}}
+  drop{{CamelStr .Table.TableName}}Api,
   {{- end}}
   {{- if InMethod .Method "Recover"}}
   recover{{CamelStr .Table.TableName}}Api,
@@ -270,6 +287,13 @@ const submitForm = (formEl: FormInstance | undefined) => {
   });
 };
 
+{{- if InMethod .Method "Drop"}}
+// 清理按钮
+const handleDrop = async (row: {{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item) => {
+  await useHandleData(drop{{CamelStr .Table.TableName}}Api, Number(row.id), "清理{{.Table.TableComment}}");
+  proTable.value?.getTableList();
+};
+{{- end}}
 {{- if InMethod .Method "Delete"}}
 // 删除按钮
 const handleDelete = async (row: {{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item) => {

@@ -238,6 +238,26 @@ func Run(cmd *cobra.Command, args []string) {
 		multiSelect = append(multiSelect,
 			base.CamelStr(tableItem.TableName)+"Recover",
 		)
+
+		methodList = append(methodList,
+			base.Method{
+				Table:          tableItem,
+				TableColumn:    tableColumn,
+				Type:           "Drop",
+				Name:           base.CamelStr(tableItem.TableName) + "Drop",
+				Condition:      nil,
+				ConditionTotal: 0,
+				Primary:        tablePrimary,
+				Pkg:            dir[strLen+1:],
+				PkgPath:        dir,
+				ModName:        mod,
+				Page:           pageBool,
+				SoftDelete:     deleteBool,
+			},
+		)
+		multiSelect = append(multiSelect,
+			base.CamelStr(tableItem.TableName)+"Drop",
+		)
 	}
 	//获取的索引信息没有
 	if err != nil {
@@ -462,6 +482,11 @@ func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, pkgPath,
 			builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "恢复"))
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("handle.PUT(\"%s\",%s)", apiUrl+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName)+"/recover", pkg+"."+v.Name))
+		case "Drop":
+			builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "清理"))
+			builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("handle.DELETE(\"%s\",%s)", apiUrl+"/:"+base.Helper(moduleParam.Primary.AlisaColumnName)+"/drop", pkg+"."+v.Name))
 		case "Show":
 			builder.WriteString("\n")
 			builder.WriteString(fmt.Sprintf("// %s->%s->%s", moduleParam.Table.TableName, moduleParam.Table.TableComment, "单条数据信息查看"))
