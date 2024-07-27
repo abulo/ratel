@@ -117,6 +117,14 @@ func GenerateDao(table base.Table, column []base.Column) {
 
 // DaoTemplate 模板
 func DaoTemplate() string {
+	if exists := base.Config.Exists("template.Dao"); exists {
+		filePath := path.Join(base.Path, base.Config.String("template.Dao"))
+		if util.FileExists(filePath) {
+			if tplString, err := util.FileGetContents(filePath); err == nil {
+				return tplString
+			}
+		}
+	}
 	outString := `
 package dao
 

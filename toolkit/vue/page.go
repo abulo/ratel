@@ -61,6 +61,14 @@ func GeneratePage(moduleParam base.ModuleParam, fullPageDir, viewUrl, tableName 
 }
 
 func PageTemplate() string {
+	if exists := base.Config.Exists("template.VuePage"); exists {
+		filePath := path.Join(base.Path, base.Config.String("template.VuePage"))
+		if util.FileExists(filePath) {
+			if tplString, err := util.FileGetContents(filePath); err == nil {
+				return tplString
+			}
+		}
+	}
 	outString := `<template>
   <div class="table-box">
 	<ProTable
@@ -72,22 +80,22 @@ func PageTemplate() string {
 	  :request-auto="true"
 	  :pagination="{{.Page}}"
 	  :search-col="12">
-	  <!-- 表格 header 按钮 -->
+	    <!-- 表格 header 按钮 -->
       <template #tableHeader>
 	  	{{- if InMethod .Method "Create"}}
         <el-button v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}Create'" type="primary" :icon="CirclePlus" @click="handleAdd">新增</el-button>
-		{{- end}}
+		  {{- end}}
       </template>
-	  {{- if .SoftDelete}}
-	  <!-- 删除状态 -->
+	    {{- if .SoftDelete}}
+	    <!-- 删除状态 -->
       <template #deleted="scope">
         <DictTag type="delete" :value="scope.row.deleted" />
       </template>
-	  {{- end}}
+	    {{- end}}
 	  <!-- 菜单操作 -->
 	  <template #operation="scope">
       {{- if InMethod .Method "Show"}}
-      <el-button v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}Item'" type="primary" link :icon="View" @click="handleItem(scope.row)">
+      <el-button v-auth="'{{.Pkg}}.{{CamelStr .Table.TableName}}'" type="primary" link :icon="View" @click="handleItem(scope.row)">
         查看
       </el-button>
       {{- end}}
@@ -211,14 +219,14 @@ import {
   {{- if InMethod .Method "Delete"}}
   delete{{CamelStr .Table.TableName}}Api,
   {{- end}}
-  {- if InMethod .Method "Drop"}}
+  {{- if InMethod .Method "Drop"}}
   drop{{CamelStr .Table.TableName}}Api,
   {{- end}}
   {{- if InMethod .Method "Recover"}}
   recover{{CamelStr .Table.TableName}}Api,
   {{- end}}
   {{- if InMethod .Method "Show"}}
-  get{{CamelStr .Table.TableName}}ItemApi,
+  get{{CamelStr .Table.TableName}}Api,
   {{- end}}
   {{- if InMethod .Method "Create"}}
   add{{CamelStr .Table.TableName}}Api,
@@ -279,8 +287,23 @@ const columns: ColumnProps<{{CamelStr .Table.TableName}}.Res{{CamelStr .Table.Ta
 		label: "操作",
 		width: 150,
 		fixed: "right",
-		isShow: HasPermission("{{.Pkg}}.{{CamelStr .Table.TableName}}Update", "{{.Pkg}}.{{CamelStr .Table.TableName}}Delete", "{{.Pkg}}.{{CamelStr .Table.TableName}}Recover")
-	  }
+		isShow: HasPermission(
+      {{- if InMethod .Method "Update"}}
+      "{{.Pkg}}.{{CamelStr .Table.TableName}}Update",
+      {{- end}}
+      {{- if InMethod .Method "Delete"}}
+      "{{.Pkg}}.{{CamelStr .Table.TableName}}Delete",
+      {{- end}}
+      {{- if InMethod .Method "Drop"}}
+      "{{.Pkg}}.{{CamelStr .Table.TableName}}Drop",
+      {{- end}}
+      {{- if InMethod .Method "Recover"}}
+      "{{.Pkg}}.{{CamelStr .Table.TableName}}Recover",
+      {{- end}}
+      {{- if InMethod .Method "Show"}}
+      "{{.Pkg}}.{{CamelStr .Table.TableName}}",
+      {{- end}}
+    )}
 ];
 
 // 重置数据
@@ -329,6 +352,7 @@ const handleDrop = async (row: {{CamelStr .Table.TableName}}.Res{{CamelStr .Tabl
   proTable.value?.getTableList();
 };
 {{- end}}
+
 {{- if InMethod .Method "Delete"}}
 // 删除按钮
 const handleDelete = async (row: {{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item) => {
@@ -355,25 +379,30 @@ const handleAdd = () => {
 };
 {{- end}}
 
+{{- if InMethod .Method "Update"}}
 // 编辑按钮
 const handleUpdate = async (row: {{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item) => {
   title.value = "编辑{{.Table.TableComment}}";
   centerDialogVisible.value = true;
   reset();
-  const { data } = await get{{CamelStr .Table.TableName}}ItemApi(Number(row.id));
+  const { data } = await get{{CamelStr .Table.TableName}}Api(Number(row.id));
   {{Helper .Table.TableName}}ItemFrom.value = data;
   disabled.value = false;
 };
+{{- end}}
 
+{{- if InMethod .Method "Show"}}
 // 查看按钮
 const handleItem = async (row: {{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item) => {
   title.value = "查看{{.Table.TableComment}}";
   centerDialogVisible.value = true;
   reset();
-  const { data } = await get{{CamelStr .Table.TableName}}ItemApi(Number(row.id));
+  const { data } = await get{{CamelStr .Table.TableName}}Api(Number(row.id));
   {{Helper .Table.TableName}}ItemFrom.value = data;
   disabled.value = true;
 };
+{{- end}}
+
 </script>
 <style lang="scss">
 @import "@/styles/custom.scss";

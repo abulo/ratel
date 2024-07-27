@@ -55,6 +55,14 @@ func GenerateConvert(moduleParam base.ModuleParam, fullConvertDir, tableName str
 }
 
 func ConvertTemplate() string {
+	if exists := base.Config.Exists("template.Convert"); exists {
+		filePath := path.Join(base.Path, base.Config.String("template.Convert"))
+		if util.FileExists(filePath) {
+			if tplString, err := util.FileGetContents(filePath); err == nil {
+				return tplString
+			}
+		}
+	}
 	outString := `
 package {{.Pkg}}
 

@@ -54,6 +54,14 @@ func GenerateService(moduleParam base.ModuleParam, fullServiceDir, tableName str
 
 }
 func ServiceTemplate() string {
+	if exists := base.Config.Exists("template.Service"); exists {
+		filePath := path.Join(base.Path, base.Config.String("template.Service"))
+		if util.FileExists(filePath) {
+			if tplString, err := util.FileGetContents(filePath); err == nil {
+				return tplString
+			}
+		}
+	}
 	outString := `
 package {{.Pkg}}
 

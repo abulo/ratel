@@ -216,7 +216,7 @@ func Run(cmd *cobra.Command, args []string) {
 			},
 		)
 		multiSelect = append(multiSelect,
-			base.CamelStr(tableItem.TableName)+"Recover",
+			base.CamelStr(tableItem.TableName)+"Drop",
 		)
 	}
 	//获取的索引信息没有

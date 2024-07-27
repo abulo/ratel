@@ -1,7 +1,22 @@
 package api
 
+import (
+	"path"
+
+	"github.com/abulo/ratel/v3/toolkit/base"
+	"github.com/abulo/ratel/v3/util"
+)
+
 // HertzTemplate 模板
 func HertzTemplate() string {
+	if exists := base.Config.Exists("template.Hertz"); exists {
+		filePath := path.Join(base.Path, base.Config.String("template.Hertz"))
+		if util.FileExists(filePath) {
+			if tplString, err := util.FileGetContents(filePath); err == nil {
+				return tplString
+			}
+		}
+	}
 	outString := `
 package {{.Pkg}}
 
@@ -60,6 +75,7 @@ func {{.Name}}(ctx context.Context,newCtx *app.RequestContext) {
 		})
 		return
 	}
+	reqInfo.Id = nil
 	request.Data = {{.Pkg}}.{{CamelStr .Table.TableName}}Proto(reqInfo)
 	// 执行服务
 	res, err := client.{{.Name}}(ctx, request)

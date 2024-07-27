@@ -11,7 +11,24 @@ import (
 	"github.com/fatih/color"
 )
 
+func ApiList(key string) string {
+	apiUrl := base.Url
+	list := make(map[string]string)
+	list["add"] = base.SymbolChar() + apiUrl + base.SymbolChar()
+	list["update"] = base.SymbolChar() + apiUrl + "/${id}/update" + base.SymbolChar()
+	list["item"] = base.SymbolChar() + apiUrl + "/${id}/item" + base.SymbolChar()
+	list["delete"] = base.SymbolChar() + apiUrl + "/${id}/delete" + base.SymbolChar()
+	list["drop"] = base.SymbolChar() + apiUrl + "/${id}/drop" + base.SymbolChar()
+	list["recover"] = base.SymbolChar() + apiUrl + "/${id}/recover" + base.SymbolChar()
+	list["list"] = base.SymbolChar() + apiUrl + base.SymbolChar()
+	if val, ok := list[key]; ok {
+		return val
+	}
+	return ""
+}
+
 func GenerateMethod(moduleParam base.ModuleParam, apiUrl, fullMethodDir, tableName string) {
+	base.SetUrl(apiUrl)
 	// 模板变量
 	tpl := template.Must(template.New("module").Funcs(template.FuncMap{
 		"Convert":               base.Convert,
@@ -24,7 +41,8 @@ func GenerateMethod(moduleParam base.ModuleParam, apiUrl, fullMethodDir, tableNa
 		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
 		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
 		"ApiToProto":            base.ApiToProto,
-	}).Parse(MethodTemplate(apiUrl)))
+		"ApiList":               ApiList,
+	}).Parse(MethodTemplate()))
 
 	// 文件夹路径
 	outMethodFile := path.Join(fullMethodDir, base.Helper(tableName)+".ts")
@@ -47,13 +65,22 @@ func GenerateMethod(moduleParam base.ModuleParam, apiUrl, fullMethodDir, tableNa
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(outMethodFile))
 }
 
-func MethodTemplate(apiUrl string) string {
-	addApiUrl := base.SymbolChar() + apiUrl + base.SymbolChar()
-	updateApiUrl := base.SymbolChar() + apiUrl + "/${id}/update" + base.SymbolChar()
-	showApiUrl := base.SymbolChar() + apiUrl + "/${id}/item" + base.SymbolChar()
-	deleteApiUrl := base.SymbolChar() + apiUrl + "/${id}/delete" + base.SymbolChar()
-	recoverApiUrl := base.SymbolChar() + apiUrl + "/${id}/recover" + base.SymbolChar()
-	listApiUrl := base.SymbolChar() + apiUrl + base.SymbolChar()
+func MethodTemplate() string {
+	if exists := base.Config.Exists("template.VueMethod"); exists {
+		filePath := path.Join(base.Path, base.Config.String("template.VueMethod"))
+		if util.FileExists(filePath) {
+			if tplString, err := util.FileGetContents(filePath); err == nil {
+				return tplString
+			}
+		}
+	}
+	// addApiUrl := base.SymbolChar() + apiUrl + base.SymbolChar()
+	// updateApiUrl := base.SymbolChar() + apiUrl + "/${id}/update" + base.SymbolChar()
+	// showApiUrl := base.SymbolChar() + apiUrl + "/${id}/item" + base.SymbolChar()
+	// deleteApiUrl := base.SymbolChar() + apiUrl + "/${id}/delete" + base.SymbolChar()
+	// dropApiUrl := base.SymbolChar() + apiUrl + "/${id}/drop" + base.SymbolChar()
+	// recoverApiUrl := base.SymbolChar() + apiUrl + "/${id}/recover" + base.SymbolChar()
+	// listApiUrl := base.SymbolChar() + apiUrl + base.SymbolChar()
 	outString := `
 // {{.Table.TableName}} {{.Table.TableComment}}
 {{- if .Page}}
@@ -66,42 +93,42 @@ import { {{CamelStr .Table.TableName}} } from "@/api/interface/{{Helper .Table.T
 {{- if eq .Type "Create"}}
 // {{.Table.TableComment}}创建数据
 export const add{{CamelStr .Table.TableName}}Api = (params: {{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item) => {
-  return http.post(PORT + ` + addApiUrl + `, params);
+  return http.post(PORT + {{ApiList "add"}}, params);
 };
 {{- else if eq .Type "Update"}}
 // {{.Table.TableComment}}更新数据
 export const update{{CamelStr .Table.TableName}}Api = (id: number, params: {{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item) => {
-  return http.put(PORT + ` + updateApiUrl + `, params);
+  return http.put(PORT + {{ApiList "update"}}, params);
 };
 {{- else if eq .Type "Show"}}
 // {{.Table.TableComment}}查询单条数据
-export const get{{CamelStr .Table.TableName}}ItemApi = (id: number) => {
-  return http.get<{{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item>(PORT + ` + showApiUrl + `);
+export const get{{CamelStr .Table.TableName}}Api = (id: number) => {
+  return http.get<{{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item>(PORT + {{ApiList "item"}});
 };
 {{- else if eq .Type "Delete"}}
 // {{.Table.TableComment}}删除数据
 export const delete{{CamelStr .Table.TableName}}Api = (id: number) => {
-  return http.delete(PORT + ` + deleteApiUrl + `);
+  return http.delete(PORT + {{ApiList "delete"}});
 };
 {{- else if eq .Type "Drop"}}
 // {{.Table.TableComment}}清理数据
 export const drop{{CamelStr .Table.TableName}}Api = (id: number) => {
-  return http.delete(PORT + ` + deleteApiUrl + `);
+  return http.delete(PORT + {{ApiList "drop"}});
 };
 {{- else if eq .Type "Recover"}}
 // {{.Table.TableComment}}恢复数据
 export const recover{{CamelStr .Table.TableName}}Api = (id: number) => {
-  return http.put(PORT + ` + recoverApiUrl + `);
+  return http.put(PORT + {{ApiList "recover"}});
 };
 {{- else if eq .Type "List"}}
 // {{.Table.TableComment}}列表数据
 {{- if .Page}}
 export const get{{CamelStr .Table.TableName}}ListApi = (params?: {{CamelStr .Table.TableName}}.Req{{CamelStr .Table.TableName}}List) => {
-  return http.get<ResPage<{{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item>>(PORT + ` + listApiUrl + `, params);
+  return http.get<ResPage<{{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item>>(PORT + {{ApiList "list"}}, params);
 };
 {{- else}}
 export const get{{CamelStr .Table.TableName}}ListApi = (params?: {{CamelStr .Table.TableName}}.Req{{CamelStr .Table.TableName}}List) => {
-  return http.get<{{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item[]>(PORT + ` + listApiUrl + `, params);
+  return http.get<{{CamelStr .Table.TableName}}.Res{{CamelStr .Table.TableName}}Item[]>(PORT + {{ApiList "list"}}, params);
 };
 {{- end}}
 {{- end}}

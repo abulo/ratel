@@ -74,6 +74,14 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 
 // @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"
 func ProtoTemplate() string {
+	if exists := base.Config.Exists("template.Proto"); exists {
+		filePath := path.Join(base.Path, base.Config.String("template.Proto"))
+		if util.FileExists(filePath) {
+			if tplString, err := util.FileGetContents(filePath); err == nil {
+				return tplString
+			}
+		}
+	}
 	outString := `
 syntax = "proto3";
 // {{.Table.TableName}} {{.Table.TableComment}}

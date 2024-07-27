@@ -19,6 +19,11 @@ import (
 var Config *config.Config
 var Query sql.SqlConn
 var Path string
+var Url string
+
+func SetUrl(url string) {
+	Url = url
+}
 
 // InitPath 初始化路径
 func InitPath() error {

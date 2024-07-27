@@ -50,6 +50,14 @@ func GenerateInterface(moduleParam base.ModuleParam, fullInterfaceDir, tableName
 }
 
 func InterfaceTemplate() string {
+	if exists := base.Config.Exists("template.VueInterface"); exists {
+		filePath := path.Join(base.Path, base.Config.String("template.VueInterface"))
+		if util.FileExists(filePath) {
+			if tplString, err := util.FileGetContents(filePath); err == nil {
+				return tplString
+			}
+		}
+	}
 	outString := `
 // {{.Table.TableName}} {{.Table.TableComment}}
 {{- if .Page}}
