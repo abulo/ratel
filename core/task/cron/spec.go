@@ -66,7 +66,7 @@ func (s *SpecSchedule) Next(t time.Time) time.Time {
 	// values)
 
 	// Convert the given time into the schedule's timezone, if one is specified.
-	// Save the original timezone, so we can convert back after we find a time.
+	// Save the original timezone so we can convert back after we find a time.
 	// Note that schedules without a time zone specified (time.Local) are treated
 	// as local to the time provided.
 	origLocation := t.Location()
@@ -112,7 +112,7 @@ WRAP:
 	// Now get a day in that month.
 	//
 	// NOTE: This causes issues for daylight savings regimes where midnight does
-	// not exist.  For example: São Paulo has DST that transforms midnight on
+	// not exist.  For example: Sao Paulo has DST that transforms midnight on
 	// 11/3 into 1am. Handle that by noticing when the Hour ends up != 0.
 	for !dayMatches(s, t) {
 		if !added {
@@ -178,8 +178,8 @@ WRAP:
 // restrictions are satisfied by the given time.
 func dayMatches(s *SpecSchedule, t time.Time) bool {
 	var (
-		domMatch = 1<<uint(t.Day())&s.Dom > 0
-		dowMatch = 1<<uint(t.Weekday())&s.Dow > 0
+		domMatch bool = 1<<uint(t.Day())&s.Dom > 0
+		dowMatch bool = 1<<uint(t.Weekday())&s.Dow > 0
 	)
 	if s.Dom&starBit > 0 || s.Dow&starBit > 0 {
 		return domMatch && dowMatch

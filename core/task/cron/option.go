@@ -36,10 +36,3 @@ func WithChain(wrappers ...JobWrapper) Option {
 		c.chain = NewChain(wrappers...)
 	}
 }
-
-// WithLogger uses the provided logger.
-func WithLogger(logger Logger) Option {
-	return func(c *Cron) {
-		c.logger = logger
-	}
-}

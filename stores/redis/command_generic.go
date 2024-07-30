@@ -488,6 +488,18 @@ func (r *Client) Scan(ctx context.Context, cursorIn uint64, match any, count int
 	return
 }
 
+func (r *Client) ScanIterator(ctx context.Context, cursorIn uint64, match any, count int64) (val *redis.ScanIterator, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val = conn.Scan(getCtx(ctx), cursorIn, r.k(match), count).Iterator()
+		return nil
+	}, acceptable)
+	return
+}
+
 func (r *Client) ScanType(ctx context.Context, cursorIn uint64, match any, count int64, keyType string) (val []string, cursor uint64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

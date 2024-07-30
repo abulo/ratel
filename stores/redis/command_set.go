@@ -247,29 +247,15 @@ func (r *Client) SRem(ctx context.Context, key any, members ...any) (val int64, 
 	return
 }
 
-// Scan 命令及其相关的 SSCAN 命令、 HSCAN 命令和 ZSCAN 命令都用于增量地迭代（incrementally iterate）一集元素
-func (r *Client) ScanIterator(ctx context.Context, cursorIn uint64, match any, count int64) (val *redis.ScanIterator, err error) {
-	// return getRedis(r).Scan(getCtx(ctx), cursor, r.k(match), count)
-	err = r.brk.DoWithAcceptable(func() error {
-		conn, err := getRedis(r)
-		if err != nil {
-			return err
-		}
-		val = conn.Scan(getCtx(ctx), cursorIn, r.k(match), count).Iterator()
-		return err
-	}, acceptable)
-	return
-}
-
 // SScan 详细信息请参考 SCAN 命令。
-func (r *Client) SScan(ctx context.Context, key any, cursorIn uint64, match string, count int64) (val []string, cursor uint64, err error) {
+func (r *Client) SScan(ctx context.Context, key any, cursorIn uint64, match string, count int64) (val *redis.ScanCmd, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
 			return err
 		}
-		val, cursor, err = conn.SScan(getCtx(ctx), r.k(key), cursorIn, match, count).Result()
-		return err
+		val = conn.SScan(getCtx(ctx), r.k(key), cursorIn, match, count)
+		return nil
 	}, acceptable)
 	return
 }

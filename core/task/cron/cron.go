@@ -1,24 +1,25 @@
 package cron
 
 import (
-	"container/heap"
 	"context"
+	"sort"
 	"sync"
 	"time"
+
+	"github.com/abulo/ratel/v3/core/logger"
 )
 
 // Cron keeps track of any number of entries, invoking the associated func as
 // specified by the schedule. It may be started, stopped, and the entries may
 // be inspected while running.
 type Cron struct {
-	entries   EntryHeap
+	entries   []*Entry
 	chain     Chain
 	stop      chan struct{}
 	add       chan *Entry
 	remove    chan EntryID
 	snapshot  chan chan []Entry
 	running   bool
-	logger    Logger
 	runningMu sync.Mutex
 	location  *time.Location
 	parser    ScheduleParser
@@ -66,7 +67,7 @@ type Entry struct {
 	WrappedJob Job
 
 	// Job is the thing that was submitted to cron.
-	// It is kept around so that user code that needs to get on the job later,
+	// It is kept around so that user code that needs to get at the job later,
 	// e.g. via Entries() can do so.
 	Job Job
 }
@@ -97,17 +98,17 @@ func (s byTime) Less(i, j int) bool {
 //
 // Available Settings
 //
-//   Time Zone
-//     Description: The time zone in which schedules are interpreted
-//     Default:     time.Local
+//	Time Zone
+//	  Description: The time zone in which schedules are interpreted
+//	  Default:     time.Local
 //
-//   Parser
-//     Description: Parser converts cron spec strings into cron.Schedules.
-//     Default:     Accepts this spec: https://en.wikipedia.org/wiki/Cron
+//	Parser
+//	  Description: Parser converts cron spec strings into cron.Schedules.
+//	  Default:     Accepts this spec: https://en.wikipedia.org/wiki/Cron
 //
-//   Chain
-//     Description: Wrap submitted jobs to customize behavior.
-//     Default:     A chain that recovers panics and logs them to stderr.
+//	Chain
+//	  Description: Wrap submitted jobs to customize behavior.
+//	  Default:     A chain that recovers panics and logs them to stderr.
 //
 // See "cron.With*" to modify the default behavior.
 func New(opts ...Option) *Cron {
@@ -120,7 +121,6 @@ func New(opts ...Option) *Cron {
 		remove:    make(chan EntryID),
 		running:   false,
 		runningMu: sync.Mutex{},
-		logger:    DefaultLogger,
 		location:  time.Local,
 		parser:    standardParser,
 	}
@@ -164,10 +164,9 @@ func (c *Cron) Schedule(schedule Schedule, cmd Job) EntryID {
 		Schedule:   schedule,
 		WrappedJob: c.chain.Then(cmd),
 		Job:        cmd,
-		Next:       schedule.Next(time.Now()),
 	}
 	if !c.running {
-		heap.Push(&c.entries, entry)
+		c.entries = append(c.entries, entry)
 	} else {
 		c.add <- entry
 	}
@@ -235,26 +234,21 @@ func (c *Cron) Run() {
 	c.run()
 }
 
-// run the scheduler. this is private just due to the need to synchronize
+// run the scheduler.. this is private just due to the need to synchronize
 // access to the 'running' state variable.
 func (c *Cron) run() {
-	c.logger.Info("start")
+	logger.Logger.Infof("start")
 
 	// Figure out the next activation times for each entry.
 	now := c.now()
-	sortedEntries := new(EntryHeap)
-	for len(c.entries) > 0 {
-		entry := heap.Pop(&c.entries).(*Entry)
+	for _, entry := range c.entries {
 		entry.Next = entry.Schedule.Next(now)
-		heap.Push(sortedEntries, entry)
-		c.logger.Info("schedule", "now", now, "entry", entry.ID, "next", entry.Next)
+		logger.Logger.Infof("schedule|now=%v, entry=%v, next=%v", now, entry.ID, entry.Next)
 	}
-	c.entries = *sortedEntries
 
 	for {
 		// Determine the next entry to run.
-		// User min-heap no need sort anymore
-		//sort.Sort(byTime(c.entries))
+		sort.Sort(byTime(c.entries))
 
 		var timer *time.Timer
 		if len(c.entries) == 0 || c.entries[0].Next.IsZero() {
@@ -263,34 +257,31 @@ func (c *Cron) run() {
 			timer = time.NewTimer(100000 * time.Hour)
 		} else {
 			timer = time.NewTimer(c.entries[0].Next.Sub(now))
-			//fmt.Printf(" %v, %+v\n", c.entries[0].Next.Sub(now), c.entries[0].ID)
 		}
 
 		for {
 			select {
 			case now = <-timer.C:
 				now = now.In(c.location)
-				c.logger.Info("wake", "now", now)
+				logger.Logger.Infof("wake|now=%v", now)
+
 				// Run every entry whose next time was less than now
-				for {
-					e := c.entries.Peek()
+				for _, e := range c.entries {
 					if e.Next.After(now) || e.Next.IsZero() {
 						break
 					}
-					e = heap.Pop(&c.entries).(*Entry)
 					c.startJob(e.WrappedJob)
 					e.Prev = e.Next
 					e.Next = e.Schedule.Next(now)
-					heap.Push(&c.entries, e)
-					c.logger.Info("run", "now", now, "entry", e.ID, "next", e.Next)
+					logger.Logger.Infof("run|now=%v, entry=%v, next=%v", now, e.ID, e.Next)
 				}
 
 			case newEntry := <-c.add:
 				timer.Stop()
 				now = c.now()
 				newEntry.Next = newEntry.Schedule.Next(now)
-				heap.Push(&c.entries, newEntry)
-				c.logger.Info("added", "now", now, "entry", newEntry.ID, "next", newEntry.Next)
+				c.entries = append(c.entries, newEntry)
+				logger.Logger.Infof("added|now=%v, entry=%v, next=%v", now, newEntry.ID, newEntry.Next)
 
 			case replyChan := <-c.snapshot:
 				replyChan <- c.entrySnapshot()
@@ -298,14 +289,14 @@ func (c *Cron) run() {
 
 			case <-c.stop:
 				timer.Stop()
-				c.logger.Info("stop")
+				logger.Logger.Infof("stop")
 				return
 
 			case id := <-c.remove:
 				timer.Stop()
 				now = c.now()
 				c.removeEntry(id)
-				c.logger.Info("removed", "entry", id)
+				logger.Logger.Infof("removed|entry=%v", id)
 			}
 
 			break
@@ -354,10 +345,11 @@ func (c *Cron) entrySnapshot() []Entry {
 }
 
 func (c *Cron) removeEntry(id EntryID) {
-	for idx, e := range c.entries {
-		if e.ID == id {
-			heap.Remove(&c.entries, idx)
-			return
+	var entries []*Entry
+	for _, e := range c.entries {
+		if e.ID != id {
+			entries = append(entries, e)
 		}
 	}
+	c.entries = entries
 }

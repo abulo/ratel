@@ -1,31 +1,43 @@
 package driver
 
-import "time"
+import (
+	"context"
 
-const (
-	PrefixKey = "Task"
-	JAR       = ":"
-	SPL       = "/"
-	REG       = "*"
+	"github.com/abulo/ratel/v3/client/etcdv3"
+	"github.com/abulo/ratel/v3/stores/redis"
 )
 
-// Driver is a driver interface
-type Driver interface {
-	// Ping 检查驱动是否可用
-	Ping() error
+// There is only one driver for one task.
+// Tips for write a user-defined Driver by yourself.
+//  1. Confirm that `Stop` and `Start` can be called for more times.
+//  2. Must make `GetNodes` will return error when timeout.
+type DriverV2 interface {
+	// init driver
+	Init(serviceName string, opts ...Option)
+	// get nodeID
+	NodeID() string
+	// get nodes
+	GetNodes(ctx context.Context) (nodes []string, err error)
 
-	// SetKeepaliveInterval 设置心跳间隔
-	SetKeepaliveInterval(interval time.Duration)
+	// register node to remote server (like etcd/redis),
+	// will create a goroutine to keep the connection.
+	// And then continue for other work.
+	Start(ctx context.Context) (err error)
 
-	// Keepalive 维持nodeId的心跳
-	Keepalive(nodeId string)
+	// stop the goroutine of keep connection.
+	Stop(ctx context.Context) (err error)
 
-	// GetServiceNodeList 获取serviceName所有node节点
-	GetServiceNodeList(serviceName string) (nodeIds []string, err error)
+	WithOption(opt Option) (err error)
+}
 
-	// RegisterServiceNode 向serviceName注册node节点
-	RegisterServiceNode(serviceName string) (nodeId string, err error)
+func NewRedisDriver(redisClient *redis.Client) DriverV2 {
+	return newRedisDriver(redisClient)
+}
 
-	// UnRegisterServiceNode 取消注册node节点
-	UnRegisterServiceNode()
+func NewEtcdDriver(etcdCli *etcdv3.Client) DriverV2 {
+	return newEtcdDriver(etcdCli)
+}
+
+func NewRedisZSetDriver(redisClient *redis.Client) DriverV2 {
+	return newRedisZSetDriver(redisClient)
 }
