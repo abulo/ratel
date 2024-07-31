@@ -68,7 +68,9 @@ func (np *NodePool) Start(ctx context.Context) (err error) {
 		return
 	}
 	np.nodeID = np.driver.NodeID()
+	// fmt.Println("np.nodeID------------", np.nodeID)
 	nowNodes, err := np.driver.GetNodes(ctx)
+	// fmt.Println("nowNodesnowNodesnowNodesnowNodesnowNodesnowNodesnowNodes", nowNodes)
 	if err != nil {
 		logger.Logger.Errorf("get nodes error: %v", err)
 		return
@@ -91,7 +93,7 @@ func (np *NodePool) CheckJobAvailable(jobName string) (bool, error) {
 	np.rwMut.RLock()
 	defer np.rwMut.RUnlock()
 	if np.nodes == nil {
-		logger.Logger.Errorf("nodeID=%s, NodePool.nodes is nil", np.nodeID)
+		// logger.Logger.Errorf("nodeID=%s, NodePool.nodes is nil", np.nodeID)
 		return false, ErrNodePoolIsNil
 	}
 	if np.nodes.IsEmpty() {
@@ -101,11 +103,12 @@ func (np *NodePool) CheckJobAvailable(jobName string) (bool, error) {
 		return false, ErrNodePoolIsUpgrading
 	}
 	targetNode := np.nodes.Get(jobName)
-	if np.nodeID == targetNode {
-		logger.Logger.Infof("job %s, running in node: %s, nodeID is %s", jobName, targetNode, np.nodeID)
-	}
+	newNpNodeId := driver.GetNodeIdKeyPrefix() + np.nodeID
+	// if newNpNodeId == targetNode {
+	// 	logger.Logger.Infof("job %s, running in node: %s, nodeID is %s", jobName, targetNode, newNpNodeId)
+	// }
 
-	return np.nodeID == targetNode, nil
+	return newNpNodeId == targetNode, nil
 }
 
 func (np *NodePool) Stop(ctx context.Context) error {
@@ -149,12 +152,12 @@ func (np *NodePool) updateHashRing(nodes []string) {
 	defer np.rwMut.Unlock()
 	if np.equalRing(nodes) {
 		np.state.Store(NodePoolStateSteady)
-		logger.Logger.Infof("nowNodes=%v, preNodes=%v", nodes, np.preNodes)
+		// logger.Logger.Infof("nowNodes=%v, preNodes=%v", nodes, np.preNodes)
 		return
 	}
 	np.lastUpdateNodesTime.Store(time.Now())
 	np.state.Store(NodePoolStateUpgrade)
-	logger.Logger.Infof("update hashRing nodes=%+v", nodes)
+	// logger.Logger.Infof("update hashRing nodes=%+v", nodes)
 	np.preNodes = make([]string, len(nodes))
 	copy(np.preNodes, nodes)
 	np.nodes = consistenthash.New(np.hashReplicas, np.hashFn)

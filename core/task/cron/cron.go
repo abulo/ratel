@@ -263,7 +263,7 @@ func (c *Cron) run() {
 			select {
 			case now = <-timer.C:
 				now = now.In(c.location)
-				logger.Logger.Infof("wake|now=%v", now)
+				// logger.Logger.Infof("wake|now=%v", now)
 
 				// Run every entry whose next time was less than now
 				for _, e := range c.entries {
@@ -273,7 +273,7 @@ func (c *Cron) run() {
 					c.startJob(e.WrappedJob)
 					e.Prev = e.Next
 					e.Next = e.Schedule.Next(now)
-					logger.Logger.Infof("run|now=%v, entry=%v, next=%v", now, e.ID, e.Next)
+					// logger.Logger.Infof("run|now=%v, entry=%v, next=%v", now, e.ID, e.Next)
 				}
 
 			case newEntry := <-c.add:
