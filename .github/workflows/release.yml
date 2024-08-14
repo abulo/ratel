@@ -20,39 +20,117 @@ jobs:
           currentTag=${tags[0]}
           previousTag=${tags[1]}
           #提取并分类提交消息
-          commitMessages=$(git log --pretty=format:"- %s %h" "$previousTag".."$currentTag" | grep -E 'feat|fix|docs|perf')
+          commitMessages=$(git log --pretty=format:"- %s %h" "$previousTag".."$currentTag" | grep -E 'feat|fix|style|format|docs|perf|init|test|refactor|patch|file|publish|tag|config|git')
           featMessages=$(echo "$commitMessages" | grep 'feat' || true)
           fixMessages=$(echo "$commitMessages" | grep 'fix' || true)
+          styleMessages=$(echo "$commitMessages" | grep 'style' || true)
+          formatMessages=$(echo "$commitMessages" | grep 'format' || true)
           docsMessages=$(echo "$commitMessages" | grep 'docs' || true)
           perfMessages=$(echo "$commitMessages" | grep 'perf' || true)
+          initMessages=$(echo "$commitMessages" | grep 'init' || true)
+          testMessages=$(echo "$commitMessages" | grep 'test' || true)
+          refactorMessages=$(echo "$commitMessages" | grep 'refactor' || true)
+          patchMessages=$(echo "$commitMessages" | grep 'patch' || true)
+          fileMessages=$(echo "$commitMessages" | grep 'file' || true)
+          publishMessages=$(echo "$commitMessages" | grep 'publish' || true)
+          tagMessages=$(echo "$commitMessages" | grep 'tag' || true)
+          configMessages=$(echo "$commitMessages" | grep 'config' || true)
+          gitMessages=$(echo "$commitMessages" | grep 'git' || true)
           #获取当前分支名
           branchName=$(git rev-parse --abbrev-ref HEAD)
           # 生成发布说明的Markdown字符串
           releaseNotes="## 更新内容：  \n"
           if [[ -n "$featMessages" ]]; then
-            releaseNotes="$releaseNotes\n### ✨ Features | 新功能:  \n"
+            releaseNotes="$releaseNotes\n### feat \n"
             for message in "${featMessages[@]}"; do
               releaseNotes="$releaseNotes\n$message"
             done
           fi
           if [[ -n "$fixMessages" ]]; then
-            releaseNotes="$releaseNotes\n### 🐛 Bug Fixes | Bug 修复:  \n"
+            releaseNotes="$releaseNotes\n### fix \n"
             for message in "${fixMessages[@]}"; do
               releaseNotes="$releaseNotes\n$message"
             done
           fi
-          if [[ -n "$docsMessages" ]]; then
-            releaseNotes="$releaseNotes\n### ✏️ Documentation | 文档:  \n"
-            for message in "${docsMessages[@]}"; do
+          if [[ -n "$styleMessages" ]]; then
+              releaseNotes="$releaseNotes\n### style \n"
+              for message in "${styleMessages[@]}"; do
               releaseNotes="$releaseNotes\n$message"
-            done
+              done
+          fi
+          if [[ -n "$formatMessages" ]]; then
+              releaseNotes="$releaseNotes\n### format \n"
+              for message in "${formatMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+              done
+          fi
+          if [[ -n "$docsMessages" ]]; then
+              releaseNotes="$releaseNotes\n### docs \n"
+              for message in "${docsMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+              done
           fi
           if [[ -n "$perfMessages" ]]; then
-            releaseNotes="$releaseNotes\n### ⚡ Performance Improvements | 性能优化:  \n"
-            for message in "${perfMessages[@]}"; do
+              releaseNotes="$releaseNotes\n### perf \n"
+              for message in "${perfMessages[@]}"; do
               releaseNotes="$releaseNotes\n$message"
-            done
+              done
           fi
+          if [[ -n "$initMessages" ]]; then
+              releaseNotes="$releaseNotes\n### init \n"
+              for message in "${initMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+              done
+          fi
+          if [[ -n "$testMessages" ]]; then
+              releaseNotes="$releaseNotes\n### test \n"
+              for message in "${testMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+              done
+          fi
+          if [[ -n "$refactorMessages" ]]; then
+              releaseNotes="$releaseNotes\n### refactor \n"
+              for message in "${refactorMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+              done
+          fi
+          if [[ -n "$patchMessages" ]]; then
+              releaseNotes="$releaseNotes\n### patch \n"
+              for message in "${patchMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+              done
+          fi
+          if [[ -n "$fileMessages" ]]; then
+              releaseNotes="$releaseNotes\n### file \n"
+              for message in "${fileMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+              done
+          fi
+          if [[ -n "$publishMessages" ]]; then
+              releaseNotes="$releaseNotes\n### publish \n"
+              for message in "${publishMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+              done
+          fi
+          if [[ -n "$tagMessages" ]]; then
+              releaseNotes="$releaseNotes\n### tag \n"
+              for message in "${tagMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+              done
+          fi
+          if [[ -n "$configMessages" ]]; then
+              releaseNotes="$releaseNotes\n### config \n"
+              for message in "${configMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+              done
+          fi
+          if [[ -n "$gitMessages" ]]; then
+              releaseNotes="$releaseNotes\n### git \n"
+              for message in "${gitMessages[@]}"; do
+              releaseNotes="$releaseNotes\n$message"
+              done
+          fi
+          #将生成的发布说明写入到changelog.md文件中
           echo -e "$releaseNotes" > changelog.md
           cat changelog.md
 
