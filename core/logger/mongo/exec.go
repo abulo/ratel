@@ -14,23 +14,26 @@ type ExecCloser interface {
 }
 
 type defaultExec struct {
-	client   *mongodb.MongoDB
-	canClose bool
+	client     *mongodb.MongoDB
+	collection string
+	canClose   bool
 }
 
 // NewExec create an exec instance
-func NewExec(client *mongodb.MongoDB) ExecCloser {
+func NewExec(client *mongodb.MongoDB, collection string) ExecCloser {
 	return &defaultExec{
-		client:   client,
-		canClose: true,
+		client:     client,
+		collection: collection,
+		canClose:   true,
 	}
 }
 
 // NewExecWithURL create an exec instance
-func NewExecWithURL(client *mongodb.MongoDB) ExecCloser {
+func NewExecWithURL(client *mongodb.MongoDB, collection string) ExecCloser {
 	return &defaultExec{
-		client:   client,
-		canClose: true,
+		client:     client,
+		collection: collection,
+		canClose:   true,
 	}
 }
 
@@ -46,7 +49,7 @@ func (e *defaultExec) Exec(entry *entry.Entry) error {
 	data := bson.M(entry.Data)
 	item["data"] = data
 	ctx := context.Background()
-	handler, err := e.client.NewCollection("logger_entry")
+	handler, err := e.client.NewCollection(e.collection)
 	if err != nil {
 		return err
 	}

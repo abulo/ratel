@@ -1,4 +1,4 @@
-package es
+package sql
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/abulo/ratel/v3/core/logger/entry"
 	"github.com/abulo/ratel/v3/core/logger/queue"
-	"github.com/abulo/ratel/v3/stores/elasticsearch"
+	"github.com/abulo/ratel/v3/stores/sql"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/sirupsen/logrus"
 )
@@ -83,26 +83,19 @@ func SetOut(out io.Writer) Option {
 // Option 钩子参数选项
 type Option func(*options)
 
-// Default create a default es hook
-func Default(client *elasticsearch.Client, index string, opts ...Option) *Hook {
+// Default create a default mongo hook
+func Default(client sql.SqlConn, tableName string, opts ...Option) *Hook {
 	var options []Option
 	options = append(options, opts...)
-	options = append(options, SetExec(NewExec(client, index)))
-
-	if err := CreateIndex(client); err != nil {
-		panic(err)
-	}
+	options = append(options, SetExec(NewExec(client, tableName)))
 	return New(options...)
 }
 
-// DefaultWithURL create a default es hook
-func DefaultWithURL(client *elasticsearch.Client, index string, opts ...Option) *Hook {
+// DefaultWithURL create a default mongo hook
+func DefaultWithURL(client sql.SqlConn, tableName string, opts ...Option) *Hook {
 	var options []Option
 	options = append(options, opts...)
-	options = append(options, SetExec(NewExecWithURL(client, index)))
-	if err := CreateIndex(client); err != nil {
-		panic(err)
-	}
+	options = append(options, SetExec(NewExecWithURL(client, tableName)))
 	return New(options...)
 }
 
@@ -127,7 +120,7 @@ func New(opt ...Option) *Hook {
 	}
 }
 
-// Hook 将日志发送到 es 数据库
+// Hook 将日志发送到数据库
 type Hook struct {
 	opts options
 	q    *queue.Queue
@@ -176,7 +169,7 @@ func (h *Hook) exec(entry *entry.Entry) {
 	}
 	err := h.opts.exec.Exec(entry)
 	if err != nil && h.opts.out != nil {
-		fmt.Fprintf(h.opts.out, "[es-Hook] Execution error: %s", err.Error())
+		fmt.Fprintf(h.opts.out, "[Mongo-Hook] Execution error: %s", err.Error())
 	}
 }
 

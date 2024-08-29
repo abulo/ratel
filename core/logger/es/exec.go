@@ -15,21 +15,24 @@ type ExecCloser interface {
 
 type defaultExec struct {
 	client   *elasticsearch.Client
+	index    string
 	canClose bool
 }
 
 // NewExec create an exec instance
-func NewExec(client *elasticsearch.Client) ExecCloser {
+func NewExec(client *elasticsearch.Client, index string) ExecCloser {
 	return &defaultExec{
 		client:   client,
+		index:    index,
 		canClose: true,
 	}
 }
 
 // NewExecWithURL create an exec instance
-func NewExecWithURL(client *elasticsearch.Client) ExecCloser {
+func NewExecWithURL(client *elasticsearch.Client, index string) ExecCloser {
 	return &defaultExec{
 		client:   client,
+		index:    index,
 		canClose: true,
 	}
 }
@@ -37,7 +40,7 @@ func NewExecWithURL(client *elasticsearch.Client) ExecCloser {
 // Exec ...
 func (e *defaultExec) Exec(entry *entry.Entry) error {
 	ctx := context.Background()
-	_, err := e.client.Index().Index("logger_entry").Id(uuid.New().String()).BodyJson(entry).Do(ctx)
+	_, err := e.client.Index().Index(e.index).Id(uuid.New().String()).BodyJson(entry).Do(ctx)
 	if err != nil {
 		return err
 	}

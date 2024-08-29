@@ -3,10 +3,10 @@ module github.com/abulo/ratel/v3
 go 1.23
 
 require (
-	dario.cat/mergo v1.0.0
+	dario.cat/mergo v1.0.1
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/BurntSushi/toml v1.4.0
-	github.com/ClickHouse/clickhouse-go/v2 v2.27.1
+	github.com/ClickHouse/clickhouse-go/v2 v2.28.1
 	github.com/cloudwego/hertz v0.9.2
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
@@ -24,8 +24,8 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.9
 	github.com/hashicorp/hcl v1.0.0
-	github.com/hashicorp/hcl/v2 v2.21.0
-	github.com/issue9/term/v3 v3.2.9
+	github.com/hashicorp/hcl/v2 v2.22.0
+	github.com/issue9/term/v3 v3.3.0
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.9
@@ -35,7 +35,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.6
-	github.com/prometheus/client_golang v1.19.1
+	github.com/prometheus/client_golang v1.20.2
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/smallnest/weighted v0.0.0-20230419055410-36b780e40a7a
@@ -55,8 +55,8 @@ require (
 	golang.org/x/mod v0.20.0
 	golang.org/x/sync v0.8.0
 	golang.org/x/text v0.17.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240812133136-8ffd90a71988
-	google.golang.org/grpc v1.65.0
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240827150818-7e3bb234dfed
+	google.golang.org/grpc v1.66.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -103,7 +103,7 @@ require (
 	github.com/issue9/errwrap v0.3.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.17.7 // indirect
+	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
@@ -115,14 +115,15 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
+	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nyaruka/phonenumbers v1.0.55 // indirect
 	github.com/paulmach/orb v0.11.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_model v0.5.0 // indirect
-	github.com/prometheus/common v0.48.0 // indirect
-	github.com/prometheus/procfs v0.12.0 // indirect
+	github.com/prometheus/client_model v0.6.1 // indirect
+	github.com/prometheus/common v0.55.0 // indirect
+	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -145,11 +146,11 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea // indirect
-	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/sys v0.23.0 // indirect
+	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/term v0.23.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240604185151-ef581f913117 // indirect
 )
 
 replace github.com/bytedance/sonic/loader => github.com/bytedance/sonic/loader v0.2.0
