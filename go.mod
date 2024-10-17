@@ -6,7 +6,7 @@ require (
 	dario.cat/mergo v1.0.1
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/BurntSushi/toml v1.4.0
-	github.com/ClickHouse/clickhouse-go/v2 v2.29.0
+	github.com/ClickHouse/clickhouse-go/v2 v2.30.0
 	github.com/cloudwego/hertz v0.9.3
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
@@ -25,7 +25,7 @@ require (
 	github.com/h2non/bimg v1.1.9
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/hcl/v2 v2.22.0
-	github.com/issue9/term/v3 v3.3.1
+	github.com/issue9/term/v3 v3.3.2
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.9
@@ -35,8 +35,8 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.6
-	github.com/prometheus/client_golang v1.20.4
-	github.com/redis/go-redis/v9 v9.6.2
+	github.com/prometheus/client_golang v1.20.5
+	github.com/redis/go-redis/v9 v9.7.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/smallnest/weighted v0.0.0-20230419055410-36b780e40a7a
 	github.com/spf13/cast v1.7.0
@@ -55,7 +55,7 @@ require (
 	golang.org/x/mod v0.21.0
 	golang.org/x/sync v0.8.0
 	golang.org/x/text v0.19.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241007155032-5fefd90f89a9
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53
 	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.35.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -67,7 +67,7 @@ require (
 	github.com/ClickHouse/ch-go v0.61.5 // indirect
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
-	github.com/andybalholm/brotli v1.1.0 // indirect
+	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -146,7 +146,7 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea // indirect
-	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/term v0.25.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
