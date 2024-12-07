@@ -10,6 +10,7 @@ import (
 	"github.com/abulo/ratel/v3/toolkit/base"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/fatih/color"
+	"github.com/spf13/cast"
 )
 
 func GenerateConvert(moduleParam base.ModuleParam, fullConvertDir, tableName string) {
@@ -56,7 +57,7 @@ func GenerateConvert(moduleParam base.ModuleParam, fullConvertDir, tableName str
 
 func ConvertTemplate() string {
 	if exists := base.Config.Exists("template.Convert"); exists {
-		filePath := path.Join(base.Path, base.Config.String("template.Convert"))
+		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.Convert"))
 		if util.FileExists(filePath) {
 			if tplString, err := util.FileGetContents(filePath); err == nil {
 				return tplString

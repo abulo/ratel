@@ -38,6 +38,14 @@ func SymbolChar() string {
 	return "`"
 }
 
+func PathChar(str ...string) string {
+	var pathList []string
+	pathList = append(pathList, "`")
+	pathList = append(pathList, str...)
+	pathList = append(pathList, "`")
+	return strings.Join(pathList, "")
+}
+
 func Add(numberOne, numberTwo any) int {
 	return cast.ToInt(numberOne) + cast.ToInt(numberTwo)
 }

@@ -34,10 +34,10 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	// 创建文件夹
-	dirModule := path.Join(base.Path, "module")
+	dirModule := path.Join(cast.ToString(base.Path), "module")
 	_ = os.MkdirAll(dirModule, os.ModePerm)
 	// 创建文件夹
-	dirProto := path.Join(base.Path, "proto")
+	dirProto := path.Join(cast.ToString(base.Path), "proto")
 	_ = os.MkdirAll(dirProto, os.ModePerm)
 
 	//创建数据
@@ -65,18 +65,18 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 	// 文件夹的路径
-	fullModuleDir := path.Join(base.Path, "module", dir)
+	fullModuleDir := path.Join(cast.ToString(base.Path), "module", dir)
 	_ = os.MkdirAll(fullModuleDir, os.ModePerm)
 
 	// 文件夹的路径
-	fullProtoDir := path.Join(base.Path, "proto")
+	fullProtoDir := path.Join(cast.ToString(base.Path), "proto")
 	_ = os.MkdirAll(fullProtoDir, os.ModePerm)
 
 	// 文件夹的路径
-	fullServiceDir := path.Join(base.Path, "service", dir)
+	fullServiceDir := path.Join(cast.ToString(base.Path), "service", dir)
 	_ = os.MkdirAll(fullServiceDir, os.ModePerm)
 
-	fullConvertDir := path.Join(base.Path, "service", dir)
+	fullConvertDir := path.Join(cast.ToString(base.Path), "service", dir)
 	_ = os.MkdirAll(fullConvertDir, os.ModePerm)
 
 	// 初始化上下文
@@ -136,7 +136,7 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 	//获取 go.mod
-	mod, err := base.ModulePath(path.Join(base.Path, "go.mod"))
+	mod, err := base.ModulePath(path.Join(cast.ToString(base.Path), "go.mod"))
 	if err != nil {
 		fmt.Println("go.mod文件不存在:", color.RedString(err.Error()))
 		return

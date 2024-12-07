@@ -16,13 +16,17 @@ import (
 	"github.com/spf13/cast"
 )
 
-var Config *config.Config
-var Query sql.SqlConn
-var Path string
-var Url string
+var (
+	Config         *config.Config // 配置文件
+	Query          sql.SqlConn    // 数据库连接
+	Path           *string        // 路径
+	Url            *string        // url
+	Driver         *string        // 驱动
+	DefaultDefault = "mysql"      // 默认驱动
+)
 
 func SetUrl(url string) {
-	Url = url
+	Url = &url
 }
 
 // InitPath 初始化路径
@@ -32,13 +36,14 @@ func InitPath() error {
 		fmt.Println("初始化目录错误:", color.RedString(err.Error()))
 		return err
 	}
-	Path = wd
+	Path = &wd
+	Driver = &DefaultDefault
 	return nil
 }
 
 // InitConfig 初始化
 func InitConfig() error {
-	configPath := path.Join(Path, "toolkit.toml")
+	configPath := path.Join(*Path, "toolkit.toml")
 	if !util.FileExists(configPath) {
 		err := errors.New("配置文件不存在")
 		fmt.Println("初始化目录错误:", color.RedString(err.Error()))
@@ -79,6 +84,7 @@ func InitQuery() error {
 	}
 	if DriverName := cast.ToString(Config.String("db.DriverName")); DriverName != "" {
 		opts = append(opts, sql.WithDriverName(DriverName))
+		Driver = &DriverName
 	}
 	// # MaxOpenConns 连接池最多同时打开的连接数
 	// MaxOpenConns = 128

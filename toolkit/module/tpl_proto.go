@@ -11,6 +11,7 @@ import (
 	"github.com/abulo/ratel/v3/toolkit/base"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/fatih/color"
+	"github.com/spf13/cast"
 )
 
 func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, tableName string) {
@@ -55,7 +56,7 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 	cmdImportGrpc.CombinedOutput()
 	//修改自定义 tag
 	// 替换fullServiceDir中 aa 替换成  bb 字符串
-	fullServiceDir = strings.Replace(fullServiceDir, base.Path+"/", "", -1)
+	fullServiceDir = strings.Replace(fullServiceDir, cast.ToString(base.Path)+"/", "", -1)
 	cmdImportTag := exec.Command("protoc-go-inject-tag", "-input="+fullServiceDir+"/"+tableName+".pb.go")
 	cmdImportTag.CombinedOutput()
 
@@ -75,7 +76,7 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 // @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"
 func ProtoTemplate() string {
 	if exists := base.Config.Exists("template.Proto"); exists {
-		filePath := path.Join(base.Path, base.Config.String("template.Proto"))
+		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.Proto"))
 		if util.FileExists(filePath) {
 			if tplString, err := util.FileGetContents(filePath); err == nil {
 				return tplString

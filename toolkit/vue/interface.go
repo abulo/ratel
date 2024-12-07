@@ -9,6 +9,7 @@ import (
 	"github.com/abulo/ratel/v3/toolkit/base"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/fatih/color"
+	"github.com/spf13/cast"
 )
 
 func GenerateInterface(moduleParam base.ModuleParam, fullInterfaceDir, tableName string) {
@@ -51,7 +52,7 @@ func GenerateInterface(moduleParam base.ModuleParam, fullInterfaceDir, tableName
 
 func InterfaceTemplate() string {
 	if exists := base.Config.Exists("template.VueInterface"); exists {
-		filePath := path.Join(base.Path, base.Config.String("template.VueInterface"))
+		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.VueInterface"))
 		if util.FileExists(filePath) {
 			if tplString, err := util.FileGetContents(filePath); err == nil {
 				return tplString

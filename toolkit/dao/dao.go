@@ -12,6 +12,7 @@ import (
 	"github.com/abulo/ratel/v3/toolkit/base"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/fatih/color"
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +33,7 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	// 创建文件夹
-	dir := path.Join(base.Path, "dao")
+	dir := path.Join(cast.ToString(base.Path), "dao")
 	_ = os.MkdirAll(dir, os.ModePerm)
 
 	// 初始化上下文
@@ -83,7 +84,7 @@ func Run(cmd *cobra.Command, args []string) {
 
 // GenerateDao
 func GenerateDao(table base.Table, column []base.Column) {
-	filePath := path.Join(base.Path, "dao", table.TableName+".go")
+	filePath := path.Join(cast.ToString(base.Path), "dao", table.TableName+".go")
 	//存在文件,需要先将文件删除掉
 	if util.FileExists(filePath) {
 		util.Delete(filePath)
@@ -118,7 +119,7 @@ func GenerateDao(table base.Table, column []base.Column) {
 // DaoTemplate 模板
 func DaoTemplate() string {
 	if exists := base.Config.Exists("template.Dao"); exists {
-		filePath := path.Join(base.Path, base.Config.String("template.Dao"))
+		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.Dao"))
 		if util.FileExists(filePath) {
 			if tplString, err := util.FileGetContents(filePath); err == nil {
 				return tplString

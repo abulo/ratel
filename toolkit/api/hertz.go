@@ -5,12 +5,13 @@ import (
 
 	"github.com/abulo/ratel/v3/toolkit/base"
 	"github.com/abulo/ratel/v3/util"
+	"github.com/spf13/cast"
 )
 
 // HertzTemplate 模板
 func HertzTemplate() string {
 	if exists := base.Config.Exists("template.Hertz"); exists {
-		filePath := path.Join(base.Path, base.Config.String("template.Hertz"))
+		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.Hertz"))
 		if util.FileExists(filePath) {
 			if tplString, err := util.FileGetContents(filePath); err == nil {
 				return tplString

@@ -9,6 +9,7 @@ import (
 	"github.com/abulo/ratel/v3/toolkit/base"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/fatih/color"
+	"github.com/spf13/cast"
 )
 
 // viewUrl: 页面路径
@@ -62,7 +63,7 @@ func GeneratePage(moduleParam base.ModuleParam, fullPageDir, viewUrl, tableName 
 
 func PageTemplate() string {
 	if exists := base.Config.Exists("template.VuePage"); exists {
-		filePath := path.Join(base.Path, base.Config.String("template.VuePage"))
+		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.VuePage"))
 		if util.FileExists(filePath) {
 			if tplString, err := util.FileGetContents(filePath); err == nil {
 				return tplString

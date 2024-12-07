@@ -9,18 +9,19 @@ import (
 	"github.com/abulo/ratel/v3/toolkit/base"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/fatih/color"
+	"github.com/spf13/cast"
 )
 
 func ApiList(key string) string {
-	apiUrl := base.Url
+	apiUrl := cast.ToString(base.Url)
 	list := make(map[string]string)
-	list["add"] = base.SymbolChar() + apiUrl + base.SymbolChar()
-	list["update"] = base.SymbolChar() + apiUrl + "/${id}/update" + base.SymbolChar()
-	list["item"] = base.SymbolChar() + apiUrl + "/${id}/item" + base.SymbolChar()
-	list["delete"] = base.SymbolChar() + apiUrl + "/${id}/delete" + base.SymbolChar()
-	list["drop"] = base.SymbolChar() + apiUrl + "/${id}/drop" + base.SymbolChar()
-	list["recover"] = base.SymbolChar() + apiUrl + "/${id}/recover" + base.SymbolChar()
-	list["list"] = base.SymbolChar() + apiUrl + base.SymbolChar()
+	list["add"] = base.PathChar(apiUrl)
+	list["update"] = base.PathChar(apiUrl, "/${id}/update")
+	list["item"] = base.PathChar(apiUrl, "/${id}/item")
+	list["delete"] = base.PathChar(apiUrl, "/${id}/delete")
+	list["drop"] = base.PathChar(apiUrl, "/${id}/drop")
+	list["recover"] = base.PathChar(apiUrl, "/${id}/recover")
+	list["list"] = base.PathChar(apiUrl)
 	if val, ok := list[key]; ok {
 		return val
 	}
@@ -67,7 +68,7 @@ func GenerateMethod(moduleParam base.ModuleParam, apiUrl, fullMethodDir, tableNa
 
 func MethodTemplate() string {
 	if exists := base.Config.Exists("template.VueMethod"); exists {
-		filePath := path.Join(base.Path, base.Config.String("template.VueMethod"))
+		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.VueMethod"))
 		if util.FileExists(filePath) {
 			if tplString, err := util.FileGetContents(filePath); err == nil {
 				return tplString

@@ -12,6 +12,7 @@ import (
 
 	"github.com/abulo/ratel/v3/toolkit/base"
 	"github.com/fatih/color"
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 )
 
@@ -233,7 +234,7 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 		changelogBuilder.WriteString("\n")
 	}
-	outApiFile := path.Join(base.Path, "CHANGELOG.md")
+	outApiFile := path.Join(cast.ToString(base.Path), "CHANGELOG.md")
 	file, err := os.OpenFile(outApiFile, os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
 		fmt.Println("文件句柄错误:", color.RedString(err.Error()))

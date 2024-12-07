@@ -401,15 +401,15 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	if util.InArray("interface", tplSelected) {
-		interfaceDir := path.Join(base.Path, base.Config.String("vue.InterfaceDir"))
+		interfaceDir := path.Join(cast.ToString(base.Path), base.Config.String("vue.InterfaceDir"))
 		GenerateInterface(moduleParam, interfaceDir, tableName)
 	}
 	if util.InArray("module", tplSelected) {
-		methodDir := path.Join(base.Path, base.Config.String("vue.ModulesDir"))
+		methodDir := path.Join(cast.ToString(base.Path), base.Config.String("vue.ModulesDir"))
 		GenerateMethod(moduleParam, apiUrl, methodDir, tableName)
 	}
 	if util.InArray("page", tplSelected) {
-		pageDir := path.Join(base.Path, base.Config.String("vue.PageDir"))
+		pageDir := path.Join(cast.ToString(base.Path), base.Config.String("vue.PageDir"))
 		GeneratePage(moduleParam, pageDir, viewUrl, tableName)
 	}
 }

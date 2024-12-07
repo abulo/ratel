@@ -5,12 +5,13 @@ import (
 
 	"github.com/abulo/ratel/v3/toolkit/base"
 	"github.com/abulo/ratel/v3/util"
+	"github.com/spf13/cast"
 )
 
 // GinTemplate 模板
 func GinTemplate() string {
 	if exists := base.Config.Exists("template.Gin"); exists {
-		filePath := path.Join(base.Path, base.Config.String("template.Gin"))
+		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.Gin"))
 		if util.FileExists(filePath) {
 			if tplString, err := util.FileGetContents(filePath); err == nil {
 				return tplString

@@ -76,7 +76,7 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	// 文件夹的路径
-	fullApiDir := path.Join(base.Path, "api", dir)
+	fullApiDir := path.Join(cast.ToString(cast.ToString(base.Path)), "api", dir)
 	_ = os.MkdirAll(fullApiDir, os.ModePerm)
 
 	// 初始化上下文
@@ -138,7 +138,7 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	//获取 go.mod
-	mod, err := base.ModulePath(path.Join(base.Path, "go.mod"))
+	mod, err := base.ModulePath(path.Join(cast.ToString(base.Path), "go.mod"))
 	if err != nil {
 		fmt.Println("go.mod文件不存在:", color.RedString(err.Error()))
 		return

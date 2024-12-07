@@ -10,6 +10,7 @@ import (
 	"github.com/abulo/ratel/v3/toolkit/base"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/fatih/color"
+	"github.com/spf13/cast"
 )
 
 func GenerateModule(moduleParam base.ModuleParam, fullModuleDir, tableName string) {
@@ -57,7 +58,7 @@ func GenerateModule(moduleParam base.ModuleParam, fullModuleDir, tableName strin
 // ModuleTemplate 模板
 func ModuleTemplate() string {
 	if exists := base.Config.Exists("template.Module"); exists {
-		filePath := path.Join(base.Path, base.Config.String("template.Module"))
+		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.Module"))
 		if util.FileExists(filePath) {
 			if tplString, err := util.FileGetContents(filePath); err == nil {
 				return tplString
