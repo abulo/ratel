@@ -3,6 +3,7 @@ package sql
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -10,6 +11,26 @@ import (
 	"github.com/abulo/ratel/v3/stores/null"
 	"github.com/pkg/errors"
 )
+
+func replaceQuery(query, driverName string) string {
+	if driverName != postgresDriverName {
+		return query
+	}
+	// 使用正则表达式找到所有 "?" 并替换成 $1, $2, ...
+	re := regexp.MustCompile(`\?`)
+	counter := 0
+	return re.ReplaceAllStringFunc(query, func(_ string) string {
+		counter++
+		return fmt.Sprintf("$%d", counter)
+	})
+}
+
+func replaceQuerySupportReturning(query, column string, support bool) string {
+	if !support {
+		return query
+	}
+	return fmt.Sprintf("%s RETURNING %s", query, column)
+}
 
 // Format
 func Format(query string, args ...any) (string, error) {

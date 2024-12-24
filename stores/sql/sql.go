@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	driverMysql      = "mysql"
-	driverClickhouse = "clickhouse"
-	driverPostgres   = "postgres"
+	mysqlDriverName      = "mysql"
+	clickhouseDriverName = "clickhouse"
+	postgresDriverName   = "pgx"
 )
 
 type (
@@ -52,11 +52,11 @@ func NewClient(opts ...Option) (*Client, error) {
 // driverUrl
 func (c *Client) dns() string {
 	switch c.DriverName {
-	case driverMysql:
+	case mysqlDriverName:
 		return c.mysqlDns()
-	case driverClickhouse:
+	case clickhouseDriverName:
 		return c.clickhouseDns()
-	case driverPostgres:
+	case postgresDriverName:
 		return c.postgresDns()
 	default:
 		logger.Logger.Panic(errors.New("driverName not support"))
@@ -67,11 +67,11 @@ func (c *Client) dns() string {
 // NewSqlClient 代理
 func (c *Client) NewSqlClient(opts ...SqlOption) SqlConn {
 	switch c.DriverName {
-	case driverMysql:
+	case mysqlDriverName:
 		return c.NewMysql(opts...)
-	case driverClickhouse:
+	case clickhouseDriverName:
 		return c.NewClickhouse(opts...)
-	case driverPostgres:
+	case postgresDriverName:
 		return c.NewPostgres(opts...)
 	default:
 		logger.Logger.Panic(errors.New("driverName not support"))

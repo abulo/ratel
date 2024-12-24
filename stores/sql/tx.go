@@ -56,6 +56,7 @@ type (
 		driverName     string // 驱动
 		dbName         string
 		addr           string
+		Returning      *Returning
 	}
 )
 
@@ -126,6 +127,19 @@ func transactOnConn(ctx context.Context, conn *sql.DB, pool *pool, b beginnable,
 	}()
 
 	return fn(ctx, tx)
+}
+
+func (db txSession) SupportReturning(column string) txSession {
+	res := &Returning{
+		Support: true,
+		Column:  column,
+	}
+	db.Returning = res
+	return db
+}
+func (db txSession) CleanSupportReturning() txSession {
+	db.Returning = nil
+	return db
 }
 
 // MultiInsert 批量插入
@@ -236,6 +250,9 @@ func (db txSession) QueryRows(ctx context.Context, query string, args ...any) *R
 }
 
 func (db txSession) ExecCtx(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
+	// 将query里面的?,?,?替换成$1,$2,$3
+	query = replaceQuery(query, db.driverName)
+	query = replaceQuerySupportReturning(query, db.Returning.Column, db.Returning.Support)
 	ctx = getCtx(ctx)
 	start := time.Now()
 	conn := db.Tx
@@ -273,10 +290,38 @@ func (db txSession) ExecCtx(ctx context.Context, query string, args ...any) (res
 				logger.Logger.Error("Error closing stmt: ", err)
 			}
 		}()
-		result, err = stmt.ExecContext(ctx, args...)
+		if db.Returning != nil && db.Returning.Support {
+			resultNew, errNew := stmt.QueryContext(ctx, args...)
+			err = errNew
+			if err != nil {
+				db.CleanSupportReturning()
+				return
+			}
+			rows := &Rows{
+				rows: resultNew,
+				err:  nil,
+			}
+			result = ToReturning(rows, db.Returning.Column)
+		} else {
+			result, err = stmt.ExecContext(ctx, args...)
+		}
 	} else {
-		result, err = conn.ExecContext(ctx, query, args...)
+		if db.Returning != nil && db.Returning.Support {
+			resultNew, errNew := conn.QueryContext(ctx, query, args...)
+			err = errNew
+			if err != nil {
+				return
+			}
+			rows := &Rows{
+				rows: resultNew,
+				err:  nil,
+			}
+			result = ToReturning(rows, db.Returning.Column)
+		} else {
+			result, err = conn.ExecContext(ctx, query, args...)
+		}
 	}
+	db.CleanSupportReturning()
 	if !db.disableMetric {
 		cost := time.Since(start)
 		if err != nil {
@@ -290,6 +335,8 @@ func (db txSession) ExecCtx(ctx context.Context, query string, args ...any) (res
 }
 
 func (db txSession) QueryCtx(ctx context.Context, query string, args ...any) (result *sql.Rows, err error) {
+	// 将query里面的?,?,?替换成$1,$2,$3
+	query = replaceQuery(query, db.driverName)
 	ctx = getCtx(ctx)
 	start := time.Now()
 	conn := db.Tx

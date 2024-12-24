@@ -59,12 +59,12 @@ func newDBConnection(driverName, dns string, pool *pool) (*sql.DB, error) {
 
 func dbConnection(driverName, dns string) (*sql.DB, error) {
 	switch driverName {
-	case driverMysql:
-		return mysqlOpen(driverName, dns)
-	case driverClickhouse:
-		return clickhouseOpen(driverName, dns)
-	case driverPostgres:
-		return postgresOpen(driverName, dns)
+	case mysqlDriverName:
+		return MySqlOpen(driverName, dns)
+	case clickhouseDriverName:
+		return ClickHouseOpen(driverName, dns)
+	case postgresDriverName:
+		return PgxOpen(driverName, dns)
 	default:
 		return nil, errors.Errorf("unsupported driver: %s", driverName)
 	}

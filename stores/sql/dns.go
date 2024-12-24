@@ -51,11 +51,14 @@ func (c *Client) clickhouseDns() string {
 }
 
 func (c *Client) postgresDns() string {
-	link := c.Username + ":" + c.Password + "@tcp(" + c.Host + ":" + c.Port + ")/" + c.Database + "?charset=" + c.Charset + "&loc=" + c.TimeZone
-	if c.ParseTime {
-		link = link + "&parseTime=true"
-	} else {
-		link = link + "&parseTime=false"
+	link := "postgres://"
+	if !util.Empty(c.Username) {
+		link = link + c.Username
 	}
+	link = link + ":"
+	if !util.Empty(c.Password) {
+		link = link + c.Password
+	}
+	link = link + "@" + c.Host + ":" + c.Port + "/" + c.Database + "?sslmode=disable"
 	return link
 }

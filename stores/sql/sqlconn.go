@@ -3,9 +3,9 @@ package sql
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"os"
 	"runtime"
-	"strconv"
 	"time"
 
 	"github.com/abulo/ratel/v3/core/logger"
@@ -58,6 +58,7 @@ type (
 		driverName     string // 驱动
 		dbName         string
 		addr           string
+		Returning      *Returning
 	}
 
 	// beginnable func(*sql.DB) (trans, error)
@@ -68,7 +69,15 @@ type (
 	// 	Query(query string, args ...any) (*sql.Rows, error)
 	// 	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
 	// }
+
+	// Row is the result of calling QueryRow to select a single row.
+	Returning struct {
+		Column  string
+		Support bool
+	}
 )
+
+var ErrLastInsertId = errors.New("LastInsertId is not supported by this driver")
 
 // NewSqlConn returns a SqlConn with given driver name and dns.
 func NewSqlConn(driverName, dns string, pool *pool, opts ...SqlOption) SqlConn {
@@ -119,7 +128,7 @@ func getCtx(ctx context.Context) context.Context {
 }
 
 func ResultAccept(err error) error {
-	if err == nil || err == sql.ErrNoRows || err == sql.ErrTxDone || err == context.Canceled {
+	if err == nil || err == sql.ErrNoRows || err == sql.ErrTxDone || err == context.Canceled || err == ErrLastInsertId {
 		return nil
 	}
 	return err
@@ -128,6 +137,19 @@ func ResultAccept(err error) error {
 // Close closes the connection.
 func (db *commonSqlConn) Close() error {
 	return nil
+}
+
+func (db *commonSqlConn) SupportReturning(column string) *commonSqlConn {
+	res := &Returning{
+		Support: true,
+		Column:  column,
+	}
+	db.Returning = res
+	return db
+}
+func (db *commonSqlConn) CleanSupportReturning() *commonSqlConn {
+	db.Returning = nil
+	return db
 }
 
 // MultiInsert 批量插入
@@ -222,7 +244,7 @@ func (db *commonSqlConn) Count(ctx context.Context, query string, args ...any) (
 		return 0, nil
 	}
 	v := d["_C"]
-	return strconv.ParseInt(v, 10, 0)
+	return cast.ToInt64(v), nil
 }
 
 // QueryRow returns a single row from the database.
@@ -239,6 +261,9 @@ func (db *commonSqlConn) QueryRows(ctx context.Context, query string, args ...an
 
 // ExecCtx executes a query without returning any rows.
 func (db *commonSqlConn) ExecCtx(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
+	// 将query里面的?,?,?替换成$1,$2,$3
+	query = replaceQuery(query, db.driverName)
+	query = replaceQuerySupportReturning(query, db.Returning.Column, db.Returning.Support)
 	ctx = getCtx(ctx)
 	start := time.Now()
 	err = db.brk.DoWithAcceptable(func() error {
@@ -273,6 +298,7 @@ func (db *commonSqlConn) ExecCtx(ctx context.Context, query string, args ...any)
 			//添加预处理
 			stmt, err = conn.PrepareContext(ctx, query)
 			if err != nil {
+				db.CleanSupportReturning()
 				return err
 			}
 			defer func() {
@@ -280,10 +306,37 @@ func (db *commonSqlConn) ExecCtx(ctx context.Context, query string, args ...any)
 					logger.Logger.Error("Error closing stmt: ", err)
 				}
 			}()
-			result, err = stmt.ExecContext(ctx, args...)
+			if db.Returning != nil && db.Returning.Support {
+				resultNew, errNew := stmt.QueryContext(ctx, args...)
+				err = errNew
+				if errNew != nil {
+					return err
+				}
+				rows := &Rows{
+					rows: resultNew,
+					err:  nil,
+				}
+				result = ToReturning(rows, db.Returning.Column)
+			} else {
+				result, err = stmt.ExecContext(ctx, args...)
+			}
 		} else {
-			result, err = conn.ExecContext(ctx, query, args...)
+			if db.Returning != nil && db.Returning.Support {
+				resultNew, errNew := conn.QueryContext(ctx, query, args...)
+				err = errNew
+				if errNew != nil {
+					return err
+				}
+				rows := &Rows{
+					rows: resultNew,
+					err:  nil,
+				}
+				result = ToReturning(rows, db.Returning.Column)
+			} else {
+				result, err = conn.ExecContext(ctx, query, args...)
+			}
 		}
+		db.CleanSupportReturning()
 		if !db.disableMetric {
 			cost := time.Since(start)
 			if err != nil {
@@ -300,6 +353,8 @@ func (db *commonSqlConn) ExecCtx(ctx context.Context, query string, args ...any)
 
 // QueryCtx executes a query that returns rows, typically a SELECT.
 func (db *commonSqlConn) QueryCtx(ctx context.Context, query string, args ...any) (result *sql.Rows, err error) {
+	// 将query里面的?,?,?替换成$1,$2,$3
+	query = replaceQuery(query, db.driverName)
 	ctx = getCtx(ctx)
 	start := time.Now()
 	err = db.brk.DoWithAcceptable(func() error {
@@ -346,6 +401,7 @@ func (db *commonSqlConn) QueryCtx(ctx context.Context, query string, args ...any
 		} else {
 			result, err = conn.QueryContext(ctx, query, args...)
 		}
+		// db.CleanSupportReturning()
 		if !db.disableMetric {
 			cost := time.Since(start)
 			if err != nil {
@@ -362,7 +418,7 @@ func (db *commonSqlConn) QueryCtx(ctx context.Context, query string, args ...any
 
 // acceptable returns true if the error is acceptable.
 func (db *commonSqlConn) acceptable(err error) bool {
-	ok := err == nil || err == sql.ErrNoRows || err == sql.ErrTxDone || err == context.Canceled
+	ok := err == nil || err == sql.ErrNoRows || err == sql.ErrTxDone || err == context.Canceled || err == ErrLastInsertId
 	if db.accept == nil {
 		return ok
 	}

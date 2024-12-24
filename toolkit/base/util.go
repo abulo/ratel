@@ -23,6 +23,9 @@ func Helper(name string) string {
 
 // Char 对数据库参数进行编码
 func Char(in string) string {
+	if cast.ToString(Driver) == "pgx" {
+		return "\\\"" + in + "\\\""
+	}
 	return "`" + in + "`"
 }
 

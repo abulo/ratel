@@ -169,7 +169,7 @@ func (h *Hook) exec(entry *entry.Entry) {
 	}
 	err := h.opts.exec.Exec(entry)
 	if err != nil && h.opts.out != nil {
-		fmt.Fprintf(h.opts.out, "[Mongo-Hook] Execution error: %s", err.Error())
+		fmt.Fprintf(h.opts.out, "[Sql-Hook] Execution error: %s", err.Error())
 	}
 }
 

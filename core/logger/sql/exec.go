@@ -45,10 +45,11 @@ func (e *defaultExec) Exec(entry *entry.Entry) error {
 	daoItem.Func = null.StringFrom(entry.Func)
 	daoItem.Message = null.StringFrom(entry.Message)
 	daoItem.Level = null.StringFrom(entry.Level)
+	daoItem.Timestamp = null.TimeStampFrom(entry.Timestamp)
 	data, _ := json.Marshal(entry.Data)
 	daoItem.Data = null.JSONFrom(data)
 	builder := sql.NewBuilder()
-	query, args, err := builder.Table(e.tableName).Insert(data)
+	query, args, err := builder.Table(e.tableName).Insert(daoItem)
 	if err != nil {
 		return err
 	}
@@ -58,12 +59,12 @@ func (e *defaultExec) Exec(entry *entry.Entry) error {
 }
 
 type Dao struct {
-	Id        *int64        `db:"id,-" json:"id"`
-	Host      null.String   `db:"host" json:"host"`
-	Timestamp null.DateTime `db:"timestamp" json:"timestamp"`
-	File      null.String   `db:"file" json:"file"`
-	Func      null.String   `db:"func" json:"func"`
-	Message   null.String   `db:"message" json:"message"`
-	Level     null.String   `db:"level" json:"level"`
-	Data      null.JSON     `db:"data" json:"data"`
+	Id        *int64         `db:"id,-" json:"id"`
+	Host      null.String    `db:"host" json:"host"`
+	Timestamp null.TimeStamp `db:"timestamp" json:"timestamp"`
+	File      null.String    `db:"file" json:"file"`
+	Func      null.String    `db:"func" json:"func"`
+	Message   null.String    `db:"message" json:"message"`
+	Level     null.String    `db:"level" json:"level"`
+	Data      null.JSON      `db:"data" json:"data"`
 }

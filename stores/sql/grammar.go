@@ -54,7 +54,8 @@ func (g Grammar) compileLimit(isUnion bool) string {
 		offset = g.builder.offset
 	}
 	if limit > 0 {
-		return " LIMIT " + strconv.FormatInt(offset, 10) + "," + strconv.FormatInt(limit, 10)
+		// return " LIMIT " + strconv.FormatInt(offset, 10) + "," + strconv.FormatInt(limit, 10)
+		return " LIMIT " + strconv.FormatInt(limit, 10) + " OFFSET " + strconv.FormatInt(offset, 10)
 	}
 	return ""
 

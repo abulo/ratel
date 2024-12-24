@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/abulo/ratel/v3/core/logger"
+	"github.com/spf13/cast"
 )
 
 // Row 获取记录
@@ -244,4 +245,39 @@ func (r *Rows) ToStruct(st any) error {
 	}
 	stVal.Elem().Set(stValInd)
 	return nil
+}
+
+type ReturningRows struct {
+	Rows   *Rows
+	Column string
+}
+
+func ToReturning(rows *Rows, column string) ReturningRows {
+	return ReturningRows{
+		Rows:   rows,
+		Column: column,
+	}
+}
+
+func (dr ReturningRows) LastInsertId() (int64, error) {
+	row := &Row{
+		rows: dr.Rows,
+		err:  dr.Rows.err,
+	}
+	res, err := row.ToMap()
+	if err != nil {
+		return 0, err
+	}
+	if id, ok := res[dr.Column]; ok {
+		return cast.ToInt64(id), nil
+	}
+	return 0, fmt.Errorf("no last insert id found")
+}
+
+func (dr ReturningRows) RowsAffected() (int64, error) {
+	res, err := dr.Rows.ToMap()
+	if err != nil {
+		return 0, err
+	}
+	return cast.ToInt64(len(res)), nil
 }

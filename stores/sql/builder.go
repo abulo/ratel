@@ -62,6 +62,7 @@ type Builder struct {
 	args      []any
 	whereArgs []any
 	data      []map[string]any
+	driver    string
 }
 type join struct {
 	table    string
@@ -81,7 +82,19 @@ type w struct {
 
 // NewBuilder 创建查询构造器
 func NewBuilder() *Builder {
-	return &Builder{}
+	builder := &Builder{}
+	// builder.SetDriver("mysql")
+
+	return builder
+}
+
+func (builder *Builder) SetDriver(driver string) *Builder {
+	builder.driver = driver
+	return builder
+}
+
+func (builder *Builder) GetDriver() string {
+	return builder.driver
 }
 
 // Table 设置操作的表名称

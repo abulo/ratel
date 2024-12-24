@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func clickhouseOpen(driverName, dns string) (*sql.DB, error) {
+func ClickHouseOpen(driverName, dns string) (*sql.DB, error) {
 	db, err := sql.Open(driverName, dns)
 	if err != nil {
 		return nil, errors.Wrapf(err, "open clickhouse connection failed, dns: %s", dns)

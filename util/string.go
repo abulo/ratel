@@ -37,7 +37,8 @@ var tagPatterns = []string{
 
 // StrTrim 去除空格
 func StrTrim(str string) string {
-	return strings.TrimSpace(str)
+	// return strings.TrimSpace(str)
+	return strings.Join(strings.Fields(str), "")
 }
 
 // StrPos Strpos strpos()
