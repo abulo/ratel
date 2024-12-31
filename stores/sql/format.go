@@ -25,12 +25,12 @@ func replaceQuery(query, driverName string) string {
 	})
 }
 
-func replaceQuerySupportReturning(query, column string, support bool) string {
-	if !support {
-		return query
-	}
-	return fmt.Sprintf("%s RETURNING %s", query, column)
-}
+// func replaceQuerySupportReturning(query, column string, support bool) string {
+// 	if !support {
+// 		return query
+// 	}
+// 	return fmt.Sprintf("%s RETURNING %s", query, column)
+// }
 
 // Format
 func Format(query string, args ...any) (string, error) {

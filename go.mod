@@ -55,7 +55,7 @@ require (
 	golang.org/x/mod v0.22.0
 	golang.org/x/sync v0.10.0
 	golang.org/x/text v0.21.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241223144023-3abc09e42ca8
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241230172942-26aa7a208def
 	google.golang.org/grpc v1.69.2
 	google.golang.org/protobuf v1.36.1
 	gopkg.in/yaml.v2 v2.4.0

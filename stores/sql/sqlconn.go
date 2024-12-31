@@ -58,7 +58,6 @@ type (
 		driverName     string // 驱动
 		dbName         string
 		addr           string
-		Returning      *Returning
 	}
 
 	// beginnable func(*sql.DB) (trans, error)
@@ -69,12 +68,7 @@ type (
 	// 	Query(query string, args ...any) (*sql.Rows, error)
 	// 	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
 	// }
-
 	// Row is the result of calling QueryRow to select a single row.
-	Returning struct {
-		Column  string
-		Support bool
-	}
 )
 
 var ErrLastInsertId = errors.New("LastInsertId is not supported by this driver")
@@ -137,19 +131,6 @@ func ResultAccept(err error) error {
 // Close closes the connection.
 func (db *commonSqlConn) Close() error {
 	return nil
-}
-
-func (db *commonSqlConn) SupportReturning(column string) *commonSqlConn {
-	res := &Returning{
-		Support: true,
-		Column:  column,
-	}
-	db.Returning = res
-	return db
-}
-func (db *commonSqlConn) CleanSupportReturning() *commonSqlConn {
-	db.Returning = nil
-	return db
 }
 
 // MultiInsert 批量插入
@@ -263,7 +244,10 @@ func (db *commonSqlConn) QueryRows(ctx context.Context, query string, args ...an
 func (db *commonSqlConn) ExecCtx(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
 	// 将query里面的?,?,?替换成$1,$2,$3
 	query = replaceQuery(query, db.driverName)
-	query = replaceQuerySupportReturning(query, db.Returning.Column, db.Returning.Support)
+	// if db.CheckReturning() {
+	// 	query = replaceQuerySupportReturning(query, db.Returning.Column, db.Returning.Support)
+	// }
+	// query = replaceQuerySupportReturning(query, db.Returning.Column, db.Returning.Support)
 	ctx = getCtx(ctx)
 	start := time.Now()
 	err = db.brk.DoWithAcceptable(func() error {
@@ -298,7 +282,6 @@ func (db *commonSqlConn) ExecCtx(ctx context.Context, query string, args ...any)
 			//添加预处理
 			stmt, err = conn.PrepareContext(ctx, query)
 			if err != nil {
-				db.CleanSupportReturning()
 				return err
 			}
 			defer func() {
@@ -306,37 +289,10 @@ func (db *commonSqlConn) ExecCtx(ctx context.Context, query string, args ...any)
 					logger.Logger.Error("Error closing stmt: ", err)
 				}
 			}()
-			if db.Returning != nil && db.Returning.Support {
-				resultNew, errNew := stmt.QueryContext(ctx, args...)
-				err = errNew
-				if errNew != nil {
-					return err
-				}
-				rows := &Rows{
-					rows: resultNew,
-					err:  nil,
-				}
-				result = ToReturning(rows, db.Returning.Column)
-			} else {
-				result, err = stmt.ExecContext(ctx, args...)
-			}
+			result, err = stmt.ExecContext(ctx, args...)
 		} else {
-			if db.Returning != nil && db.Returning.Support {
-				resultNew, errNew := conn.QueryContext(ctx, query, args...)
-				err = errNew
-				if errNew != nil {
-					return err
-				}
-				rows := &Rows{
-					rows: resultNew,
-					err:  nil,
-				}
-				result = ToReturning(rows, db.Returning.Column)
-			} else {
-				result, err = conn.ExecContext(ctx, query, args...)
-			}
+			result, err = conn.ExecContext(ctx, query, args...)
 		}
-		db.CleanSupportReturning()
 		if !db.disableMetric {
 			cost := time.Since(start)
 			if err != nil {

@@ -642,8 +642,8 @@ func JSONEncode(val any) ([]byte, error) {
 
 // JSONString ...
 func JSONString(obj any) string {
-	aa, _ := json.Marshal(obj)
-	return string(aa)
+	jsByte, _ := json.Marshal(obj)
+	return cast.ToString(jsByte)
 }
 
 // AddSlashes Addslashes addslashes()
