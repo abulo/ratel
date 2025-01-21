@@ -6,13 +6,11 @@ import (
 	"path"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/abulo/ratel/v3/config"
-	"github.com/abulo/ratel/v3/config/toml"
 	"github.com/abulo/ratel/v3/stores/sql"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/fatih/color"
+	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 )
 
@@ -50,9 +48,11 @@ func InitConfig() error {
 		return err
 	}
 	//加载配置文件
-	Config = config.New("dao")
-	Config.AddDriver(toml.Driver)
-	Config.LoadFiles(configPath)
+	Config = config.New()
+	if err := Config.LoadFile(configPath); err != nil {
+		fmt.Println("初始化目录错误:", color.RedString(err.Error()))
+		return err
+	}
 	return nil
 }
 
