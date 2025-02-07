@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/pkg/errors"
 )
 
@@ -231,13 +230,13 @@ func (lt loggedThrottle) doReq(req func() error, fallback func(err error) error,
 }
 
 func (lt loggedThrottle) logError(err error) error {
-	if err == ErrServiceUnavailable {
-		// if circuit open, not possible to have empty error window
-		errString := fmt.Sprintf(
-			"proc(%s/%d), callee: %s, breaker is open and requests dropped\nlast errors:\n%s",
-			ProcessName(), Pid(), lt.name, lt.errWin)
-		logger.Logger.Warn(errString)
-	}
+	// if err == ErrServiceUnavailable {
+	// 	// if circuit open, not possible to have empty error window
+	// 	errString := fmt.Sprintf(
+	// 		"proc(%s/%d), callee: %s, breaker is open and requests dropped\nlast errors:\n%s",
+	// 		ProcessName(), Pid(), lt.name, lt.errWin)
+	// 	logger.Logger.Warn(errString)
+	// }
 
 	return err
 }

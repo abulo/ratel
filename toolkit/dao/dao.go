@@ -135,15 +135,19 @@ import "github.com/abulo/ratel/v3/stores/null"
 type {{CamelStr .Table.TableName}} struct {
 	{{- range .TableColumn }}
 	{{- if eq .IsNullable "YES" }}
-	{{CamelStr .ColumnName}}	{{Pointer .DataTypeMap.Empty}}{{.DataTypeMap.Empty}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
+	{{CamelStr .ColumnName}}	{{Pointer .DataTypeMap.Empty}}{{.DataTypeMap.Empty}}	{{SymbolChar}}gorm:"column:{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
 	{{- else }}
 	{{- if eq .ColumnKey "PRI" }}
-	{{CamelStr .ColumnName}}	*{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}},PRI
+	{{CamelStr .ColumnName}}	*{{.DataTypeMap.Default}}	{{SymbolChar}}gorm:"column:{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}},PRI
 	{{- else }}
-	{{CamelStr .ColumnName}}	{{Pointer .DataTypeMap.Default}}{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
+	{{CamelStr .ColumnName}}	{{Pointer .DataTypeMap.Default}}{{.DataTypeMap.Default}}	{{SymbolChar}}gorm:"column:{{.ColumnName}}" json:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
 	{{- end}}
 	{{- end}}
 	{{- end}}
+}
+
+func ({{CamelStr .Table.TableName}}) TableName() string {
+	return "{{.Table.TableName}}"
 }
 `
 	return outString

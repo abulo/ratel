@@ -12,11 +12,12 @@ import (
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
+	"gorm.io/gorm"
 )
 
 var (
 	Config         *config.Config // 配置文件
-	Query          sql.SqlConn    // 数据库连接
+	Query          *gorm.DB       // 数据库连接
 	Path           *string        // 路径
 	Url            *string        // url
 	Driver         *string        // 驱动
@@ -58,20 +59,21 @@ func InitConfig() error {
 
 // InitQuery 初始化数据查询
 func InitQuery() error {
-
 	opts := make([]sql.Option, 0)
-
-	if Username := cast.ToString(Config.String("db.Username")); Username != "" {
-		opts = append(opts, sql.WithUsername(Username))
-	}
-	if Password := cast.ToString(Config.String("db.Password")); Password != "" {
-		opts = append(opts, sql.WithPassword(Password))
-	}
+	// DisableMetric = false # 关闭指标采集
+	// DisableTrace = false # 关闭链路追踪
+	// DriverName = "mysql" # 数据库驱动名称
 	if Host := cast.ToString(Config.String("db.Host")); Host != "" {
 		opts = append(opts, sql.WithHost(Host))
 	}
 	if Port := cast.ToString(Config.String("db.Port")); Port != "" {
 		opts = append(opts, sql.WithPort(Port))
+	}
+	if Username := cast.ToString(Config.String("db.Username")); Username != "" {
+		opts = append(opts, sql.WithUsername(Username))
+	}
+	if Password := cast.ToString(Config.String("db.Password")); Password != "" {
+		opts = append(opts, sql.WithPassword(Password))
 	}
 	if Charset := cast.ToString(Config.String("db.Charset")); Charset != "" {
 		opts = append(opts, sql.WithCharset(Charset))
@@ -79,26 +81,20 @@ func InitQuery() error {
 	if Database := cast.ToString(Config.String("db.Database")); Database != "" {
 		opts = append(opts, sql.WithDatabase(Database))
 	}
+	if ParseTime := cast.ToBool(Config.Bool("db.ParseTime")); ParseTime {
+		opts = append(opts, sql.WithParseTime(ParseTime))
+	}
 	if TimeZone := cast.ToString(Config.String("db.TimeZone")); TimeZone != "" {
 		opts = append(opts, sql.WithTimeZone(TimeZone))
 	}
-	if DriverName := cast.ToString(Config.String("db.DriverName")); DriverName != "" {
-		opts = append(opts, sql.WithDriverName(DriverName))
-		Driver = &DriverName
+	if SslMode := cast.ToBool(Config.Bool("db.SslMode")); SslMode {
+		opts = append(opts, sql.WithSslMode(SslMode))
 	}
-	// # MaxOpenConns 连接池最多同时打开的连接数
-	// MaxOpenConns = 128
-	// # MaxIdleConns 连接池里最大空闲连接数。必须要比maxOpenConns小
-	// MaxIdleConns = 32
-	// # MaxLifetime 连接池里面的连接最大存活时长(分钟)
-	// MaxLifetime = 10
-	// # MaxIdleTime 连接池里面的连接最大空闲时长(分钟)
-	// MaxIdleTime = 5
-	if MaxLifetime := cast.ToInt(Config.Int("db.MaxLifetime")); MaxLifetime > 0 {
-		opts = append(opts, sql.WithMaxLifetime(time.Duration(MaxLifetime)*time.Minute))
+	if DialTimeOut := cast.ToString(Config.String("db.DialTimeOut")); DialTimeOut != "" {
+		opts = append(opts, sql.WithDialTimeOut(DialTimeOut))
 	}
-	if MaxIdleTime := cast.ToInt(Config.Int("db.MaxIdleTime")); MaxIdleTime > 0 {
-		opts = append(opts, sql.WithMaxIdleTime(time.Duration(MaxIdleTime)*time.Minute))
+	if ReadTimeOut := cast.ToString(Config.String("db.ReadTimeOut")); ReadTimeOut != "" {
+		opts = append(opts, sql.WithReadTimeOut(ReadTimeOut))
 	}
 	if MaxIdleConns := cast.ToInt(Config.Int("db.MaxIdleConns")); MaxIdleConns > 0 {
 		opts = append(opts, sql.WithMaxIdleConns(MaxIdleConns))
@@ -106,15 +102,27 @@ func InitQuery() error {
 	if MaxOpenConns := cast.ToInt(Config.Int("db.MaxOpenConns")); MaxOpenConns > 0 {
 		opts = append(opts, sql.WithMaxOpenConns(MaxOpenConns))
 	}
-	opts = append(opts, sql.WithDisableMetric(cast.ToBool(Config.Bool("db.DisableMetric"))))
-	opts = append(opts, sql.WithDisableTrace(cast.ToBool(Config.Bool("db.DisableTrace"))))
-	opts = append(opts, sql.WithDisablePrepare(cast.ToBool(Config.Bool("db.DisablePrepare"))))
-	opts = append(opts, sql.WithParseTime(cast.ToBool(Config.Bool("db.ParseTime"))))
+	if MaxLifetime := cast.ToInt(Config.Int("db.MaxLifetime")); MaxLifetime > 0 {
+		opts = append(opts, sql.WithMaxLifetime(time.Duration(MaxLifetime)*time.Second))
+	}
+	if MaxIdleTime := cast.ToInt(Config.Int("db.MaxIdleTime")); MaxIdleTime > 0 {
+		opts = append(opts, sql.WithMaxIdleTime(time.Duration(MaxIdleTime)*time.Second))
+	}
+	if DisableMetric := cast.ToBool(Config.Bool("db.DisableMetric")); DisableMetric {
+		opts = append(opts, sql.WithDisableMetric(DisableMetric))
+	}
+	if DisableTrace := cast.ToBool(Config.Bool("db.DisableTrace")); DisableTrace {
+		opts = append(opts, sql.WithDisableTrace(DisableTrace))
+	}
+	if DriverName := cast.ToString(Config.String("db.DriverName")); DriverName != "" {
+		opts = append(opts, sql.WithDriverName(DriverName))
+		Driver = &DriverName
+	}
 	client, err := sql.NewClient(opts...)
 	if err != nil {
 		return err
 	}
-	Query = client.NewSqlClient()
+	Query, _ = client.SqlConn()
 	return nil
 }
 

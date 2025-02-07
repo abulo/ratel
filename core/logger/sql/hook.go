@@ -8,9 +8,9 @@ import (
 
 	"github.com/abulo/ratel/v3/core/logger/entry"
 	"github.com/abulo/ratel/v3/core/logger/queue"
-	"github.com/abulo/ratel/v3/stores/sql"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 var defaultOptions = options{
@@ -84,7 +84,7 @@ func SetOut(out io.Writer) Option {
 type Option func(*options)
 
 // Default create a default mongo hook
-func Default(client sql.SqlConn, tableName string, opts ...Option) *Hook {
+func Default(client *gorm.DB, tableName string, opts ...Option) *Hook {
 	var options []Option
 	options = append(options, opts...)
 	options = append(options, SetExec(NewExec(client, tableName)))
@@ -92,7 +92,7 @@ func Default(client sql.SqlConn, tableName string, opts ...Option) *Hook {
 }
 
 // DefaultWithURL create a default mongo hook
-func DefaultWithURL(client sql.SqlConn, tableName string, opts ...Option) *Hook {
+func DefaultWithURL(client *gorm.DB, tableName string, opts ...Option) *Hook {
 	var options []Option
 	options = append(options, opts...)
 	options = append(options, SetExec(NewExecWithURL(client, tableName)))

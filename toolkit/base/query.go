@@ -3,7 +3,6 @@ package base
 import (
 	"context"
 
-	"github.com/abulo/ratel/v3/stores/sql"
 	"github.com/spf13/cast"
 )
 
@@ -14,20 +13,20 @@ type DaoParam struct {
 
 // Table 表信息
 type Table struct {
-	TableName    string `db:"TABLE_NAME"`    // 表名
-	TableComment string `db:"TABLE_COMMENT"` // 表注释
+	TableName    string `gorm:"column:TABLE_NAME"`    // 表名
+	TableComment string `gorm:"column:TABLE_COMMENT"` // 表注释
 }
 
 // Column 字段新
 type Column struct {
-	ColumnName      string   `db:"COLUMN_NAME"`    // 字段名
-	IsNullable      string   `db:"IS_NULLABLE"`    // 是否为空
-	DataType        string   `db:"DATA_TYPE"`      // 字段类型
-	ColumnKey       string   `db:"COLUMN_KEY"`     // 是否索引
-	ColumnComment   string   `db:"COLUMN_COMMENT"` // 字段描述
-	PosiTion        int64    // 排序信息
-	DataTypeMap     DataType // 字段类型信息
-	AlisaColumnName string   // 字段名
+	ColumnName      string   `gorm:"column:COLUMN_NAME"`    // 字段名
+	IsNullable      string   `gorm:"column:IS_NULLABLE"`    // 是否为空
+	DataType        string   `gorm:"column:DATA_TYPE"`      // 字段类型
+	ColumnKey       string   `gorm:"column:COLUMN_KEY"`     // 是否索引
+	ColumnComment   string   `gorm:"column:COLUMN_COMMENT"` // 字段描述
+	PosiTion        int64    `gorm:"-"`
+	DataTypeMap     DataType `gorm:"-"`
+	AlisaColumnName string   `gorm:"-"`
 }
 
 // DataType 字段类型信息
@@ -42,8 +41,8 @@ type DataType struct {
 
 // Index 索引信息
 type Index struct {
-	IndexName string `db:"INDEX_NAME"` // 索引名称
-	Field     string `db:"FIELD"`      // 索引作用字段
+	IndexName string `gorm:"column:INDEX_NAME"` // 索引名称
+	Field     string `gorm:"column:FIELD"`      // 索引作用字段
 }
 
 type ModuleParam struct {
@@ -129,40 +128,38 @@ func NewDataType() map[string]DataType {
 // TableList 获取数据中表的信息
 func TableList(ctx context.Context, DbName string) ([]Table, error) {
 	var res []Table
-	builder := sql.NewBuilder()
 	var query string
 	var args []any
 	var err error
 	switch *Driver {
 	case "mysql":
-		query, args, err = builder.Select("TABLE_NAME", "TABLE_COMMENT").Table("information_schema.TABLES").Where("TABLE_SCHEMA", DbName).Rows()
-	case "pgx":
-		query, args, err = "SELECT C.relname AS \"TABLE_NAME\",obj_description(C.OID) AS \"TABLE_COMMENT\" FROM pg_catalog.pg_class C WHERE C.relkind='r' AND C.relnamespace=(SELECT OID FROM pg_catalog.pg_namespace WHERE nspname='public')", nil, nil
+		query = "SELECT TABLE_NAME,TABLE_COMMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA=?"
+		args = []any{DbName}
+	case "postgres":
+		query = "SELECT C.relname AS \"TABLE_NAME\",obj_description(C.OID) AS \"TABLE_COMMENT\" FROM pg_catalog.pg_class C WHERE C.relkind='r' AND C.relnamespace=(SELECT OID FROM pg_catalog.pg_namespace WHERE nspname='public')"
 	}
-	if err != nil {
-		return res, err
-	}
-	err = Query.QueryRows(ctx, query, args...).ToStruct(&res)
+	handle := Query.Raw(query, args...)
+	handle.Scan(&res)
+	err = handle.Error
 	return res, err
 }
 
 // TableItem 获取数据中表的信息
 func TableItem(ctx context.Context, DbName, TableName string) (Table, error) {
 	var res Table
-	builder := sql.NewBuilder()
 	var query string
 	var args []any
 	var err error
 	switch *Driver {
 	case "mysql":
-		query, args, err = builder.Select("TABLE_NAME", "TABLE_COMMENT").Table("information_schema.TABLES").Where("TABLE_SCHEMA", DbName).Where("TABLE_NAME", TableName).Row()
-	case "pgx":
-		query, args, err = "SELECT C.relname AS \"TABLE_NAME\",obj_description(C.OID) AS \"TABLE_COMMENT\" FROM pg_catalog.pg_class C WHERE C.relkind='r' AND C.relnamespace=(SELECT OID FROM pg_catalog.pg_namespace WHERE nspname='public') AND C.relname=?", []any{TableName}, nil
+		query = "SELECT TABLE_NAME,TABLE_COMMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA=? AND TABLE_NAME=?"
+		args = []any{DbName, TableName}
+	case "postgres":
+		query, args = "SELECT C.relname AS \"TABLE_NAME\",obj_description(C.OID) AS \"TABLE_COMMENT\" FROM pg_catalog.pg_class C WHERE C.relkind='r' AND C.relnamespace=(SELECT OID FROM pg_catalog.pg_namespace WHERE nspname='public') AND C.relname=?", []any{TableName}
 	}
-	if err != nil {
-		return res, err
-	}
-	err = Query.QueryRow(ctx, query, args...).ToStruct(&res)
+	handle := Query.Raw(query, args...)
+	handle.Scan(&res)
+	err = handle.Error
 	return res, err
 }
 
@@ -172,17 +169,16 @@ func TableColumn(ctx context.Context, DbName, TableName string) ([]Column, error
 	var query string
 	var args []any
 	var err error
-	builder := sql.NewBuilder()
 	switch *Driver {
 	case "mysql":
-		query, args, err = builder.Select("COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "COLUMN_KEY", "COLUMN_COMMENT").Table("information_schema.COLUMNS").Where("TABLE_SCHEMA", DbName).Where("TABLE_NAME", TableName).OrderBy("ORDINAL_POSITION", sql.ASC).Rows()
-	case "pgx":
-		query, args, err = "SELECT C.COLUMN_NAME AS \"COLUMN_NAME\",C.is_nullable AS \"IS_NULLABLE\",C.udt_name AS \"DATA_TYPE\",CASE WHEN EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_attribute A ON A.attnum=con.conkey[1] AND A.attrelid=con.conrelid WHERE con.contype='p' AND con.conrelid=cl.OID AND A.attname=C.COLUMN_NAME) THEN 'PRI' WHEN EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_attribute A ON A.attnum=con.conkey[1] AND A.attrelid=con.conrelid WHERE con.contype='u' AND con.conrelid=cl.OID AND A.attname=C.COLUMN_NAME) THEN 'UNIQUE' ELSE 'NONE' END AS \"COLUMN_KEY\",col_description (cl.OID,A.attnum) AS \"COLUMN_COMMENT\" FROM information_schema.COLUMNS C LEFT JOIN pg_catalog.pg_class cl ON cl.relname=C.TABLE_NAME LEFT JOIN pg_catalog.pg_attribute A ON A.attrelid=cl.OID AND A.attnum=C.ordinal_position WHERE C.table_schema='public' AND C.TABLE_NAME=? order by C.ordinal_position ASC;", []any{TableName}, nil
+		query = "SELECT COLUMN_NAME,IS_NULLABLE,DATA_TYPE,COLUMN_KEY,COLUMN_COMMENT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME=? ORDER BY ORDINAL_POSITION ASC"
+		args = []any{DbName, TableName}
+	case "postgres":
+		query, args = "SELECT C.COLUMN_NAME AS \"COLUMN_NAME\",C.is_nullable AS \"IS_NULLABLE\",C.udt_name AS \"DATA_TYPE\",CASE WHEN EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_attribute A ON A.attnum=con.conkey[1] AND A.attrelid=con.conrelid WHERE con.contype='p' AND con.conrelid=cl.OID AND A.attname=C.COLUMN_NAME) THEN 'PRI' WHEN EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_attribute A ON A.attnum=con.conkey[1] AND A.attrelid=con.conrelid WHERE con.contype='u' AND con.conrelid=cl.OID AND A.attname=C.COLUMN_NAME) THEN 'UNIQUE' ELSE 'NONE' END AS \"COLUMN_KEY\",col_description (cl.OID,A.attnum) AS \"COLUMN_COMMENT\" FROM information_schema.COLUMNS C LEFT JOIN pg_catalog.pg_class cl ON cl.relname=C.TABLE_NAME LEFT JOIN pg_catalog.pg_attribute A ON A.attrelid=cl.OID AND A.attnum=C.ordinal_position WHERE C.table_schema='public' AND C.TABLE_NAME=? order by C.ordinal_position ASC;", []any{TableName}
 	}
-	if err != nil {
-		return res, err
-	}
-	err = Query.QueryRows(ctx, query, args...).ToStruct(&res)
+	handle := Query.Raw(query, args...)
+	handle.Scan(&res)
+	err = handle.Error
 	if err == nil {
 		//首先去进行一个数据的装换
 		//SqlResultConvert
@@ -207,17 +203,16 @@ func TableIndex(ctx context.Context, DbName, TableName string) ([]Index, error) 
 	var query string
 	var args []any
 	var err error
-	builder := sql.NewBuilder()
 	switch *Driver {
 	case "mysql":
-		query, args, err = builder.Select("statistics.INDEX_NAME", "GROUP_CONCAT(CONCAT(statistics.COLUMN_NAME) ORDER BY statistics.NON_UNIQUE ASC,statistics.SEQ_IN_INDEX ASC) AS FIELD").Table("`information_schema`.`STATISTICS` AS statistics").LeftJoin("information_schema.`COLUMNS` AS `columns`", "statistics.COLUMN_NAME = `columns`.COLUMN_NAME").Where("statistics.TABLE_SCHEMA", DbName).Where("statistics.TABLE_NAME", TableName).Where("`columns`.TABLE_SCHEMA", DbName).Where("`columns`.TABLE_NAME", TableName).NotEqual("statistics.INDEX_NAME", "PRIMARY").GroupBy("statistics.TABLE_NAME", "statistics.INDEX_NAME").OrderBy("statistics.NON_UNIQUE", sql.ASC).OrderBy("statistics.SEQ_IN_INDEX", sql.ASC).Rows()
-	case "pgx":
-		query, args, err = "WITH index_info AS (SELECT i.relname AS index_name,ARRAY_AGG(A.attname ORDER BY ia.attnum) AS fields,ci.indisprimary FROM pg_class T JOIN pg_index ci ON T.OID=ci.indrelid JOIN pg_class i ON ci.indexrelid=i.OID JOIN UNNEST(ci.indkey) WITH ORDINALITY AS ia (attnum,ORDINALITY) ON ia.attnum> 0 JOIN pg_attribute A ON A.attnum=ia.attnum AND A.attrelid=T.OID WHERE T.relname=? AND T.relkind='r' GROUP BY i.relname,ci.indisprimary) SELECT index_name AS \"INDEX_NAME\",array_to_string(fields,',') AS \"FIELD\" FROM index_info WHERE NOT indisprimary ORDER BY index_name;", []any{TableName}, nil
+		query = "SELECT statistics.INDEX_NAME,GROUP_CONCAT(CONCAT(statistics.COLUMN_NAME) ORDER BY statistics.NON_UNIQUE ASC,statistics.SEQ_IN_INDEX ASC) AS FIELD FROM `information_schema`.`STATISTICS` AS statistics LEFT JOIN `information_schema`.`COLUMNS` AS `columns` ON statistics.COLUMN_NAME = `columns`.COLUMN_NAME WHERE statistics.TABLE_SCHEMA=? AND statistics.TABLE_NAME=? AND `columns`.TABLE_SCHEMA=? AND `columns`.TABLE_NAME=? AND statistics.INDEX_NAME!='PRIMARY' GROUP BY statistics.TABLE_NAME,statistics.INDEX_NAME ORDER BY statistics.NON_UNIQUE ASC,statistics.SEQ_IN_INDEX ASC"
+		args = []any{DbName, TableName, DbName, TableName}
+	case "postgres":
+		query, args = "WITH index_info AS (SELECT i.relname AS index_name,ARRAY_AGG(A.attname ORDER BY ia.attnum) AS fields,ci.indisprimary FROM pg_class T JOIN pg_index ci ON T.OID=ci.indrelid JOIN pg_class i ON ci.indexrelid=i.OID JOIN UNNEST(ci.indkey) WITH ORDINALITY AS ia (attnum,ORDINALITY) ON ia.attnum> 0 JOIN pg_attribute A ON A.attnum=ia.attnum AND A.attrelid=T.OID WHERE T.relname=? AND T.relkind='r' GROUP BY i.relname,ci.indisprimary) SELECT index_name AS \"INDEX_NAME\",array_to_string(fields,',') AS \"FIELD\" FROM index_info WHERE NOT indisprimary ORDER BY index_name;", []any{TableName}
 	}
-	if err != nil {
-		return res, err
-	}
-	err = Query.QueryRows(ctx, query, args...).ToStruct(&res)
+	handle := Query.Raw(query, args...)
+	handle.Scan(&res)
+	err = handle.Error
 	return res, err
 }
 
@@ -227,17 +222,16 @@ func TablePrimary(ctx context.Context, DbName, TableName string) (Column, error)
 	var query string
 	var args []any
 	var err error
-	builder := sql.NewBuilder()
 	switch *Driver {
 	case "mysql":
-		query, args, err = builder.Select("COLUMN_NAME", "IS_NULLABLE", "DATA_TYPE", "COLUMN_KEY", "COLUMN_COMMENT").Table("information_schema.COLUMNS").Where("TABLE_SCHEMA", DbName).Where("TABLE_NAME", TableName).Where("COLUMN_KEY", "PRI").OrderBy("ORDINAL_POSITION", sql.ASC).Row()
-	case "pgx":
-		query, args, err = "SELECT * FROM (SELECT C.COLUMN_NAME AS \"COLUMN_NAME\",C.is_nullable AS \"IS_NULLABLE\",C.udt_name AS \"DATA_TYPE\",CASE WHEN EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_attribute A ON A.attnum=con.conkey[1] AND A.attrelid=con.conrelid WHERE con.contype='p' AND con.conrelid=cl.OID AND A.attname=C.COLUMN_NAME) THEN 'PRI' WHEN EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_attribute A ON A.attnum=con.conkey[1] AND A.attrelid=con.conrelid WHERE con.contype='u' AND con.conrelid=cl.OID AND A.attname=C.COLUMN_NAME) THEN 'UNIQUE' ELSE 'NONE' END AS \"COLUMN_KEY\",col_description (cl.OID,A.attnum) AS \"COLUMN_COMMENT\" FROM information_schema.COLUMNS C LEFT JOIN pg_catalog.pg_class cl ON cl.relname=C.TABLE_NAME LEFT JOIN pg_catalog.pg_attribute A ON A.attrelid=cl.OID AND A.attnum=C.ordinal_position WHERE C.table_schema='public' AND C.TABLE_NAME=?) AS TT WHERE TT.\"COLUMN_KEY\"='PRI'", []any{TableName}, nil
+		query = "SELECT COLUMN_NAME,IS_NULLABLE,DATA_TYPE,COLUMN_KEY,COLUMN_COMMENT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME=? AND COLUMN_KEY='PRI' ORDER BY ORDINAL_POSITION ASC"
+		args = []any{DbName, TableName}
+	case "postgres":
+		query, args = "SELECT * FROM (SELECT C.COLUMN_NAME AS \"COLUMN_NAME\",C.is_nullable AS \"IS_NULLABLE\",C.udt_name AS \"DATA_TYPE\",CASE WHEN EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_attribute A ON A.attnum=con.conkey[1] AND A.attrelid=con.conrelid WHERE con.contype='p' AND con.conrelid=cl.OID AND A.attname=C.COLUMN_NAME) THEN 'PRI' WHEN EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_attribute A ON A.attnum=con.conkey[1] AND A.attrelid=con.conrelid WHERE con.contype='u' AND con.conrelid=cl.OID AND A.attname=C.COLUMN_NAME) THEN 'UNIQUE' ELSE 'NONE' END AS \"COLUMN_KEY\",col_description (cl.OID,A.attnum) AS \"COLUMN_COMMENT\" FROM information_schema.COLUMNS C LEFT JOIN pg_catalog.pg_class cl ON cl.relname=C.TABLE_NAME LEFT JOIN pg_catalog.pg_attribute A ON A.attrelid=cl.OID AND A.attnum=C.ordinal_position WHERE C.table_schema='public' AND C.TABLE_NAME=?) AS TT WHERE TT.\"COLUMN_KEY\"='PRI'", []any{TableName}
 	}
-	if err != nil {
-		return res, err
-	}
-	err = Query.QueryRow(ctx, query, args...).ToStruct(&res)
+	handle := Query.Raw(query, args...)
+	handle.Scan(&res)
+	err = handle.Error
 	if err == nil {
 		//首先去进行一个数据的装换
 		//SqlResultConvert

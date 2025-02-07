@@ -5,4 +5,7 @@ import (
 )
 
 // Logger 日志组件
-var Logger *logrus.Logger = logrus.New()
+var (
+	Logger      *logrus.Logger = logrus.New()
+	LoggerEntry *logrus.Entry  = logrus.NewEntry(Logger)
+)

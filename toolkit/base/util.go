@@ -71,7 +71,7 @@ func Convert(Condition []Column) string {
 	for _, item := range Condition {
 		builder.WriteString(fmt.Sprintf("	if val,ok := condition[\"%s\"] ;ok {", Helper(item.ColumnName)))
 		builder.WriteString("\n")
-		builder.WriteString(fmt.Sprintf("		builder.Where(\"%s\",val)", Char(item.ColumnName)))
+		builder.WriteString(fmt.Sprintf("		builder.Where(\"%s = ?\",val)", item.ColumnName))
 		builder.WriteString("\n")
 		builder.WriteString("	}")
 		builder.WriteString("\n")
