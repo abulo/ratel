@@ -3,6 +3,7 @@ package sql
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -301,13 +302,14 @@ func (c *Client) Open() (*ClientManager, error) {
 	newLogger := NewLogger(logger.Logger)
 	newLogger.SetDebug(!c.DisableDebug)
 	newLogger.SetSourceField("gorm")
+	newLogger.SetSkipErrRecordNotFound(true)
 	db, err := gorm.Open(dialector, &gorm.Config{
 		NowFunc: func() time.Time {
 			return time.Now().Local()
 		},
 		Logger:                 newLogger,
 		SkipDefaultTransaction: true,
-		// AllowGlobalUpdate: true,
+		TranslateError:         true,
 	})
 	if err != nil {
 		return nil, err
@@ -373,9 +375,26 @@ func (c *Client) getCachedSqlConn() (*ClientManager, error) {
 	return val.(*ClientManager), nil
 }
 
-func ResultAccept(err error) error {
-	if err == nil || err == sql.ErrNoRows || err == sql.ErrTxDone || err == context.Canceled {
+var (
+	ErrLastInsertIdIsNotSupported = errors.New("LastInsertId is not supported by this driver")
+	ErrRowsAffectedIsNotSupported = errors.New("RowsAffected is not supported by this driver")
+	ErrNoLastInsertIdAvailable    = errors.New("no LastInsertId available after DDL statement")
+	ErrNoRowsAffectedAvailable    = errors.New("no RowsAffected available after DDL statement")
+)
+
+func Acceptable(err error) error {
+	if err == nil || ErrorIn(err, sql.ErrNoRows, sql.ErrTxDone, context.Canceled, ErrLastInsertIdIsNotSupported, ErrRowsAffectedIsNotSupported, ErrNoLastInsertIdAvailable, ErrNoRowsAffectedAvailable, gorm.ErrRecordNotFound) {
 		return nil
 	}
 	return err
+}
+
+// In checks if the given err is one of errs.
+func ErrorIn(err error, errs ...error) bool {
+	for _, each := range errs {
+		if errors.Is(err, each) {
+			return true
+		}
+	}
+	return false
 }

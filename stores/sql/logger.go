@@ -2,13 +2,11 @@ package sql
 
 import (
 	"context"
-	"errors"
 	"runtime"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/utils"
 )
@@ -69,7 +67,7 @@ func (l *WrapLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 	if l.SourceField != "" {
 		fields[l.SourceField] = utils.FileWithLineNum()
 	}
-	if err != nil && !(errors.Is(err, gorm.ErrRecordNotFound) && l.SkipErrRecordNotFound) {
+	if Acceptable(err) != nil && !l.SkipErrRecordNotFound {
 		fields[logrus.ErrorKey] = err
 		l.Logrus.WithContext(ctx).WithFields(fields).Errorf("%s [%s]", sql, elapsed)
 		return
@@ -127,7 +125,7 @@ func (l *WrapEntry) Trace(ctx context.Context, begin time.Time, fc func() (strin
 	if l.SourceField != "" {
 		fields[l.SourceField] = utils.FileWithLineNum()
 	}
-	if err != nil && !(errors.Is(err, gorm.ErrRecordNotFound) && l.SkipErrRecordNotFound) {
+	if Acceptable(err) != nil && !l.SkipErrRecordNotFound {
 		fields[logrus.ErrorKey] = err
 		l.Logrus.WithContext(ctx).WithFields(fields).Errorf("%s [%s]", sql, elapsed)
 		return

@@ -1,6 +1,8 @@
 module github.com/abulo/ratel/v3
 
-go 1.23
+go 1.23.0
+
+toolchain go1.23.6
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -18,7 +20,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.9
-	github.com/issue9/term/v3 v3.3.2
+	github.com/issue9/term/v3 v3.4.0
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/mozillazg/go-pinyin v0.20.0
 	github.com/olivere/elastic/v7 v7.0.32
@@ -40,14 +42,14 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.18
 	go.mongodb.org/mongo-driver v1.17.2
 	go.uber.org/multierr v1.11.0
-	golang.org/x/crypto v0.32.0
-	golang.org/x/image v0.23.0
-	golang.org/x/mod v0.22.0
-	golang.org/x/sync v0.10.0
-	golang.org/x/text v0.21.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250127172529-29210b9bc287
+	golang.org/x/crypto v0.33.0
+	golang.org/x/image v0.24.0
+	golang.org/x/mod v0.23.0
+	golang.org/x/sync v0.11.0
+	golang.org/x/text v0.22.0
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250212204824-5a70512c5d8b
 	google.golang.org/grpc v1.70.0
-	google.golang.org/protobuf v1.36.4
+	google.golang.org/protobuf v1.36.5
 	gorm.io/driver/clickhouse v0.6.1
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/driver/postgres v1.5.11
@@ -150,8 +152,8 @@ require (
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/term v0.28.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241202173237-19429a94021a // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
