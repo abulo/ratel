@@ -103,7 +103,7 @@ func (np *NodePool) CheckJobAvailable(jobName string) (bool, error) {
 		return false, ErrNodePoolIsUpgrading
 	}
 	targetNode := np.nodes.Get(jobName)
-	newNpNodeId := driver.GetNodeIdKeyPrefix() + np.nodeID
+	newNpNodeId := np.nodeID
 	// if newNpNodeId == targetNode {
 	// 	logger.Logger.Infof("job %s, running in node: %s, nodeID is %s", jobName, targetNode, newNpNodeId)
 	// }

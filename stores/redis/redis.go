@@ -10,21 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// // Client  配置
-// type Client struct {
-// 	ClientType          string            // 模式(normal => 单节点,cluster =>  集群,failover => 哨兵,ring => 分片)
-// 	Hosts         []string          // 集群 哨兵 需要填写
-// 	Password      string            // 密码
-// 	Database      int               // 数据库
-// 	PoolSize      int               // 连接池大小
-// 	KeyPrefix     string            // 前缀标识
-// 	DisableMetric bool              // 关闭指标采集
-// 	DisableTrace  bool              // 关闭链路追踪
-// 	Addr          string            // 单节点客户端
-// 	Addrs         map[string]string // 分片客户端  shardName => host:port
-// 	MasterName    string            // 哨兵
-// }
-
+// NewRedisClient 创建新的Redis客户端 opts: 配置选项
 func NewRedisClient(opts ...Option) (*Client, error) {
 	c := &Client{}
 	c.brk = resource.NewBreaker()
@@ -58,77 +44,70 @@ func NewRedisClient(opts ...Option) (*Client, error) {
 	return c, nil
 }
 
-// WithClientType customizes the given Redis with given Type.
+// WithClientType 设置Redis客户端类型 ClientType: 客户端类型(normal,cluster,failover,ring)
 func WithClientType(ClientType string) Option {
 	return func(r *Client) {
 		r.ClientType = ClientType
 	}
 }
 
-// WithHosts customizes the given Redis with given Hosts.
+// WithHosts 设置Redis主机地址 Hosts: 主机地址列表
 func WithHosts(Hosts []string) Option {
 	return func(r *Client) {
 		r.Hosts = Hosts
 	}
 }
 
-// WithPassword customizes the given Redis with given Password.
+// WithPassword 设置Redis密码 Password: 认证密码
 func WithPassword(Password string) Option {
 	return func(r *Client) {
 		r.Password = Password
 	}
 }
 
-// WithDatabase customizes the given Redis with given Database.
+// WithDatabase 设置Redis数据库 Database: 数据库编号
 func WithDatabase(Database int) Option {
 	return func(r *Client) {
 		r.Database = Database
 	}
 }
 
-// WithPoolSize customizes the given Redis with given PoolSize.
+// WithPoolSize 设置连接池大小 PoolSize: 连接池大小
 func WithPoolSize(PoolSize int) Option {
 	return func(r *Client) {
 		r.PoolSize = PoolSize
 	}
 }
 
-// WithKeyPrefix customizes the given Redis with given KeyPrefix.
-func WithKeyPrefix(KeyPrefix string) Option {
-	return func(r *Client) {
-		r.KeyPrefix = KeyPrefix + "%s"
-	}
-}
-
-// WithDisableMetric customizes the given Redis with given DisableMetric.
+// WithDisableMetric 禁用指标采集 DisableMetric: 是否禁用指标采集
 func WithDisableMetric(DisableMetric bool) Option {
 	return func(r *Client) {
 		r.DisableMetric = DisableMetric
 	}
 }
 
-// WithDisableTrace customizes the given Redis with given DisableTrace.
+// WithDisableTrace 禁用链路追踪 DisableTrace: 是否禁用链路追踪
 func WithDisableTrace(DisableTrace bool) Option {
 	return func(r *Client) {
 		r.DisableTrace = DisableTrace
 	}
 }
 
-// WithAddr customizes the given Redis with given Addr.
+// WithAddr 设置单节点地址 Addr: 单节点地址
 func WithAddr(Addr string) Option {
 	return func(r *Client) {
 		r.Addr = Addr
 	}
 }
 
-// WithAddrs customizes the given Redis with given Addrs.
+// WithAddrs 设置分片地址 Addrs: 分片地址映射
 func WithAddrs(Addrs map[string]string) Option {
 	return func(r *Client) {
 		r.Addrs = Addrs
 	}
 }
 
-// WithMasterName customizes the given Redis with given MasterName.
+// WithMasterName 设置哨兵主节点名称 MasterName: 主节点名称
 func WithMasterName(MasterName string) Option {
 	return func(r *Client) {
 		r.MasterName = MasterName
@@ -139,11 +118,9 @@ func WithMasterName(MasterName string) Option {
 type RedisNode interface {
 	redis.UniversalClient
 	redis.Cmdable
-	redis.BitMapCmdable
-	// FTList(ctx context.Context) *redis.StringSliceCmd
 }
 
-// getRedis new redis client
+// getRedis 获取Redis客户端实例 r: 客户端配置
 func getRedis(r *Client) (RedisNode, error) {
 	switch r.ClientType {
 	case ClientNormal:
@@ -163,7 +140,7 @@ func getRedis(r *Client) (RedisNode, error) {
 
 var clientManager = resource.NewResourceManager()
 
-// getClient new redis client
+// getClient 获取单节点Redis客户端 r: 客户端配置
 func getClient(r *Client) (RedisNode, error) {
 	driverName := r.Addr
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
@@ -185,9 +162,7 @@ func getClient(r *Client) (RedisNode, error) {
 	return val.(*redis.Client), nil
 }
 
-// var clusterManager = resource.NewResourceManager()
-
-// getCluster new redis  cluster client
+// getCluster 获取集群Redis客户端 r: 客户端配置
 func getCluster(r *Client) (RedisNode, error) {
 	driverName := util.Implode(";", r.Hosts)
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
@@ -209,9 +184,7 @@ func getCluster(r *Client) (RedisNode, error) {
 	return val.(*redis.Client), nil
 }
 
-// var failoverManager = resource.NewResourceManager()
-
-// getFailover new redis  failover client
+// getFailover 获取哨兵Redis客户端 r: 客户端配置
 func getFailover(r *Client) (RedisNode, error) {
 	driverName := r.MasterName + "://" + util.Implode(";", r.Hosts)
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
@@ -233,9 +206,7 @@ func getFailover(r *Client) (RedisNode, error) {
 	return val.(*redis.Client), nil
 }
 
-// var ringManager = resource.NewResourceManager()
-
-// getRing new redis  ring client
+// getRing 获取分片Redis客户端 r: 客户端配置
 func getRing(r *Client) (RedisNode, error) {
 	var driverName string
 	for k, v := range r.Addrs {

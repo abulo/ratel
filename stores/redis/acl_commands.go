@@ -6,7 +6,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func (r *Client) ACLDryRun(ctx context.Context, username string, command ...interface{}) (val string, err error) {
+// ACLDryRun 用于在不实际执行命令的情况下检查用户是否具有执行给定命令的权限。ctx:上下文 username:用户名 command:要检查的命令
+func (r *Client) ACLDryRun(ctx context.Context, username string, command ...any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -17,6 +18,8 @@ func (r *Client) ACLDryRun(ctx context.Context, username string, command ...inte
 	}, acceptable)
 	return
 }
+
+// ACLLog 获取 ACL 日志。ctx:上下文 count:要获取的日志条数
 func (r *Client) ACLLog(ctx context.Context, count int64) (val []*redis.ACLLogEntry, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -29,6 +32,7 @@ func (r *Client) ACLLog(ctx context.Context, count int64) (val []*redis.ACLLogEn
 	return
 }
 
+// ACLLogReset 重置 ACL 日志。ctx:上下文
 func (r *Client) ACLLogReset(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

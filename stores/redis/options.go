@@ -29,11 +29,6 @@ type Client struct {
 	Network string
 	// Database to be selected after connecting to the server.
 	Database int // 数据库
-	// Automatically adds a prefix to all keys
-	KeyPrefix string // 前缀标识
-	// The maximum number of retries before giving up. Command is retried
-	// on network errors and MOVED/ASK redirects.
-	// Default is 16.
 	// In normal client this is the MaxRetries option
 	MaxRedirects int
 	// Enables read queries for a connection to a Redis Cluster slave node.

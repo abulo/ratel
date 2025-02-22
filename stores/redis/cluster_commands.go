@@ -6,6 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// ClusterMyShardID 获取当前节点的ID ctx:上下文
 func (r *Client) ClusterMyShardID(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -18,7 +19,7 @@ func (r *Client) ClusterMyShardID(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ClusterSlots 获取集群节点的映射数组
+// ClusterSlots 获取集群节点的映射数组 ctx:上下文
 func (r *Client) ClusterSlots(ctx context.Context) (val []redis.ClusterSlot, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -31,6 +32,7 @@ func (r *Client) ClusterSlots(ctx context.Context) (val []redis.ClusterSlot, err
 	return
 }
 
+// ClusterShards 获取集群分片信息 ctx:上下文
 func (r *Client) ClusterShards(ctx context.Context) (val []redis.ClusterShard, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -42,6 +44,8 @@ func (r *Client) ClusterShards(ctx context.Context) (val []redis.ClusterShard, e
 	}, acceptable)
 	return
 }
+
+// ClusterLinks 获取集群节点间的链接信息 ctx:上下文
 func (r *Client) ClusterLinks(ctx context.Context) (val []redis.ClusterLink, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -54,7 +58,7 @@ func (r *Client) ClusterLinks(ctx context.Context) (val []redis.ClusterLink, err
 	return
 }
 
-// ClusterNodes Get Cluster config for the node
+// ClusterNodes 获取集群节点信息 ctx:上下文
 func (r *Client) ClusterNodes(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -67,7 +71,7 @@ func (r *Client) ClusterNodes(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ClusterMeet Force a node cluster to handshake with another node
+// ClusterMeet 将新节点加入集群 ctx:上下文 host:主机地址 port:端口号
 func (r *Client) ClusterMeet(ctx context.Context, host, port string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -80,7 +84,7 @@ func (r *Client) ClusterMeet(ctx context.Context, host, port string) (val string
 	return
 }
 
-// ClusterForget Remove a node from the nodes table
+// ClusterForget 从集群中移除指定节点 ctx:上下文 nodeID:节点ID
 func (r *Client) ClusterForget(ctx context.Context, nodeID string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -93,7 +97,7 @@ func (r *Client) ClusterForget(ctx context.Context, nodeID string) (val string, 
 	return
 }
 
-// ClusterReplicate Reconfigure a node as a replica of the specified master node
+// ClusterReplicate 将当前节点配置为指定主节点的从节点 ctx:上下文 nodeID:主节点ID
 func (r *Client) ClusterReplicate(ctx context.Context, nodeID string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -106,7 +110,7 @@ func (r *Client) ClusterReplicate(ctx context.Context, nodeID string) (val strin
 	return
 }
 
-// ClusterResetSoft Reset a Redis Cluster node
+// ClusterResetSoft 软重置集群节点（保留数据） ctx:上下文
 func (r *Client) ClusterResetSoft(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -119,7 +123,7 @@ func (r *Client) ClusterResetSoft(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ClusterResetHard Reset a Redis Cluster node
+// ClusterResetHard 硬重置集群节点（清除数据） ctx:上下文
 func (r *Client) ClusterResetHard(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -132,7 +136,7 @@ func (r *Client) ClusterResetHard(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ClusterInfo Provides info about Redis Cluster node state
+// ClusterInfo 获取集群节点状态信息 ctx:上下文
 func (r *Client) ClusterInfo(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -145,21 +149,21 @@ func (r *Client) ClusterInfo(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ClusterKeySlot Returns the hash slot of the specified key
-func (r *Client) ClusterKeySlot(ctx context.Context, key any) (val int64, err error) {
+// ClusterKeySlot 返回指定key的哈希槽 ctx:上下文 key:键名
+func (r *Client) ClusterKeySlot(ctx context.Context, key string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
 			return err
 		}
-		val, err = conn.ClusterKeySlot(getCtx(ctx), r.k(key)).Result()
+		val, err = conn.ClusterKeySlot(getCtx(ctx), key).Result()
 		return err
 	}, acceptable)
 	return
 }
 
-// ClusterGetKeysInSlot Return local key names in the specified hash slot
-func (r *Client) ClusterGetKeysInSlot(ctx context.Context, slot int, count int) (val []string, err error) {
+// ClusterGetKeysInSlot 返回指定哈希槽中的key列表 ctx:上下文 slot:哈希槽 count:返回key的数量
+func (r *Client) ClusterGetKeysInSlot(ctx context.Context, slot, count int) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -171,7 +175,7 @@ func (r *Client) ClusterGetKeysInSlot(ctx context.Context, slot int, count int) 
 	return
 }
 
-// ClusterCountFailureReports Return the number of failure reports active for a given node
+// ClusterCountFailureReports 返回指定节点的故障报告数量 ctx:上下文 nodeID:节点ID
 func (r *Client) ClusterCountFailureReports(ctx context.Context, nodeID string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -184,7 +188,7 @@ func (r *Client) ClusterCountFailureReports(ctx context.Context, nodeID string) 
 	return
 }
 
-// ClusterCountKeysInSlot Return the number of local keys in the specified hash slot
+// ClusterCountKeysInSlot 返回指定哈希槽中的key数量 ctx:上下文 slot:哈希槽
 func (r *Client) ClusterCountKeysInSlot(ctx context.Context, slot int) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -197,7 +201,7 @@ func (r *Client) ClusterCountKeysInSlot(ctx context.Context, slot int) (val int6
 	return
 }
 
-// ClusterDelSlots Set hash slots as unbound in receiving node
+// ClusterDelSlots 删除指定哈希槽的绑定 ctx:上下文 slots:哈希槽列表
 func (r *Client) ClusterDelSlots(ctx context.Context, slots ...int) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -210,7 +214,7 @@ func (r *Client) ClusterDelSlots(ctx context.Context, slots ...int) (val string,
 	return
 }
 
-// ClusterDelSlotsRange ->  ClusterDelSlots
+// ClusterDelSlotsRange 删除指定范围内的哈希槽绑定 ctx:上下文 min:起始哈希槽 max:结束哈希槽
 func (r *Client) ClusterDelSlotsRange(ctx context.Context, min, max int) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -223,7 +227,7 @@ func (r *Client) ClusterDelSlotsRange(ctx context.Context, min, max int) (val st
 	return
 }
 
-// ClusterSaveConfig Forces the node to save cluster state on disk
+// ClusterSaveConfig 强制将集群状态保存到磁盘 ctx:上下文
 func (r *Client) ClusterSaveConfig(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -236,7 +240,7 @@ func (r *Client) ClusterSaveConfig(ctx context.Context) (val string, err error) 
 	return
 }
 
-// ClusterSlaves List replica nodes of the specified master node
+// ClusterSlaves 列出指定主节点的从节点列表 ctx:上下文 nodeID:主节点ID
 func (r *Client) ClusterSlaves(ctx context.Context, nodeID string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -249,7 +253,7 @@ func (r *Client) ClusterSlaves(ctx context.Context, nodeID string) (val []string
 	return
 }
 
-// ClusterFailover Forces a replica to perform a manual failover of its master.
+// ClusterFailover 强制从节点执行手动故障转移 ctx:上下文
 func (r *Client) ClusterFailover(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -262,7 +266,7 @@ func (r *Client) ClusterFailover(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ClusterAddSlots Assign new hash slots to receiving node
+// ClusterAddSlots 为当前节点分配新的哈希槽 ctx:上下文 slots:哈希槽列表
 func (r *Client) ClusterAddSlots(ctx context.Context, slots ...int) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -275,7 +279,7 @@ func (r *Client) ClusterAddSlots(ctx context.Context, slots ...int) (val string,
 	return
 }
 
-// ClusterAddSlotsRange -> ClusterAddSlots
+// ClusterAddSlotsRange 为当前节点分配指定范围内的哈希槽 ctx:上下文 min:起始哈希槽 max:结束哈希槽
 func (r *Client) ClusterAddSlotsRange(ctx context.Context, min, max int) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -288,6 +292,7 @@ func (r *Client) ClusterAddSlotsRange(ctx context.Context, min, max int) (val st
 	return
 }
 
+// ReadOnly 将当前连接设置为只读模式（针对从节点） ctx:上下文
 func (r *Client) ReadOnly(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -299,6 +304,8 @@ func (r *Client) ReadOnly(ctx context.Context) (val string, err error) {
 	}, acceptable)
 	return
 }
+
+// ReadWrite 将当前连接设置为读写模式（针对从节点） ctx:上下文
 func (r *Client) ReadWrite(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

@@ -108,16 +108,17 @@ func InitQuery() error {
 	if MaxIdleTime := cast.ToInt(Config.Int("db.MaxIdleTime")); MaxIdleTime > 0 {
 		opts = append(opts, sql.WithMaxIdleTime(time.Duration(MaxIdleTime)*time.Second))
 	}
-	if DisableMetric := cast.ToBool(Config.Bool("db.DisableMetric")); DisableMetric {
-		opts = append(opts, sql.WithDisableMetric(DisableMetric))
-	}
-	if DisableTrace := cast.ToBool(Config.Bool("db.DisableTrace")); DisableTrace {
-		opts = append(opts, sql.WithDisableTrace(DisableTrace))
-	}
+	// if DisableMetric := cast.ToBool(Config.Bool("db.DisableMetric")); DisableMetric {
+	opts = append(opts, sql.WithDisableMetric(true))
+	// }
+	// if DisableTrace := cast.ToBool(Config.Bool("db.DisableTrace")); DisableTrace {
+	opts = append(opts, sql.WithDisableTrace(true))
+	// }
 	if DriverName := cast.ToString(Config.String("db.DriverName")); DriverName != "" {
 		opts = append(opts, sql.WithDriverName(DriverName))
 		Driver = &DriverName
 	}
+	opts = append(opts, sql.WithDisableDebug(true))
 	client, err := sql.NewClient(opts...)
 	if err != nil {
 		return err

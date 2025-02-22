@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 	"unicode/utf8"
-	"unsafe"
 
 	"github.com/abulo/ratel/v3/core/metric"
 	"github.com/abulo/ratel/v3/core/trace"
@@ -28,10 +27,12 @@ type OpenTraceHook struct {
 	Addr          string
 }
 
+// DialHook 返回redis连接hook hook: 原始redis连接hook
 func (op OpenTraceHook) DialHook(hook redis.DialHook) redis.DialHook {
 	return hook
 }
 
+// ProcessHook 返回redis命令处理hook hook: 原始redis命令处理hook
 func (op OpenTraceHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
 	return func(ctx context.Context, cmd redis.Cmder) error {
 		ctx, err := op.BeforeProcess(ctx, cmd)
@@ -43,6 +44,7 @@ func (op OpenTraceHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
 	}
 }
 
+// ProcessPipelineHook 返回redis管道命令处理hook hook: 原始redis管道命令处理hook
 func (op OpenTraceHook) ProcessPipelineHook(hook redis.ProcessPipelineHook) redis.ProcessPipelineHook {
 	return func(ctx context.Context, cmd []redis.Cmder) error {
 		ctx, err := op.BeforeProcessPipeline(ctx, cmd)
@@ -60,6 +62,7 @@ type CmdStart string
 // RequestCmdStart ...
 const RequestCmdStart = CmdStart("start")
 
+// Caller 获取调用者信息 skip: 调用栈跳过的层数
 func Caller(skip int) map[string]string {
 	pc, file, lineNo, _ := runtime.Caller(skip)
 	name := runtime.FuncForPC(pc).Name()
@@ -69,7 +72,7 @@ func Caller(skip int) map[string]string {
 	}
 }
 
-// BeforeProcess ...
+// BeforeProcess 在执行redis命令前处理 ctx: 上下文 cmd: redis命令
 func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
 	b := make([]byte, 32)
 	b = appendCmd(b, cmd)
@@ -86,7 +89,7 @@ func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (con
 			}
 			ext.PeerHostname.Set(span, hostName)
 			span.LogFields(log.Object("call", call))
-			span.LogFields(log.String("cmd", String(b)))
+			span.LogFields(log.String("cmd", cast.ToString(b)))
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
@@ -98,7 +101,7 @@ func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (con
 	return ctx, nil
 }
 
-// AfterProcess ...
+// AfterProcess 在执行redis命令后处理 ctx: 上下文 cmd: redis命令
 func (op OpenTraceHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	ctx = getCtx(ctx)
 	if !op.DisableTrace {
@@ -125,7 +128,7 @@ func (op OpenTraceHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error
 	return nil
 }
 
-// BeforeProcessPipeline ...
+// BeforeProcessPipeline 在执行redis管道命令前处理 ctx: 上下文 cmds: redis命令数组
 func (op OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
 	ctx = getCtx(ctx)
 
@@ -167,7 +170,7 @@ func (op OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.
 			}
 			ext.PeerHostname.Set(span, hostName)
 			span.LogFields(log.Object("call", call))
-			span.LogFields(log.String("cmds", String(b)))
+			span.LogFields(log.String("cmds", cast.ToString(b)))
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
 	}
@@ -180,7 +183,7 @@ func (op OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.
 	return ctx, nil
 }
 
-// AfterProcessPipeline ...
+// AfterProcessPipeline 在执行redis管道命令后处理 ctx: 上下文 cmds: redis命令数组
 func (op OpenTraceHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
 	ctx = getCtx(ctx)
 	if !op.DisableTrace {
@@ -202,11 +205,7 @@ func (op OpenTraceHook) AfterProcessPipeline(ctx context.Context, cmds []redis.C
 	return nil
 }
 
-// String ...
-func String(b []byte) string {
-	return *(*string)(unsafe.Pointer(&b))
-}
-
+// appendCmd 将redis命令追加到字节数组 b: 目标字节数组 cmd: redis命令
 func appendCmd(b []byte, cmd redis.Cmder) []byte {
 	const lenLimit = 64
 
@@ -230,7 +229,7 @@ func appendCmd(b []byte, cmd redis.Cmder) []byte {
 	return b
 }
 
-// AppendArg ...
+// AppendArg 将参数追加到字节数组 b: 目标字节数组 v: 要追加的参数
 func AppendArg(b []byte, v any) []byte {
 	switch v := v.(type) {
 	case nil:
@@ -238,7 +237,7 @@ func AppendArg(b []byte, v any) []byte {
 	case string:
 		return appendUTF8String(b, v)
 	case []byte:
-		return appendUTF8String(b, String(v))
+		return appendUTF8String(b, cast.ToString(v))
 	case int:
 		return strconv.AppendInt(b, int64(v), 10)
 	case int8:
@@ -275,6 +274,7 @@ func AppendArg(b []byte, v any) []byte {
 	}
 }
 
+// appendUTF8String 将UTF8字符串追加到字节数组 b: 目标字节数组 s: 要追加的字符串
 func appendUTF8String(b []byte, s string) []byte {
 	for _, r := range s {
 		b = appendRune(b, r)
@@ -282,6 +282,7 @@ func appendUTF8String(b []byte, s string) []byte {
 	return b
 }
 
+// appendRune 将rune追加到字节数组 b: 目标字节数组 r: 要追加的rune
 func appendRune(b []byte, r rune) []byte {
 	if r < utf8.RuneSelf {
 		switch c := byte(r); c {
