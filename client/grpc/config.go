@@ -16,24 +16,24 @@ import (
 
 // Config ...
 type Config struct {
-	Name                      string
-	BalancerName              string
-	Address                   string
-	Block                     bool
-	DialTimeout               time.Duration
-	ReadTimeout               time.Duration
-	Direct                    bool
-	KeepAlive                 *keepalive.ClientParameters
-	dialOptions               []grpc.DialOption
-	SlowThreshold             time.Duration
-	Debug                     bool
-	DisableTraceInterceptor   bool
-	DisableAidInterceptor     bool
-	DisableTimeoutInterceptor bool
-	DisableMetricInterceptor  bool
-	DisableAccessInterceptor  bool
-	AccessInterceptorLevel    string
-	Etcd                      *etcdv3.Config
+	Name                     string
+	BalancerName             string
+	Address                  string
+	Block                    bool
+	DialTimeout              time.Duration
+	ReadTimeout              time.Duration
+	Direct                   bool
+	KeepAlive                *keepalive.ClientParameters
+	dialOptions              []grpc.DialOption
+	SlowThreshold            time.Duration
+	EnableDebug              bool
+	EnableTraceInterceptor   bool
+	EnableAidInterceptor     bool
+	EnableTimeoutInterceptor bool
+	EnableMetricInterceptor  bool
+	EnableAccessInterceptor  bool
+	AccessInterceptorLevel   string
+	Etcd                     *etcdv3.Config
 }
 
 // New ...
@@ -104,39 +104,39 @@ func (config *Config) SetSlowThreshold(SlowThreshold time.Duration) *Config {
 	return config
 }
 
-// SetDebug ...
-func (config *Config) SetDebug(Debug bool) *Config {
-	config.Debug = Debug
+// SetEnableDebug ...
+func (config *Config) SetEnableDebug(Debug bool) *Config {
+	config.EnableDebug = Debug
 	return config
 }
 
-// SetDisableTraceInterceptor ...
-func (config *Config) SetDisableTraceInterceptor(DisableTraceInterceptor bool) *Config {
-	config.DisableTraceInterceptor = DisableTraceInterceptor
+// SetEnableTraceInterceptor ...
+func (config *Config) SetEnableTraceInterceptor(EnableTraceInterceptor bool) *Config {
+	config.EnableTraceInterceptor = EnableTraceInterceptor
 	return config
 }
 
-// SetDisableAidInterceptor ...
-func (config *Config) SetDisableAidInterceptor(DisableAidInterceptor bool) *Config {
-	config.DisableAidInterceptor = DisableAidInterceptor
+// SetEnableAidInterceptor ...
+func (config *Config) SetEnableAidInterceptor(EnableAidInterceptor bool) *Config {
+	config.EnableAidInterceptor = EnableAidInterceptor
 	return config
 }
 
-// SetDisableTimeoutInterceptor ...
-func (config *Config) SetDisableTimeoutInterceptor(DisableTimeoutInterceptor bool) *Config {
-	config.DisableTimeoutInterceptor = DisableTimeoutInterceptor
+// SetEnableTimeoutInterceptor ...
+func (config *Config) SetEnableTimeoutInterceptor(EnableTimeoutInterceptor bool) *Config {
+	config.EnableTimeoutInterceptor = EnableTimeoutInterceptor
 	return config
 }
 
-// SetDisableMetricInterceptor ...
-func (config *Config) SetDisableMetricInterceptor(DisableMetricInterceptor bool) *Config {
-	config.DisableMetricInterceptor = DisableMetricInterceptor
+// SetEnableMetricInterceptor ...
+func (config *Config) SetEnableMetricInterceptor(EnableMetricInterceptor bool) *Config {
+	config.EnableMetricInterceptor = EnableMetricInterceptor
 	return config
 }
 
-// SetDisableAccessInterceptor ...
-func (config *Config) SetDisableAccessInterceptor(DisableAccessInterceptor bool) *Config {
-	config.DisableAccessInterceptor = DisableAccessInterceptor
+// SetEnableAccessInterceptor ...
+func (config *Config) SetEnableAccessInterceptor(EnableAccessInterceptor bool) *Config {
+	config.EnableAccessInterceptor = EnableAccessInterceptor
 	return config
 }
 
@@ -157,37 +157,37 @@ func (config *Config) WithDialOption(opts ...grpc.DialOption) *Config {
 
 // Build ...
 func (config *Config) Build() (*grpc.ClientConn, error) {
-	if config.Debug {
+	if config.EnableDebug {
 		config.dialOptions = append(config.dialOptions,
 			grpc.WithChainUnaryInterceptor(debugUnaryClientInterceptor(config.Address)),
 		)
 	}
 
-	if !config.DisableAidInterceptor {
+	if config.EnableAidInterceptor {
 		config.dialOptions = append(config.dialOptions,
 			grpc.WithChainUnaryInterceptor(aidUnaryClientInterceptor()),
 		)
 	}
 
-	if !config.DisableTimeoutInterceptor {
+	if config.EnableTimeoutInterceptor {
 		config.dialOptions = append(config.dialOptions,
 			grpc.WithChainUnaryInterceptor(timeoutUnaryClientInterceptor(config.ReadTimeout, config.SlowThreshold)),
 		)
 	}
 
-	if !config.DisableTraceInterceptor {
+	if config.EnableTraceInterceptor {
 		config.dialOptions = append(config.dialOptions,
 			grpc.WithChainUnaryInterceptor(traceUnaryClientInterceptor()),
 		)
 	}
 
-	if !config.DisableAccessInterceptor {
+	if config.EnableAccessInterceptor {
 		config.dialOptions = append(config.dialOptions,
 			grpc.WithChainUnaryInterceptor(loggerUnaryClientInterceptor(config.Name, config.AccessInterceptorLevel)),
 		)
 	}
 
-	if !config.DisableMetricInterceptor {
+	if config.EnableMetricInterceptor {
 		config.dialOptions = append(config.dialOptions,
 			grpc.WithChainUnaryInterceptor(metricUnaryClientInterceptor(config.Name)),
 		)

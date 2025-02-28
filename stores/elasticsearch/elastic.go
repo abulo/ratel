@@ -4,20 +4,22 @@ import (
 	"bytes"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
+	"github.com/abulo/ratel/v3/core/call"
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
 	"github.com/abulo/ratel/v3/core/resource"
-	"github.com/abulo/ratel/v3/core/trace"
+	globalTrace "github.com/abulo/ratel/v3/core/trace"
 	"github.com/abulo/ratel/v3/util"
 	"github.com/olivere/elastic/v7"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/metadata"
 )
 
 // MaxContentLength ...
@@ -25,11 +27,11 @@ const MaxContentLength = 1 << 16
 
 // Config ...
 type Config struct {
-	URL           []string
-	Username      string //账号 root
-	Password      string //密码
-	DisableMetric bool   // 关闭指标采集
-	DisableTrace  bool   // 关闭链路追踪
+	URL          []string
+	Username     string //账号 root
+	Password     string //密码
+	EnableMetric bool   // 关闭指标采集
+	EnableTrace  bool   // 关闭链路追踪
 }
 
 // Client --
@@ -72,8 +74,8 @@ func getClient(config *Config) (*Client, error) {
 	if config.Username != "" && config.Password != "" {
 		options = append(options, elastic.SetBasicAuth(config.Username, config.Password))
 	}
-	if !config.DisableMetric || !config.DisableTrace {
-		options = append(options, elastic.SetHttpClient(ESTraceServerInterceptor(config.DisableMetric, config.DisableTrace, util.Implode(";", config.URL))))
+	if config.EnableMetric || config.EnableTrace {
+		options = append(options, elastic.SetHttpClient(ESTraceServerInterceptor(config.EnableMetric, config.EnableTrace, util.Implode(";", config.URL))))
 	}
 	options = append(options, elastic.SetSniff(false))
 	client, err := elastic.NewClient(options...)
@@ -89,11 +91,11 @@ func getClient(config *Config) (*Client, error) {
 }
 
 // ESTraceServerInterceptor ...
-func ESTraceServerInterceptor(DisableMetric, DisableTrace bool, Addr string) *http.Client {
+func ESTraceServerInterceptor(EnableMetric, EnableTrace bool, Addr string) *http.Client {
 	newESTracedTransport := &ESTracedTransport{}
 	newESTracedTransport.Transport = &http.Transport{}
-	newESTracedTransport.DisableMetric = DisableMetric
-	newESTracedTransport.DisableTrace = DisableTrace
+	newESTracedTransport.EnableMetric = EnableMetric
+	newESTracedTransport.EnableTrace = EnableTrace
 	newESTracedTransport.Addr = Addr
 	return &http.Client{
 		Transport: newESTracedTransport,
@@ -103,40 +105,58 @@ func ESTraceServerInterceptor(DisableMetric, DisableTrace bool, Addr string) *ht
 // ESTracedTransport ...
 type ESTracedTransport struct {
 	*http.Transport
-	DisableMetric bool
-	DisableTrace  bool
-	Addr          string
+	EnableMetric bool
+	EnableTrace  bool
+	Addr         string
 }
 
 // RoundTrip ...
 func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err error) {
 	start := time.Now()
-	var span opentracing.Span
-	if !t.DisableTrace {
-		if parentSpan := trace.SpanFromContext(r.Context()); parentSpan != nil {
-			parentCtx := parentSpan.Context()
-			span = opentracing.StartSpan("elastic", opentracing.ChildOf(parentCtx))
-			ext.SpanKindRPCClient.Set(span)
-			hostName, err := os.Hostname()
-			if err != nil {
-				hostName = "unknown"
-			}
-			ext.PeerHostname.Set(span, hostName)
-			defer func() {
-				if err != nil {
-					span.SetTag("elastic.error", err.Error())
-					span.SetTag(string(ext.Error), true)
-				}
-				span.Finish()
-			}()
-			ctx := opentracing.ContextWithSpan(r.Context(), span)
-			span.SetTag(string(ext.DBType), "elastic")
-			span.SetTag(string(ext.DBInstance), r.URL.Host)
-			span.SetTag("elastic.method", r.Method)
-			span.SetTag("elastic.url", r.URL.Path)
-			span.SetTag("elastic.params", r.URL.Query().Encode())
-			r = r.WithContext(ctx)
+	if t.EnableTrace {
+		tracer := globalTrace.NewTracer(trace.SpanKindClient)
+		attrs := []attribute.KeyValue{
+			semconv.RPCSystemKey.String("elastic"),
 		}
+		fn, file, line := call.Caller(6)
+		attrs = append(attrs,
+			semconv.CodeFunction(fn),
+			semconv.CodeFilepath(file),
+			semconv.CodeLineNumber(line),
+		)
+		md := metadata.New(nil)
+		newCtx, span := tracer.Start(r.Context(), "Count", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+		span.SetAttributes(
+			attribute.String("elastic.method", r.Method),
+			attribute.String("elastic.url", r.URL.Path),
+		)
+		defer span.End()
+
+		// if parentSpan := trace.SpanFromContext(r.Context()); parentSpan != nil {
+		// 	parentCtx := parentSpan.Context()
+		// 	span = opentracing.StartSpan("elastic", opentracing.ChildOf(parentCtx))
+		// 	ext.SpanKindRPCClient.Set(span)
+		// 	hostName, err := os.Hostname()
+		// 	if err != nil {
+		// 		hostName = "unknown"
+		// 	}
+		// 	ext.PeerHostname.Set(span, hostName)
+		// 	defer func() {
+		// 		if err != nil {
+		// 			span.SetTag("elastic.error", err.Error())
+		// 			span.SetTag(string(ext.Error), true)
+		// 		}
+		// 		span.Finish()
+		// 	}()
+		// 	ctx := opentracing.ContextWithSpan(r.Context(), span)
+		// 	span.SetTag(string(ext.DBType), "elastic")
+		// 	span.SetTag(string(ext.DBInstance), r.URL.Host)
+		// 	span.SetTag("elastic.method", r.Method)
+		// 	span.SetTag("elastic.url", r.URL.Path)
+		// 	span.SetTag("elastic.params", r.URL.Query().Encode())
+		r = r.WithContext(newCtx)
+		// }
 	}
 	contentLength, _ := strconv.Atoi(r.Header.Get("Content-Length"))
 	if r.Body != nil && contentLength < MaxContentLength {
@@ -144,17 +164,13 @@ func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err
 		if err != nil {
 			return nil, err
 		}
-		if !t.DisableTrace {
-			span.SetTag(string(ext.DBStatement), string(buf))
-			span.LogFields(log.String("params", string(buf)))
-		}
 		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 	}
 	resp, err = t.Transport.RoundTrip(r)
 	if err != nil {
 		return nil, err
 	}
-	if !t.DisableMetric {
+	if !t.EnableMetric {
 		cost := time.Since(start)
 		if err != nil {
 			metric.LibHandleCounter.WithLabelValues("elastic", "elastic", t.Addr, "ERR").Inc()

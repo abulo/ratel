@@ -5,13 +5,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abulo/ratel/v3/core/call"
 	"github.com/abulo/ratel/v3/core/ecode"
 	"github.com/abulo/ratel/v3/core/metric"
-	"github.com/abulo/ratel/v3/core/trace"
-	"github.com/opentracing/opentracing-go/ext"
+	globalTrace "github.com/abulo/ratel/v3/core/trace"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 )
 
@@ -66,29 +70,48 @@ func prometheusStreamServerInterceptor(srv any, ss grpc.ServerStream, info *grpc
 	return err
 }
 
-func traceUnaryServerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-	span, ctx := trace.StartSpanFromContext(
-		ctx,
-		info.FullMethod,
-		trace.FromIncomingContext(ctx),
-		trace.TagComponent("gRPC"),
-		trace.TagSpanKind("server.unary"),
-	)
-
-	defer span.Finish()
-
-	resp, err := handler(ctx, req)
-
-	if err != nil {
-		code := codes.Unknown
-		if s, ok := status.FromError(err); ok {
-			code = s.Code()
+func NewTraceUnaryServerInterceptor() grpc.UnaryServerInterceptor {
+	tracer := globalTrace.NewTracer(trace.SpanKindServer)
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (reply any, err error) {
+		var remote string
+		md, ok := metadata.FromIncomingContext(ctx)
+		if ok {
+			md = md.Copy()
+		} else {
+			md = metadata.MD{}
 		}
-		span.SetTag("code", code)
-		ext.Error.Set(span, true)
-		span.LogFields(trace.String("event", "error"), trace.String("message", err.Error()))
+		operation, mAttrs := globalTrace.ParseFullMethod(info.FullMethod)
+		attrs := []attribute.KeyValue{
+			semconv.RPCSystemGRPC,
+		}
+		attrs = append(attrs, mAttrs...)
+		if p, ok := peer.FromContext(ctx); ok {
+			remote = p.Addr.String()
+		}
+		attrs = append(attrs, globalTrace.PeerAttr(remote)...)
+		fn, file, line := call.Caller(7)
+		attrs = append(attrs,
+			semconv.CodeFunction(fn),
+			semconv.CodeFilepath(file),
+			semconv.CodeLineNumber(line),
+		)
+		ctx, span := tracer.Start(ctx, operation, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				s, ok := status.FromError(err)
+				if ok {
+					span.SetAttributes(semconv.RPCGRPCStatusCodeKey.Int64(int64(s.Code())))
+				} else {
+					span.SetStatus(codes.Error, err.Error())
+				}
+			} else {
+				span.SetStatus(codes.Ok, "OK")
+			}
+			span.End()
+		}()
+		return handler(ctx, req)
 	}
-	return resp, err
 }
 
 type contextedServerStream struct {
@@ -101,21 +124,42 @@ func (css contextedServerStream) Context() context.Context {
 	return css.ctx
 }
 
-func traceStreamServerInterceptor(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	span, ctx := trace.StartSpanFromContext(
-		ss.Context(),
-		info.FullMethod,
-		trace.FromIncomingContext(ss.Context()),
-		trace.TagComponent("gRPC"),
-		trace.TagSpanKind("server.stream"),
-		trace.CustomTag("isServerStream", info.IsServerStream),
-	)
-	defer span.Finish()
+func NewTraceStreamServerInterceptor() grpc.StreamServerInterceptor {
+	return func(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		tracer := globalTrace.NewTracer(trace.SpanKindServer)
+		attrs := []attribute.KeyValue{
+			semconv.RPCSystemGRPC,
+		}
+		var remote string
+		md, ok := metadata.FromIncomingContext(ss.Context())
+		if ok {
+			md = md.Copy()
+		} else {
+			md = metadata.MD{}
+		}
+		operation, mAttrs := globalTrace.ParseFullMethod(info.FullMethod)
+		attrs = append(attrs, mAttrs...)
+		if p, ok := peer.FromContext(ss.Context()); ok {
+			remote = p.Addr.String()
+		}
+		attrs = append(attrs, globalTrace.PeerAttr(remote)...)
 
-	return handler(srv, contextedServerStream{
-		ServerStream: ss,
-		ctx:          ctx,
-	})
+		fn, file, line := call.Caller(7)
+		attrs = append(attrs,
+			semconv.CodeFunction(fn),
+			semconv.CodeFilepath(file),
+			semconv.CodeLineNumber(line),
+			semconv.HostNameKey.String(remote),
+		)
+
+		ctx, span := tracer.Start(ss.Context(), operation, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
+		defer span.End()
+
+		return handler(srv, contextedServerStream{
+			ServerStream: ss,
+			ctx:          ctx,
+		})
+	}
 }
 
 func extractAID(ctx context.Context) string {

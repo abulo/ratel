@@ -13,14 +13,14 @@ type JobWithTime struct {
 
 type JobWithTimeHeap []JobWithTime
 
-func (jobHeap *JobWithTimeHeap) Pop() (ret interface{}) {
+func (jobHeap *JobWithTimeHeap) Pop() (ret any) {
 	n := jobHeap.Len() - 1
 	ret = (*jobHeap)[n]
 	(*jobHeap) = (*jobHeap)[0:n]
 	return
 }
 
-func (jobHeap *JobWithTimeHeap) Push(x interface{}) {
+func (jobHeap *JobWithTimeHeap) Push(x any) {
 	(*jobHeap) = append((*jobHeap), x.(JobWithTime))
 }
 
@@ -38,7 +38,7 @@ func (jobHeap *JobWithTimeHeap) Swap(i, j int) {
 	(*jobHeap)[j] = t
 }
 
-func (jobHeap *JobWithTimeHeap) Index(i int) interface{} {
+func (jobHeap *JobWithTimeHeap) Index(i int) any {
 	return (*jobHeap)[i]
 }
 

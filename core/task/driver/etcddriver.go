@@ -110,7 +110,7 @@ func (e *EtcdDriver) delServiceList(key string) {
 // GetServices 获取服务地址
 func (e *EtcdDriver) getServices() []string {
 	addrs := make([]string, 0)
-	e.nodes.Range(func(key, _ interface{}) bool {
+	e.nodes.Range(func(key, _ any) bool {
 		addrs = append(addrs, key.(string))
 		return true
 	})

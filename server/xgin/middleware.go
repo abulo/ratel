@@ -10,11 +10,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abulo/ratel/v3/core/call"
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
-	"github.com/abulo/ratel/v3/core/trace"
+	globalTrace "github.com/abulo/ratel/v3/core/trace"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -39,18 +44,27 @@ func metricServerInterceptor() gin.HandlerFunc {
 
 func traceServerInterceptor() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		span, ctx := trace.StartSpanFromContext(
-			c.Request.Context(),
-			trace.SpanGinHttpStartName(c),
-			trace.TagComponent("http"),
-			trace.TagSpanKind("server"),
-			trace.HeaderExtractor(c.Request.Header),
-			trace.CustomTag("http.url", c.Request.URL.Path),
-			trace.CustomTag("http.method", c.Request.Method),
-			trace.CustomTag("peer.ipv4", c.ClientIP()),
+		tracer := globalTrace.NewTracer(trace.SpanKindServer)
+		attrs := []attribute.KeyValue{
+			semconv.RPCSystemKey.String("http"),
+		}
+
+		fn, file, line := call.Caller(7)
+		attrs = append(attrs,
+			semconv.CodeFunction(fn),
+			semconv.CodeFilepath(file),
+			semconv.CodeLineNumber(line),
 		)
+		ctx, span := tracer.Start(c.Request.Context(), c.Request.URL.Path, propagation.HeaderCarrier(c.Request.Header), trace.WithAttributes(attrs...))
+		span.SetAttributes(
+			semconv.HTTPURLKey.String(c.Request.URL.String()),
+			semconv.HTTPTargetKey.String(c.Request.URL.Path),
+			semconv.HTTPMethodKey.String(c.Request.Method),
+			semconv.HTTPUserAgentKey.String(c.Request.UserAgent()),
+			semconv.NetPeerNameKey.String(c.ClientIP()),
+		)
+		defer span.End()
 		c.Request = c.Request.WithContext(ctx)
-		defer span.Finish()
 		c.Next()
 	}
 }

@@ -48,15 +48,15 @@ func (l *WrapLogger) LogMode(level logger.LogLevel) logger.Interface {
 	return l
 }
 
-func (l *WrapLogger) Info(ctx context.Context, s string, args ...interface{}) {
+func (l *WrapLogger) Info(ctx context.Context, s string, args ...any) {
 	l.Logrus.WithContext(ctx).Infof(s, args...)
 }
 
-func (l *WrapLogger) Warn(ctx context.Context, s string, args ...interface{}) {
+func (l *WrapLogger) Warn(ctx context.Context, s string, args ...any) {
 	l.Logrus.WithContext(ctx).Warnf(s, args...)
 }
 
-func (l *WrapLogger) Error(ctx context.Context, s string, args ...interface{}) {
+func (l *WrapLogger) Error(ctx context.Context, s string, args ...any) {
 	l.Logrus.WithContext(ctx).Errorf(s, args...)
 }
 
@@ -106,15 +106,15 @@ func (l *WrapEntry) LogMode(level logger.LogLevel) logger.Interface {
 	return l
 }
 
-func (l *WrapEntry) Info(ctx context.Context, s string, args ...interface{}) {
+func (l *WrapEntry) Info(ctx context.Context, s string, args ...any) {
 	l.Logrus.WithContext(ctx).Infof(s, args...)
 }
 
-func (l *WrapEntry) Warn(ctx context.Context, s string, args ...interface{}) {
+func (l *WrapEntry) Warn(ctx context.Context, s string, args ...any) {
 	l.Logrus.WithContext(ctx).Warnf(s, args...)
 }
 
-func (l *WrapEntry) Error(ctx context.Context, s string, args ...interface{}) {
+func (l *WrapEntry) Error(ctx context.Context, s string, args ...any) {
 	l.Logrus.WithContext(ctx).Errorf(s, args...)
 }
 

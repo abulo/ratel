@@ -9,13 +9,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-func labValue(value *pb.Value) (interface{}, error) {
+func labValue(value *pb.Value) (any, error) {
 	var err error
 	if value == nil {
 		return nil, nil
 	}
 	if structValue, ok := value.GetKind().(*pb.Value_StructValue); ok {
-		result := make(map[string]interface{})
+		result := make(map[string]any)
 		for k, v := range structValue.StructValue.Fields {
 			result[k], err = labValue(v)
 			if err != nil {
@@ -25,7 +25,7 @@ func labValue(value *pb.Value) (interface{}, error) {
 		return result, err
 	}
 	if listValue, ok := value.GetKind().(*pb.Value_ListValue); ok {
-		result := make([]interface{}, len(listValue.ListValue.Values))
+		result := make([]any, len(listValue.ListValue.Values))
 		for i, el := range listValue.ListValue.Values {
 			result[i], err = labValue(el)
 			if err != nil {
@@ -49,9 +49,9 @@ func labValue(value *pb.Value) (interface{}, error) {
 	return errors.New(fmt.Sprintf("Cannot convert the value %+v", value)), nil
 }
 
-func StructToMap(str *pb.Struct) (map[string]interface{}, error) {
+func StructToMap(str *pb.Struct) (map[string]any, error) {
 	var err error
-	result := make(map[string]interface{})
+	result := make(map[string]any)
 	for k, v := range str.Fields {
 		result[k], err = labValue(v)
 		if err != nil {
@@ -61,7 +61,7 @@ func StructToMap(str *pb.Struct) (map[string]interface{}, error) {
 	return result, err
 }
 
-func labEntry(entry interface{}) (*pb.Value, error) {
+func labEntry(entry any) (*pb.Value, error) {
 	var err error
 	if entry == nil {
 		return &pb.Value{Kind: &pb.Value_NullValue{}}, nil
@@ -98,7 +98,7 @@ func labEntry(entry interface{}) (*pb.Value, error) {
 	case reflect.Struct:
 		return labEntry(structs.Map(entry))
 	case reflect.Map:
-		mapEntry := make(map[string]interface{})
+		mapEntry := make(map[string]any)
 		entryValue := reflect.ValueOf(entry)
 		for _, k := range entryValue.MapKeys() {
 			mapEntry[k.String()] = entryValue.MapIndex(k).Interface()
@@ -109,7 +109,7 @@ func labEntry(entry interface{}) (*pb.Value, error) {
 	return nil, errors.New(fmt.Sprintf("Cannot convert [%+v] kind:%s", entry, rt.Kind()))
 }
 
-func MapToStruct(input map[string]interface{}) (*pb.Struct, error) {
+func MapToStruct(input map[string]any) (*pb.Struct, error) {
 	var err error
 	result := &pb.Struct{Fields: make(map[string]*pb.Value)}
 	for k, v := range input {
@@ -121,6 +121,6 @@ func MapToStruct(input map[string]interface{}) (*pb.Struct, error) {
 	return result, err
 }
 
-func StructToPbStruct(input interface{}) (*pb.Struct, error) {
+func StructToPbStruct(input any) (*pb.Struct, error) {
 	return MapToStruct(structs.Map(input))
 }

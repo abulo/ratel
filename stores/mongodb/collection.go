@@ -2,18 +2,15 @@ package mongodb
 
 import (
 	"context"
-	"os"
 	"reflect"
 	"runtime"
 	"time"
 
+	"github.com/abulo/ratel/v3/core/call"
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
 	"github.com/abulo/ratel/v3/core/resource"
-	"github.com/abulo/ratel/v3/core/trace"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/opentracing/opentracing-go/log"
+	globalTrace "github.com/abulo/ratel/v3/core/trace"
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	"go.mongodb.org/mongo-driver/bson"
@@ -21,6 +18,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/session"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/metadata"
 )
 
 type (
@@ -28,14 +30,14 @@ type (
 		*mongo.Collection
 		// db            string
 		// name          string
-		brk           resource.Breaker
-		DisableMetric bool // 关闭指标采集
-		DisableTrace  bool // 关闭链路追踪
-		filter        bson.D
-		limit         int64
-		skip          int64
-		sort          bson.D
-		fields        bson.M
+		brk          resource.Breaker
+		EnableMetric bool // 开启指标采集
+		EnableTrace  bool // 开启链路追踪
+		filter       bson.D
+		limit        int64
+		skip         int64
+		sort         bson.D
+		fields       bson.M
 	}
 
 	index struct {
@@ -44,16 +46,14 @@ type (
 	}
 )
 
-func newCollection(collection *mongo.Collection, brk resource.Breaker, DisableMetric, DisableTrace bool) *DecoratedCollection {
+func newCollection(collection *mongo.Collection, brk resource.Breaker, EnableMetric, EnableTrace bool) *DecoratedCollection {
 	return &DecoratedCollection{
-		Collection: collection,
-		// name:          c.Name(),
-		// db:            c.Database().Name(),
-		brk:           brk,
-		DisableMetric: DisableMetric,
-		DisableTrace:  DisableTrace,
-		filter:        make(bson.D, 0),
-		sort:          make(bson.D, 0),
+		Collection:   collection,
+		brk:          brk,
+		EnableMetric: EnableMetric,
+		EnableTrace:  EnableTrace,
+		filter:       make(bson.D, 0),
+		sort:         make(bson.D, 0),
 	}
 }
 
@@ -107,31 +107,48 @@ func (c *DecoratedCollection) CreateIndex(ctx context.Context, key bson.D, op *o
 	start := time.Now()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "CreateIndex")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("keys", key))
-				span.LogFields(log.Object("options", op))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "CreateIndex", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
+			// call := Caller(6)
+			// if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
+			// 	parentCtx := parentSpan.Context()
+			// 	span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
+			// 	ext.SpanKindRPCClient.Set(span)
+			// 	hostName, err := os.Hostname()
+			// 	if err != nil {
+			// 		hostName = "unknown"
+			// 	}
+			// 	ext.PeerHostname.Set(span, hostName)
+			// 	span.SetTag("method", "CreateIndex")
+			// 	span.LogFields(log.String("database", c.Database().Name()))
+			// 	span.LogFields(log.String("table", c.Name()))
+			// 	span.LogFields(log.Object("keys", key))
+			// 	span.LogFields(log.Object("options", op))
+			// 	span.LogFields(log.Object("call", call))
+			// 	ctx = opentracing.ContextWithSpan(ctx, span)
+			// }
 		}
 		indexView := c.Collection.Indexes()
 		indexModel := mongo.IndexModel{Keys: key, Options: op}
 		res, err = indexView.CreateOne(ctx, indexModel)
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -150,25 +167,43 @@ func (c *DecoratedCollection) ListIndexes(ctx context.Context, opts *options.Lis
 	start := time.Now()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "ListIndexes")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("options", opts))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "ListIndexes", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
+			// call := Caller(6)
+			// if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
+			// 	parentCtx := parentSpan.Context()
+			// 	span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
+			// 	ext.SpanKindRPCClient.Set(span)
+			// 	hostName, err := os.Hostname()
+			// 	if err != nil {
+			// 		hostName = "unknown"
+			// 	}
+			// 	ext.PeerHostname.Set(span, hostName)
+			// 	span.SetTag("method", "ListIndexes")
+			// 	span.LogFields(log.String("database", c.Database().Name()))
+			// 	span.LogFields(log.String("table", c.Name()))
+			// 	span.LogFields(log.Object("options", opts))
+			// 	span.LogFields(log.Object("call", call))
+			// 	defer span.Finish()
+			// 	ctx = opentracing.ContextWithSpan(ctx, span)
+			// }
 		}
 		indexView := c.Collection.Indexes()
 		cursor, err := indexView.List(ctx, opts)
@@ -183,7 +218,7 @@ func (c *DecoratedCollection) ListIndexes(ctx context.Context, opts *options.Lis
 			}
 		}
 		c.reset()
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -203,26 +238,44 @@ func (c *DecoratedCollection) DropIndex(ctx context.Context, name string, opts *
 	indexView := c.Collection.Indexes()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "DropIndex")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.String("indexname", name))
-				span.LogFields(log.Object("options", opts))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "DropIndex", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
+			// call := Caller(6)
+			// if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
+			// 	parentCtx := parentSpan.Context()
+			// 	span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
+			// 	ext.SpanKindRPCClient.Set(span)
+			// 	hostName, err := os.Hostname()
+			// 	if err != nil {
+			// 		hostName = "unknown"
+			// 	}
+			// 	ext.PeerHostname.Set(span, hostName)
+			// 	span.SetTag("method", "DropIndex")
+			// 	span.LogFields(log.String("database", c.Database().Name()))
+			// 	span.LogFields(log.String("table", c.Name()))
+			// 	span.LogFields(log.String("indexname", name))
+			// 	span.LogFields(log.Object("options", opts))
+			// 	span.LogFields(log.Object("call", call))
+			// 	defer span.Finish()
+			// 	ctx = opentracing.ContextWithSpan(ctx, span)
+			// }
 		}
 		_, err = indexView.DropOne(ctx, name, opts)
 		if err != nil {
@@ -230,7 +283,7 @@ func (c *DecoratedCollection) DropIndex(ctx context.Context, name string, opts *
 			return err
 		}
 		c.reset()
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -251,30 +304,30 @@ func (c *DecoratedCollection) InsertOne(ctx context.Context, document any) (val 
 	err = c.brk.DoWithAcceptable(func() error {
 		// var data any
 		data := BeforeCreate(document)
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "InsertOne")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("document", data))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "InsertOne", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
 		}
 		val, err = c.Collection.InsertOne(ctx, data)
 		c.reset()
 
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -295,29 +348,29 @@ func (c *DecoratedCollection) InsertMany(ctx context.Context, documents any) (va
 	err = c.brk.DoWithAcceptable(func() error {
 		// var data []any
 		data := BeforeCreate(documents).([]any)
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "InsertMany")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("documents", documents))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "InsertMany", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
 		}
 		val, err = c.Collection.InsertMany(ctx, data)
 		c.reset()
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -336,25 +389,25 @@ func (c *DecoratedCollection) Aggregate(ctx context.Context, pipeline any, resul
 	start := time.Now()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "Aggregate")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("pipeline", pipeline))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "Aggregate", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
 		}
 		cursor, err := c.Collection.Aggregate(ctx, pipeline)
 		if err != nil {
@@ -363,7 +416,7 @@ func (c *DecoratedCollection) Aggregate(ctx context.Context, pipeline any, resul
 		}
 		err = cursor.All(ctx, result)
 		c.reset()
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -383,32 +436,31 @@ func (c *DecoratedCollection) UpdateOrInsert(ctx context.Context, documents []an
 	start := time.Now()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "UpdateOrInsert")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("filter", c.filter))
-				span.LogFields(log.Object("documents", documents))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "UpdateOrInsert", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
 		}
 		var upsert = true
 		val, err = c.Collection.UpdateMany(ctx, c.filter, documents, &options.UpdateOptions{Upsert: &upsert})
 		c.reset()
 
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -428,31 +480,30 @@ func (c *DecoratedCollection) UpdateOne(ctx context.Context, document any) (val 
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		update := bson.M{"$set": BeforeUpdate(document)}
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "UpdateOne")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("filter", c.filter))
-				span.LogFields(log.Object("update", update))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "UpdateOne", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
 		}
 		val, err = c.Collection.UpdateOne(ctx, c.filter, update)
 		c.reset()
 
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", "ERR").Inc()
@@ -471,30 +522,29 @@ func (c *DecoratedCollection) UpdateOneRaw(ctx context.Context, document any, op
 	start := time.Now()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "UpdateOneRaw")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("filter", c.filter))
-				span.LogFields(log.Object("update", document))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "UpdateOneRaw", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
 		}
 		val, err = c.Collection.UpdateOne(ctx, c.filter, document, opt...)
 		c.reset()
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -514,30 +564,29 @@ func (c *DecoratedCollection) UpdateMany(ctx context.Context, document any) (val
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		update := bson.M{"$set": BeforeUpdate(document)}
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "UpdateMany")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("filter", c.filter))
-				span.LogFields(log.Object("update", update))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "UpdateMany", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
 		}
 		val, err = c.Collection.UpdateMany(ctx, c.filter, update)
 		c.reset()
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -556,28 +605,25 @@ func (c *DecoratedCollection) FindOne(ctx context.Context, document any) (err er
 	start := time.Now()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "FindOne")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("filter", c.filter))
-				span.LogFields(log.Int64("skip", c.skip))
-				span.LogFields(log.Object("sort", c.sort))
-				span.LogFields(log.Object("fields", c.fields))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "FindOne", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
 		}
 		result := c.Collection.FindOne(ctx, c.filter, &options.FindOneOptions{
 			Skip:       &c.skip,
@@ -586,7 +632,7 @@ func (c *DecoratedCollection) FindOne(ctx context.Context, document any) (err er
 		})
 		err = result.Decode(document)
 		c.reset()
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -605,29 +651,25 @@ func (c *DecoratedCollection) FindMany(ctx context.Context, documents any) (err 
 	start := time.Now()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "FindMany")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("filter", c.filter))
-				span.LogFields(log.Int64("skip", c.skip))
-				span.LogFields(log.Int64("limit", c.limit))
-				span.LogFields(log.Object("sort", c.sort))
-				span.LogFields(log.Object("fields", c.fields))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "FindMany", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
 		}
 		result, err := c.Collection.Find(ctx, c.filter, &options.FindOptions{
 			Skip:       &c.skip,
@@ -665,7 +707,7 @@ func (c *DecoratedCollection) FindMany(ctx context.Context, documents any) (err 
 		}
 		val.Elem().Set(slice)
 		c.reset()
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -684,25 +726,25 @@ func (c *DecoratedCollection) Delete(ctx context.Context) (count int64, err erro
 	start := time.Now()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "Delete")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("filter", c.filter))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "Delete", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
 		}
 		if c.filter == nil || len(c.filter) == 0 {
 			err = errors.New("you can't delete all documents, it's very dangerous")
@@ -718,7 +760,7 @@ func (c *DecoratedCollection) Delete(ctx context.Context) (count int64, err erro
 		}
 		count = result.DeletedCount
 		c.reset()
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -737,29 +779,30 @@ func (c *DecoratedCollection) Drop(ctx context.Context) (err error) {
 	start := time.Now()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "Drop")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "Drop", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
 		}
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 		err = c.Collection.Drop(ctx)
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
@@ -778,31 +821,31 @@ func (c *DecoratedCollection) Count(ctx context.Context) (result int64, err erro
 	start := time.Now()
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
-		if !c.DisableTrace {
-			call := Caller(6)
-			if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-				parentCtx := parentSpan.Context()
-				span := opentracing.StartSpan("mongodb", opentracing.ChildOf(parentCtx))
-				ext.SpanKindRPCClient.Set(span)
-				hostName, err := os.Hostname()
-				if err != nil {
-					hostName = "unknown"
-				}
-				ext.PeerHostname.Set(span, hostName)
-				span.SetTag("method", "Count")
-				span.LogFields(log.String("database", c.Database().Name()))
-				span.LogFields(log.String("table", c.Name()))
-				span.LogFields(log.Object("filter", c.filter))
-				span.LogFields(log.Object("call", call))
-				defer span.Finish()
-				ctx = opentracing.ContextWithSpan(ctx, span)
+		if c.EnableTrace {
+			tracer := globalTrace.NewTracer(trace.SpanKindClient)
+			attrs := []attribute.KeyValue{
+				semconv.RPCSystemKey.String("mongo"),
 			}
+			fn, file, line := call.Caller(6)
+			attrs = append(attrs,
+				semconv.CodeFunction(fn),
+				semconv.CodeFilepath(file),
+				semconv.CodeLineNumber(line),
+			)
+			md := metadata.New(nil)
+			newCtx, span := tracer.Start(ctx, "Count", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+
+			span.SetAttributes(
+				semconv.DBMongoDBCollection(c.Database().Name()),
+			)
+			defer span.End()
+			ctx = newCtx
 		}
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 		result, err = c.Collection.CountDocuments(ctx, c.filter)
 		c.reset()
-		if !c.DisableMetric {
+		if c.EnableMetric {
 			cost := time.Since(start)
 			if err != nil {
 				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()

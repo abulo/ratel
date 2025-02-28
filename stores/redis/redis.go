@@ -79,17 +79,17 @@ func WithPoolSize(PoolSize int) Option {
 	}
 }
 
-// WithDisableMetric 禁用指标采集 DisableMetric: 是否禁用指标采集
-func WithDisableMetric(DisableMetric bool) Option {
+// WithEnableMetric 禁用指标采集 EnableMetric: 是否禁用指标采集
+func WithEnableMetric(EnableMetric bool) Option {
 	return func(r *Client) {
-		r.DisableMetric = DisableMetric
+		r.EnableMetric = EnableMetric
 	}
 }
 
-// WithDisableTrace 禁用链路追踪 DisableTrace: 是否禁用链路追踪
-func WithDisableTrace(DisableTrace bool) Option {
+// WithEnableTrace 禁用链路追踪 EnableTrace: 是否禁用链路追踪
+func WithEnableTrace(EnableTrace bool) Option {
 	return func(r *Client) {
-		r.DisableTrace = DisableTrace
+		r.EnableTrace = EnableTrace
 	}
 }
 
@@ -146,13 +146,8 @@ func getClient(r *Client) (RedisNode, error) {
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
 		opt := r.GetClientConfig()
 		store := redis.NewClient(opt)
-		if !r.DisableTrace || !r.DisableMetric {
-			store.AddHook(OpenTraceHook{
-				DisableMetric: r.DisableMetric,
-				DisableTrace:  r.DisableTrace,
-				DB:            r.Database,
-				Addr:          driverName,
-			})
+		if r.EnableTrace {
+			store.AddHook(OpenTraceHook{})
 		}
 		return store, nil
 	})
@@ -168,13 +163,8 @@ func getCluster(r *Client) (RedisNode, error) {
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
 		opt := r.GetClusterClientConfig()
 		store := redis.NewClusterClient(opt)
-		if !r.DisableTrace || !r.DisableMetric {
-			store.AddHook(OpenTraceHook{
-				DisableMetric: r.DisableMetric,
-				DisableTrace:  r.DisableTrace,
-				DB:            r.Database,
-				Addr:          driverName,
-			})
+		if r.EnableTrace {
+			store.AddHook(OpenTraceHook{})
 		}
 		return store, nil
 	})
@@ -190,13 +180,8 @@ func getFailover(r *Client) (RedisNode, error) {
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
 		opt := r.GetFailoverClientConfig()
 		store := redis.NewFailoverClient(opt)
-		if !r.DisableTrace || !r.DisableMetric {
-			store.AddHook(OpenTraceHook{
-				DisableMetric: r.DisableMetric,
-				DisableTrace:  r.DisableTrace,
-				DB:            r.Database,
-				Addr:          driverName,
-			})
+		if r.EnableTrace {
+			store.AddHook(OpenTraceHook{})
 		}
 		return store, nil
 	})
@@ -215,13 +200,8 @@ func getRing(r *Client) (RedisNode, error) {
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
 		opt := r.GetRingClientConfig()
 		store := redis.NewRing(opt)
-		if !r.DisableTrace || !r.DisableMetric {
-			store.AddHook(OpenTraceHook{
-				DisableMetric: r.DisableMetric,
-				DisableTrace:  r.DisableTrace,
-				DB:            r.Database,
-				Addr:          driverName,
-			})
+		if r.EnableTrace {
+			store.AddHook(OpenTraceHook{})
 		}
 		return store, nil
 	})

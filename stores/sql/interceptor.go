@@ -1,16 +1,20 @@
 package sql
 
 import (
-	"os"
 	"runtime"
 	"strings"
 
+	"github.com/abulo/ratel/v3/core/call"
+	"github.com/abulo/ratel/v3/core/hostname"
 	"github.com/abulo/ratel/v3/core/metric"
-	"github.com/abulo/ratel/v3/core/trace"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/opentracing/opentracing-go/log"
+	globalTrace "github.com/abulo/ratel/v3/core/trace"
 	"github.com/spf13/cast"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/propagation"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/metadata"
 	"gorm.io/gorm"
 )
 
@@ -78,34 +82,36 @@ func MetricInterceptor() Interceptor {
 }
 
 func TraceInterceptor() Interceptor {
+	tracer := globalTrace.NewTracer(trace.SpanKindClient)
+	attrs := []attribute.KeyValue{
+		semconv.RPCSystemKey.String("gorm"),
+	}
 	return func(op string, client *Client, next Handler) Handler {
 		return func(scope *gorm.DB) {
 			if ctx := scope.Statement.Context; ctx != nil {
-				call := Caller(7)
-				if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-					parentCtx := parentSpan.Context()
-					span := opentracing.StartSpan(client.DriverName, opentracing.ChildOf(parentCtx))
-					ext.SpanKindRPCClient.Set(span)
-					hostName, err := os.Hostname()
-					if err != nil {
-						hostName = "unknown"
-					}
-					ext.PeerHostname.Set(span, hostName)
-					ext.PeerAddress.Set(span, client.Host)
-					ext.DBInstance.Set(span, client.Database)
-					ext.DBStatement.Set(span, client.DriverName)
-					sqlRaw := scope.Dialector.Explain(scope.Statement.SQL.String(), scope.Statement.Vars...)
-					span.LogFields(log.String("sql", sqlRaw))
-					span.LogFields(log.Object("call", call))
-					defer span.Finish()
-					ctx = opentracing.ContextWithSpan(ctx, span)
-					scope.Statement.Context = ctx
-					next(scope)
-					if scope.Error != nil {
-						ext.Error.Set(span, true)
-					}
-					return
+				sqlRaw := scope.Dialector.Explain(scope.Statement.SQL.String(), scope.Statement.Vars...)
+				fn, file, line := call.Caller(7)
+				attrs = append(attrs,
+					semconv.HostName(hostname.Hostname()),
+					semconv.CodeFunction(fn),
+					semconv.CodeFilepath(file),
+					semconv.CodeLineNumber(line),
+				)
+				md := metadata.New(nil)
+				_, span := tracer.Start(ctx, op, propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+				span.SetAttributes(
+					semconv.DBNameKey.String(client.DriverName),
+					semconv.DBConnectionStringKey.String(client.Host),
+					semconv.DBUserKey.String(client.Username),
+					semconv.DBStatementKey.String(sqlRaw),
+				)
+				defer span.End()
+				next(scope)
+				if scope.Error != nil {
+					span.RecordError(scope.Error)
+					span.SetStatus(codes.Error, scope.Error.Error())
 				}
+				return
 			}
 			next(scope)
 		}

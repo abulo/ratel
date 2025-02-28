@@ -10,16 +10,17 @@ import (
 	"github.com/abulo/ratel/v3/core/env"
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
-	"github.com/abulo/ratel/v3/core/trace"
+	globalTrace "github.com/abulo/ratel/v3/core/trace"
 	"github.com/abulo/ratel/v3/util"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
-	"google.golang.org/grpc/status"
 )
 
 var (
@@ -90,33 +91,29 @@ func timeoutUnaryClientInterceptor(timeout time.Duration, slowThreshold time.Dur
 }
 
 func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	tracer := globalTrace.NewTracer(trace.SpanKindClient)
+	attrs := []attribute.KeyValue{
+		semconv.RPCSystemGRPC,
+	}
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) (err error) {
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if !ok {
 			md = metadata.New(nil)
 		} else {
 			md = md.Copy()
 		}
-
-		span, ctx := trace.StartSpanFromContext(
-			ctx,
-			method,
-			trace.TagSpanKind("client"),
-			trace.TagComponent("grpc"),
+		ctx, span := tracer.Start(ctx, method, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
+		ctx = metadata.NewOutgoingContext(ctx, md)
+		span.SetAttributes(
+			semconv.RPCMethodKey.String(method),
 		)
-		defer span.Finish()
-
-		err := invoker(trace.MetadataInjector(ctx, md), method, req, reply, cc, opts...)
+		err = invoker(ctx, method, req, reply, cc, opts...)
+		span.SetStatus(codes.Ok, "ok")
 		if err != nil {
-			code := codes.Unknown
-			if s, ok := status.FromError(err); ok {
-				code = s.Code()
-			}
-			span.SetTag("response_code", code)
-			ext.Error.Set(span, true)
-
-			span.LogFields(trace.String("event", "error"), trace.String("message", err.Error()))
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 		}
+		span.End()
 		return err
 	}
 }

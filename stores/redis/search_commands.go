@@ -20,7 +20,7 @@ func (r *Client) FT_List(ctx context.Context) (val []string, err error) {
 }
 
 // FTAggregate 执行聚合查询 ctx: 上下文, index: 索引名称, query: 查询语句
-func (r *Client) FTAggregate(ctx context.Context, index, query string) (val map[string]interface{}, err error) {
+func (r *Client) FTAggregate(ctx context.Context, index, query string) (val map[string]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -150,7 +150,7 @@ func (r *Client) FTCursorDel(ctx context.Context, index string, cursorId int) (v
 }
 
 // FTCursorRead 读取游标 ctx: 上下文, index: 索引名称, cursorId: 游标ID, count: 读取数量
-func (r *Client) FTCursorRead(ctx context.Context, index string, cursorId, count int) (val map[string]interface{}, err error) {
+func (r *Client) FTCursorRead(ctx context.Context, index string, cursorId, count int) (val map[string]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {

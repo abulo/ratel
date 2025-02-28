@@ -67,10 +67,10 @@ type Client struct {
 	IdleCheckFrequency time.Duration
 	// TLS Config to use. When set TLS will be negotiated.
 	// Only for normal client
-	TLSConfig     *tls.Config
-	DisableMetric bool // 关闭指标采集
-	DisableTrace  bool // 关闭链路追踪
-	brk           resource.Breaker
+	TLSConfig    *tls.Config
+	EnableMetric bool // 开启指标采集
+	EnableTrace  bool // 开启链路追踪
+	brk          resource.Breaker
 }
 
 // GetRingClientConfig 获取分片配置

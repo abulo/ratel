@@ -1,29 +1,32 @@
 package trace
 
 import (
-	"strings"
+	"go.opentelemetry.io/otel/propagation"
+	"google.golang.org/grpc/metadata"
 )
 
+// assert that MetadataReaderWriter implements the TextMapCarrier interface
+var _ propagation.TextMapCarrier = (*MetadataReaderWriter)(nil)
+
 // MetadataReaderWriter ...
-type MetadataReaderWriter struct {
-	MD map[string][]string
-}
+type MetadataReaderWriter metadata.MD
 
-// Set ...
-func (w MetadataReaderWriter) Set(key, val string) {
-	key = strings.ToLower(key)
-	w.MD[key] = append(w.MD[key], val)
-}
-
-// ForeachKey ...
-func (w MetadataReaderWriter) ForeachKey(handler func(key, val string) error) error {
-	for k, val := range w.MD {
-		for _, v := range val {
-			if err := handler(k, v); err != nil {
-				return err
-			}
-		}
+func (m MetadataReaderWriter) Get(key string) string {
+	values := metadata.MD(m).Get(key)
+	if len(values) == 0 {
+		return ""
 	}
+	return values[0]
+}
 
-	return nil
+func (m MetadataReaderWriter) Set(key, value string) {
+	metadata.MD(m).Set(key, value)
+}
+
+func (m MetadataReaderWriter) Keys() []string {
+	keys := make([]string, 0, len(m))
+	for k := range metadata.MD(m) {
+		keys = append(keys, k)
+	}
+	return keys
 }

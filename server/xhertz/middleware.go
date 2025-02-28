@@ -11,13 +11,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abulo/ratel/v3/core/hostname"
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
-	"github.com/abulo/ratel/v3/core/trace"
+	globalTrace "github.com/abulo/ratel/v3/core/trace"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/errors"
+	"github.com/cloudwego/hertz/pkg/protocol"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -26,6 +31,32 @@ var (
 	dot       = []byte(".")
 	slash     = []byte("/")
 )
+
+type metadataProvider struct {
+	metadata map[string]string
+	headers  *protocol.RequestHeader
+}
+
+// Get a value from metadata by key
+func (m *metadataProvider) Get(key string) string {
+	return m.headers.Get(key)
+}
+
+// Set a value to metadata by k/v
+func (m *metadataProvider) Set(key, value string) {
+	m.headers.Set(key, value)
+}
+
+// Keys Iteratively get all keys of metadata
+func (m *metadataProvider) Keys() []string {
+	out := make([]string, 0, len(m.metadata))
+
+	m.headers.VisitAll(func(key, value []byte) {
+		out = append(out, string(key))
+	})
+
+	return out
+}
 
 func metricServerInterceptor() app.HandlerFunc {
 	return func(c context.Context, ctx *app.RequestContext) {
@@ -38,18 +69,21 @@ func metricServerInterceptor() app.HandlerFunc {
 
 func traceServerInterceptor() app.HandlerFunc {
 	return func(c context.Context, ctx *app.RequestContext) {
-		span, ctxNew := trace.StartSpanFromContext(
-			c,
-			trace.SpanHertzHttpStartName(ctx),
-			trace.TagComponent("http"),
-			trace.TagSpanKind("server"),
-			// trace.HeaderExtractor(ctx.Request.Header.GetHeaders()),
-			trace.CustomTag("http.url", string(ctx.Request.Path())),
-			trace.CustomTag("http.method", string(ctx.Request.Method())),
-			trace.CustomTag("peer.ipv4", ctx.ClientIP()),
+		tracer := globalTrace.NewTracer(trace.SpanKindServer)
+		attrs := []attribute.KeyValue{
+			semconv.RPCSystemKey.String("http"),
+			semconv.HostName(hostname.Hostname()),
+		}
+		headers := &ctx.Request.Header
+		provider := &metadataProvider{headers: headers}
+		c, span := tracer.Start(c, cast.ToString(ctx.Request.Method())+" "+cast.ToString(ctx.Request.Path()), provider, trace.WithAttributes(attrs...))
+		span.SetAttributes(
+			semconv.HTTPTargetKey.String(cast.ToString(ctx.Request.Path())),
+			semconv.HTTPMethodKey.String(cast.ToString(ctx.Request.Method())),
+			semconv.HTTPUserAgentKey.String(cast.ToString(ctx.Request.Header.UserAgent())),
+			attribute.String("client.ip", cast.ToString(ctx.ClientIP())),
 		)
-		c = ctxNew
-		defer span.Finish()
+		defer span.End()
 		ctx.Next(c)
 	}
 }

@@ -23,25 +23,25 @@ const (
 )
 
 type Client struct {
-	Host          string        // 数据库 IP
-	Port          string        // 数据库端口
-	Username      string        // 数据库用户名
-	Password      string        // 数据库密码
-	Charset       string        // 数据库字符集
-	Database      string        // 数据库名称
-	ParseTime     bool          // 是否解析时间
-	TimeZone      string        // 数据库时区  mysql & postgresql 专用
-	SslMode       bool          // 数据库SSL模式  postgresql 专用
-	DialTimeOut   string        // 连接超时时间 clickhouse 专用
-	ReadTimeOut   string        // 读取超时时间 clickhouse 专用
-	MaxIdleConns  int           // 连接池里最大空闲连接数。必须要比maxOpenConns小
-	MaxOpenConns  int           // 连接池最多同时打开的连接数
-	MaxLifetime   time.Duration // 连接池里面的连接最大存活时长
-	MaxIdleTime   time.Duration // 连接池里面的连接最大空闲时长
-	DisableMetric bool          // 关闭指标采集
-	DisableTrace  bool          // 关闭链路追踪
-	DisableDebug  bool          // 关闭调试模式
-	DriverName    string        // 数据库驱动名称
+	Host         string        // 数据库 IP
+	Port         string        // 数据库端口
+	Username     string        // 数据库用户名
+	Password     string        // 数据库密码
+	Charset      string        // 数据库字符集
+	Database     string        // 数据库名称
+	ParseTime    bool          // 是否解析时间
+	TimeZone     string        // 数据库时区  mysql & postgresql 专用
+	SslMode      bool          // 数据库SSL模式  postgresql 专用
+	DialTimeOut  string        // 连接超时时间 clickhouse 专用
+	ReadTimeOut  string        // 读取超时时间 clickhouse 专用
+	MaxIdleConns int           // 连接池里最大空闲连接数。必须要比maxOpenConns小
+	MaxOpenConns int           // 连接池最多同时打开的连接数
+	MaxLifetime  time.Duration // 连接池里面的连接最大存活时长
+	MaxIdleTime  time.Duration // 连接池里面的连接最大空闲时长
+	EnableMetric bool          // 开启指标采集
+	EnableTrace  bool          // 开启链路追踪
+	EnableDebug  bool          // 关闭调试模式
+	DriverName   string        // 数据库驱动名称
 }
 
 type ClientManager struct {
@@ -179,17 +179,17 @@ func WithMaxIdleTime(maxIdleTime time.Duration) Option {
 	}
 }
 
-// WithDisableMetric 关闭指标采集
-func WithDisableMetric(disableMetric bool) Option {
+// WithEnableMetric 开启指标采集
+func WithEnableMetric(disableMetric bool) Option {
 	return func(r *Client) {
-		r.DisableMetric = disableMetric
+		r.EnableMetric = disableMetric
 	}
 }
 
-// WithDisableTrace 关闭链路追踪
-func WithDisableTrace(disableTrace bool) Option {
+// WithEnableTrace 开启链路追踪
+func WithEnableTrace(disableTrace bool) Option {
 	return func(r *Client) {
-		r.DisableTrace = disableTrace
+		r.EnableTrace = disableTrace
 	}
 }
 
@@ -200,10 +200,10 @@ func WithDriverName(driverName string) Option {
 	}
 }
 
-// WithDisableDebug 关闭调试模式
-func WithDisableDebug(disableDebug bool) Option {
+// WithEnableDebug 关闭调试模式
+func WithEnableDebug(disableDebug bool) Option {
 	return func(r *Client) {
-		r.DisableDebug = disableDebug
+		r.EnableDebug = disableDebug
 	}
 }
 
@@ -300,7 +300,7 @@ func (c *Client) Open() (*ClientManager, error) {
 		return nil, err
 	}
 	newLogger := NewLogger(logger.Logger)
-	newLogger.SetDebug(!c.DisableDebug)
+	newLogger.SetDebug(c.EnableDebug)
 	newLogger.SetSourceField("gorm")
 	newLogger.SetSkipErrRecordNotFound(true)
 	db, err := gorm.Open(dialector, &gorm.Config{
@@ -317,10 +317,10 @@ func (c *Client) Open() (*ClientManager, error) {
 
 	// 这里需要去判断要不要开启链路追踪和指标采集
 	interceptors := []Interceptor{}
-	if !c.DisableMetric {
+	if c.EnableMetric {
 		interceptors = append(interceptors, MetricInterceptor())
 	}
-	if !c.DisableTrace {
+	if c.EnableTrace {
 		interceptors = append(interceptors, TraceInterceptor())
 	}
 	if len(interceptors) > 0 {

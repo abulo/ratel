@@ -2,303 +2,140 @@ package redis
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"runtime"
-	"strconv"
+	"net"
 	"time"
-	"unicode/utf8"
 
+	"github.com/abulo/ratel/v3/core/call"
 	"github.com/abulo/ratel/v3/core/metric"
-	"github.com/abulo/ratel/v3/core/trace"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/opentracing/opentracing-go/log"
+	globalTrace "github.com/abulo/ratel/v3/core/trace"
+	"github.com/redis/go-redis/extra/rediscmd/v9"
 	"github.com/redis/go-redis/v9"
-	"github.com/spf13/cast"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/metadata"
 )
 
 // OpenTraceHook ...
 type OpenTraceHook struct {
 	redis.Hook
-	DisableMetric bool // 关闭指标采集
-	DisableTrace  bool // 关闭链路追踪
-	DB            int
-	Addr          string
 }
 
 // DialHook 返回redis连接hook hook: 原始redis连接hook
 func (op OpenTraceHook) DialHook(hook redis.DialHook) redis.DialHook {
-	return hook
+
+	tracer := globalTrace.NewTracer(trace.SpanKindServer)
+	attrs := []attribute.KeyValue{
+		semconv.RPCSystemKey.String("redis"),
+	}
+	return func(ctx context.Context, network, addr string) (net.Conn, error) {
+		md := metadata.New(nil)
+		ctx, span := tracer.Start(ctx, "redis.dial", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+		defer span.End()
+		conn, err := hook(ctx, network, addr)
+		if err != nil {
+			return nil, err
+		}
+		return conn, nil
+	}
 }
 
 // ProcessHook 返回redis命令处理hook hook: 原始redis命令处理hook
 func (op OpenTraceHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
+	tracer := globalTrace.NewTracer(trace.SpanKindServer)
+	attrs := []attribute.KeyValue{
+		semconv.RPCSystemKey.String("redis"),
+	}
 	return func(ctx context.Context, cmd redis.Cmder) error {
-		ctx, err := op.BeforeProcess(ctx, cmd)
-		if err != nil {
+		fn, file, line := call.Caller(11)
+		attrs = append(attrs,
+			semconv.CodeFunction(fn),
+			semconv.CodeFilepath(file),
+			semconv.CodeLineNumber(line),
+		)
+		cmdString := rediscmd.CmdString(cmd)
+		attrs = append(attrs, semconv.DBStatement(cmdString))
+		md := metadata.New(nil)
+		ctx, span := tracer.Start(ctx, cmd.FullName(), propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+		defer span.End()
+		if err := hook(ctx, cmd); err != nil {
 			return err
 		}
-		hook(ctx, cmd)
-		return op.AfterProcess(ctx, cmd)
+		return nil
 	}
 }
 
 // ProcessPipelineHook 返回redis管道命令处理hook hook: 原始redis管道命令处理hook
 func (op OpenTraceHook) ProcessPipelineHook(hook redis.ProcessPipelineHook) redis.ProcessPipelineHook {
-	return func(ctx context.Context, cmd []redis.Cmder) error {
-		ctx, err := op.BeforeProcessPipeline(ctx, cmd)
-		if err != nil {
+	tracer := globalTrace.NewTracer(trace.SpanKindServer)
+	attrs := []attribute.KeyValue{
+		semconv.RPCSystemKey.String("redis"),
+	}
+	return func(ctx context.Context, cmds []redis.Cmder) error {
+		fn, file, line := call.Caller(11)
+		attrs = append(attrs,
+			semconv.CodeFunction(fn),
+			semconv.CodeFilepath(file),
+			semconv.CodeLineNumber(line),
+			attribute.Int("db.redis.num_cmd", len(cmds)),
+		)
+		summary, cmdsString := rediscmd.CmdsString(cmds)
+		attrs = append(attrs, semconv.DBStatement(cmdsString))
+		md := metadata.New(nil)
+		ctx, span := tracer.Start(ctx, "redis.pipeline "+summary, propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+		defer span.End()
+		if err := hook(ctx, cmds); err != nil {
 			return err
 		}
-		hook(ctx, cmd)
-		return op.AfterProcessPipeline(ctx, cmd)
+		return nil
 	}
 }
 
-// CmdStart ...
-type CmdStart string
-
-// RequestCmdStart ...
-const RequestCmdStart = CmdStart("start")
-
-// Caller 获取调用者信息 skip: 调用栈跳过的层数
-func Caller(skip int) map[string]string {
-	pc, file, lineNo, _ := runtime.Caller(skip)
-	name := runtime.FuncForPC(pc).Name()
-	return map[string]string{
-		"path": file + ":" + cast.ToString(lineNo),
-		"func": name,
-	}
+type MetricsHook struct {
+	redis.Hook
 }
 
-// BeforeProcess 在执行redis命令前处理 ctx: 上下文 cmd: redis命令
-func (op OpenTraceHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
-	b := make([]byte, 32)
-	b = appendCmd(b, cmd)
-	ctx = getCtx(ctx)
-	if !op.DisableTrace {
-		call := Caller(11)
-		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-			parentCtx := parentSpan.Context()
-			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
-			ext.SpanKindRPCClient.Set(span)
-			hostName, err := os.Hostname()
-			if err != nil {
-				hostName = "unknown"
-			}
-			ext.PeerHostname.Set(span, hostName)
-			span.LogFields(log.Object("call", call))
-			span.LogFields(log.String("cmd", cast.ToString(b)))
-			ctx = opentracing.ContextWithSpan(ctx, span)
-		}
-	}
-	if !op.DisableMetric {
+func (op MetricsHook) DialHook(hook redis.DialHook) redis.DialHook {
+	return func(ctx context.Context, network, addr string) (net.Conn, error) {
 		start := time.Now()
-		ctx = context.WithValue(ctx, RequestCmdStart, start)
+		conn, err := hook(ctx, network, addr)
+		dur := time.Since(start)
+		metric.LibHandleHistogram.WithLabelValues("redis", network, addr).Observe(milliseconds(dur))
+		return conn, err
 	}
-
-	return ctx, nil
 }
 
-// AfterProcess 在执行redis命令后处理 ctx: 上下文 cmd: redis命令
-func (op OpenTraceHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
-	ctx = getCtx(ctx)
-	if !op.DisableTrace {
-		span := trace.SpanFromContext(ctx)
-		if span != nil {
-			defer span.Finish()
-		}
-	}
-	if !op.DisableMetric {
-		start := ctx.Value(RequestCmdStart)
-		var cost time.Duration
-		if start == nil {
-			cost = time.Since(time.Now())
-		} else {
-			cost = time.Since(start.(time.Time))
-		}
-		if cmd.Err() != nil {
-			metric.LibHandleCounter.WithLabelValues("redis", cast.ToString(op.DB), op.Addr, "ERR").Inc()
-		} else {
-			metric.LibHandleCounter.Inc("redis", cast.ToString(op.DB), op.Addr, "OK")
-		}
-		metric.LibHandleHistogram.WithLabelValues("redis", cast.ToString(op.DB), op.Addr).Observe(cost.Seconds())
-	}
-	return nil
-}
-
-// BeforeProcessPipeline 在执行redis管道命令前处理 ctx: 上下文 cmds: redis命令数组
-func (op OpenTraceHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
-	ctx = getCtx(ctx)
-
-	const numCmdLimit = 100
-	const numNameLimit = 10
-
-	seen := make(map[string]struct{}, len(cmds))
-	unqNames := make([]string, 0, len(cmds))
-
-	b := make([]byte, 0, 32*len(cmds))
-
-	for i, cmd := range cmds {
-		if i > numCmdLimit {
-			break
-		}
-		if i > 0 {
-			b = append(b, '\n')
-		}
-		b = appendCmd(b, cmd)
-
-		if len(unqNames) >= numNameLimit {
-			continue
-		}
-		name := cmd.FullName()
-		if _, ok := seen[name]; !ok {
-			seen[name] = struct{}{}
-			unqNames = append(unqNames, name)
-		}
-	}
-	if !op.DisableTrace {
-		call := Caller(11)
-		if parentSpan := trace.SpanFromContext(ctx); parentSpan != nil {
-			parentCtx := parentSpan.Context()
-			span := opentracing.StartSpan("redis", opentracing.ChildOf(parentCtx))
-			ext.SpanKindRPCClient.Set(span)
-			hostName, err := os.Hostname()
-			if err != nil {
-				hostName = "unknown"
-			}
-			ext.PeerHostname.Set(span, hostName)
-			span.LogFields(log.Object("call", call))
-			span.LogFields(log.String("cmds", cast.ToString(b)))
-			ctx = opentracing.ContextWithSpan(ctx, span)
-		}
-	}
-
-	if !op.DisableMetric {
+func (op MetricsHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
+	return func(ctx context.Context, cmd redis.Cmder) error {
 		start := time.Now()
-		ctx = context.WithValue(ctx, RequestCmdStart, start)
-	}
-
-	return ctx, nil
-}
-
-// AfterProcessPipeline 在执行redis管道命令后处理 ctx: 上下文 cmds: redis命令数组
-func (op OpenTraceHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
-	ctx = getCtx(ctx)
-	if !op.DisableTrace {
-		span := trace.SpanFromContext(ctx)
-		if span != nil {
-			defer span.Finish()
-		}
-	}
-	if !op.DisableMetric {
-		start := ctx.Value(RequestCmdStart)
-		cost := time.Since(start.(time.Time))
-		if cmds != nil {
-			metric.LibHandleCounter.WithLabelValues("redis", cast.ToString(op.DB), op.Addr, "ERR").Inc()
+		err := hook(ctx, cmd)
+		dur := time.Since(start)
+		if err != nil {
+			metric.LibHandleCounter.WithLabelValues("redis", cmd.FullName(), "ERR").Inc()
 		} else {
-			metric.LibHandleCounter.Inc("redis", cast.ToString(op.DB), op.Addr, "OK")
+			metric.LibHandleCounter.WithLabelValues("redis", cmd.FullName(), "OK").Inc()
 		}
-		metric.LibHandleHistogram.WithLabelValues("redis", cast.ToString(op.DB), op.Addr).Observe(cost.Seconds())
-	}
-	return nil
-}
-
-// appendCmd 将redis命令追加到字节数组 b: 目标字节数组 cmd: redis命令
-func appendCmd(b []byte, cmd redis.Cmder) []byte {
-	const lenLimit = 64
-
-	for i, arg := range cmd.Args() {
-		if i > 0 {
-			b = append(b, ' ')
-		}
-
-		start := len(b)
-		b = AppendArg(b, arg)
-		if len(b)-start > lenLimit {
-			b = append(b[:start+lenLimit], "..."...)
-		}
-	}
-
-	if err := cmd.Err(); err != nil {
-		b = append(b, ": "...)
-		b = append(b, err.Error()...)
-	}
-
-	return b
-}
-
-// AppendArg 将参数追加到字节数组 b: 目标字节数组 v: 要追加的参数
-func AppendArg(b []byte, v any) []byte {
-	switch v := v.(type) {
-	case nil:
-		return append(b, "<nil>"...)
-	case string:
-		return appendUTF8String(b, v)
-	case []byte:
-		return appendUTF8String(b, cast.ToString(v))
-	case int:
-		return strconv.AppendInt(b, int64(v), 10)
-	case int8:
-		return strconv.AppendInt(b, int64(v), 10)
-	case int16:
-		return strconv.AppendInt(b, int64(v), 10)
-	case int32:
-		return strconv.AppendInt(b, int64(v), 10)
-	case int64:
-		return strconv.AppendInt(b, v, 10)
-	case uint:
-		return strconv.AppendUint(b, uint64(v), 10)
-	case uint8:
-		return strconv.AppendUint(b, uint64(v), 10)
-	case uint16:
-		return strconv.AppendUint(b, uint64(v), 10)
-	case uint32:
-		return strconv.AppendUint(b, uint64(v), 10)
-	case uint64:
-		return strconv.AppendUint(b, v, 10)
-	case float32:
-		return strconv.AppendFloat(b, float64(v), 'f', -1, 64)
-	case float64:
-		return strconv.AppendFloat(b, v, 'f', -1, 64)
-	case bool:
-		if v {
-			return append(b, "true"...)
-		}
-		return append(b, "false"...)
-	case time.Time:
-		return v.AppendFormat(b, time.RFC3339Nano)
-	default:
-		return append(b, fmt.Sprint(v)...)
+		metric.LibHandleHistogram.WithLabelValues("redis", cmd.FullName()).Observe(milliseconds(dur))
+		return err
 	}
 }
 
-// appendUTF8String 将UTF8字符串追加到字节数组 b: 目标字节数组 s: 要追加的字符串
-func appendUTF8String(b []byte, s string) []byte {
-	for _, r := range s {
-		b = appendRune(b, r)
+func (op MetricsHook) ProcessPipelineHook(hook redis.ProcessPipelineHook) redis.ProcessPipelineHook {
+	return func(ctx context.Context, cmds []redis.Cmder) error {
+		start := time.Now()
+		err := hook(ctx, cmds)
+		dur := time.Since(start)
+		if err != nil {
+			metric.LibHandleCounter.WithLabelValues("redis", "pipeline", "ERR").Inc()
+		} else {
+			metric.LibHandleCounter.WithLabelValues("redis", "pipeline", "OK").Inc()
+		}
+		metric.LibHandleHistogram.WithLabelValues("redis", "pipeline").Observe(milliseconds(dur))
+		return err
 	}
-	return b
 }
 
-// appendRune 将rune追加到字节数组 b: 目标字节数组 r: 要追加的rune
-func appendRune(b []byte, r rune) []byte {
-	if r < utf8.RuneSelf {
-		switch c := byte(r); c {
-		case '\n':
-			return append(b, "\\n"...)
-		case '\r':
-			return append(b, "\\r"...)
-		default:
-			return append(b, c)
-		}
-	}
-
-	l := len(b)
-	b = append(b, make([]byte, utf8.UTFMax)...)
-	n := utf8.EncodeRune(b[l:l+utf8.UTFMax], r)
-	b = b[:l+n]
-
-	return b
+func milliseconds(d time.Duration) float64 {
+	return float64(d) / float64(time.Millisecond)
 }

@@ -16,10 +16,10 @@ type Config struct {
 	Deployment string `json:"deployment"`
 	// Network network type, tcp4 by default
 	Network string `json:"network" toml:"network"`
-	// DisableTrace  Trace Interceptor, false by default
-	DisableTrace bool
-	// DisableMetric disable Metric Interceptor, false by default
-	DisableMetric bool
+	// EnableTrace  Trace Interceptor, false by default
+	EnableTrace bool
+	// EnableMetric disable Metric Interceptor, false by default
+	EnableMetric bool
 	// SlowQueryThresholdInMill, request will be colored if cost over this threshold value
 	SlowQueryThresholdInMill int64
 	// ServiceAddress service address in registry info, default to 'Host:Port'
@@ -43,8 +43,8 @@ func New() *Config {
 	return &Config{
 		Network:                  "tcp4",
 		Deployment:               constant.DefaultDeployment,
-		DisableMetric:            false,
-		DisableTrace:             false,
+		EnableMetric:             false,
+		EnableTrace:              false,
 		EnableTLS:                false,
 		SlowQueryThresholdInMill: 500,
 		serverOptions:            []grpc.ServerOption{},
@@ -92,12 +92,12 @@ func (config *Config) MustBuild() *Server {
 
 // Build ...
 func (config *Config) Build() (*Server, error) {
-	if !config.DisableTrace {
-		config.unaryInterceptors = append(config.unaryInterceptors, traceUnaryServerInterceptor)
-		config.streamInterceptors = append(config.streamInterceptors, traceStreamServerInterceptor)
+	if config.EnableTrace {
+		config.unaryInterceptors = append(config.unaryInterceptors, NewTraceUnaryServerInterceptor())
+		config.streamInterceptors = append(config.streamInterceptors, NewTraceStreamServerInterceptor())
 	}
 
-	if !config.DisableMetric {
+	if config.EnableMetric {
 		config.unaryInterceptors = append(config.unaryInterceptors, prometheusUnaryServerInterceptor)
 		config.streamInterceptors = append(config.streamInterceptors, prometheusStreamServerInterceptor)
 	}

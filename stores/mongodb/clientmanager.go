@@ -22,14 +22,15 @@ const (
 var clientManager = resource.NewResourceManager()
 var slowThreshold = resource.ForAtomicDuration(defaultSlowThreshold)
 
+// EnableDebug
 // MongoDB wraps *mongo.Client and provides a Close method.
 type (
 	MongoDB struct {
 		*mongo.Client
-		DisableMetric bool   // 关闭指标采集
-		DisableTrace  bool   // 关闭链路追踪
-		Name          string // 数据库名称
-		Uri           string
+		EnableMetric bool   // 指标采集
+		EnableTrace  bool   // 链路追踪
+		Name         string // 数据库名称
+		Uri          string
 	}
 	// Option defines the method to customize a mongo model.
 	Option func(opts *options.ClientOptions)
@@ -134,13 +135,13 @@ func NewMongoDBClient(uri string, opts ...Option) (*MongoDB, error) {
 	return val.(*MongoDB), nil
 }
 
-func (m *MongoDB) SetDisableMetric(disableMetric bool) *MongoDB {
-	m.DisableMetric = disableMetric
+func (m *MongoDB) SetEnableMetric(disableMetric bool) *MongoDB {
+	m.EnableMetric = disableMetric
 	return m
 }
 
-func (m *MongoDB) SetDisableTrace(disableTrace bool) *MongoDB {
-	m.DisableTrace = disableTrace
+func (m *MongoDB) SetEnableTrace(disableTrace bool) *MongoDB {
+	m.EnableTrace = disableTrace
 	return m
 }
 
@@ -154,7 +155,7 @@ func (m *MongoDB) NewModel(collection string) (*Model, error) {
 		return nil, err
 	}
 	brk := resource.GetBreaker(m.Uri)
-	coll := newCollection(m.Client.Database(m.Name).Collection(collection), brk, m.DisableMetric, m.DisableTrace)
+	coll := newCollection(m.Client.Database(m.Name).Collection(collection), brk, m.EnableMetric, m.EnableTrace)
 	return &Model{
 		Collection: coll,
 		cli:        m.Client,
@@ -177,7 +178,7 @@ func (m *MongoDB) NewCollection(collection string) (*DecoratedCollection, error)
 		return nil, err
 	}
 	brk := resource.GetBreaker(m.Uri)
-	return newCollection(m.Client.Database(m.Name).Collection(collection), brk, m.DisableMetric, m.DisableTrace), nil
+	return newCollection(m.Client.Database(m.Name).Collection(collection), brk, m.EnableMetric, m.EnableTrace), nil
 }
 
 func (m *MongoDB) MustNewCollection(collection string) *DecoratedCollection {
@@ -186,5 +187,5 @@ func (m *MongoDB) MustNewCollection(collection string) *DecoratedCollection {
 		logger.Logger.Fatal(err)
 	}
 	brk := resource.GetBreaker(m.Uri)
-	return newCollection(m.Client.Database(m.Name).Collection(collection), brk, m.DisableMetric, m.DisableTrace)
+	return newCollection(m.Client.Database(m.Name).Collection(collection), brk, m.EnableMetric, m.EnableTrace)
 }

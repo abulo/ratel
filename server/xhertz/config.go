@@ -22,9 +22,9 @@ type Config struct {
 	Port                     int
 	Mode                     string
 	Deployment               string
-	DisableMetric            bool
-	DisableTrace             bool
-	DisableSlowQuery         bool
+	EnableMetric             bool
+	EnableTrace              bool
+	EnableSlowQuery          bool
 	ServiceAddress           string
 	SlowQueryThresholdInMill int64
 }
@@ -55,21 +55,21 @@ func (config *Config) WithDeployment(deployment string) *Config {
 	return config
 }
 
-// WithDisableSlowQuery ...
-func (config *Config) WithDisableSlowQuery(disableSlowQuery bool) *Config {
-	config.DisableSlowQuery = disableSlowQuery
+// WithEnableSlowQuery ...
+func (config *Config) WithEnableSlowQuery(disableSlowQuery bool) *Config {
+	config.EnableSlowQuery = disableSlowQuery
 	return config
 }
 
-// WithDisableMetric  ...
-func (config *Config) WithDisableMetric(disableMetric bool) *Config {
-	config.DisableMetric = disableMetric
+// WithEnableMetric  ...
+func (config *Config) WithEnableMetric(disableMetric bool) *Config {
+	config.EnableMetric = disableMetric
 	return config
 }
 
-// WithDisableTrace ...
-func (config *Config) WithDisableTrace(disableTrace bool) *Config {
-	config.DisableTrace = disableTrace
+// WithEnableTrace ...
+func (config *Config) WithEnableTrace(disableTrace bool) *Config {
+	config.EnableTrace = disableTrace
 	return config
 }
 
@@ -94,14 +94,14 @@ func (config *Config) WithMode(mode string) *Config {
 // Build create server instance, then initialize it with necessary interceptor
 func (config *Config) Build() *Server {
 	serverInstance := newServer(config)
-	if !config.DisableSlowQuery {
+	if config.EnableSlowQuery {
 		//慢日志查询
 		serverInstance.Use(recoverMiddleware(config.SlowQueryThresholdInMill))
 	}
-	if !config.DisableMetric {
+	if config.EnableMetric {
 		serverInstance.Use(metricServerInterceptor())
 	}
-	if !config.DisableTrace {
+	if config.EnableTrace {
 		serverInstance.Use(traceServerInterceptor())
 	}
 	return serverInstance
