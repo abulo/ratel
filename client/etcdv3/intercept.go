@@ -24,6 +24,7 @@ func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 		} else {
 			md = md.Copy()
 		}
+		// fmt.Println("method------", method)
 		ctx, span := tracer.Start(ctx, method, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
 		ctx = metadata.NewOutgoingContext(ctx, md)
 		span.SetAttributes(

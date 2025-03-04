@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/v3/core/call"
 	"github.com/abulo/ratel/v3/core/ecode"
+	"github.com/abulo/ratel/v3/core/hostname"
 	"github.com/abulo/ratel/v3/core/metric"
 	globalTrace "github.com/abulo/ratel/v3/core/trace"
 	"go.opentelemetry.io/otel/attribute"
@@ -83,18 +83,13 @@ func NewTraceUnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		operation, mAttrs := globalTrace.ParseFullMethod(info.FullMethod)
 		attrs := []attribute.KeyValue{
 			semconv.RPCSystemGRPC,
+			semconv.HostName(hostname.Hostname()),
 		}
 		attrs = append(attrs, mAttrs...)
 		if p, ok := peer.FromContext(ctx); ok {
 			remote = p.Addr.String()
 		}
 		attrs = append(attrs, globalTrace.PeerAttr(remote)...)
-		fn, file, line := call.Caller(7)
-		attrs = append(attrs,
-			semconv.CodeFunction(fn),
-			semconv.CodeFilepath(file),
-			semconv.CodeLineNumber(line),
-		)
 		ctx, span := tracer.Start(ctx, operation, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
 		defer func() {
 			if err != nil {
@@ -129,6 +124,7 @@ func NewTraceStreamServerInterceptor() grpc.StreamServerInterceptor {
 		tracer := globalTrace.NewTracer(trace.SpanKindServer)
 		attrs := []attribute.KeyValue{
 			semconv.RPCSystemGRPC,
+			semconv.HostName(hostname.Hostname()),
 		}
 		var remote string
 		md, ok := metadata.FromIncomingContext(ss.Context())
@@ -143,15 +139,9 @@ func NewTraceStreamServerInterceptor() grpc.StreamServerInterceptor {
 			remote = p.Addr.String()
 		}
 		attrs = append(attrs, globalTrace.PeerAttr(remote)...)
-
-		fn, file, line := call.Caller(7)
 		attrs = append(attrs,
-			semconv.CodeFunction(fn),
-			semconv.CodeFilepath(file),
-			semconv.CodeLineNumber(line),
 			semconv.HostNameKey.String(remote),
 		)
-
 		ctx, span := tracer.Start(ss.Context(), operation, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
 		defer span.End()
 

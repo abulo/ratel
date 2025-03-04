@@ -1,17 +1,14 @@
 package sql
 
 import (
-	"runtime"
 	"strings"
 
 	"github.com/abulo/ratel/v3/core/call"
 	"github.com/abulo/ratel/v3/core/hostname"
 	"github.com/abulo/ratel/v3/core/metric"
 	globalTrace "github.com/abulo/ratel/v3/core/trace"
-	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/propagation"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
@@ -85,20 +82,27 @@ func TraceInterceptor() Interceptor {
 	tracer := globalTrace.NewTracer(trace.SpanKindClient)
 	attrs := []attribute.KeyValue{
 		semconv.RPCSystemKey.String("gorm"),
+		semconv.HostName(hostname.Hostname()),
 	}
 	return func(op string, client *Client, next Handler) Handler {
 		return func(scope *gorm.DB) {
 			if ctx := scope.Statement.Context; ctx != nil {
-				sqlRaw := scope.Dialector.Explain(scope.Statement.SQL.String(), scope.Statement.Vars...)
-				fn, file, line := call.Caller(7)
+				stmt := scope.Statement
+				next(scope)
+				sqlRaw := scope.Dialector.Explain(stmt.SQL.String(), stmt.Vars...)
+				fn, file, line := call.Caller(4)
 				attrs = append(attrs,
-					semconv.HostName(hostname.Hostname()),
 					semconv.CodeFunction(fn),
 					semconv.CodeFilepath(file),
 					semconv.CodeLineNumber(line),
 				)
-				md := metadata.New(nil)
-				_, span := tracer.Start(ctx, op, propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+				md, ok := metadata.FromIncomingContext(ctx)
+				if ok {
+					md = md.Copy()
+				} else {
+					md = metadata.MD{}
+				}
+				_, span := tracer.Start(ctx, op, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
 				span.SetAttributes(
 					semconv.DBNameKey.String(client.DriverName),
 					semconv.DBConnectionStringKey.String(client.Host),
@@ -106,7 +110,7 @@ func TraceInterceptor() Interceptor {
 					semconv.DBStatementKey.String(sqlRaw),
 				)
 				defer span.End()
-				next(scope)
+				// next(scope)
 				if scope.Error != nil {
 					span.RecordError(scope.Error)
 					span.SetStatus(codes.Error, scope.Error.Error())
@@ -115,14 +119,5 @@ func TraceInterceptor() Interceptor {
 			}
 			next(scope)
 		}
-	}
-}
-
-func Caller(skip int) map[string]string {
-	pc, file, lineNo, _ := runtime.Caller(skip)
-	name := runtime.FuncForPC(pc).Name()
-	return map[string]string{
-		"path": file + ":" + cast.ToString(lineNo),
-		"func": name,
 	}
 }

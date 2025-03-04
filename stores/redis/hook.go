@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/abulo/ratel/v3/core/call"
+	"github.com/abulo/ratel/v3/core/hostname"
 	"github.com/abulo/ratel/v3/core/metric"
 	globalTrace "github.com/abulo/ratel/v3/core/trace"
 	"github.com/redis/go-redis/extra/rediscmd/v9"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/propagation"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
@@ -28,10 +28,16 @@ func (op OpenTraceHook) DialHook(hook redis.DialHook) redis.DialHook {
 	tracer := globalTrace.NewTracer(trace.SpanKindServer)
 	attrs := []attribute.KeyValue{
 		semconv.RPCSystemKey.String("redis"),
+		semconv.HostName(hostname.Hostname()),
 	}
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
-		md := metadata.New(nil)
-		ctx, span := tracer.Start(ctx, "redis.dial", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+		md, ok := metadata.FromIncomingContext(ctx)
+		if ok {
+			md = md.Copy()
+		} else {
+			md = metadata.MD{}
+		}
+		ctx, span := tracer.Start(ctx, "redis.dial", globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
 		defer span.End()
 		conn, err := hook(ctx, network, addr)
 		if err != nil {
@@ -46,6 +52,7 @@ func (op OpenTraceHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
 	tracer := globalTrace.NewTracer(trace.SpanKindServer)
 	attrs := []attribute.KeyValue{
 		semconv.RPCSystemKey.String("redis"),
+		semconv.HostName(hostname.Hostname()),
 	}
 	return func(ctx context.Context, cmd redis.Cmder) error {
 		fn, file, line := call.Caller(11)
@@ -56,8 +63,13 @@ func (op OpenTraceHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
 		)
 		cmdString := rediscmd.CmdString(cmd)
 		attrs = append(attrs, semconv.DBStatement(cmdString))
-		md := metadata.New(nil)
-		ctx, span := tracer.Start(ctx, cmd.FullName(), propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+		md, ok := metadata.FromIncomingContext(ctx)
+		if ok {
+			md = md.Copy()
+		} else {
+			md = metadata.MD{}
+		}
+		ctx, span := tracer.Start(ctx, "redis."+cmd.FullName(), globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
 		defer span.End()
 		if err := hook(ctx, cmd); err != nil {
 			return err
@@ -71,6 +83,7 @@ func (op OpenTraceHook) ProcessPipelineHook(hook redis.ProcessPipelineHook) redi
 	tracer := globalTrace.NewTracer(trace.SpanKindServer)
 	attrs := []attribute.KeyValue{
 		semconv.RPCSystemKey.String("redis"),
+		semconv.HostName(hostname.Hostname()),
 	}
 	return func(ctx context.Context, cmds []redis.Cmder) error {
 		fn, file, line := call.Caller(11)
@@ -82,8 +95,13 @@ func (op OpenTraceHook) ProcessPipelineHook(hook redis.ProcessPipelineHook) redi
 		)
 		summary, cmdsString := rediscmd.CmdsString(cmds)
 		attrs = append(attrs, semconv.DBStatement(cmdsString))
-		md := metadata.New(nil)
-		ctx, span := tracer.Start(ctx, "redis.pipeline "+summary, propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+		md, ok := metadata.FromIncomingContext(ctx)
+		if ok {
+			md = md.Copy()
+		} else {
+			md = metadata.MD{}
+		}
+		ctx, span := tracer.Start(ctx, "redis.pipeline "+summary, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
 		defer span.End()
 		if err := hook(ctx, cmds); err != nil {
 			return err

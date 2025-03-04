@@ -81,7 +81,7 @@ func traceServerInterceptor() app.HandlerFunc {
 			semconv.HTTPTargetKey.String(cast.ToString(ctx.Request.Path())),
 			semconv.HTTPMethodKey.String(cast.ToString(ctx.Request.Method())),
 			semconv.HTTPUserAgentKey.String(cast.ToString(ctx.Request.Header.UserAgent())),
-			attribute.String("client.ip", cast.ToString(ctx.ClientIP())),
+			semconv.NetPeerNameKey.String(cast.ToString(ctx.ClientIP())),
 		)
 		defer span.End()
 		ctx.Next(c)

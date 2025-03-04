@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abulo/ratel/v3/core/call"
+	"github.com/abulo/ratel/v3/core/hostname"
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
 	globalTrace "github.com/abulo/ratel/v3/core/trace"
@@ -47,14 +47,9 @@ func traceServerInterceptor() gin.HandlerFunc {
 		tracer := globalTrace.NewTracer(trace.SpanKindServer)
 		attrs := []attribute.KeyValue{
 			semconv.RPCSystemKey.String("http"),
+			semconv.HostName(hostname.Hostname()),
 		}
 
-		fn, file, line := call.Caller(7)
-		attrs = append(attrs,
-			semconv.CodeFunction(fn),
-			semconv.CodeFilepath(file),
-			semconv.CodeLineNumber(line),
-		)
 		ctx, span := tracer.Start(c.Request.Context(), c.Request.URL.Path, propagation.HeaderCarrier(c.Request.Header), trace.WithAttributes(attrs...))
 		span.SetAttributes(
 			semconv.HTTPURLKey.String(c.Request.URL.String()),
