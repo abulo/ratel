@@ -144,14 +144,13 @@ jobs:
               releaseNotes="$releaseNotes\n$message"
             done
           fi
-          # 将生成的发布说明写入到环境变量中
-          echo "RELEASE_BODY<<EOF" >> $GITHUB_ENV
-          echo "$releaseNotes" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          #将生成的发布说明写入到changelog.md文件中
+          echo -e "$releaseNotes" > changelog.md
+          cat changelog.md
 
       - name: 创建标签的发布
         id: releaseTag
         uses: ncipollo/release-action@v1
         with:
           generateReleaseNotes: "false"  # 禁用自动生成发布说明
-          body: ${{ env.RELEASE_BODY }}  # 从环境变量中读取发布说明
+          bodyfile: changelog.md
