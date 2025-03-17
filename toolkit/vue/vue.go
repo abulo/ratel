@@ -405,7 +405,7 @@ func Run(cmd *cobra.Command, args []string) {
 		GenerateInterface(moduleParam, interfaceDir, tableName)
 	}
 	if util.InArray("module", tplSelected) {
-		methodDir := path.Join(cast.ToString(base.Path), base.Config.String("vue.ModulesDir"))
+		methodDir := path.Join(cast.ToString(base.Path), base.Config.String("vue.ModuleDir"))
 		GenerateMethod(moduleParam, apiUrl, methodDir, tableName)
 	}
 	if util.InArray("page", tplSelected) {

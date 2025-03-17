@@ -522,7 +522,7 @@ func Props(table, condition []Column) string {
 	builder := strings.Builder{}
 	for _, item := range table {
 		if util.InArray(item.ColumnName, conditionList) {
-			builder.WriteString(fmt.Sprintf("	{ prop: \"%s\", label: \"%s\", search: { el: \"input\", span: 2, props: { placeholder: \"请输入%s\" } } },", Helper(item.ColumnName), item.ColumnComment, item.ColumnComment))
+			builder.WriteString(fmt.Sprintf("	{ prop: \"%s\", label: \"%s\", search: { valueType: \"input\" } },", Helper(item.ColumnName), item.ColumnComment))
 		} else {
 			builder.WriteString(fmt.Sprintf("	{ prop: \"%s\", label: \"%s\" },", Helper(item.ColumnName), item.ColumnComment))
 		}
