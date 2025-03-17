@@ -36,6 +36,8 @@
                     tagMessages=$(echo "$commitMessages" | grep 'tag' || true)
                     configMessages=$(echo "$commitMessages" | grep 'config' || true)
                     gitMessages=$(echo "$commitMessages" | grep 'git' || true)
+                    buildMessages=$(echo "$commitMessages" | grep 'build' || true)
+                    ciMessages=$(echo "$commitMessages" | grep 'ci' || true)
                     # 获取当前分支名
                     branchName=$(git rev-parse --abbrev-ref HEAD)
                     # 生成发布说明的Markdown字符串
@@ -127,6 +129,18 @@
                     if [[ -n "$gitMessages" ]]; then
                       releaseNotes="$releaseNotes\n### git \n"
                       for message in $gitMessages; do
+                        releaseNotes="$releaseNotes\n$message"
+                      done
+                    fi
+                    if [[ -n "$buildMessages" ]]; then
+                      releaseNotes="$releaseNotes\n### git \n"
+                      for message in $buildMessages; do
+                        releaseNotes="$releaseNotes\n$message"
+                      done
+                    fi
+                    if [[ -n "$ciMessages" ]]; then
+                      releaseNotes="$releaseNotes\n### git \n"
+                      for message in $ciMessages; do
                         releaseNotes="$releaseNotes\n$message"
                       done
                     fi
