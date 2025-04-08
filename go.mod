@@ -9,7 +9,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/fatih/color v1.18.0
 	github.com/fatih/structs v1.1.0
-	github.com/fsnotify/fsnotify v1.8.0
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.5.4
@@ -18,26 +18,26 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.9
-	github.com/issue9/term/v3 v3.4.0
+	github.com/issue9/term/v3 v3.4.1
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/mozillazg/go-pinyin v0.20.0
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.9
-	github.com/prometheus/client_golang v1.21.1
+	github.com/prometheus/client_golang v1.22.0
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.7.3
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/sirupsen/logrus v1.9.3
 	github.com/smallnest/weighted v0.0.0-20230419055410-36b780e40a7a
 	github.com/spf13/cast v1.7.1
 	github.com/spf13/cobra v1.9.1
-	github.com/spf13/viper v1.20.0
+	github.com/spf13/viper v1.20.1
 	github.com/streadway/amqp v1.1.0
 	github.com/stretchr/testify v1.10.0
-	github.com/tdewolff/parse/v2 v2.7.21
-	go.etcd.io/etcd/api/v3 v3.5.20
-	go.etcd.io/etcd/client/v3 v3.5.20
+	github.com/tdewolff/parse/v2 v2.7.23
+	go.etcd.io/etcd/api/v3 v3.5.21
+	go.etcd.io/etcd/client/v3 v3.5.21
 	go.mongodb.org/mongo-driver v1.17.3
 	go.opentelemetry.io/otel v1.35.0
 	go.opentelemetry.io/otel/bridge/opentracing v1.35.0
@@ -45,13 +45,13 @@ require (
 	go.opentelemetry.io/otel/sdk v1.35.0
 	go.opentelemetry.io/otel/trace v1.35.0
 	go.uber.org/multierr v1.11.0
-	golang.org/x/crypto v0.36.0
-	golang.org/x/image v0.25.0
+	golang.org/x/crypto v0.37.0
+	golang.org/x/image v0.26.0
 	golang.org/x/mod v0.24.0
-	golang.org/x/sync v0.12.0
-	golang.org/x/text v0.23.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463
-	google.golang.org/grpc v1.71.0
+	golang.org/x/sync v0.13.0
+	golang.org/x/text v0.24.0
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250407143221-ac9807e6c755
+	google.golang.org/grpc v1.71.1
 	google.golang.org/protobuf v1.36.6
 	gorm.io/driver/clickhouse v0.6.1
 	gorm.io/driver/mysql v1.5.7
@@ -105,7 +105,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.17.11 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
@@ -144,15 +144,15 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.5.20 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.5.21 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/net v0.36.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/term v0.30.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/term v0.31.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250106144421-5f5ef82da422 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
