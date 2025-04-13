@@ -40,8 +40,10 @@ jobs:
     - name: Enrich Release Notes
       id: enrich-notes
       run: |
-        # 添加额外信息
+        # 添加额外信息到环境变量
         echo "RELEASE_NOTES=${{ steps.official-notes.outputs.result }}" >> $GITHUB_ENV
+
+        # 使用多行内容填充 RELEASE_NOTES
         echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
         echo "${{ steps.official-notes.outputs.result }}" >> $GITHUB_ENV
         echo "" >> $GITHUB_ENV
