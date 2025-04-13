@@ -39,33 +39,16 @@ jobs:
 
     - name: Enrich Release Notes
       id: enrich-notes
-      env:
-        OFFICIAL_NOTES: ${{ steps.official-notes.outputs.result }}
       run: |
-        # 使用 heredoc 语法安全处理多行文本
-        RELEASE_NOTES=$(cat << EOF
-        $OFFICIAL_NOTES
-        ### 📊 统计信息
-        - 本次发布包含 ${{ steps.commit-count.outputs.count }} 个提交
-        - 影响 ${{ steps.file-changes.outputs.files }} 个文件
-        EOF
-        )
-        # 使用 delimiter 处理特殊字符
-        echo "RELEASE_NOTES<<EOF_DELIMITER" >> $GITHUB_ENV
-        echo "$RELEASE_NOTES" >> $GITHUB_ENV
-        echo "EOF_DELIMITER" >> $GITHUB_ENV
-    # - name: Enrich Release Notes
-    #   id: enrich-notes
-    #   run: |
-    #     # 添加额外信息
-    #     echo "RELEASE_NOTES=${{ steps.official-notes.outputs.result }}" >> $GITHUB_ENV
-    #     echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
-    #     echo "${{ steps.official-notes.outputs.result }}" >> $GITHUB_ENV
-    #     echo "" >> $GITHUB_ENV
-    #     echo "### 📊 统计信息" >> $GITHUB_ENV
-    #     echo "- 本次发布包含 ${{ steps.commit-count.outputs.count }} 个提交" >> $GITHUB_ENV
-    #     echo "- 影响 ${{ steps.file-changes.outputs.files }} 个文件" >> $GITHUB_ENV
-    #     echo "EOF"
+        # 添加额外信息
+        echo "RELEASE_NOTES=${{ steps.official-notes.outputs.result }}" >> $GITHUB_ENV
+        echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+        echo "${{ steps.official-notes.outputs.result }}" >> $GITHUB_ENV
+        echo "" >> $GITHUB_ENV
+        echo "### 📊 统计信息" >> $GITHUB_ENV
+        echo "- 本次发布包含 ${{ steps.commit-count.outputs.count }} 个提交" >> $GITHUB_ENV
+        echo "- 影响 ${{ steps.file-changes.outputs.files }} 个文件" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
