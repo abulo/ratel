@@ -19,6 +19,9 @@ func newServer(config *Config) *Server {
 		Hertz: hserver.New(
 			hserver.WithHostPorts(config.Address()),
 			hserver.WithDisablePrintRoute(config.Mode == ReleaseMode),
+			hserver.WithMaxRequestBodySize(20*1204*1204),
+			hserver.WithMaxKeepBodySize(20*1204*1204),
+			hserver.WithReadBufferSize(20*1204*1204),
 		),
 		config: config,
 	}
