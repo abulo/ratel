@@ -42,10 +42,7 @@ jobs:
       run: |
         # 构建包含发布说明、统计信息和贡献者的完整发布日志
         echo "RELEASE_NOTES=${{ steps.official-notes.outputs.result }}" >> $GITHUB_ENV
-        echo "### 📊 统计信息" >> $GITHUB_ENV
-        echo "- 本次发布包含 ${{ env.commit_count }} 个提交" >> $GITHUB_ENV
-        echo "- 影响 ${{ env.files_changed }} 个文件" >> $GITHUB_ENV
-        echo "" >> $GITHUB_ENV
+
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
