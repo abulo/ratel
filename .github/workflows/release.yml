@@ -15,6 +15,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install YAML parser
+        run: npm install js-yaml
+
       - name: Get release data
         id: release-data
         uses: actions/github-script@v6
@@ -22,7 +30,11 @@ jobs:
           CATEGORIES: '.github/release.yml'
         with:
           script: |
-            const { categories } = require('./' + process.env.CATEGORIES)
+            // 读取并解析 YAML 配置
+            const configContent = fs.readFileSync(process.env.CONFIG_PATH, 'utf8')
+            const { categories } = yaml.load(configContent)
+
+            // 后续原有逻辑保持不变...
             const tag = process.env.GITHUB_REF.replace('refs/tags/', '')
             const previousTag = await github.rest.repos.listTags({
               owner: context.repo.owner,
