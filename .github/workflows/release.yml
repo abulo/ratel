@@ -12,6 +12,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3 # 检出代码到工作区
 
+      - name: Install js-yaml
+        run: npm install js-yaml
+
       - name: Generate release notes
         id: generate_notes
         uses: actions/github-script@v6
@@ -100,8 +103,6 @@ jobs:
             }
 
             releaseNotes += `**Full Changelog**: ${prevTagName ? `https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${prevTagName}...${tagName}` : 'N/A'}\n\n`;
-
-
             releaseNotes += `### 📊 统计信息\n`;
             releaseNotes += `- 本次发布包含 ${commitCount} 个提交\n`;
             releaseNotes += `- 影响 ${fileCount} 个文件\n\n`;
