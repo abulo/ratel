@@ -45,7 +45,7 @@ jobs:
 
             const configPath = path.join(process.env.GITHUB_WORKSPACE, '.github/release.yml');
             const configContent = fs.readFileSync(configPath, 'utf8');
-            const config = JSON.parse(JSON.stringify(require('js-yaml').safeLoad(configContent)));
+            const config = JSON.parse(JSON.stringify(require('js-yaml').load(configContent)));
 
             const categoryMap = {};
             config.categories.forEach(category => {
@@ -103,6 +103,7 @@ jobs:
             }
 
             releaseNotes += `**Full Changelog**: ${prevTagName ? `https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${prevTagName}...${tagName}` : 'N/A'}\n\n`;
+
             releaseNotes += `### 📊 统计信息\n`;
             releaseNotes += `- 本次发布包含 ${commitCount} 个提交\n`;
             releaseNotes += `- 影响 ${fileCount} 个文件\n\n`;
