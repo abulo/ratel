@@ -4,7 +4,7 @@ name: Auto Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   generate-release:
@@ -15,108 +15,116 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Load config
+        id: load-config
+        run: |
+          CONFIG_CONTENT=$(cat .github/release.yml | jq -Rs .)
+          echo "config=$CONFIG_CONTENT" >> $GITHUB_OUTPUT
 
-      - name: Install YAML parser
-        run: npm install js-yaml
-
-      - name: Get release data
+      - name: Generate release notes
         id: release-data
         uses: actions/github-script@v6
         env:
-          CATEGORIES: '.github/release.yml'
+          TAG_NAME: ${{ github.ref_name }}
         with:
           script: |
-            // 读取并解析 YAML 配置
-            const configContent = fs.readFileSync(process.env.CONFIG_PATH, 'utf8')
-            const { categories } = yaml.load(configContent)
+            const yaml = require('js-yaml')
 
-            // 后续原有逻辑保持不变...
-            const tag = process.env.GITHUB_REF.replace('refs/tags/', '')
+            // 从步骤输出获取配置
+            const configContent = '${{ steps.load-config.outputs.config }}'
+            const { categories } = yaml.load(Buffer.from(configContent, 'base64').toString())
+
+            // 获取上一个标签
             const previousTag = await github.rest.repos.listTags({
               owner: context.repo.owner,
               repo: context.repo.repo,
               per_page: 2
-            }).then(res => res.data[1]?.name || '')
+            }).then(res => res.data[1]?.name || 'v0.0.0')
 
-            // 获取关联的 PR 列表
-            const commits = await github.rest.repos.compareCommits({
+            // 获取提交对比
+            const comparison = await github.rest.repos.compareCommits({
               owner: context.repo.owner,
               repo: context.repo.repo,
               base: previousTag,
-              head: tag
+              head: process.env.TAG_NAME
             })
 
-            const prs = await Promise.all(commits.data.commits
-              .filter(c => c.commit.message.match(/\(#\d+\)$/))
-              .map(async commit => {
-                const prNumber = commit.commit.message.match(/\(#(\d+)\)$/)[1]
+            // 处理 PR 数据
+            const processPr = async (commit) => {
+              const prMatch = commit.commit.message.match(/\(#(\d+)\)$/)
+              if (!prMatch) return null
+
+              try {
                 const pr = await github.rest.pulls.get({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  pull_number: prNumber
+                  pull_number: prMatch[1]
                 })
                 return {
                   title: pr.data.title,
-                  number: prNumber,
+                  number: pr.data.number,
                   labels: pr.data.labels.map(l => l.name),
                   user: pr.data.user.login
                 }
-              }))
+              } catch {
+                return null
+              }
+            }
+
+            // 获取所有有效 PR
+            const prs = (await Promise.all(
+              comparison.data.commits
+                .map(processPr)
+            )).filter(Boolean)
 
             // 分类处理
             const categorized = {}
-            categories.forEach(c => {
-              c.items = prs.filter(pr =>
-                pr.labels.some(label => c.labels.includes(label))
+            categories.forEach(category => {
+              category.items = prs.filter(pr =>
+                category.labels.some(label =>
+                  label === '*' || pr.labels.includes(label)
+                )
               )
-              categorized[c.title] = c.items
+              categorized[category.title] = category.items
             })
 
             // 贡献者统计
-            const contributors = commits.data.commits
-              .filter(c => !c.author.login.includes('bot'))
+            const contributors = comparison.data.commits
+              .filter(c => !c.author.login.includes('[bot]'))
               .reduce((acc, cur) => {
                 acc[cur.author.login] = (acc[cur.author.login] || 0) + 1
                 return acc
               }, {})
 
+            // 生成最终结果
             return {
-              categorized,
-              contributors: Object.entries(contributors)
-                .sort((a, b) => b[1] - a[1]),
-              fileStats: commits.data.files.length,
-              commitCount: commits.data.total_commits
+              categorized: JSON.stringify(categorized),
+              contributors: JSON.stringify(
+                Object.entries(contributors)
+                  .sort((a, b) => b[1] - a[1])
+              ),
+              fileStats: comparison.data.files.length,
+              commitCount: comparison.data.total_commits
             }
-
-      - name: Generate release notes
-        id: gen-notes
-        run: |
-          echo "## What's Changed"
-
-          # 生成分类内容
-          echo "${{ toJSON(steps.release-data.outputs.categorized) }}" | jq -r 'to_entries[] | "### \(.key)\n\(.value | map("- \(.title) by @\(.user) in [#\(.number)](https://github.com/${{ github.repository }}/pull/\(.number))") | join("\n"))\n"'
-
-          # 贡献者排名
-          echo "### 👥 贡献者"
-          echo "感谢这些优秀的贡献者（按提交次数排序）："
-          echo "${{ toJSON(steps.release-data.outputs.contributors) }}" | jq -r '.[] | "- @\(.[0]) (\(.[1]) 次提交)"'
-
-          # 统计信息
-          echo "### 📊 统计信息"
-          echo "- 本次发布包含 ${{ steps.release-data.outputs.commitCount }} 个提交"
-          echo "- 影响 ${{ steps.release-data.outputs.fileStats }} 个文件"
-
-          # 元数据
-          echo "---\n📅 **发布日期**: $(date +'%Y-%m-%d')"
-          echo "🔗 **下载统计**: ![GitHub Releases](https://img.shields.io/github/downloads/${{ github.repository }}/${{ env.TAG_NAME }}/total?style=flat-square)"
 
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref }}
-          name: Release ${{ github.ref }}
-          body: ${{ steps.gen-notes.outputs.result }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## What's Changed
+
+            ${{ fromJSON(steps.release-data.outputs.result).categorized | jq -r 'to_entries[] | "### \(.key)\n\(.value | map("- \(.title) by @\(.user) in [#\(.number)](https://github.com/${{ github.repository }}/pull/\(.number))") | join("\n"))\n"' }}
+
+            ### 👥 贡献者
+            感谢这些优秀的贡献者（按提交次数排序）：
+            ${{ fromJSON(steps.release-data.outputs.result).contributors | jq -r '.[] | "- @\(.[0]) (\(.[1]) 次提交)"' }}
+
+            ### 📊 统计信息
+            - 本次发布包含 ${{ fromJSON(steps.release-data.outputs.result).commitCount }} 个提交
+            - 影响 ${{ fromJSON(steps.release-data.outputs.result).fileStats }} 个文件
+
+            ---
+            📅 **发布日期**: ${{ steps.release-data.outputs.date }}
+            🔗 **下载统计**: ![GitHub Releases](https://img.shields.io/github/downloads/${{ github.repository }}/${{ env.TAG_NAME }}/total?style=flat-square)
