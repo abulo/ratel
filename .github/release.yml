@@ -1,35 +1,34 @@
 # 自定义分类规则
-changelog:
-  categories:
-    - title: '新功能'
-      labels: ['feat']
-    - title: '修复'
-      labels: ['fix']
-    - title: '样式'
-      labels: ['style']
-    - title: '格式化'
-      labels: ['format']
-    - title: '文档'
-      labels: ['docs']
-    - title: '性能'
-      labels: ['perf']
-    - title: '初始化'
-      labels: ['init']
-    - title: '测试'
-      labels: ['test']
-    - title: '重构'
-      labels: ['refactor']
-    - title: '构建'
-      labels: ['build']
-    - title: '补丁'
-      labels: ['patch']
-    - title: '发布'
-      labels: ['release','publish']
-    - title: '流程'
-      labels: ['workflow','ci']
-    - title: '配置'
-      labels: ['config','chore']
-    - title: '其他'
-      labels: ['other']
-    - title: '待定'
-      labels: ['unreleased']
+categories:
+  - title: '新功能'
+    labels: ['feat']
+  - title: '修复'
+    labels: ['fix']
+  - title: '样式'
+    labels: ['style']
+  - title: '格式化'
+    labels: ['format']
+  - title: '文档'
+    labels: ['docs']
+  - title: '性能'
+    labels: ['perf']
+  - title: '初始化'
+    labels: ['init']
+  - title: '测试'
+    labels: ['test']
+  - title: '重构'
+    labels: ['refactor']
+  - title: '构建'
+    labels: ['build']
+  - title: '补丁'
+    labels: ['patch']
+  - title: '发布'
+    labels: ['release','publish']
+  - title: '流程'
+    labels: ['workflow','ci']
+  - title: '配置'
+    labels: ['config','chore']
+  - title: '其他'
+    labels: ['other']
+  - title: '待定'
+    labels: ['unreleased']
