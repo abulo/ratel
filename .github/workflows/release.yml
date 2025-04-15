@@ -1,10 +1,9 @@
-# .github/workflows/release.yml
 name: Auto Release
 
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
 
 jobs:
   generate-release:
@@ -30,18 +29,17 @@ jobs:
           script: |
             const yaml = require('js-yaml')
 
-            // 从步骤输出获取配置
-            const configContent = '${{ steps.load-config.outputs.config }}'
-            const { categories } = yaml.load(Buffer.from(configContent, 'base64').toString())
+            // 解析配置
+            const configContent = Buffer.from('${{ steps.load-config.outputs.config }}', 'base64').toString()
+            const { categories } = yaml.load(configContent)
 
-            // 获取上一个标签
+            // 获取对比数据
             const previousTag = await github.rest.repos.listTags({
               owner: context.repo.owner,
               repo: context.repo.repo,
               per_page: 2
             }).then(res => res.data[1]?.name || 'v0.0.0')
 
-            // 获取提交对比
             const comparison = await github.rest.repos.compareCommits({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -71,24 +69,28 @@ jobs:
               }
             }
 
-            // 获取所有有效 PR
             const prs = (await Promise.all(
-              comparison.data.commits
-                .map(processPr)
+              comparison.data.commits.map(processPr)
             )).filter(Boolean)
 
-            // 分类处理
-            const categorized = {}
+            // 生成分类内容
+            let categorizedContent = '## What\'s Changed\n\n'
             categories.forEach(category => {
-              category.items = prs.filter(pr =>
+              const items = prs.filter(pr =>
                 category.labels.some(label =>
                   label === '*' || pr.labels.includes(label)
                 )
               )
-              categorized[category.title] = category.items
+              if (items.length === 0) return
+
+              categorizedContent += `### ${category.title}\n`
+              items.forEach(item => {
+                categorizedContent += `- ${item.title} by @${item.user} in [#${item.number}](https://github.com/${context.repo.owner}/${context.repo.repo}/pull/${item.number})\n`
+              })
+              categorizedContent += '\n'
             })
 
-            // 贡献者统计
+            // 生成贡献者列表
             const contributors = comparison.data.commits
               .filter(c => !c.author.login.includes('[bot]'))
               .reduce((acc, cur) => {
@@ -96,35 +98,33 @@ jobs:
                 return acc
               }, {})
 
-            // 生成最终结果
-            return {
-              categorized: JSON.stringify(categorized),
-              contributors: JSON.stringify(
-                Object.entries(contributors)
-                  .sort((a, b) => b[1] - a[1])
-              ),
-              fileStats: comparison.data.files.length,
-              commitCount: comparison.data.total_commits
-            }
+            let contributorsContent = '### 👥 贡献者\n感谢这些优秀的贡献者（按提交次数排序）：\n'
+            Object.entries(contributors)
+              .sort((a, b) => b[1] - a[1])
+              .forEach(([user, count]) => {
+                contributorsContent += `- @${user} (${count} 次提交)\n`
+              })
+
+            // 生成最终内容
+            const body = `
+${categorizedContent}
+
+${contributorsContent}
+
+### 📊 统计信息
+- 本次发布包含 ${comparison.data.total_commits} 个提交
+- 影响 ${comparison.data.files.length} 个文件
+
+---
+📅 **发布日期**: ${new Date().toISOString().split('T')[0]}
+🔗 **下载统计**: ![GitHub Releases](https://img.shields.io/github/downloads/${context.repo.owner}/${context.repo.repo}/${process.env.TAG_NAME}/total?style=flat-square)
+            `.trim()
+
+            return { body }
 
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref }}
           name: Release ${{ github.ref_name }}
-          body: |
-            ## What's Changed
-
-            ${{ fromJSON(steps.release-data.outputs.result).categorized | jq -r 'to_entries[] | "### \(.key)\n\(.value | map("- \(.title) by @\(.user) in [#\(.number)](https://github.com/${{ github.repository }}/pull/\(.number))") | join("\n"))\n"' }}
-
-            ### 👥 贡献者
-            感谢这些优秀的贡献者（按提交次数排序）：
-            ${{ fromJSON(steps.release-data.outputs.result).contributors | jq -r '.[] | "- @\(.[0]) (\(.[1]) 次提交)"' }}
-
-            ### 📊 统计信息
-            - 本次发布包含 ${{ fromJSON(steps.release-data.outputs.result).commitCount }} 个提交
-            - 影响 ${{ fromJSON(steps.release-data.outputs.result).fileStats }} 个文件
-
-            ---
-            📅 **发布日期**: ${{ steps.release-data.outputs.date }}
-            🔗 **下载统计**: ![GitHub Releases](https://img.shields.io/github/downloads/${{ github.repository }}/${{ env.TAG_NAME }}/total?style=flat-square)
+          body: ${{ steps.release-data.outputs.body }}
