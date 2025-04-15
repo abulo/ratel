@@ -23,11 +23,6 @@ jobs:
         env:
           CONFIG_FILE: .github/release.yml
         run: |
-          # 安装轻量级 yq (Go 版本)
-          echo "安装 YAML 处理器..."
-          sudo curl -L https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64 -o /usr/bin/yq
-          sudo chmod +x /usr/bin/yq
-
           # 增强类型解析函数
           parse_commit_type() {
             local subject="$1"
@@ -41,11 +36,10 @@ jobs:
           declare -A category_map
           echo "加载分类配置..."
           while IFS=";" read -r title labels; do
-              echo "注册分类: $title => $labels"
               for label in $labels; do
-                  category_map["${label,,}"]="$title" # 统一转小写
+                  category_map[$label]="$title"
               done
-          done < <(yq eval '.categories[] | [.title, (.labels | join(" "))] | join(";")' $CONFIG_FILE)
+          done < <(yq -o=tsv '.categories[] | [.title, (.labels | join(" "))] | join(";")' $CONFIG_FILE)
 
           # 获取版本信息
           mapfile -t tags < <(git tag -l --sort=-version:refname)
