@@ -85,7 +85,7 @@ jobs:
           release_notes="## 版本更新日志 ($current_tag)\n\n"
           current_date=$(date +"%Y-%m-%d")
           # 添加发布日期和下载统计信息
-          release_notes+="📅 ### 发布日期: ${current_date}\n"
+          release_notes+=" ### 📅 发布日期: ${current_date}\n"
           while IFS= read -r category; do
               if [[ -n "${log_entries[$category]}" ]]; then
                   release_notes+="### $category\n${log_entries[$category]}\n"
