@@ -1,82 +1,86 @@
-name: Create Release Tag
+name: Auto Release with Config
 
 on:
   push:
     tags:
-      - 'v*' # 推送标签，比如 v1.0, v20.15.10
+      - 'v*'
 
 jobs:
-  build:
-    name: 创建发布
+  generate-changelog:
     runs-on: ubuntu-latest
     steps:
-      - name: 检出代码
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 获取完整提交历史
+          fetch-depth: 0
 
-      - name: 提取信息
-        id: extractInfo
+      - name: Install yq
+        run: sudo snap install yq
+
+      - name: Generate changelog
+        id: changelog
+        env:
+          CONFIG_FILE: .github/release.yml
         run: |
-          # 获取按版本号倒序排列的标签列表
+          # 解析配置文件
+          declare -A category_map
+          while IFS=";" read -r title labels; do
+              for label in $labels; do
+                  category_map[$label]="$title"
+              done
+          done < <(yq -o=tsv '.categories[] | [.title, (.labels | join(" "))] | join(";")' $CONFIG_FILE)
+
+          # 获取版本范围
           mapfile -t tags < <(git tag -l --sort=-version:refname)
-          currentTag=${tags[0]}
-          previousTag=${tags[1]:-}  # 处理无前序标签情况
+          current_tag=${tags[0]}
+          previous_tag=${tags[1]:-}
 
-          # 智能获取版本间提交记录
-          if [[ -z "$previousTag" ]]; then
-            commitRange=$currentTag
+          if [[ -z "$previous_tag" ]]; then
+              commit_range="$current_tag"
+              echo "首次发布版本: $current_tag"
           else
-            commitRange="$previousTag..$currentTag"
+              commit_range="$previous_tag..$current_tag"
+              echo "版本范围: $commit_range"
           fi
 
-          # 提取符合约定式提交规范的记录
-          commitMessages=$(git log --pretty=format:"- %s (%h)" $commitRange | grep -E '^- (feat|fix|style|format|docs|perf|init|test|refactor|patch|file|publish|tag|config|git|ci|build):')
+          # 获取所有符合规范的提交
+          commits=$(git log --pretty=format:"%s|%h" "$commit_range")
 
-          # 分类处理提交记录
-          declare -A categoryMap=(
-            [feat]="新功能"
-            [fix]="问题修复"
-            [style]="代码样式"
-            [format]="格式调整"
-            [docs]="文档更新"
-            [perf]="性能优化"
-            [init]="初始化"
-            [test]="测试相关"
-            [refactor]="代码重构"
-            [patch]="紧急补丁"
-            [file]="文件调整"
-            [publish]="发布相关"
-            [tag]="标签操作"
-            [config]="配置变更"
-            [git]="版本控制"
-            [ci]="持续集成"
-            [build]="构建系统"
-          )
+          # 生成分类日志
+          declare -A log_entries
+          while IFS="|" read -r subject hash; do
+              type=$(echo "$subject" | cut -d':' -f1 | tr -d ' ')
+              found=0
+              for label in "${!category_map[@]}"; do
+                  if [[ "$type" == "$label" ]]; then
+                      entry="- ${subject} (${hash:0:7})"
+                      log_entries[${category_map[$label]}]+="$entry"$'\n'
+                      found=1
+                      break
+                  fi
+              done
+              if [[ $found -eq 0 ]]; then
+                  entry="- ${subject} (${hash:0:7})"
+                  log_entries["其他"]+="$entry"$'\n'
+              fi
+          done <<< "$commits"
 
-          # 生成变更日志
-          releaseNotes="## 版本更新内容\n\n"
-          for type in "${!categoryMap[@]}"; do
-            filtered=$(echo "$commitMessages" | grep -E "^- ${type}:" || true)
-            if [[ -n "$filtered" ]]; then
-              releaseNotes+="### ${categoryMap[$type]}\n${filtered}\n\n"
-            fi
-          done
+          # 构建输出内容
+          release_notes="## 版本更新日志 ($current_tag)\n\n"
+          while IFS= read -r category; do
+              if [[ -n "${log_entries[$category]}" ]]; then
+                  release_notes+="### $category\n${log_entries[$category]}\n"
+              fi
+          done < <(yq '.categories[].title' $CONFIG_FILE)
 
-          # 处理未分类的提交
-          others=$(echo "$commitMessages" | grep -vE "^- ($(IFS=\|; echo "${!categoryMap[*]}")):" || true)
-          if [[ -n "$others" ]]; then
-            releaseNotes+="### 其他变更\n${others}\n\n"
-          fi
-
-          # 输出日志文件
-          echo -e "$releaseNotes" > changelog.md
-          echo "生成变更日志内容："
+          # 写入文件
+          echo -e "$release_notes" > changelog.md
+          echo "生成日志内容："
           cat changelog.md
 
-      - name: 创建版本发布
+      - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          generateReleaseNotes: false  # 禁用自动生成
+          generateReleaseNotes: false
           bodyFile: changelog.md
-          tag: ${{ github.ref_name }}  # 使用触发工作流的标签
+          tag: ${{ github.ref_name }}
