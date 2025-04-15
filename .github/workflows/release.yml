@@ -1,18 +1,24 @@
-name: Auto Release with Config
+name: Auto Release
 
 on:
   push:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+  pull-requests: read
+  issues: read
+
 jobs:
-  generate-changelog:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install yq
         run: sudo snap install yq
