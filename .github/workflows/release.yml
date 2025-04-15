@@ -1,131 +1,82 @@
-# .github/workflows/release.yml
-name: Auto Release
+name: Create Release Tag
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*' # 推送标签，比如 v1.0, v20.15.10
 
 jobs:
-  generate-release:
+  build:
+    name: 创建发布
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: 检出代码
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # 获取完整提交历史
 
-      - name: Load config
-        id: load-config
+      - name: 提取信息
+        id: extractInfo
         run: |
-          CONFIG_CONTENT=$(cat .github/release.yml | jq -Rs .)
-          echo "config=$CONFIG_CONTENT" >> $GITHUB_OUTPUT
+          # 获取按版本号倒序排列的标签列表
+          mapfile -t tags < <(git tag -l --sort=-version:refname)
+          currentTag=${tags[0]}
+          previousTag=${tags[1]:-}  # 处理无前序标签情况
 
-      - name: Generate release notes
-        id: release-data
-        uses: actions/github-script@v6
-        env:
-          TAG_NAME: ${{ github.ref_name }}
+          # 智能获取版本间提交记录
+          if [[ -z "$previousTag" ]]; then
+            commitRange=$currentTag
+          else
+            commitRange="$previousTag..$currentTag"
+          fi
+
+          # 提取符合约定式提交规范的记录
+          commitMessages=$(git log --pretty=format:"- %s (%h)" $commitRange | grep -E '^- (feat|fix|style|format|docs|perf|init|test|refactor|patch|file|publish|tag|config|git|ci|build):')
+
+          # 分类处理提交记录
+          declare -A categoryMap=(
+            [feat]="新功能"
+            [fix]="问题修复"
+            [style]="代码样式"
+            [format]="格式调整"
+            [docs]="文档更新"
+            [perf]="性能优化"
+            [init]="初始化"
+            [test]="测试相关"
+            [refactor]="代码重构"
+            [patch]="紧急补丁"
+            [file]="文件调整"
+            [publish]="发布相关"
+            [tag]="标签操作"
+            [config]="配置变更"
+            [git]="版本控制"
+            [ci]="持续集成"
+            [build]="构建系统"
+          )
+
+          # 生成变更日志
+          releaseNotes="## 版本更新内容\n\n"
+          for type in "${!categoryMap[@]}"; do
+            filtered=$(echo "$commitMessages" | grep -E "^- ${type}:" || true)
+            if [[ -n "$filtered" ]]; then
+              releaseNotes+="### ${categoryMap[$type]}\n${filtered}\n\n"
+            fi
+          done
+
+          # 处理未分类的提交
+          others=$(echo "$commitMessages" | grep -vE "^- ($(IFS=\|; echo "${!categoryMap[*]}")):" || true)
+          if [[ -n "$others" ]]; then
+            releaseNotes+="### 其他变更\n${others}\n\n"
+          fi
+
+          # 输出日志文件
+          echo -e "$releaseNotes" > changelog.md
+          echo "生成变更日志内容："
+          cat changelog.md
+
+      - name: 创建版本发布
+        uses: ncipollo/release-action@v1
         with:
-          script: |
-            const yaml = require('js-yaml')
-
-            // 解析配置
-            const configContent = Buffer.from('${{ steps.load-config.outputs.config }}', 'base64').toString()
-            const { categories } = yaml.load(configContent)
-
-            // 获取标签对比数据
-            const previousTag = await github.rest.repos.listTags({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 2
-            }).then(res => res.data[1]?.name || 'v0.0.0')
-
-            // 获取提交对比
-            const comparison = await github.rest.repos.compareCommits({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              base: previousTag,
-              head: process.env.TAG_NAME
-            })
-
-            // PR 处理函数
-            const processPr = async (commit) => {
-              const prMatch = commit.commit.message.match(/\(#(\d+)\)$/m)
-              if (!prMatch) return null
-
-              try {
-                const pr = await github.rest.pulls.get({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: prMatch[1]
-                })
-                return {
-                  title: pr.data.title.replace(/(^"|"$)/g, ''), // 清理标题引号
-                  number: pr.data.number,
-                  labels: pr.data.labels.map(l => l.name),
-                  user: pr.data.user.login
-                }
-              } catch {
-                return null
-              }
-            }
-
-            // 获取有效 PR 列表
-            const prs = (await Promise.all(
-              comparison.data.commits.map(processPr)
-            )).filter(Boolean)
-
-            // 生成分类内容
-            let releaseBody = '## What\'s Changed\n\n'
-            categories.forEach(category => {
-              const items = prs.filter(pr =>
-                category.labels.some(label =>
-                  label === '*' || pr.labels.includes(label)
-                )
-              )
-              if (items.length === 0) return
-
-              releaseBody += `### ${category.title}\n`
-              items.forEach(item => {
-                releaseBody += `- ${item.title} by @${item.user} in [#${item.number}](https://github.com/${context.repo.owner}/${context.repo.repo}/pull/${item.number})\n`
-              })
-              releaseBody += '\n'
-            })
-
-            // 生成贡献者统计
-            const contributors = comparison.data.commits
-              .filter(c => !c.author?.login?.includes('[bot]'))
-              .reduce((acc, cur) => {
-                const user = cur.author?.login || 'unknown'
-                acc[user] = (acc[user] || 0) + 1
-                return acc
-              }, {})
-
-            releaseBody += '### 👥 贡献者\n感谢这些优秀的贡献者（按提交次数排序）：\n'
-            Object.entries(contributors)
-              .sort((a, b) => b[1] - a[1])
-              .forEach(([user, count]) => {
-                releaseBody += `- @${user} (${count} 次提交)\n`
-              })
-
-            // 添加统计信息
-            releaseBody += `
-### 📊 统计信息
-- 本次发布包含 ${comparison.data.total_commits} 个提交
-- 影响 ${comparison.data.files?.length || 0} 个文件
-
----
-📅 **发布日期**: ${new Date().toISOString().split('T')[0]}
-🔗 **下载统计**: ![GitHub Releases](https://img.shields.io/github/downloads/${context.repo.owner}/${context.repo.repo}/${process.env.TAG_NAME}/total?style=flat-square)
-            `.trim()
-
-            // 返回最终内容
-            return { body: releaseBody }
-
-      - name: Create release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref }}
-          name: Release ${{ github.ref_name }}
-          body: ${{ steps.release-data.outputs.body }}
+          generateReleaseNotes: false  # 禁用自动生成
+          bodyFile: changelog.md
+          tag: ${{ github.ref_name }}  # 使用触发工作流的标签
