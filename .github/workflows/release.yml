@@ -17,65 +17,93 @@ jobs:
       - name: Install yq
         run: sudo snap install yq
 
+      # 更新后的 changelog 生成步骤
       - name: Generate changelog
         id: changelog
         env:
           CONFIG_FILE: .github/release.yml
         run: |
-          # 解析配置文件
-          declare -A category_map
-          while IFS=";" read -r title labels; do
-              for label in $labels; do
-                  category_map[$label]="$title"
-              done
-          done < <(yq -o=tsv '.categories[] | [.title, (.labels | join(" "))] | join(";")' $CONFIG_FILE)
+          # 安装轻量级 yq (Go 版本)
+          echo "安装 YAML 处理器..."
+          sudo curl -L https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64 -o /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
 
-          # 获取版本范围
+          # 增强类型解析函数
+          parse_commit_type() {
+            local subject="$1"
+            # 匹配两种格式：
+            # 1. 类型(范围): 描述 -> 提取类型
+            # 2. 类型: 描述 -> 提取类型
+            echo "$subject" | sed -E 's/^([[:alnum:]]+)(\(.*\))?:.*/\1/' | tr -d ' '
+          }
+
+          # 初始化分类系统
+          declare -A category_map
+          echo "加载分类配置..."
+          while IFS=";" read -r title labels; do
+              echo "注册分类: $title => $labels"
+              for label in $labels; do
+                  category_map["${label,,}"]="$title" # 统一转小写
+              done
+          done < <(yq eval '.categories[] | [.title, (.labels | join(" "))] | join(";")' $CONFIG_FILE)
+
+          # 获取版本信息
           mapfile -t tags < <(git tag -l --sort=-version:refname)
           current_tag=${tags[0]}
           previous_tag=${tags[1]:-}
 
-          if [[ -z "$previous_tag" ]]; then
-              commit_range="$current_tag"
-              echo "首次发布版本: $current_tag"
-          else
-              commit_range="$previous_tag..$current_tag"
-              echo "版本范围: $commit_range"
-          fi
+          # 生成提交范围
+          commit_range=${previous_tag:-$(git rev-list --max-parents=0 HEAD)}
+          [[ -n "$previous_tag" ]] && commit_range="$previous_tag..$current_tag"
+          echo "分析提交范围: $commit_range"
 
-          # 获取所有符合规范的提交
-          commits=$(git log --pretty=format:"%s|%h" "$commit_range")
-
-          # 生成分类日志
+          # 收集提交数据
+          echo "正在解析提交记录..."
           declare -A log_entries
-          while IFS="|" read -r subject hash; do
-              type=$(echo "$subject" | cut -d':' -f1 | tr -d ' ')
-              found=0
-              for label in "${!category_map[@]}"; do
-                  if [[ "$type" == "$label" ]]; then
-                      entry="- ${subject} (${hash:0:7})"
-                      log_entries[${category_map[$label]}]+="$entry"$'\n'
-                      found=1
+          git log --pretty=format:"%s|%h" "$commit_range" | while IFS="|" read -r subject hash; do
+              type=$(parse_commit_type "$subject")
+              clean_subject="${subject#$type}"          # 移除类型部分
+              clean_subject="${clean_subject#\(*\)}"    # 移除范围部分
+              clean_subject="${clean_subject#:}"        # 移除剩余冒号
+              entry="- ${clean_subject} (${hash:0:7})"  # 格式化条目
+
+              found_category=""
+              for pattern in "${!category_map[@]}"; do
+                  if [[ "${type,,}" == "${pattern,,}" ]]; then
+                      found_category="${category_map[$pattern]}"
                       break
                   fi
               done
-              if [[ $found -eq 0 ]]; then
-                  entry="- ${subject} (${hash:0:7})"
-                  log_entries["其他"]+="$entry"$'\n'
-              fi
-          done <<< "$commits"
 
-          # 构建输出内容
-          release_notes="## 版本更新日志 ($current_tag)\n\n"
-          while IFS= read -r category; do
-              if [[ -n "${log_entries[$category]}" ]]; then
-                  release_notes+="### $category\n${log_entries[$category]}\n"
+              if [[ -z "$found_category" ]]; then
+                  found_category="其他"
+                  echo "未分类提交: $type => $subject"
               fi
-          done < <(yq '.categories[].title' $CONFIG_FILE)
 
-          # 写入文件
+              log_entries["$found_category"]+="$entry"$'\n'
+          done
+
+          # 构建发布说明
+          echo "生成变更日志..."
+          release_notes="## 📦 版本 $current_tag 更新日志\n\n"
+          release_notes+="**发布日期**: $(date +'%Y-%m-%d %H:%M:%S')\n\n"
+
+          # 按配置顺序输出分类
+          yq eval '.categories[].title' $CONFIG_FILE | while read -r category; do
+              [[ -n "${log_entries[$category]}" ]] && {
+                  release_notes+="### ${category}\n"
+                  release_notes+="${log_entries[$category]}\n"
+              }
+          done
+
+          # 处理未在配置中定义的分类
+          [[ -n "${log_entries[其他]}" ]] && {
+              release_notes+="### 其他变更\n"
+              release_notes+="${log_entries[其他]}\n"
+          }
+
           echo -e "$release_notes" > changelog.md
-          echo "生成日志内容："
+          echo "最终变更日志："
           cat changelog.md
 
       - name: Create Release
