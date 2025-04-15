@@ -46,7 +46,8 @@ jobs:
           declare -A log_entries
           while IFS="|" read -r subject hash; do
               type=$(echo "$subject" | cut -d':' -f1 | tr -d ' ')
-              if [[ "$type" =~ \((.*)\) ]]; then
+              # 如果提交包含标签，则提取标签, 并将标签作为分类, 例如 ci(release) -> ci
+              if [[ "$subject" =~ \((.*)\): ]]; then
                 type=${BASH_REMATCH[1]}
               fi
               found=0
