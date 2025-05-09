@@ -18,7 +18,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/h2non/bimg v1.1.9
-	github.com/issue9/term/v3 v3.4.1
+	github.com/issue9/term/v3 v3.4.2
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/mozillazg/go-pinyin v0.20.0
 	github.com/olivere/elastic/v7 v7.0.32
@@ -26,16 +26,16 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.9
 	github.com/prometheus/client_golang v1.22.0
-	github.com/redis/go-redis/extra/rediscmd/v9 v9.7.3
-	github.com/redis/go-redis/v9 v9.7.3
+	github.com/redis/go-redis/extra/rediscmd/v9 v9.8.0
+	github.com/redis/go-redis/v9 v9.8.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/smallnest/weighted v0.0.0-20230419055410-36b780e40a7a
-	github.com/spf13/cast v1.7.1
+	github.com/spf13/cast v1.8.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/streadway/amqp v1.1.0
 	github.com/stretchr/testify v1.10.0
-	github.com/tdewolff/parse/v2 v2.7.23
+	github.com/tdewolff/parse/v2 v2.8.0
 	go.etcd.io/etcd/api/v3 v3.5.21
 	go.etcd.io/etcd/client/v3 v3.5.21
 	go.mongodb.org/mongo-driver v1.17.3
@@ -45,18 +45,18 @@ require (
 	go.opentelemetry.io/otel/sdk v1.35.0
 	go.opentelemetry.io/otel/trace v1.35.0
 	go.uber.org/multierr v1.11.0
-	golang.org/x/crypto v0.37.0
-	golang.org/x/image v0.26.0
+	golang.org/x/crypto v0.38.0
+	golang.org/x/image v0.27.0
 	golang.org/x/mod v0.24.0
-	golang.org/x/sync v0.13.0
-	golang.org/x/text v0.24.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250425173222-7b384671a197
+	golang.org/x/sync v0.14.0
+	golang.org/x/text v0.25.0
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250505200425-f936aa4a68b2
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.6
 	gorm.io/driver/clickhouse v0.6.1
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/driver/postgres v1.5.11
-	gorm.io/gorm v1.26.0
+	gorm.io/gorm v1.26.1
 )
 
 require (
@@ -151,8 +151,8 @@ require (
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/term v0.31.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/term v0.32.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250218202821-56aae31c358a // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

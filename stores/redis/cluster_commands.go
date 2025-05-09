@@ -19,6 +19,19 @@ func (r *Client) ClusterMyShardID(ctx context.Context) (val string, err error) {
 	return
 }
 
+// ClusterMyID(ctx context.Context) *StringCmd
+func (r *Client) ClusterMyID(ctx context.Context) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ClusterMyID(getCtx(ctx)).Result()
+		return err
+	}, acceptable)
+	return
+}
+
 // ClusterSlots 获取集群节点的映射数组 ctx:上下文
 func (r *Client) ClusterSlots(ctx context.Context) (val []redis.ClusterSlot, err error) {
 	err = r.brk.DoWithAcceptable(func() error {

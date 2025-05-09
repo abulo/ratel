@@ -44,3 +44,64 @@ func (r *Client) ACLLogReset(ctx context.Context) (val string, err error) {
 	}, acceptable)
 	return
 }
+
+// ACLSetUser(ctx context.Context, username string, rules ...string) *StringCmd
+func (r *Client) ACLSetUser(ctx context.Context, username string, rules ...string) (val string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ACLSetUser(getCtx(ctx), username, rules...).Result()
+		return err
+	}, acceptable)
+	return
+}
+
+func (r *Client) ACLDelUser(ctx context.Context, username string) (val int64, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ACLDelUser(getCtx(ctx), username).Result()
+		return err
+	}, acceptable)
+	return
+}
+
+func (r *Client) ACLList(ctx context.Context) (val []string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ACLList(getCtx(ctx)).Result()
+		return err
+	}, acceptable)
+	return
+}
+
+func (r *Client) ACLCat(ctx context.Context) (val []string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ACLCat(getCtx(ctx)).Result()
+		return err
+	}, acceptable)
+	return
+}
+
+func (r *Client) ACLCatArgs(ctx context.Context, options *redis.ACLCatArgs) (val []string, err error) {
+	err = r.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(r)
+		if err != nil {
+			return err
+		}
+		val, err = conn.ACLCatArgs(getCtx(ctx), options).Result()
+		return err
+	}, acceptable)
+	return
+}
