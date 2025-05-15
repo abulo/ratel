@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/cloudwego/hertz v0.9.7
+	github.com/cloudwego/hertz v0.10.0
 	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0
 	github.com/disintegration/imaging v1.6.2
 	github.com/fatih/color v1.18.0
@@ -50,8 +50,8 @@ require (
 	golang.org/x/mod v0.24.0
 	golang.org/x/sync v0.14.0
 	golang.org/x/text v0.25.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250505200425-f936aa4a68b2
-	google.golang.org/grpc v1.72.0
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250512202823-5a2f75b736a9
+	google.golang.org/grpc v1.72.1
 	google.golang.org/protobuf v1.36.6
 	gorm.io/driver/clickhouse v0.6.1
 	gorm.io/driver/mysql v1.5.7
@@ -65,12 +65,13 @@ require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.23.2 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bytedance/gopkg v0.1.0 // indirect
+	github.com/bytedance/gopkg v0.1.1 // indirect
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
-	github.com/cloudwego/netpoll v0.6.4 // indirect
+	github.com/cloudwego/gopkg v0.1.4 // indirect
+	github.com/cloudwego/netpoll v0.7.0 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

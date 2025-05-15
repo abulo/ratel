@@ -85,6 +85,7 @@ func (o *Client) GetRingClientConfig() *redis.RingOptions {
 		PoolTimeout:     o.PoolTimeout,
 		ConnMaxIdleTime: o.IdleTimeout,
 		ConnMaxLifetime: o.IdleCheckFrequency,
+		UnstableResp3:   true,
 	}
 	return opts
 }
@@ -103,6 +104,7 @@ func (o *Client) GetFailoverClientConfig() *redis.FailoverOptions {
 		PoolTimeout:     o.PoolTimeout,
 		ConnMaxIdleTime: o.IdleTimeout,
 		ConnMaxLifetime: o.IdleCheckFrequency,
+		UnstableResp3:   true,
 	}
 	return opts
 }
@@ -121,6 +123,7 @@ func (o *Client) GetClusterClientConfig() *redis.ClusterOptions {
 		PoolTimeout:     o.PoolTimeout,
 		ConnMaxIdleTime: o.IdleTimeout,
 		ConnMaxLifetime: o.IdleCheckFrequency,
+		UnstableResp3:   true,
 	}
 	if o.MaxRedirects > 0 {
 		opts.MaxRedirects = o.MaxRedirects
@@ -143,6 +146,7 @@ func (o *Client) GetClientConfig() *redis.Options {
 		ConnMaxIdleTime: o.IdleTimeout,
 		ConnMaxLifetime: o.IdleCheckFrequency,
 		TLSConfig:       o.TLSConfig,
+		UnstableResp3:   true,
 	}
 	return opts
 }
