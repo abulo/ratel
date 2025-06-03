@@ -1,9 +1,7 @@
 package grpc
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/abulo/ratel/v3/client/grpc/resolver"
 	"github.com/abulo/ratel/v3/core/ecode"
@@ -14,25 +12,25 @@ import (
 )
 
 func newGRPCClient(config *Config) (*grpc.ClientConn, error) {
-	var ctx = context.Background()
+	// var ctx = context.Background()
 	dialOptions := getDialOptions(config)
 	// 默认配置使用block
-	if config.Block {
-		if config.DialTimeout > time.Duration(0) {
-			var cancel context.CancelFunc
-			ctx, cancel = context.WithTimeout(ctx, config.DialTimeout)
-			defer cancel()
-		}
-		dialOptions = append(dialOptions, grpc.WithBlock())
-	}
+	// if config.Block {
+	// 	if config.DialTimeout > time.Duration(0) {
+	// 		// 	var cancel context.CancelFunc
+	// 		// 	ctx, cancel = context.WithTimeout(ctx, config.DialTimeout)
+	// 		// 	defer cancel()
+	// 	}
+	// 	dialOptions = append(dialOptions, grpc.WithReturnConnectionError())
+	// }
 
-	conn, err := grpc.DialContext(ctx, config.Address, dialOptions...)
+	conn, err := grpc.NewClient(config.Address, dialOptions...)
 	// conn, err := grpc.DialContext(ctx, config.Address, append(dialOptions, grpc.WithBlock())...)
 	if err != nil {
 		logger.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Panic("dial grpc server failed, connect without block,", ecode.ErrKindRequestErr)
-		conn, err = grpc.DialContext(context.Background(), config.Address, dialOptions...)
+		conn, err = grpc.NewClient(config.Address, dialOptions...)
 
 		if err != nil {
 			logger.Logger.WithFields(logrus.Fields{
