@@ -23,7 +23,7 @@ func try(fn func() error, cleaner func()) (ret error) {
 			} else {
 				ret = fmt.Errorf("%+v", err)
 			}
-			ret = errors.Wrap(ret, fmt.Sprintf("%s", util.FunctionName(fn)))
+			ret = errors.Wrap(ret, util.FunctionName(fn))
 		}
 	}()
 	return fn()
