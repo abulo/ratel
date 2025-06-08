@@ -5,7 +5,9 @@ import (
 
 	"github.com/abulo/ratel/v3/core/logger"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
@@ -16,6 +18,7 @@ type Config struct {
 	Name     string
 	Endpoint string
 	Sampler  float64
+	Protocol string
 }
 
 // Option 选项
@@ -42,8 +45,16 @@ func WithSampler(sampler float64) Option {
 	}
 }
 
+func WithProtocol(protocol string) Option {
+	return func(r *Config) {
+		r.Protocol = protocol
+	}
+}
+
 func NewConfig(opts ...Option) *Config {
-	c := &Config{}
+	c := &Config{
+		Protocol: "http",
+	}
 	for _, opt := range opts {
 		opt(c)
 	}
@@ -51,7 +62,20 @@ func NewConfig(opts ...Option) *Config {
 }
 
 func (config *Config) Build() trace.TracerProvider {
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(config.Endpoint)))
+
+	var exp *otlptrace.Exporter
+	var err error
+	if config.Protocol == "http" {
+		exp, err = otlptracehttp.New(context.TODO(),
+			otlptracehttp.WithEndpoint(config.Endpoint),
+			otlptracehttp.WithInsecure(), // 如果是 http 而不是 https
+		)
+	} else {
+		exp, err = otlptracegrpc.New(context.TODO(),
+			otlptracegrpc.WithEndpoint(config.Endpoint),
+			otlptracegrpc.WithInsecure(), // 如果未启用 TLS
+		)
+	}
 	if err != nil {
 		logger.Logger.Panic("new jaeger", err)
 		return nil
