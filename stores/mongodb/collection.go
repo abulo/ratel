@@ -746,7 +746,7 @@ func (c *DecoratedCollection) Delete(ctx context.Context) (count int64, err erro
 			defer span.End()
 			ctx = newCtx
 		}
-		if c.filter == nil || len(c.filter) == 0 {
+		if len(c.filter) == 0 {
 			err = errors.New("you can't delete all documents, it's very dangerous")
 			c.reset()
 			return err
