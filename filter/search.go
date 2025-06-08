@@ -168,6 +168,7 @@ func (_this *Search) findByAC(s []byte, single bool) (list []*Result) {
 				} else {
 					i = j + l - int(node.len) - skip
 				}
+				break
 			}
 		}
 	}
