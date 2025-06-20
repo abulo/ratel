@@ -7,7 +7,7 @@ import (
 
 // MySql Dsn
 func (c *Client) TDengineDsn() string {
-	link := c.Username + ":" + c.Password + "@tcp(" + c.Host + ":" + c.Port + ")/"
+	link := c.Username + ":" + c.Password + "@tcp(" + c.Host + ":" + c.Port + ")/?loc=" + c.TimeZone
 	return link
 }
 
