@@ -10,38 +10,37 @@ import (
 
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/resource"
-	"gorm.io/driver/clickhouse"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 const (
-	mysqlDriverName      = "mysql"
-	clickhouseDriverName = "clickhouse"
-	postgresDriverName   = "postgres"
+	MySQLDriverName      = "mysql"
+	ClickHouseDriverName = "clickhouse"
+	PostgreSQLDriverName = "postgres"
+	TDengineDriverName   = "tdengine"
 )
 
 type Client struct {
-	Host         string        // 数据库 IP
-	Port         string        // 数据库端口
-	Username     string        // 数据库用户名
-	Password     string        // 数据库密码
-	Charset      string        // 数据库字符集
-	Database     string        // 数据库名称
-	ParseTime    bool          // 是否解析时间
-	TimeZone     string        // 数据库时区  mysql & postgresql 专用
-	SslMode      bool          // 数据库SSL模式  postgresql 专用
-	DialTimeOut  string        // 连接超时时间 clickhouse 专用
-	ReadTimeOut  string        // 读取超时时间 clickhouse 专用
-	MaxIdleConns int           // 连接池里最大空闲连接数。必须要比maxOpenConns小
-	MaxOpenConns int           // 连接池最多同时打开的连接数
-	MaxLifetime  time.Duration // 连接池里面的连接最大存活时长
-	MaxIdleTime  time.Duration // 连接池里面的连接最大空闲时长
-	EnableMetric bool          // 开启指标采集
-	EnableTrace  bool          // 开启链路追踪
-	EnableDebug  bool          // 关闭调试模式
-	DriverName   string        // 数据库驱动名称
+	Host           string        // 数据库 IP
+	Port           string        // 数据库端口
+	Username       string        // 数据库用户名
+	Password       string        // 数据库密码
+	Charset        string        // 数据库字符集
+	Database       string        // 数据库名称
+	ParseTime      bool          // 是否解析时间
+	TimeZone       string        // 数据库时区  mysql & postgresql 专用
+	SslMode        bool          // 数据库SSL模式  postgresql 专用
+	DialTimeOut    string        // 连接超时时间 clickhouse 专用
+	ReadTimeOut    string        // 读取超时时间 clickhouse 专用
+	MaxIdleConns   int           // 连接池里最大空闲连接数。必须要比maxOpenConns小
+	MaxOpenConns   int           // 连接池最多同时打开的连接数
+	MaxLifetime    time.Duration // 连接池里面的连接最大存活时长
+	MaxIdleTime    time.Duration // 连接池里面的连接最大空闲时长
+	EnableMetric   bool          // 开启指标采集
+	EnableTrace    bool          // 开启链路追踪
+	EnableDebug    bool          // 关闭调试模式
+	ConnectionMode string        // tdengine 连接模式(native/rest/websocket)
+	DriverName     string        // 数据库驱动名称
 }
 
 type ClientManager struct {
@@ -207,87 +206,32 @@ func WithEnableDebug(disableDebug bool) Option {
 	}
 }
 
-// MySql Dsn
-func (c *Client) MySqlDsn() string {
-	link := c.Username + ":" + c.Password + "@tcp(" + c.Host + ":" + c.Port + ")/" + c.Database + "?charset=" + c.Charset + "&loc=" + c.TimeZone
-	if c.ParseTime {
-		link = link + "&parseTime=true"
-	} else {
-		link = link + "&parseTime=false"
-	}
-	return link
-}
-
-// postgres Dsn
-func (c *Client) PostgreSQLDsn() string {
-	link := "host=" + c.Host + " user=" + c.Username + " password=" + c.Password + " dbname=" + c.Database + " port=" + c.Port
-	if c.SslMode {
-		link = link + " sslmode=enable"
-	} else {
-		link = link + " sslmode=disable"
-	}
-	link = link + " TimeZone=" + c.TimeZone
-	return link
-}
-
-// clickhouse Dsn
-func (c *Client) ClickHouseDsn() string {
-	link := "clickhouse://" + c.Username + ":" + c.Password + "@" + c.Host + ":" + c.Port + "/" + c.Database + "?dial_timeout=" + c.DialTimeOut + "&read_timeout=" + c.ReadTimeOut
-	return link
-}
-
 func (c *Client) Dsn() (string, error) {
 	switch c.DriverName {
-	case mysqlDriverName:
+	case MySQLDriverName:
 		return c.MySqlDsn(), nil
-	case clickhouseDriverName:
+	case ClickHouseDriverName:
 		return c.ClickHouseDsn(), nil
-	case postgresDriverName:
+	case PostgreSQLDriverName:
 		return c.PostgreSQLDsn(), nil
+	case TDengineDriverName:
+		return c.TDengineDsn(), nil
 	default:
 		return "", fmt.Errorf("driverName not support : %s", c.DriverName)
 	}
 }
 
-// mysql open
-func (c *Client) MySqlDialector() (gorm.Dialector, error) {
-	dsn, err := c.Dsn()
-	if err != nil {
-		return nil, err
-	}
-	return mysql.Open(dsn), nil
-}
-
-// clickhouse open
-func (c *Client) ClickHouseDialector() (gorm.Dialector, error) {
-	dsn, err := c.Dsn()
-	if err != nil {
-		return nil, err
-	}
-	return clickhouse.Open(dsn), nil
-}
-
-// postgres open
-func (c *Client) PostgreSQLDialector() (gorm.Dialector, error) {
-	dsn, err := c.Dsn()
-	if err != nil {
-		return nil, err
-	}
-	return postgres.New(postgres.Config{
-		DSN:              dsn,
-		WithoutReturning: true,
-	}), nil
-}
-
 // Dsn 数据库连接
 func (c *Client) Dialector() (gorm.Dialector, error) {
 	switch c.DriverName {
-	case mysqlDriverName:
+	case MySQLDriverName:
 		return c.MySqlDialector()
-	case clickhouseDriverName:
+	case ClickHouseDriverName:
 		return c.ClickHouseDialector()
-	case postgresDriverName:
+	case PostgreSQLDriverName:
 		return c.PostgreSQLDialector()
+	case TDengineDriverName:
+		return c.TDengineDialector()
 	default:
 		return nil, fmt.Errorf("driverName not support : %s", c.DriverName)
 	}
