@@ -21,26 +21,25 @@ const (
 )
 
 type Client struct {
-	Host           string        // 数据库 IP
-	Port           string        // 数据库端口
-	Username       string        // 数据库用户名
-	Password       string        // 数据库密码
-	Charset        string        // 数据库字符集
-	Database       string        // 数据库名称
-	ParseTime      bool          // 是否解析时间
-	TimeZone       string        // 数据库时区  mysql & postgresql 专用
-	SslMode        bool          // 数据库SSL模式  postgresql 专用
-	DialTimeOut    string        // 连接超时时间 clickhouse 专用
-	ReadTimeOut    string        // 读取超时时间 clickhouse 专用
-	MaxIdleConns   int           // 连接池里最大空闲连接数。必须要比maxOpenConns小
-	MaxOpenConns   int           // 连接池最多同时打开的连接数
-	MaxLifetime    time.Duration // 连接池里面的连接最大存活时长
-	MaxIdleTime    time.Duration // 连接池里面的连接最大空闲时长
-	EnableMetric   bool          // 开启指标采集
-	EnableTrace    bool          // 开启链路追踪
-	EnableDebug    bool          // 关闭调试模式
-	ConnectionMode string        // tdengine 连接模式(native/rest/websocket)
-	DriverName     string        // 数据库驱动名称
+	Host         string        // 数据库 IP
+	Port         string        // 数据库端口
+	Username     string        // 数据库用户名
+	Password     string        // 数据库密码
+	Charset      string        // 数据库字符集
+	Database     string        // 数据库名称
+	ParseTime    bool          // 是否解析时间
+	TimeZone     string        // 数据库时区  mysql & postgresql 专用
+	SslMode      bool          // 数据库SSL模式  postgresql 专用
+	DialTimeOut  string        // 连接超时时间 clickhouse 专用
+	ReadTimeOut  string        // 读取超时时间 clickhouse 专用
+	MaxIdleConns int           // 连接池里最大空闲连接数。必须要比maxOpenConns小
+	MaxOpenConns int           // 连接池最多同时打开的连接数
+	MaxLifetime  time.Duration // 连接池里面的连接最大存活时长
+	MaxIdleTime  time.Duration // 连接池里面的连接最大空闲时长
+	EnableMetric bool          // 开启指标采集
+	EnableTrace  bool          // 开启链路追踪
+	EnableDebug  bool          // 关闭调试模式
+	DriverName   string        // 数据库驱动名称
 }
 
 type ClientManager struct {
@@ -214,8 +213,6 @@ func (c *Client) Dsn() (string, error) {
 		return c.ClickHouseDsn(), nil
 	case PostgreSQLDriverName:
 		return c.PostgreSQLDsn(), nil
-	case TDengineDriverName:
-		return c.TDengineDsn(), nil
 	default:
 		return "", fmt.Errorf("driverName not support : %s", c.DriverName)
 	}
@@ -230,8 +227,6 @@ func (c *Client) Dialector() (gorm.Dialector, error) {
 		return c.ClickHouseDialector()
 	case PostgreSQLDriverName:
 		return c.PostgreSQLDialector()
-	case TDengineDriverName:
-		return c.TDengineDialector()
 	default:
 		return nil, fmt.Errorf("driverName not support : %s", c.DriverName)
 	}
