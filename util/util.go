@@ -146,7 +146,7 @@ func equal(a, b []int) bool {
 
 // GetMissingElement ...
 func GetMissingElement(arr []int) int {
-	if arr == nil || len(arr) <= 0 {
+	if len(arr) <= 0 {
 		return 1
 	}
 	sort.Sort(intSlice(arr))

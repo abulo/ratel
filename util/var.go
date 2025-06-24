@@ -38,27 +38,26 @@ func Empty(val any) bool {
 // Thus +0123.45e6 is a valid numeric value.
 // In PHP hexadecimal (e.g. 0xf4c3b00c) is not supported, but IsNumeric is supported.
 func IsNumeric(val any) bool {
-	switch val.(type) {
+	switch v := val.(type) {
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		return true
 	case float32, float64, complex64, complex128:
 		return true
 	case string:
-		str := val.(string)
-		if str == "" {
+		if v == "" {
 			return false
 		}
 		// Trim any whitespace
-		str = strings.TrimSpace(str)
-		if str[0] == '-' || str[0] == '+' {
-			if len(str) == 1 {
+		v = strings.TrimSpace(v)
+		if v[0] == '-' || v[0] == '+' {
+			if len(v) == 1 {
 				return false
 			}
-			str = str[1:]
+			v = v[1:]
 		}
 		// hex
-		if len(str) > 2 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X') {
-			for _, h := range str[2:] {
+		if len(v) > 2 && v[0] == '0' && (v[1] == 'x' || v[1] == 'X') {
+			for _, h := range v[2:] {
 				if !((h >= '0' && h <= '9') || (h >= 'a' && h <= 'f') || (h >= 'A' && h <= 'F')) {
 					return false
 				}
@@ -66,19 +65,19 @@ func IsNumeric(val any) bool {
 			return true
 		}
 		// 0-9, Point, Scientific
-		p, s, l := 0, 0, len(str)
-		for i, v := range str {
-			if v == '.' { // Point
+		p, s, l := 0, 0, len(v)
+		for i, ch := range v {
+			if ch == '.' { // Point
 				if p > 0 || s > 0 || i+1 == l {
 					return false
 				}
 				p = i
-			} else if v == 'e' || v == 'E' { // Scientific
+			} else if ch == 'e' || ch == 'E' { // Scientific
 				if i == 0 || s > 0 || i+1 == l {
 					return false
 				}
 				s = i
-			} else if v < '0' || v > '9' {
+			} else if ch < '0' || ch > '9' {
 				return false
 			}
 		}

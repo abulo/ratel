@@ -87,7 +87,7 @@ func labEntry(entry any) (*pb.Value, error) {
 	case reflect.Array, reflect.Slice:
 		lstEntry := reflect.ValueOf(entry)
 
-		lstValue := &pb.ListValue{Values: make([]*pb.Value, lstEntry.Len(), lstEntry.Len())}
+		lstValue := &pb.ListValue{Values: make([]*pb.Value, lstEntry.Len())}
 		for i := 0; i < lstEntry.Len(); i++ {
 			lstValue.Values[i], err = labEntry(lstEntry.Index(i).Interface())
 			if err != nil {

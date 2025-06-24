@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -84,7 +85,7 @@ func ExtractIP(addr string) (string, error) {
 
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return "", fmt.Errorf("Failed to get interfaces! Err: %v", err)
+		return "", fmt.Errorf("failed to get interfaces! Err: %v", err)
 	}
 
 	var addrs []net.Addr
@@ -136,7 +137,7 @@ func ExtractIP(addr string) (string, error) {
 		return net.IP(publicIP).String(), nil
 	}
 
-	return "", fmt.Errorf("No IP address found, and explicit IP not provided")
+	return "", errors.New("no IP address found, and explicit IP not provided")
 }
 
 func isPrivateIP(ipAddr string) bool {

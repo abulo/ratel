@@ -154,8 +154,14 @@ func UCWords(str string) string {
 }
 
 // SubStr Substr substr()
-func SubStr(str string, start uint, length int) string {
-	if start < 0 || length < -1 {
+func SubStr(str string, start int, length int) string {
+	if start < 0 {
+		start = len(str) + start
+		if start < 0 {
+			start = 0
+		}
+	}
+	if length < -1 {
 		return str
 	}
 	switch {

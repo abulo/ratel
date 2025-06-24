@@ -434,6 +434,7 @@ func Hour(s string, e string) ([]string, []int64) {
 }
 
 // ToWeekDay ...
+// ToWeekDay ...
 func ToWeekDay(t any) string {
 	weekday := [7]string{"周日", "周一", "周二", "周三", "周四", "周五", "周六"}
 	now := cast.ToTimeInDefaultLocation(t, TimeZone())
@@ -448,12 +449,9 @@ func ToWeekDay(t any) string {
 		y = (year - 1) % 100
 		c = (year - 1) / 100
 	}
-	week := y + (y / 4) + (c / 4) - 2*c + ((26 * (m + 1)) / 10) + day - 1
-	if week < 0 {
-		week = 7 - (-week)%7
-	} else {
-		week = week % 7
-	}
-	which_week := int(week)
+
+	// 使用 int 避免无符号类型问题
+	week := int(y) + int(y)/4 + int(c)/4 - 2*int(c) + (26*(int(m)+1))/10 + int(day) - 1
+	which_week := (week%7 + 7) % 7 // 确保非负
 	return weekday[which_week]
 }

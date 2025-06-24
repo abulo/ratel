@@ -34,7 +34,9 @@ func PathInfo(path string, options int) map[string]string {
 	if ((options & 4) == 4) || ((options & 8) == 8) {
 		basename := ""
 		if (options & 2) == 2 {
-			basename, _ = info["basename"]
+			if val, ok := info["basename"]; !ok {
+				basename = val
+			}
 		} else {
 			basename = filepath.Base(path)
 		}
@@ -182,6 +184,10 @@ func GetCwd() (string, error) {
 
 // RealPath Realpath realpath()
 func RealPath(path string) (string, error) {
+	_, err := os.Stat(path)
+	if err != nil {
+		return "", err
+	}
 	return filepath.Abs(path)
 }
 
@@ -212,11 +218,11 @@ func FileMTime(filename string) (int64, error) {
 		return 0, err
 	}
 	defer fd.Close()
-	fileinfo, err := fd.Stat()
+	fi, err := fd.Stat()
 	if err != nil {
 		return 0, err
 	}
-	return fileinfo.ModTime().Unix(), nil
+	return fi.ModTime().Unix(), nil
 }
 
 // FGetCsv Fgetcsv fgetcsv()
