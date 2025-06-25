@@ -55,15 +55,13 @@ var _ balancer.Balancer = (*baseBalancer)(nil) // Assert that we implement V2Bal
 type baseBalancer struct {
 	cc              balancer.ClientConn
 	v2PickerBuilder PickerBuilder
-
-	csEvltr *balancer.ConnectivityStateEvaluator
-	state   connectivity.State
-
-	subConns   map[resolver.Address]balancer.SubConn
-	scStates   map[balancer.SubConn]connectivity.State
-	v2Picker   balancer.Picker
-	config     base.Config
-	attributes *attributes.Attributes
+	csEvltr         *balancer.ConnectivityStateEvaluator
+	state           connectivity.State
+	subConns        map[resolver.Address]balancer.SubConn
+	scStates        map[balancer.SubConn]connectivity.State
+	v2Picker        balancer.Picker
+	config          base.Config
+	attributes      *attributes.Attributes
 }
 
 // HandleResolvedAddrs ...
