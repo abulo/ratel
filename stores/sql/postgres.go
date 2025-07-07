@@ -25,6 +25,6 @@ func (c *Client) PostgreSQLDialector() (gorm.Dialector, error) {
 	}
 	return postgres.New(postgres.Config{
 		DSN:              dsn,
-		WithoutReturning: true,
+		WithoutReturning: false,
 	}), nil
 }

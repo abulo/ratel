@@ -141,6 +141,13 @@ func ModuleDaoConvertProto(Condition []Column, res, resItem string) string {
 				builder.WriteString("\n")
 				builder.WriteString("		}")
 				builder.WriteString("\n")
+			case "null.Time":
+				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
+				builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(*%s.%s.Ptr())", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
+				builder.WriteString("		}")
+				builder.WriteString("\n")
 			case "null.Date":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
@@ -229,6 +236,13 @@ func ModuleDaoConvertProto(Condition []Column, res, resItem string) string {
 				builder.WriteString("		}")
 				builder.WriteString("\n")
 			case "null.CTime":
+				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
+				builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(*%s.%s.Ptr())", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
+				builder.WriteString("		}")
+				builder.WriteString("\n")
+			case "null.Time":
 				builder.WriteString(fmt.Sprintf("	if %s.%s.IsValid() {", resItem, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(*%s.%s.Ptr())", res, CamelStr(item.ColumnName), resItem, CamelStr(item.ColumnName)))
@@ -330,6 +344,9 @@ func TypeScriptCondition(Condition []Column) string {
 			builder.WriteString(fmt.Sprintf("		%s?: boolean; // %s", Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
 		case "null.CTime":
+			builder.WriteString(fmt.Sprintf("		%s?: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+		case "null.Time":
 			builder.WriteString(fmt.Sprintf("		%s?: string; // %s", Helper(item.ColumnName), item.ColumnComment))
 			builder.WriteString("\n")
 		case "null.Date":
@@ -452,6 +469,17 @@ func ApiToProto(Condition []Column, res, request string, page bool) string {
 			}
 			builder.WriteString("	}")
 			builder.WriteString("\n")
+		case "null.Time":
+			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
+			builder.WriteString("\n")
+			builder.WriteString(fmt.Sprintf("		%s.%s = timestamppb.New(cast.ToTimeInDefaultLocation(val, time.Local)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+			builder.WriteString("\n")
+			if page {
+				builder.WriteString(fmt.Sprintf("		%sTotal.%s = timestamppb.New(cast.ToTimeInDefaultLocation(val, time.Local)) // %s", res, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			}
+			builder.WriteString("	}")
+			builder.WriteString("\n")
 		case "null.Date":
 			builder.WriteString(fmt.Sprintf("	if val, ok := %s(\"%s\"); ok {", request, Helper(item.ColumnName)))
 			builder.WriteString("\n")
@@ -564,6 +592,9 @@ func Json(Condition []Column) string {
 			case "null.CTime":
 				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
+			case "null.Time":
+				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
 			case "null.Date":
 				builder.WriteString(fmt.Sprintf("		%s: undefined, // %s", Helper(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
@@ -598,6 +629,9 @@ func Json(Condition []Column) string {
 				builder.WriteString(fmt.Sprintf("		%s: {}, // %s", Helper(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
 			case "null.CTime":
+				builder.WriteString(fmt.Sprintf("		%s: \"\", // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Time":
 				builder.WriteString(fmt.Sprintf("		%s: \"\", // %s", Helper(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
 			case "null.Date":
@@ -651,6 +685,9 @@ func TypeScript(Condition []Column) string {
 			case "null.CTime":
 				builder.WriteString(fmt.Sprintf("		%s: string | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
+			case "null.Time":
+				builder.WriteString(fmt.Sprintf("		%s: string | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
 			case "null.Date":
 				builder.WriteString(fmt.Sprintf("		%s: string | undefined; // %s", Helper(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
@@ -685,6 +722,9 @@ func TypeScript(Condition []Column) string {
 				builder.WriteString(fmt.Sprintf("		%s: any; // %s", Helper(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
 			case "null.CTime":
+				builder.WriteString(fmt.Sprintf("		%s: string; // %s", Helper(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+			case "null.Time":
 				builder.WriteString(fmt.Sprintf("		%s: string; // %s", Helper(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
 			case "null.Date":
@@ -775,6 +815,13 @@ func ModuleProtoConvertDao(Condition []Column, res, request string) string {
 				builder.WriteString("\n")
 				builder.WriteString("	}")
 				builder.WriteString("\n")
+			case "null.Time":
+				builder.WriteString(fmt.Sprintf("		if %s != nil && %s.%s != nil {", request, request, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
+				builder.WriteString(fmt.Sprintf("			%s.%s = null.TimeFrom(util.GrpcTime(%s.%s)) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+				builder.WriteString("	}")
+				builder.WriteString("\n")
 			case "null.Date":
 				builder.WriteString(fmt.Sprintf("		if %s != nil && %s.%s != nil {", request, request, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
@@ -852,6 +899,13 @@ func ModuleProtoConvertDao(Condition []Column, res, request string) string {
 				builder.WriteString(fmt.Sprintf("		if %s != nil && %s.%s != nil {", request, request, CamelStr(item.ColumnName)))
 				builder.WriteString("\n")
 				builder.WriteString(fmt.Sprintf("			%s.%s = null.CTimeFrom(util.GrpcTime(%s.%s)) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
+				builder.WriteString("\n")
+				builder.WriteString("	}")
+				builder.WriteString("\n")
+			case "null.Time":
+				builder.WriteString(fmt.Sprintf("		if %s != nil && %s.%s != nil {", request, request, CamelStr(item.ColumnName)))
+				builder.WriteString("\n")
+				builder.WriteString(fmt.Sprintf("			%s.%s = null.TimeFrom(util.GrpcTime(%s.%s)) // %s", res, CamelStr(item.ColumnName), request, CamelStr(item.ColumnName), item.ColumnComment))
 				builder.WriteString("\n")
 				builder.WriteString("	}")
 				builder.WriteString("\n")

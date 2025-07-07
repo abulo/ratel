@@ -114,6 +114,7 @@ func NewDataType() map[string]DataType {
 	res["longblob"] = DataType{Default: "null.Bytes", Empty: "null.Bytes", Proto: "bytes", OptionProto: true, TypeScript: "string", Json: ""}
 
 	res["time"] = DataType{Default: "null.CTime", Empty: "null.CTime", Proto: "google.protobuf.Timestamp", OptionProto: false, TypeScript: "string", Json: ""}
+	res["timestamptz"] = DataType{Default: "null.Time", Empty: "null.Time", Proto: "google.protobuf.Timestamp", OptionProto: false, TypeScript: "string", Json: ""}
 	res["date"] = DataType{Default: "null.Date", Empty: "null.Date", Proto: "google.protobuf.Timestamp", OptionProto: false, TypeScript: "string", Json: ""}
 	res["datetime"] = DataType{Default: "null.DateTime", Empty: "null.DateTime", Proto: "google.protobuf.Timestamp", OptionProto: false, TypeScript: "string", Json: ""}
 	res["timestamp"] = DataType{Default: "null.TimeStamp", Empty: "null.TimeStamp", Proto: "google.protobuf.Timestamp", OptionProto: false, TypeScript: "string", Json: ""}
@@ -176,6 +177,7 @@ func TableColumn(ctx context.Context, DbName, TableName string) ([]Column, error
 	case "postgres":
 		query, args = "SELECT C.COLUMN_NAME AS \"COLUMN_NAME\",C.is_nullable AS \"IS_NULLABLE\",C.udt_name AS \"DATA_TYPE\",CASE WHEN EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_attribute A ON A.attnum=con.conkey[1] AND A.attrelid=con.conrelid WHERE con.contype='p' AND con.conrelid=cl.OID AND A.attname=C.COLUMN_NAME) THEN 'PRI' WHEN EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_attribute A ON A.attnum=con.conkey[1] AND A.attrelid=con.conrelid WHERE con.contype='u' AND con.conrelid=cl.OID AND A.attname=C.COLUMN_NAME) THEN 'UNIQUE' ELSE 'NONE' END AS \"COLUMN_KEY\",col_description (cl.OID,A.attnum) AS \"COLUMN_COMMENT\" FROM information_schema.COLUMNS C LEFT JOIN pg_catalog.pg_class cl ON cl.relname=C.TABLE_NAME LEFT JOIN pg_catalog.pg_attribute A ON A.attrelid=cl.OID AND A.attnum=C.ordinal_position WHERE C.table_schema='public' AND C.TABLE_NAME=? order by C.ordinal_position ASC;", []any{TableName}
 	}
+
 	handle := Query.Raw(query, args...)
 	handle.Scan(&res)
 	err = handle.Error
