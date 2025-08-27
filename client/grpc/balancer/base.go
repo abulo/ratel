@@ -92,6 +92,8 @@ func (b *baseBalancer) UpdateClientConnState(s balancer.ClientConnState) error {
 		addrsSet[a] = struct{}{}
 		if _, ok := b.subConns[a]; !ok {
 			// a is a new address (not existing in b.subConns).
+			// Note: We are passing only one address to NewSubConn which is the
+			// recommended approach and compliant with future gRPC versions.
 			sc, err := b.cc.NewSubConn(
 				[]resolver.Address{a},
 				balancer.NewSubConnOptions{HealthCheckEnabled: b.config.HealthCheck},
@@ -200,6 +202,15 @@ func (b *baseBalancer) UpdateSubConnState(sc balancer.SubConn, state balancer.Su
 // Close is a nop because base balancer doesn't have internal state to clean up,
 // and it doesn't need to call RemoveSubConn for the SubConns.
 func (b *baseBalancer) Close() {
+}
+
+// ExitIdle implements the balancer.Balancer interface.
+func (b *baseBalancer) ExitIdle() {
+	for _, sc := range b.subConns {
+		if state, ok := b.scStates[sc]; ok && state == connectivity.Idle {
+			sc.Connect()
+		}
+	}
 }
 
 // NewErrPickerV2 returns a V2Picker that always returns err on Pick().
