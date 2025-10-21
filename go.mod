@@ -35,7 +35,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/streadway/amqp v1.1.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tdewolff/parse/v2 v2.8.3
+	github.com/tdewolff/parse/v2 v2.8.4
 	go.etcd.io/etcd/api/v3 v3.6.5
 	go.etcd.io/etcd/client/v3 v3.6.5
 	go.mongodb.org/mongo-driver v1.17.4
@@ -47,12 +47,12 @@ require (
 	go.opentelemetry.io/otel/sdk v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
 	go.uber.org/multierr v1.11.0
-	golang.org/x/crypto v0.42.0
-	golang.org/x/image v0.31.0
-	golang.org/x/mod v0.28.0
+	golang.org/x/crypto v0.43.0
+	golang.org/x/image v0.32.0
+	golang.org/x/mod v0.29.0
 	golang.org/x/sync v0.17.0
-	golang.org/x/text v0.29.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251006185510-65f7160b3a87
+	golang.org/x/text v0.30.0
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251020155222-88f65dc88635
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
 	gorm.io/driver/clickhouse v0.7.0
@@ -158,10 +158,10 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.20.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/term v0.35.0 // indirect
-	golang.org/x/tools v0.36.0 // indirect
+	golang.org/x/net v0.45.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/term v0.36.0 // indirect
+	golang.org/x/tools v0.37.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250825161204-c5933d9347a5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
