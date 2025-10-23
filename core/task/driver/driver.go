@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/abulo/ratel/v3/client/etcdv3"
-	"github.com/abulo/ratel/v3/stores/redis"
+	"github.com/redis/go-redis/v9"
 )
 
 // There is only one driver for one task.
@@ -30,7 +30,7 @@ type DriverV2 interface {
 	WithOption(opt Option) (err error)
 }
 
-func NewRedisDriver(redisClient *redis.Client) DriverV2 {
+func NewRedisDriver(redisClient redis.UniversalClient) DriverV2 {
 	return newRedisDriver(redisClient)
 }
 
@@ -38,6 +38,6 @@ func NewEtcdDriver(etcdCli *etcdv3.Client) DriverV2 {
 	return newEtcdDriver(etcdCli)
 }
 
-func NewRedisZSetDriver(redisClient *redis.Client) DriverV2 {
+func NewRedisZSetDriver(redisClient redis.UniversalClient) DriverV2 {
 	return newRedisZSetDriver(redisClient)
 }

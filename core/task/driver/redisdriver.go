@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/abulo/ratel/v3/core/logger"
-	"github.com/abulo/ratel/v3/stores/redis"
+	"github.com/redis/go-redis/v9"
 )
 
 const (
@@ -16,7 +16,7 @@ const (
 )
 
 type RedisDriver struct {
-	c           *redis.Client
+	c           redis.UniversalClient
 	serviceName string
 	nodeID      string
 	timeout     time.Duration
@@ -29,7 +29,7 @@ type RedisDriver struct {
 	sync.Mutex
 }
 
-func newRedisDriver(redisClient *redis.Client) *RedisDriver {
+func newRedisDriver(redisClient redis.UniversalClient) *RedisDriver {
 	rd := &RedisDriver{
 		c:       redisClient,
 		timeout: redisDefaultTimeout,
@@ -98,7 +98,7 @@ func (rd *RedisDriver) heartBeat() {
 			}
 		case <-rd.runtimeCtx.Done():
 			{
-				if _, err := rd.c.Del(context.Background(), rd.nodeID, rd.nodeID); err != nil {
+				if err := rd.c.Del(context.Background(), rd.nodeID, rd.nodeID).Err(); err != nil {
 					logger.Logger.Errorf("unregister service node error %+v", err)
 				}
 				return
@@ -108,16 +108,12 @@ func (rd *RedisDriver) heartBeat() {
 }
 
 func (rd *RedisDriver) registerServiceNode() error {
-	_, err := rd.c.SetEx(context.Background(), rd.nodeID, rd.nodeID, rd.timeout)
-	return err
+	return rd.c.SetEx(context.Background(), rd.nodeID, rd.nodeID, rd.timeout).Err()
 }
 
 func (rd *RedisDriver) scan(ctx context.Context, matchStr string) ([]string, error) {
 	ret := make([]string, 0)
-	iter, err := rd.c.ScanIterator(ctx, 0, matchStr, -1)
-	if err != nil {
-		return nil, err
-	}
+	iter := rd.c.Scan(ctx, 0, matchStr, -1).Iterator()
 	for iter.Next(ctx) {
 		err := iter.Err()
 		if err != nil {
