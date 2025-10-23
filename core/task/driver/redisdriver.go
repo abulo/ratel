@@ -63,7 +63,7 @@ func (rd *RedisDriver) Start(ctx context.Context) (err error) {
 	// register
 	err = rd.registerServiceNode()
 	if err != nil {
-		logger.Logger.Errorf("register service error=%v", err)
+		// logger.Logger.Errorf("register service error=%v", err)
 		return
 	}
 	// heartbeat timer

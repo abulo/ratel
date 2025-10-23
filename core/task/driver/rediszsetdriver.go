@@ -60,7 +60,7 @@ func (rd *RedisZSetDriver) GetNodes(ctx context.Context) (nodes []string, err er
 		nodes = make([]string, len(sliceCmd.Val()))
 		copy(nodes, sliceCmd.Val())
 	}
-	logger.Logger.Infof("nodes=%v", nodes)
+	// logger.Logger.Infof("nodes=%v", nodes)
 	return
 }
 func (rd *RedisZSetDriver) Start(ctx context.Context) (err error) {
