@@ -1,4 +1,4 @@
-package frontend
+package project
 
 import (
 	"context"
@@ -8,16 +8,15 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/abulo/ratel/v3/toolkit/project"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 // CmdNew represents the new command.
 var CmdNew = &cobra.Command{
-	Use:   "frontend",
-	Short: "前端项目",
-	Long:  "前端项目: toolkit frontend helloworld",
+	Use:   "project",
+	Short: "项目",
+	Long:  "项目: toolkit project helloworld",
 	Run:   run,
 }
 
@@ -28,7 +27,7 @@ var (
 )
 
 func init() {
-	repoURL = "https://github.com/abulo/layout-vue.git"
+	repoURL = "https://github.com/abulo/layout.git"
 	timeout = "60s"
 	CmdNew.Flags().StringVarP(&repoURL, "repo-url", "r", repoURL, "layout repo")
 	CmdNew.Flags().StringVarP(&branch, "branch", "b", branch, "repo branch")
@@ -59,7 +58,7 @@ func run(cmd *cobra.Command, args []string) {
 	} else {
 		name = args[0]
 	}
-	p := &project.Project{Name: path.Base(name), Path: name}
+	p := &Project{Name: path.Base(name), Path: name}
 	done := make(chan error, 1)
 	go func() {
 		done <- p.NewFront(ctx, wd, repoURL, branch)

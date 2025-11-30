@@ -26,8 +26,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.10
 	github.com/prometheus/client_golang v1.23.2
-	github.com/redis/go-redis/extra/rediscmd/v9 v9.16.0
-	github.com/redis/go-redis/v9 v9.16.0
+	github.com/redis/go-redis/extra/rediscmd/v9 v9.17.1
+	github.com/redis/go-redis/v9 v9.17.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/smallnest/weighted v0.0.0-20230419055410-36b780e40a7a
 	github.com/spf13/cast v1.10.0
@@ -47,12 +47,12 @@ require (
 	go.opentelemetry.io/otel/sdk v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
 	go.uber.org/multierr v1.11.0
-	golang.org/x/crypto v0.44.0
+	golang.org/x/crypto v0.45.0
 	golang.org/x/image v0.33.0
 	golang.org/x/mod v0.30.0
 	golang.org/x/sync v0.18.0
 	golang.org/x/text v0.31.0
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251124214823-79d6a2a48846
 	google.golang.org/grpc v1.77.0
 	google.golang.org/protobuf v1.36.10
 	gorm.io/driver/clickhouse v0.7.0
@@ -158,7 +158,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.20.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/net v0.46.1-0.20251013234738-63d1a5100f82 // indirect
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/term v0.37.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
