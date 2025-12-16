@@ -559,6 +559,20 @@ func Props(table, condition []Column) string {
 	}
 	return builder.String()
 }
+func PropsSearch(table, condition []Column) string {
+	var conditionList []string
+	for _, item := range condition {
+		conditionList = append(conditionList, item.ColumnName)
+	}
+	builder := strings.Builder{}
+	for _, item := range table {
+		if util.InArray(item.ColumnName, conditionList) {
+			builder.WriteString(fmt.Sprintf("	{ prop: \"%s\", label: \"%s\", valueType: \"input\" },", Helper(item.ColumnName), item.ColumnComment))
+		}
+		builder.WriteString("\n")
+	}
+	return builder.String()
+}
 
 func Json(Condition []Column) string {
 	builder := strings.Builder{}

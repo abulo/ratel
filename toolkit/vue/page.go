@@ -39,6 +39,7 @@ func GeneratePage(moduleParam base.ModuleParam, fullPageDir, viewUrl, tableName 
 		"InMethod":              base.InMethod,
 		"Rule":                  base.Rule,
 		"Props":                 base.Props,
+		"PropsSearch":           base.PropsSearch,
 	}).Parse(PageTemplate()))
 
 	// 文件夹路径
