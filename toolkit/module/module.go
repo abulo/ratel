@@ -307,7 +307,7 @@ func Run(cmd *cobra.Command, args []string) {
 			indexName := v.IndexName
 
 			// 拆分字符串,得到索引类型和索引名称
-			indexNameSlice := util.Explode(":", indexName)
+			indexNameSlice := util.Explode("_", indexName)
 			if len(indexNameSlice) < 2 {
 				continue
 			}
