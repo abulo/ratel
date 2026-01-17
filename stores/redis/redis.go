@@ -3,6 +3,7 @@ package redis
 import (
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/resource"
@@ -111,6 +112,40 @@ func WithAddrs(Addrs map[string]string) Option {
 func WithMasterName(MasterName string) Option {
 	return func(r *Client) {
 		r.MasterName = MasterName
+	}
+}
+func WithDialTimeout(t time.Duration) Option {
+	return func(r *Client) {
+		r.DialTimeout = t
+	}
+}
+func WithReadTimeout(t time.Duration) Option {
+	return func(r *Client) {
+		r.ReadTimeout = t
+	}
+}
+
+func WithWriteTimeout(t time.Duration) Option {
+	return func(r *Client) {
+		r.WriteTimeout = t
+	}
+}
+
+func WithPoolTimeout(t time.Duration) Option {
+	return func(r *Client) {
+		r.PoolTimeout = t
+	}
+}
+
+func WithIdleTimeout(t time.Duration) Option {
+	return func(r *Client) {
+		r.IdleTimeout = t
+	}
+}
+
+func WithIdleCheckFrequency(t time.Duration) Option {
+	return func(r *Client) {
+		r.IdleCheckFrequency = t
 	}
 }
 

@@ -2,6 +2,7 @@ package trace
 
 import (
 	"context"
+	"time"
 
 	"github.com/abulo/ratel/v3/core/logger"
 	"go.opentelemetry.io/otel"
@@ -69,11 +70,26 @@ func (config *Config) Build() trace.TracerProvider {
 		exp, err = otlptracehttp.New(context.TODO(),
 			otlptracehttp.WithEndpoint(config.Endpoint),
 			otlptracehttp.WithInsecure(), // 如果是 http 而不是 https
+			otlptracehttp.WithRetry(
+				otlptracehttp.RetryConfig{
+					Enabled:         true,
+					InitialInterval: 1 * time.Second,
+					MaxInterval:     10 * time.Second,
+					MaxElapsedTime:  30 * time.Second,
+				},
+			),
 		)
 	} else {
 		exp, err = otlptracegrpc.New(context.TODO(),
 			otlptracegrpc.WithEndpoint(config.Endpoint),
-			otlptracegrpc.WithInsecure(), // 如果未启用 TLS
+			otlptracegrpc.WithInsecure(),                        // 如果未启用 TLS
+			otlptracegrpc.WithReconnectionPeriod(5*time.Second), // 添加重连
+			otlptracegrpc.WithRetry(otlptracegrpc.RetryConfig{
+				Enabled:         true,
+				InitialInterval: 1 * time.Second,
+				MaxInterval:     10 * time.Second,
+				MaxElapsedTime:  30 * time.Second,
+			}),
 		)
 	}
 	if err != nil {

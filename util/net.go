@@ -26,7 +26,7 @@ func GetHostByName(hostname string) (string, error) {
 				return v.String(), nil
 			}
 		}
-		return "", nil
+		return "", fmt.Errorf("null: cannot find host %s", hostname)
 	}
 	return "", err
 }
