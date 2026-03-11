@@ -130,6 +130,11 @@ func Time() int64 {
 	return time.Now().In(cstZone).Unix()
 }
 
+// 时间戳，毫秒级别
+func ToTime(now time.Time) int64 {
+	return now.Unix()
+}
+
 // Duration ...
 func Duration(str string) time.Duration {
 	dur, err := time.ParseDuration(str)
