@@ -101,6 +101,12 @@ func WithAddr(Addr string) Option {
 	}
 }
 
+func WithName(Name string) Option {
+	return func(r *Client) {
+		r.Name = Name
+	}
+}
+
 // WithAddrs 设置分片地址 Addrs: 分片地址映射
 func WithAddrs(Addrs map[string]string) Option {
 	return func(r *Client) {
@@ -177,7 +183,7 @@ var clientManager = resource.NewResourceManager()
 
 // getClient 获取单节点Redis客户端 r: 客户端配置
 func getClient(r *Client) (RedisNode, error) {
-	driverName := r.Addr
+	driverName := r.Addr + "@" + r.Name
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
 		opt := r.GetClientConfig()
 		store := redis.NewClient(opt)
@@ -194,7 +200,7 @@ func getClient(r *Client) (RedisNode, error) {
 
 // getCluster 获取集群Redis客户端 r: 客户端配置
 func getCluster(r *Client) (RedisNode, error) {
-	driverName := util.Implode(";", r.Hosts)
+	driverName := util.Implode(";", r.Hosts) + "@" + r.Name
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
 		opt := r.GetClusterClientConfig()
 		store := redis.NewClusterClient(opt)
@@ -211,7 +217,7 @@ func getCluster(r *Client) (RedisNode, error) {
 
 // getFailover 获取哨兵Redis客户端 r: 客户端配置
 func getFailover(r *Client) (RedisNode, error) {
-	driverName := r.MasterName + "://" + util.Implode(";", r.Hosts)
+	driverName := r.MasterName + "://" + util.Implode(";", r.Hosts) + "@" + r.Name
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
 		opt := r.GetFailoverClientConfig()
 		store := redis.NewFailoverClient(opt)
@@ -232,6 +238,7 @@ func getRing(r *Client) (RedisNode, error) {
 	for k, v := range r.Addrs {
 		driverName += k + ":" + v + ";"
 	}
+	driverName = driverName + "@" + r.Name
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
 		opt := r.GetRingClientConfig()
 		store := redis.NewRing(opt)

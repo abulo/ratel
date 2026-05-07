@@ -71,6 +71,7 @@ type Client struct {
 	EnableMetric bool // 开启指标采集
 	EnableTrace  bool // 开启链路追踪
 	brk          resource.Breaker
+	Name         string // 节点名称
 }
 
 // GetRingClientConfig 获取分片配置

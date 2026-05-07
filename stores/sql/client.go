@@ -40,6 +40,7 @@ type Client struct {
 	EnableTrace  bool          // 开启链路追踪
 	EnableDebug  bool          // 关闭调试模式
 	DriverName   string        // 数据库驱动名称
+	Name         string
 }
 
 type ClientManager struct {
@@ -195,6 +196,12 @@ func WithEnableTrace(disableTrace bool) Option {
 func WithDriverName(driverName string) Option {
 	return func(r *Client) {
 		r.DriverName = driverName
+	}
+}
+
+func WithName(Name string) Option {
+	return func(r *Client) {
+		r.Name = Name
 	}
 }
 
