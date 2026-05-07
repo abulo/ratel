@@ -69,6 +69,15 @@ func (b *baseBalancer) HandleResolvedAddrs(addrs []resolver.Address, err error) 
 	panic("not implemented")
 }
 
+// ExitIdle instructs the balancer to exit idle state and attempt to connect.
+func (b *baseBalancer) ExitIdle() {
+	for _, sc := range b.subConns {
+		if state, ok := b.scStates[sc]; ok && state == connectivity.Idle {
+			sc.Connect()
+		}
+	}
+}
+
 // ResolverError ...
 func (b *baseBalancer) ResolverError(err error) {
 	switch b.state {

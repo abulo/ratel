@@ -17,7 +17,6 @@ import (
 
 	"github.com/abulo/ratel/v2/gin/internal/bytesconv"
 	"github.com/abulo/ratel/v2/gin/render"
-	"github.com/olekukonko/tablewriter"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -164,7 +163,6 @@ type Engine struct {
 	trustedProxies   []string
 	trustedCIDRs     []*net.IPNet
 	routes           map[string]string
-	Table            *tablewriter.Table
 }
 
 var (
@@ -205,14 +203,6 @@ func New() *Engine {
 		trustedProxies:         []string{"0.0.0.0/0"},
 		trustedCIDRs:           defaultTrustedCIDRs,
 		routes:                 make(map[string]string),
-	}
-	if IsDebugging() {
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"METHOD", "PATH", "HANDLER", "NUMBER"})
-		table.SetRowLine(true)
-		table.SetBorder(false)
-		table.SetCenterSeparator("|")
-		App.Table = table
 	}
 	App.RouterGroup.engine = App
 	App.pool.New = func() any {

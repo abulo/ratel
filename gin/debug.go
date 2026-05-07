@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	
+
 	"github.com/spf13/cast"
 )
 
@@ -36,7 +36,6 @@ func debugPrintRoute(httpMethod, absolutePath string, handlers HandlersChain) {
 			data[1] = absolutePath
 			data[2] = handlerName
 			data[3] = cast.ToString(nuHandlers)
-			App.Table.Append(data)
 		} else {
 			DebugPrintRouteFunc(httpMethod, absolutePath, handlerName, nuHandlers)
 		}
