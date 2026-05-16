@@ -151,14 +151,14 @@ func (t *Task) GetSpec(context.Context) string {
 
 // GetStatus get current task status
 func (t *Task) GetStatus(context.Context) string {
-	var str string
+	var str strings.Builder
 	for _, v := range t.Errlist {
 		if v == nil {
 			continue
 		}
-		str += v.t.String() + ":" + v.errinfo + "<br>"
+		str.WriteString(v.t.String() + ":" + v.errinfo + "<br>")
 	}
-	return str
+	return str.String()
 }
 
 // Run run all tasks

@@ -492,7 +492,7 @@ func (rw *RollingWindow) updateOffset() {
 
 	offset := rw.offset
 	// reset expired buckets
-	for i := 0; i < span; i++ {
+	for i := range span {
 		rw.win.resetBucket((offset + i + 1) % rw.size)
 	}
 
@@ -504,7 +504,7 @@ func (rw *RollingWindow) updateOffset() {
 
 func newWindow(size int) *window {
 	buckets := make([]*Bucket, size)
-	for i := 0; i < size; i++ {
+	for i := range size {
 		buckets[i] = new(Bucket)
 	}
 	return &window{
@@ -518,7 +518,7 @@ func (w *window) add(offset int, v float64) {
 }
 
 func (w *window) reduce(start, count int, fn func(b *Bucket)) {
-	for i := 0; i < count; i++ {
+	for i := range count {
 		fn(w.buckets[(start+i)%w.size])
 	}
 }

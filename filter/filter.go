@@ -1,7 +1,7 @@
 package filter
 
 import (
-	"sort"
+	"slices"
 )
 
 type ResultWriter struct {
@@ -20,9 +20,7 @@ func (_this *ResultWriter) Len() int {
 func skipStr(skip ...string) []rune {
 	if len(skip) > 0 {
 		runes := []rune(skip[0])
-		sort.Slice(runes, func(i, j int) bool {
-			return runes[i] < runes[j]
-		})
+		slices.Sort(runes)
 		return runes
 	}
 	return []rune(SortedSkipList())

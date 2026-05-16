@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/fatih/color"
@@ -93,12 +94,7 @@ func copyDir(src, dst string, replaces, ignores []string) error {
 }
 
 func hasSets(name string, sets []string) bool {
-	for _, ig := range sets {
-		if ig == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(sets, name)
 }
 
 func Tree(path string, dir string) {

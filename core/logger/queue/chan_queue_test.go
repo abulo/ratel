@@ -13,7 +13,7 @@ func TestQueue(t *testing.T) {
 
 	var count int64
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		job := NewJob("foo", func(v any) {
 			atomic.AddInt64(&count, 1)
 		})
@@ -53,7 +53,7 @@ func ExampleQueue() {
 
 	var count int64
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		job := NewJob("foo", func(v any) {
 			atomic.AddInt64(&count, 1)
 		})

@@ -170,7 +170,7 @@ func (np *NodePool) equalRing(a []string) bool {
 	if len(a) == len(np.preNodes) {
 		la := len(a)
 		sort.Strings(a)
-		for i := 0; i < la; i++ {
+		for i := range la {
 			if a[i] != np.preNodes[i] {
 				return false
 			}

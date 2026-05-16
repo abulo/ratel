@@ -268,7 +268,6 @@ func (app *Application) startServers() error {
 	// start multi servers
 	app.smu.Lock()
 	for _, s := range app.servers {
-		s := s
 		eg.Go(func() (err error) {
 			time.AfterFunc(time.Second, func() {
 				_ = registry.DefaultRegisterer.RegisterService(ctx, s.Info())
@@ -291,7 +290,6 @@ func (app *Application) startWorkers() error {
 	var eg errgroup.Group
 	// start multi workers
 	for _, w := range app.workers {
-		w := w
 		eg.Go(func() error {
 			return w.WorkerStart()
 		})

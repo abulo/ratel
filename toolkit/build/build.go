@@ -73,7 +73,7 @@ func Run(cmd *cobra.Command, args []string) {
 
 	builderNumber := len(optionInfo.MainFiles)
 	watchOptionList := make([]*watch.Options, 0)
-	for i := 0; i < builderNumber; i++ {
+	for i := range builderNumber {
 		// 获取配置文件
 		option := &watch.Options{}
 		option.AutoTidy = optionInfo.AutoTidy
@@ -104,7 +104,6 @@ func Run(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
 	var eg errgroup.Group
 	for _, s := range watchOptionList {
-		s := s
 		eg.Go(func() (err error) {
 			err = watch.Watch(ctx, s)
 			return

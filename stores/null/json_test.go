@@ -141,7 +141,7 @@ func TestUnmarshalJSONInStruct(t *testing.T) {
 	t.Parallel()
 
 	type testStruct struct {
-		Val JSON `json:"val,omitempty"`
+		Val JSON `json:"val"`
 	}
 
 	// In this case UnmarshalJSON is never called and it should not be

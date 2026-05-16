@@ -156,10 +156,7 @@ func UCWords(str string) string {
 // SubStr Substr substr()
 func SubStr(str string, start int, length int) string {
 	if start < 0 {
-		start = len(str) + start
-		if start < 0 {
-			start = 0
-		}
+		start = max(len(str)+start, 0)
 	}
 	if length < -1 {
 		return str
@@ -170,10 +167,7 @@ func SubStr(str string, start int, length int) string {
 	case length == 0:
 		return ""
 	}
-	end := int(start) + length
-	if end > len(str) {
-		end = len(str)
-	}
+	end := min(int(start)+length, len(str))
 	return str[start:end]
 }
 
@@ -268,8 +262,8 @@ func ParseStr(encodedString string, result map[string]any) error {
 	}
 
 	// split encodedString.
-	parts := strings.Split(encodedString, "&")
-	for _, part := range parts {
+	parts := strings.SplitSeq(encodedString, "&")
+	for part := range parts {
 		pos := strings.Index(part, "=")
 		if pos <= 0 {
 			continue
@@ -312,19 +306,19 @@ func ParseStr(encodedString string, result map[string]any) error {
 			keys = append(keys, key)
 		}
 		// first key
-		first := ""
+		var first strings.Builder
 		for i, chr := range keys[0] {
 			if chr == ' ' || chr == '.' || chr == '[' {
-				first += "_"
+				first.WriteString("_")
 			} else {
-				first += string(chr)
+				first.WriteString(string(chr))
 			}
 			if chr == '[' {
-				first += keys[0][i+1:]
+				first.WriteString(keys[0][i+1:])
 				break
 			}
 		}
-		keys[0] = first
+		keys[0] = first.String()
 
 		// build nested map
 		if err := build(result, keys, value); err != nil {
@@ -798,9 +792,9 @@ func Levenshtein(str1, str2 string, costIns, costRep, costDel int) int {
 	for i2 := 0; i2 <= l2; i2++ {
 		p1[i2] = i2 * costIns
 	}
-	for i1 = 0; i1 < l1; i1++ {
+	for i1 = range l1 {
 		p2[0] = p1[0] + costDel
-		for i2 = 0; i2 < l2; i2++ {
+		for i2 = range l2 {
 			if str1[i1] == str2[i2] {
 				c0 = p1[i2]
 			} else {
@@ -833,8 +827,8 @@ func SimilarText(first, second string, percent *float64) int {
 		pos1, pos2 := 0, 0
 
 		// Find the longest segment of the same section in two strings
-		for i := 0; i < len1; i++ {
-			for j := 0; j < len2; j++ {
+		for i := range len1 {
+			for j := range len2 {
 				for l := 0; (i+l < len1) && (j+l < len2) && (str1[i+l] == str2[j+l]); l++ {
 					if l+1 > max {
 						max = l + 1

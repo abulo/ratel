@@ -179,7 +179,7 @@ func Run(cmd *cobra.Command, args []string) {
 	var changelogBuilder strings.Builder
 	changelogBuilder.WriteString("# 更新日志\n\n")
 
-	for i := 0; i < len(tags); i++ {
+	for i := range tags {
 		tag1 := tags[i]
 		date, err := getTagDate(tag1)
 		if err != nil {

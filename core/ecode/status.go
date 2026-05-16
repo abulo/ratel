@@ -14,8 +14,7 @@ import (
 )
 
 // Status ...
-type Status interface {
-}
+type Status any
 
 type spbStatus struct {
 	*spb.Status

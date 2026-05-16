@@ -688,7 +688,7 @@ func (c *DecoratedCollection) FindMany(ctx context.Context, documents any) (err 
 			}
 		}(ctx)
 		val := reflect.ValueOf(documents)
-		if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Slice {
+		if val.Kind() != reflect.Pointer || val.Elem().Kind() != reflect.Slice {
 			err = errors.New("result argument must be a slice address")
 			c.reset()
 			return err
@@ -865,7 +865,7 @@ func BeforeCreate(document any) any {
 	typ := reflect.TypeOf(document)
 
 	switch typ.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return BeforeCreate(val.Elem().Interface())
 
 	case reflect.Array, reflect.Slice:
@@ -881,7 +881,7 @@ func BeforeCreate(document any) any {
 			data[typ.Field(i).Tag.Get("bson")] = val.Field(i).Interface()
 		}
 		dataVal := reflect.ValueOf(data)
-		if val.FieldByName("Id").Type() == reflect.TypeOf(primitive.ObjectID{}) {
+		if val.FieldByName("Id").Type() == reflect.TypeFor[primitive.ObjectID]() {
 			dataVal.SetMapIndex(reflect.ValueOf("_id"), reflect.ValueOf(primitive.NewObjectID()))
 		}
 
@@ -891,7 +891,7 @@ func BeforeCreate(document any) any {
 		return dataVal.Interface()
 
 	default:
-		if val.Type() == reflect.TypeOf(bson.M{}) {
+		if val.Type() == reflect.TypeFor[bson.M]() {
 			if !val.MapIndex(reflect.ValueOf("_id")).IsValid() {
 				val.SetMapIndex(reflect.ValueOf("_id"), reflect.ValueOf(primitive.NewObjectID()))
 			}
@@ -906,7 +906,7 @@ func BeforeUpdate(document any) any {
 	typ := reflect.TypeOf(document)
 
 	switch typ.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return BeforeUpdate(val.Elem().Interface())
 
 	case reflect.Array, reflect.Slice:

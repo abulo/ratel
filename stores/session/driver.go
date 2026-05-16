@@ -110,7 +110,7 @@ func setSliceMap(m map[string]any, keys []string, value any) map[string]any {
 	var i int
 	var limit = len(keys) - 1
 
-	for i = 0; i < limit; i++ {
+	for i = range limit {
 		_, ok := itMap[keys[i]]
 		if !ok {
 			// } else {

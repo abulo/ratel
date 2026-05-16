@@ -75,7 +75,7 @@ func (tree *Trie) Add(words ...string) {
 func (tree *Trie) add(word string) {
 	var current = tree.Root
 	var runes = []rune(word)
-	for position := 0; position < len(runes); position++ {
+	for position := range runes {
 		r := runes[position]
 		if next, ok := current.Children[r]; ok {
 			current = next
@@ -101,7 +101,7 @@ func (tree *Trie) Replace(text string, character rune) string {
 	)
 
 	var ac = new(ac)
-	for position := 0; position < len(runes); position++ {
+	for position := range runes {
 		next = ac.next(node, runes[position])
 		if next == nil {
 			next = ac.fail(node, runes[position])
@@ -158,7 +158,7 @@ func (tree *Trie) Validate(text string) (bool, string) {
 	)
 
 	var ac = new(ac)
-	for position := 0; position < len(runes); position++ {
+	for position := range runes {
 		next = ac.next(node, runes[position])
 		if next == nil {
 			next = ac.fail(node, runes[position])
@@ -188,7 +188,7 @@ func (tree *Trie) FindAll(text string) []string {
 	)
 
 	var ac = new(ac)
-	for position := 0; position < len(runes); position++ {
+	for position := range runes {
 		next = ac.next(node, runes[position])
 		if next == nil {
 			next = ac.fail(node, runes[position])

@@ -36,7 +36,7 @@ func RandomInt(min, max int) (int, error) {
 func StrPad(str1, str2 string, i int) string {
 	n := i - len(str1) - len(str2)
 	if n > 0 {
-		for i := 0; i < n; i++ {
+		for range n {
 			str1 = str1 + "0"
 		}
 	}

@@ -61,10 +61,7 @@ func GetAppRootPath() string {
 
 func substr(s string, pos, length int) string {
 	runes := []rune(s)
-	l := pos + length
-	if l > len(runes) {
-		l = len(runes)
-	}
+	l := min(pos+length, len(runes))
 	return string(runes[pos:l])
 }
 

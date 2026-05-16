@@ -34,7 +34,7 @@ func InitEnv() {
 	appHost = os.Getenv(constant.EnvAppHost)
 	appInstance = os.Getenv(constant.EnvAppInstance)
 	if appInstance == "" {
-		appInstance = fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s:%s", HostName(), AppID()))))
+		appInstance = fmt.Sprintf("%x", md5.Sum(fmt.Appendf(nil, "%s:%s", HostName(), AppID())))
 	}
 	// appPodIP = os.Getenv(constant.EnvPOD_IP)
 	// appPodName = os.Getenv(constant.EnvPOD_NAME)

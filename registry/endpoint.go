@@ -2,6 +2,7 @@ package registry
 
 import (
 	"encoding/json"
+	"maps"
 
 	"github.com/abulo/ratel/v3/server"
 )
@@ -43,18 +44,10 @@ func (in *Endpoints) DeepCopy() *Endpoints {
 
 // DeepCopyInfo ...
 func (in *Endpoints) DeepCopyInfo(out *Endpoints) {
-	for key, info := range in.Nodes {
-		out.Nodes[key] = info
-	}
-	for key, config := range in.RouteConfigs {
-		out.RouteConfigs[key] = config
-	}
-	for key, config := range in.ConsumerConfigs {
-		out.ConsumerConfigs[key] = config
-	}
-	for key, config := range in.ProviderConfigs {
-		out.ProviderConfigs[key] = config
-	}
+	maps.Copy(out.Nodes, in.Nodes)
+	maps.Copy(out.RouteConfigs, in.RouteConfigs)
+	maps.Copy(out.ConsumerConfigs, in.ConsumerConfigs)
+	maps.Copy(out.ProviderConfigs, in.ProviderConfigs)
 }
 
 // ProviderConfig config of provider

@@ -19,8 +19,7 @@ import (
 // ArrayFill array_fill()
 func ArrayFill(startIndex int, num uint, value any) map[int]any {
 	m := make(map[int]any)
-	var i uint
-	for i = 0; i < num; i++ {
+	for range num {
 		m[startIndex] = value
 		startIndex++
 	}
@@ -78,10 +77,7 @@ func ArrayChunk(s []any, size int) [][]any {
 	chunks := int(math.Ceil(float64(length) / float64(size)))
 	var n [][]any
 	for i, end := 0, 0; chunks > 0; chunks-- {
-		end = (i + 1) * size
-		if end > length {
-			end = length
-		}
+		end = min((i+1)*size, length)
 		n = append(n, s[i*size:end])
 		i++
 	}
@@ -349,7 +345,7 @@ func ArrayPluck(data []map[string]string, value string) []string {
 // ArrayRemoveRepeatedElement 数组去重
 func ArrayRemoveRepeatedElement(arr []string) (newArr []string) {
 	newArr = make([]string, 0)
-	for i := 0; i < len(arr); i++ {
+	for i := range arr {
 		repeat := false
 		for j := i + 1; j < len(arr); j++ {
 			if arr[i] == arr[j] {
@@ -468,7 +464,7 @@ func InterfaceToAryMapStringString(in any) []map[string]string {
 // ArrayStringUniq 数组去重
 func ArrayStringUniq(arr []string) (newArr []string) {
 	newArr = make([]string, 0)
-	for i := 0; i < len(arr); i++ {
+	for i := range arr {
 		repeat := false
 		for j := i + 1; j < len(arr); j++ {
 			if arr[i] == arr[j] {
