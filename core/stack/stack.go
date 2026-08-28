@@ -1,6 +1,7 @@
 package stack
 
 import (
+	"slices"
 	"sync"
 )
 
@@ -29,7 +30,7 @@ func (ds *DeferStack) Push(fns ...func() error) {
 func (ds *DeferStack) Clean() {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
-	for i := len(ds.fns) - 1; i >= 0; i-- {
-		_ = ds.fns[i]()
+	for _, v := range slices.Backward(ds.fns) {
+		_ = v()
 	}
 }

@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/fatih/color"
 )
@@ -51,8 +52,8 @@ func Do(stage Stage) {
 		return
 	}
 
-	for i := len(globalHooks[stage]) - 1; i >= 0; i-- {
-		fn := globalHooks[stage][i]
+	for _, fn := range slices.Backward(globalHooks[stage]) {
+
 		if fn != nil {
 			fn()
 		}

@@ -135,7 +135,7 @@ func (h *Hook) Levels() []logrus.Level {
 func (h *Hook) Fire(entryLogrus *logrus.Entry) error {
 	var funcVal string
 	var fileVal string
-	if entryLogrus.HasCaller() {
+	if entryLogrus.Caller != nil {
 		funcVal = entryLogrus.Caller.Function
 		fileVal = fmt.Sprintf("%s:%d", entryLogrus.Caller.File, entryLogrus.Caller.Line)
 	}

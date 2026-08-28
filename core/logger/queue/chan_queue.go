@@ -22,17 +22,17 @@ type Queue struct {
 	jobQueue   chan Jober
 	workerPool chan chan Jober
 	workers    []*worker
-	running    uint32
+	running    atomic.Uint32
 	wg         *sync.WaitGroup
 }
 
 // Run 开始运行队列
 func (q *Queue) Run() {
-	if atomic.LoadUint32(&q.running) == 1 {
+	if q.running.Load() == 1 {
 		return
 	}
 
-	atomic.StoreUint32(&q.running, 1)
+	q.running.Store(1)
 	for i := 0; i < q.maxWorkers; i++ {
 		q.workers[i] = newWorker(q.workerPool, q.wg)
 		q.workers[i].Start()
@@ -50,11 +50,11 @@ func (q *Queue) dispatcher() {
 
 // Terminate 终止队列以接收任务并释放资源
 func (q *Queue) Terminate() {
-	if atomic.LoadUint32(&q.running) != 1 {
+	if q.running.Load() != 1 {
 		return
 	}
 
-	atomic.StoreUint32(&q.running, 0)
+	q.running.Store(0)
 	q.wg.Wait()
 
 	close(q.jobQueue)
@@ -66,7 +66,7 @@ func (q *Queue) Terminate() {
 
 // Push 将可执行任务放入队列
 func (q *Queue) Push(job Jober) {
-	if atomic.LoadUint32(&q.running) != 1 {
+	if q.running.Load() != 1 {
 		return
 	}
 

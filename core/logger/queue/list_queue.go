@@ -34,15 +34,15 @@ type ListQueue struct {
 	list       *list.List
 	lock       *sync.RWMutex
 	wg         *sync.WaitGroup
-	running    uint32
+	running    atomic.Uint32
 }
 
 // Run 开始运行队列
 func (q *ListQueue) Run() {
-	if atomic.LoadUint32(&q.running) == 1 {
+	if q.running.Load() == 1 {
 		return
 	}
-	atomic.StoreUint32(&q.running, 1)
+	q.running.Store(1)
 
 	for i := 0; i < q.maxWorker; i++ {
 		q.workers[i] = newWorker(q.workerPool, q.wg)
@@ -55,7 +55,7 @@ func (q *ListQueue) Run() {
 func (q *ListQueue) dispatcher() {
 	for {
 		q.lock.RLock()
-		if atomic.LoadUint32(&q.running) != 1 && q.list.Len() == 0 {
+		if q.running.Load() != 1 && q.list.Len() == 0 {
 			q.lock.RUnlock()
 			break
 		}
@@ -78,7 +78,7 @@ func (q *ListQueue) dispatcher() {
 
 // Push 将可执行任务推入队列
 func (q *ListQueue) Push(job Jober) {
-	if atomic.LoadUint32(&q.running) != 1 {
+	if q.running.Load() != 1 {
 		return
 	}
 
@@ -99,11 +99,11 @@ func (q *ListQueue) Push(job Jober) {
 
 // Terminate 终止队列以接收任务并释放资源
 func (q *ListQueue) Terminate() {
-	if atomic.LoadUint32(&q.running) != 1 {
+	if q.running.Load() != 1 {
 		return
 	}
 
-	atomic.StoreUint32(&q.running, 0)
+	q.running.Store(0)
 	q.wg.Wait()
 
 	for i := 0; i < q.maxWorker; i++ {

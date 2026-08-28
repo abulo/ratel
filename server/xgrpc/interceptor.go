@@ -2,6 +2,7 @@ package xgrpc
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"time"
 
@@ -28,8 +29,8 @@ func StreamInterceptorChain(interceptors ...grpc.StreamServerInterceptor) grpc.S
 	}
 	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
 		chain := handler
-		for i := len(interceptors) - 1; i >= 0; i-- {
-			chain = build(interceptors[i], chain, info)
+		for _, interceptor := range slices.Backward(interceptors) {
+			chain = build(interceptor, chain, info)
 		}
 		return chain(srv, stream)
 	}
@@ -45,8 +46,8 @@ func UnaryInterceptorChain(interceptors ...grpc.UnaryServerInterceptor) grpc.Una
 
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 		chain := handler
-		for i := len(interceptors) - 1; i >= 0; i-- {
-			chain = build(interceptors[i], chain, info)
+		for _, interceptor := range slices.Backward(interceptors) {
+			chain = build(interceptor, chain, info)
 		}
 		return chain(ctx, req)
 	}
