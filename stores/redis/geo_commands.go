@@ -6,7 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// GeoAdd 将指定的地理空间位置（纬度、经度、名称）添加到指定的key中
+// GeoAdd 将一组地理坐标（经度、纬度、成员名）写入有序集合 key，返回新增成员数量；已存在成员更新坐标。
 func (r *Client) GeoAdd(ctx context.Context, key string, geoLocation ...*redis.GeoLocation) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -19,7 +19,7 @@ func (r *Client) GeoAdd(ctx context.Context, key string, geoLocation ...*redis.G
 	return
 }
 
-// GeoPos 从key里返回所有给定位置元素的位置（经度和纬度）
+// GeoPos 返回给定 members 的经纬度坐标切片；不存在的成员对应位置为 nil。
 func (r *Client) GeoPos(ctx context.Context, key string, members ...string) (val []*redis.GeoPos, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -32,7 +32,7 @@ func (r *Client) GeoPos(ctx context.Context, key string, members ...string) (val
 	return
 }
 
-// GeoRadius 以给定的经纬度为中心， 找出某一半径内的元素
+// GeoRadius 以给定经纬度为中心，按 query 条件查询半径范围内的成员及其距离等信息。
 func (r *Client) GeoRadius(ctx context.Context, key string, longitude, latitude float64, query *redis.GeoRadiusQuery) (val []redis.GeoLocation, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -45,7 +45,7 @@ func (r *Client) GeoRadius(ctx context.Context, key string, longitude, latitude 
 	return
 }
 
-// GeoRadiusStore 找出位于指定范围内的元素，中心点是由给定的经纬度决定 ctx: 上下文 key: 键名 longitude: 经度 latitude: 纬度 query: 查询条件
+// GeoRadiusStore 按给定经纬度查询半径范围内成员，并将结果存入 query 指定的目标键。
 func (r *Client) GeoRadiusStore(ctx context.Context, key string, longitude, latitude float64, query *redis.GeoRadiusQuery) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -58,7 +58,7 @@ func (r *Client) GeoRadiusStore(ctx context.Context, key string, longitude, lati
 	return
 }
 
-// GeoRadiusByMember 找出位于指定范围内的元素，中心点是由给定的位置元素决定 ctx: 上下文 key: 键名 member: 位置元素 query: 查询条件
+// GeoRadiusByMember 以成员 member 的坐标为中心点，按 query 条件查询其范围内的成员。
 func (r *Client) GeoRadiusByMember(ctx context.Context, key, member string, query *redis.GeoRadiusQuery) (val []redis.GeoLocation, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -71,7 +71,7 @@ func (r *Client) GeoRadiusByMember(ctx context.Context, key, member string, quer
 	return
 }
 
-// GeoRadiusByMemberStore 找出位于指定范围内的元素，中心点是由给定的位置元素决定
+// GeoRadiusByMemberStore 以成员 member 的坐标为中心查询范围内成员，并将结果存入指定目标键。
 func (r *Client) GeoRadiusByMemberStore(ctx context.Context, key, member string, query *redis.GeoRadiusQuery) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -84,7 +84,7 @@ func (r *Client) GeoRadiusByMemberStore(ctx context.Context, key, member string,
 	return
 }
 
-// GeoSearch 在指定key中搜索地理空间位置 ctx: 上下文 key: 键名 q: 搜索查询条件
+// GeoSearch 按 GeoSearchQuery 在 key 中搜索满足条件的地理成员，返回成员名称。
 func (r *Client) GeoSearch(ctx context.Context, key string, q *redis.GeoSearchQuery) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -97,7 +97,7 @@ func (r *Client) GeoSearch(ctx context.Context, key string, q *redis.GeoSearchQu
 	return
 }
 
-// GeoSearchLocation 在指定key中搜索地理空间位置并返回位置信息 ctx: 上下文 key: 键名 q: 搜索查询条件
+// GeoSearchLocation 按条件搜索地理成员，并返回成员名称、坐标与距离等完整位置信息。
 func (r *Client) GeoSearchLocation(ctx context.Context, key string, q *redis.GeoSearchLocationQuery) (val []redis.GeoLocation, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -110,7 +110,7 @@ func (r *Client) GeoSearchLocation(ctx context.Context, key string, q *redis.Geo
 	return
 }
 
-// GeoSearchStore 在指定key中搜索地理空间位置并将结果存储到另一个key中 ctx: 上下文 key: 源键名 store: 目标键名 q: 搜索查询条件
+// GeoSearchStore 按条件搜索 key 中的地理成员，并将结果存入 store 目标键，返回命中成员数量。
 func (r *Client) GeoSearchStore(ctx context.Context, key, store string, q *redis.GeoSearchStoreQuery) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -123,7 +123,7 @@ func (r *Client) GeoSearchStore(ctx context.Context, key, store string, q *redis
 	return
 }
 
-// GeoDist 返回两个给定位置之间的距离 ctx: 上下文 key: 键名 member1: 位置1 member2: 位置2 unit: 距离单位(m|km|ft|mi)
+// GeoDist 返回成员 member1 与 member2 之间的距离，unit 指定单位（m/km/ft/mi）；任一成员不存在时返回 nil。
 func (r *Client) GeoDist(ctx context.Context, key string, member1, member2, unit string) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -137,7 +137,7 @@ func (r *Client) GeoDist(ctx context.Context, key string, member1, member2, unit
 
 }
 
-// GeoHash 返回一个或多个位置元素的 Geohash 表示 ctx: 上下文 key: 键名 members: 位置元素列表
+// GeoHash 返回给定 members 的 Geohash 编码字符串切片，顺序与 members 一致。
 func (r *Client) GeoHash(ctx context.Context, key string, members ...string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

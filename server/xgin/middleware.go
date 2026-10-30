@@ -33,6 +33,7 @@ func extractAID(ctx *gin.Context) string {
 	return ctx.Request.Header.Get("AID")
 }
 
+// metricServerInterceptor 返回 HTTP 服务指标采集中间件：请求处理结束后记录耗时直方图与请求计数器。
 func metricServerInterceptor() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		beg := time.Now()
@@ -42,6 +43,7 @@ func metricServerInterceptor() gin.HandlerFunc {
 	}
 }
 
+// traceServerInterceptor 返回服务端链路追踪中间件：创建服务端 Span、填充 HTTP 属性并将追踪上下文注入请求。
 func traceServerInterceptor() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tracer := globalTrace.NewTracer(trace.SpanKindServer)
@@ -64,6 +66,9 @@ func traceServerInterceptor() gin.HandlerFunc {
 	}
 }
 
+// recoverMiddleware 返回 panic 恢复与访问日志中间件：捕获 panic 并记录错误与调用栈，
+// 识别客户端断管（broken pipe、connection reset）后直接中止，其余 panic 返回 500；
+// 请求耗时超过阈值时在日志中标记慢查询。
 func recoverMiddleware(slowQueryThresholdInMilli int64) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var beg = time.Now()
@@ -109,19 +114,17 @@ func recoverMiddleware(slowQueryThresholdInMilli int64) gin.HandlerFunc {
 	}
 }
 
-// stack returns a nicely formatted stack frame, skipping skip frames.
+// stack 返回跳过 skip 帧后格式化的调用栈，包含文件、行号、函数名与对应源码行；源码不可读时用占位符表示。
 func stack(skip int) []byte {
-	buf := new(bytes.Buffer) // the returned data
-	// As we loop, we open files and read them. These variables record the currently
-	// loaded file.
+	buf := new(bytes.Buffer)
 	var lines [][]byte
 	var lastFile string
-	for i := skip; ; i++ { // Skip the expected number of frames
+	for i := skip; ; i++ {
 		pc, file, line, ok := runtime.Caller(i)
 		if !ok {
 			break
 		}
-		// Print this much at least.  If we can't find the source, it won't show.
+		// 找不到源码文件时至少输出文件、行号与程序计数器地址。
 		fmt.Fprintf(buf, "%s:%d (0x%x)\n", file, line, pc)
 		if file != lastFile {
 			data, err := os.ReadFile(file)
@@ -136,21 +139,15 @@ func stack(skip int) []byte {
 	return buf.Bytes()
 }
 
-// function returns, if possible, the name of the function containing the PC.
+// function 返回程序计数器 pc 对应函数的简称：剥离包路径前缀并将包名中的中点替换为点。
 func function(pc uintptr) []byte {
 	fn := runtime.FuncForPC(pc)
 	if fn == nil {
 		return dunno
 	}
 	name := []byte(fn.Name())
-	// The name includes the path name to the package, which is unnecessary
-	// since the file name is already included.  Plus, it has center dots.
-	// That is, we see
-	//	runtime/debug.*T·ptrmethod
-	// and want
-	//	*T.ptrmethod
-	// Also the package path might contains dot (e.g. code.google.com/...),
-	// so first eliminate the path prefix
+	// runtime.FuncForPC 返回的全名带有包路径前缀，而文件路径已经输出在前一行；
+	// 同时先按斜杠去除路径前缀，再按点去除包名，避免包名本身含点时误删。
 	if lastSlash := bytes.LastIndex(name, slash); lastSlash >= 0 {
 		name = name[lastSlash+1:]
 	}
@@ -161,9 +158,10 @@ func function(pc uintptr) []byte {
 	return name
 }
 
-// source returns a space-trimmed slice of the n'th line.
+// source 返回源码行切片中第 n 行去除首尾空白后的内容；行号越界时返回 "???" 占位符。
 func source(lines [][]byte, n int) []byte {
-	n-- // in stack trace, lines are 1-indexed but our array is 0-indexed
+	// 调用栈中行号从 1 开始计数，而切片下标从 0 开始。
+	n--
 	if n < 0 || n >= len(lines) {
 		return dunno
 	}

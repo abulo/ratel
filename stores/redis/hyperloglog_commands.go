@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// PFAdd 将指定元素添加到HyperLogLog key: HyperLogLog键名, els: 要添加的元素列表
+// PFAdd 将 els 加入 HyperLogLog key，返回 HLL 内部估算是否发生改变（1 表示已更新）。
 func (r *Client) PFAdd(ctx context.Context, key string, els ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -17,7 +17,7 @@ func (r *Client) PFAdd(ctx context.Context, key string, els ...any) (val int64, 
 	return
 }
 
-// PFCount 返回HyperlogLog观察到的集合的近似基数。 keys: 要查询的HyperLogLog键名列表
+// PFCount 返回给定 keys 合并去重后的近似基数（元素数量估计值）。
 func (r *Client) PFCount(ctx context.Context, keys ...string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -30,7 +30,7 @@ func (r *Client) PFCount(ctx context.Context, keys ...string) (val int64, err er
 	return
 }
 
-// PFMerge N个不同的HyperLogLog合并为一个。 dest: 目标HyperLogLog键名, keys: 要合并的HyperLogLog键名列表
+// PFMerge 将多个 HyperLogLog keys 合并到 dest，合并结果的近似基数等价于这些集合的并集。
 func (r *Client) PFMerge(ctx context.Context, dest string, keys ...string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

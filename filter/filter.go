@@ -4,19 +4,23 @@ import (
 	"slices"
 )
 
+// ResultWriter 是仅统计命中数量的结果收集器，收集过程始终返回 true 表示不中断扫描。
 type ResultWriter struct {
 	count int
 }
 
+// Write 记录一次命中并返回 true 以继续扫描后续内容。
 func (_this *ResultWriter) Write(_ *Result) (stop bool) {
 	_this.count++
 	return true
 }
 
+// Len 返回已记录的命中数量。
 func (_this *ResultWriter) Len() int {
 	return _this.count
 }
 
+// skipStr 返回跳过集合的 rune 切片；传入自定义字符串时先排序，未传入时使用内置默认集合。
 func skipStr(skip ...string) []rune {
 	if len(skip) > 0 {
 		runes := []rune(skip[0])
@@ -26,13 +30,18 @@ func skipStr(skip ...string) []rune {
 	return []rune(SortedSkipList())
 }
 
-// Strings 将输入的敏感词列表转换成 tireRoot 树
+// Strings 用词表 words 构建扫描器并完成失败指针构建。
+//
+// 可选 skip 参数传入自定义跳过分隔符字符串，不传时使用内置默认跳过集合。
 func Strings(words []string, skip ...string) *Search {
 	search := NewSearch(SetSortedRunesSkip(skipStr(skip...)))
 	search.TrieWriter().InsertWords(words).BuildFail()
 	return search
 }
 
+// File 从字典文件加载词库构建扫描器并完成失败指针构建。
+//
+// 可选 skip 参数传入自定义跳过分隔符字符串；文件打开失败时 InsertFile 会直接 panic。
 func File(filename string, skip ...string) (search *Search, err error) {
 	search = NewSearch(SetSortedRunesSkip(skipStr(skip...)))
 	writer := search.TrieWriter()
@@ -46,14 +55,17 @@ type options struct {
 	skip   *Skip
 }
 
+// Option 用于在 NewSearch 中以函数式方式配置词库写入器或跳过集合。
 type Option func(options *options)
 
+// SetWriter 指定自定义 TrieWriter 作为词库载体。
 func SetWriter(w *TrieWriter) Option {
 	return func(options *options) {
 		options.writer = w
 	}
 }
 
+// SetSortedRunesSkip 直接使用已排序的 rune 切片作为跳过集合；调用方须保证切片有序。
 func SetSortedRunesSkip(s []rune) Option {
 	return func(options *options) {
 		skip := &Skip{list: s}
@@ -61,6 +73,7 @@ func SetSortedRunesSkip(s []rune) Option {
 	}
 }
 
+// SetSortedSkip 使用已排序字符串作为跳过集合；调用方须保证字符有序。
 func SetSortedSkip(s string) Option {
 	return func(options *options) {
 		skip := &Skip{}
@@ -69,6 +82,7 @@ func SetSortedSkip(s string) Option {
 	}
 }
 
+// SetSkip 使用指定字符串重建跳过集合，内部自动排序。
 func SetSkip(s string) Option {
 	return func(options *options) {
 		skip := &Skip{}
@@ -77,6 +91,7 @@ func SetSkip(s string) Option {
 	}
 }
 
+// NewSearch 按传入 Option 配置创建扫描器；未指定时使用内置默认跳过集合与空词库。
 func NewSearch(opts ...Option) *Search {
 	opt := &options{
 		skip:   &Skip{list: []rune(sortedSkipList)},

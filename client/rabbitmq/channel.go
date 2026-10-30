@@ -8,79 +8,82 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// ReceiveOpts 消息接收选项。
-// 如果 autoAck 设为 false，RabbitMQ 会等待消费者显式地回复确认信号后才从内存(或者磁盘)中移去
-// 消息。因此调用者应该主动调用 (*amqp.Delivery).Ack 确认消费，防止消息在内存(或者磁盘)中积累。
-// 如果 autoAck 设为 true，消息会被服务器默认为已消费，可能会导致消费者无法处理数据时造成数据丢失。
-// 如果 RabbitMQ 一直没有收到消费者的确认信号，并且消费此消息的消费者己经 断开连接，则 RabbitMQ
-// 会安排该消息重新进入队列，等待投递给下一个消费者，当然也有可能还是原来的那个消费者。
-// consumerTag 用于唯一识别一个消费者，如果不填可自动生成。
-// 其他参数如果没有特别需求，默认不填即可。
+// ReceiveOpts 是消费消息的选项集合，通过 ReceiveOptsBuilder 构造。
+//
+// autoAck 为 false 时，RabbitMQ 要等消费者显式确认后才从内存或磁盘移除消息，调用方须主动
+// 调用 (*amqp.Delivery).Ack 确认，防止消息在服务端堆积；autoAck 为 true 时消息由服务器自动
+// 视为已消费，消费者处理失败时可能造成消息丢失。若一直未收到确认且消费者已断开，RabbitMQ 会将
+// 消息重新入队投递给其他消费者。consumerTag 用于唯一标识消费者，留空由服务器自动生成；其余参数
+// 无特殊需求时保持默认即可。
 type ReceiveOpts struct {
 	autoAck, exclusive, noLocal, noWait bool
 	args                                *amqp.Table
 	consumerTag                         string
 }
 
-// DefaultReceiveOpts 将 ReceiveOpts.autoAck 默认设置为 true
+// DefaultReceiveOpts 返回默认接收选项，autoAck 默认为 true。
 func DefaultReceiveOpts() *ReceiveOpts {
 	return &ReceiveOpts{autoAck: true}
 }
 
+// ReceiveOptsBuilder 以链式方式构造 ReceiveOpts。
 type ReceiveOptsBuilder struct {
 	opts *ReceiveOpts
 }
 
+// NewReceiveOptsBuilder 创建基于默认选项的 ReceiveOptsBuilder。
 func NewReceiveOptsBuilder() *ReceiveOptsBuilder {
 	return &ReceiveOptsBuilder{DefaultReceiveOpts()}
 }
 
-// 作用详见 ReceiveOpts
+// SetAutoAck 设置是否由服务器自动确认消息，返回构造器自身以便链式调用。
 func (bld *ReceiveOptsBuilder) SetAutoAck(b bool) *ReceiveOptsBuilder {
 	bld.opts.autoAck = b
 	return bld
 }
 
+// SetExclusive 设置是否声明独占消费者，返回构造器自身以便链式调用。
 func (bld *ReceiveOptsBuilder) SetExclusive(b bool) *ReceiveOptsBuilder {
 	bld.opts.exclusive = b
 	return bld
 }
 
+// SetNoLocal 设置是否不接收本连接发布的消息，返回构造器自身以便链式调用。
 func (bld *ReceiveOptsBuilder) SetNoLocal(b bool) *ReceiveOptsBuilder {
 	bld.opts.noLocal = b
 	return bld
 }
 
+// SetNoWait 设置是否不等服务器确认即返回，返回构造器自身以便链式调用。
 func (bld *ReceiveOptsBuilder) SetNoWait(b bool) *ReceiveOptsBuilder {
 	bld.opts.noWait = b
 	return bld
 }
 
+// SetArgs 设置传给消费声明的自定义参数表，返回构造器自身以便链式调用。
 func (bld *ReceiveOptsBuilder) SetArgs(args *amqp.Table) *ReceiveOptsBuilder {
 	bld.opts.args = args
 	return bld
 }
 
+// SetConsumerTag 设置消费者唯一标识，返回构造器自身以便链式调用。
 func (bld *ReceiveOptsBuilder) SetConsumerTag(tag string) *ReceiveOptsBuilder {
 	bld.opts.consumerTag = tag
 	return bld
 }
 
+// Build 完成选项构造，返回最终的 ReceiveOpts。
 func (bld *ReceiveOptsBuilder) Build() *ReceiveOpts {
 	return bld.opts
 }
 
-// SendOpts 消息发送选项。
-// mandatory 设为 true 时，交换器无法根据自身的类型和路由键找到一个符合条件的队列，
-// 那么 RabbitMQ 会调用 Basic.Return 命令将消息返回给生产者。当该选项设置为 false 时，
-// 出现上述情形，则消息直接被丢弃。
-// immediate 设为 true 时，如果交换器在将消息路由到队列时发现队列上并不存在任何消费者，
-// 那么这条消息将不会存入队列中。当与路由键匹配的所有队列都没有消费者时，该消息会通过 Basic.Return
-// 返回至生产者。
-// RabbitMQ 3.0版本开始去掉了对 immediate 参数的支持，对此 RabbitMQ 官方解释是: immediate
-// 参数会影响镜像队列的性能，增加了代码复杂性，建议采用 TTL 和 DLX 的方法替代。
-// messageFactory 如果未设置该选项，则默认使用 MessagePlainTransient 生产消息。
-// retryable 如果不设置该选项，表示不启用消息重发功能。
+// SendOpts 是发送消息的选项集合，通过 SendOptsBuilder 构造。
+//
+// mandatory 为 true 时，交换器无法按类型和路由键匹配到队列，RabbitMQ 会通过 Basic.Return 将
+// 消息退回生产者；为 false 时这类消息会被直接丢弃。immediate 为 true 时，路由到的队列上没有
+// 消费者则消息不入队并通过 Basic.Return 退回生产者；RabbitMQ 3.0 起已移除 immediate 支持，
+// 官方建议改用 TTL 与 DLX 实现等价语义。messageFactory 在发送路径中未设置时回退为
+// MessagePlainPersistent；retryable 未设置时不启用消息重发。
 type SendOpts struct {
 	mandatory      bool
 	immediate      bool
@@ -88,65 +91,66 @@ type SendOpts struct {
 	retryable      Retryable
 }
 
-// DefaultSendOpts 默认消息发送选项：消息无格式，非持久化，启用默认重试配置(DefaultTimesRetry)
+// DefaultSendOpts 返回默认发送选项：text/plain、非持久化，并启用默认持续重试策略。
 func DefaultSendOpts() *SendOpts {
 	return &SendOpts{messageFactory: MessagePlainTransient, retryable: DefaultTimesRetry()}
 }
 
-// SendOptsBuilder ...
+// SendOptsBuilder 以链式方式构造 SendOpts。
 type SendOptsBuilder struct {
 	opts *SendOpts
 }
 
-// NewSendOptsBuilder creates a new SendOptsBuilder
+// NewSendOptsBuilder 创建基于默认选项的 SendOptsBuilder。
 func NewSendOptsBuilder() *SendOptsBuilder {
 	return &SendOptsBuilder{DefaultSendOpts()}
 }
 
-// SetMandatory  设为 true 时，交换器无法根据自身的类型和路由键找到一个符合条件的队列，
-// 那么 RabbitMQ 会调用 Basic.Return 命令将消息返回给生产者。当该选项设置为 false 时，
-// 出现上述情形，则消息直接被丢弃。
+// SetMandatory 设置无法路由时是否将消息退回生产者，返回构造器自身以便链式调用。
 func (bld *SendOptsBuilder) SetMandatory(b bool) *SendOptsBuilder {
 	bld.opts.mandatory = b
 	return bld
 }
 
-// SetImmediate 设为 true 时，如果交换器在将消息路由到队列时发现队列上并不存在任何消费者，
-// 那么这条消息将不会存入队列中。当与路由键匹配的所有队列都没有消费者时，该消息会通过 Basic.Return
-// 返回至生产者。
+// SetImmediate 设置无消费者时是否将消息退回生产者；注意 RabbitMQ 3.0 起不再支持该参数。
 func (bld *SendOptsBuilder) SetImmediate(b bool) *SendOptsBuilder {
 	bld.opts.immediate = b
 	return bld
 }
 
-// SetMessageFactory 设置消息工厂方法。默认为 Plain Transient （无格式，非持久化）形式。
+// SetMessageFactory 设置消息工厂，返回构造器自身以便链式调用；未设置时发送路径回退为持久化工厂。
 func (bld *SendOptsBuilder) SetMessageFactory(factory MessageFactory) *SendOptsBuilder {
 	bld.opts.messageFactory = factory
 	return bld
 }
 
-// SetRetryable 设置重试配置
+// SetRetryable 设置发布确认重试策略，返回构造器自身以便链式调用；nil 表示不启用重发。
 func (bld *SendOptsBuilder) SetRetryable(retryable Retryable) *SendOptsBuilder {
 	bld.opts.retryable = retryable
 	return bld
 }
 
-// Build the sendOptsBuilder
+// Build 完成选项构造，返回最终的 SendOpts。
 func (bld *SendOptsBuilder) Build() *SendOpts {
 	return bld.opts
 }
 
-// 如果没有消息则该方法阻塞等待；否则本方法会被持续调用，
-// 直到主动停止消费（即本方法返回 true）。
-// 返回值 brk 表示是否 break，即在循环消费过程中是否需要终止消费。
+// ConsumerFunc 是消息消费回调：delivery 为当前投递的消息，返回 true 表示终止消费并退出循环，
+// 返回 false 继续接收下一条；队列投递通道关闭时消费循环自然结束。
 type ConsumerFunc func(*amqp.Delivery) (brk bool)
 
-// Channel represents a channel
+// Channel 在 amqp.Channel 基础上绑定所属 Connection，提供带选项的消息收发与发布确认支持。
+//
+// 零值不可直接使用，由 Connection.Channel 创建；单条 Channel 不支持并发发送，需要并发发送时
+// 应先创建新的 Channel。
 type Channel struct {
 	*amqp.Channel
-	conn       *Connection            // 用于断线重连
-	confirming bool                   // producer
-	confirms   chan amqp.Confirmation // producer
+	// conn 为所属连接，用于断线后重建通道。
+	conn *Connection
+	// confirming 标记当前通道是否已进入 Confirm 模式。
+	confirming bool
+	// confirms 为发布确认结果的监听通道。
+	confirms chan amqp.Confirmation
 }
 
 func newChannel(ch *amqp.Channel, conn *Connection) *Channel {
@@ -156,19 +160,17 @@ func newChannel(ch *amqp.Channel, conn *Connection) *Channel {
 	}
 }
 
-// RemoveOperation removes an operation from the channel
+// RemoveOperation 转发到所属连接，移除指定标识的已注册操作。
 func (c *Channel) RemoveOperation(key string) {
 	c.conn.RemoveOperation(key)
 }
 
-// ReceiveOpts 持续接收消息并消费，除非 `<-chan amqp.Delivery` 关闭或 ConsumerFunc 主动放弃接收。
-// 参数 opts 表示接收选项。opts 如果为 nil，将使用 DefaultReceiveOpts() 作为默认配置。
-// 如果将参数 opts 的 autoAck 属性设为 false，则应该在 ReceiveListener.Consumer()
-// 函数中调用 (*amqp.Delivery).Ack 手动确认消费；如果设为 true，已发送的消息会被服务器认为已被消费，
-// 可能因网络状况不好等原因导致消息未被接收，从而造成数据丢失。 autoAck 为 false 时不提供自动确认，
-// 是因为消费者有可能会需要拒绝确认，或在消费出现错误时不进行确认。
-// 参数 consumer 用于处理接收操作。参数 consumer 一定不能为 nil，否则将 panic。
-// 返回值：当 `<-chan amqp.Delivery` 关闭或 ConsumerFunc 主动放弃接收，返回 nil；其他情况则返回 error
+// ReceiveOpts 在指定队列上持续接收消息并交给 consumer 消费，直到投递通道关闭或 consumer 返回 true
+// 主动放弃。
+//
+// opts 为 nil 时使用 DefaultReceiveOpts；consumer 为 nil 会 panic。autoAck 为 false 时须在回调中
+// 调用 (*amqp.Delivery).Ack 手动确认，为 true 时消息由服务器自动确认，网络异常时可能丢失。正常
+// 结束返回 nil，订阅或消费过程中的错误直接返回。
 func (c *Channel) ReceiveOpts(queue string, consumer ConsumerFunc, opts *ReceiveOpts) error {
 	var err error
 	if consumer == nil {
@@ -198,20 +200,21 @@ func (c *Channel) ReceiveOpts(queue string, consumer ConsumerFunc, opts *Receive
 	return nil
 }
 
-// Receive returns error if delivery
+// Receive 使用默认接收选项在指定队列上持续消费消息，等价于 ReceiveOpts(queue, consumer, nil)。
 func (c *Channel) Receive(queue string, consumer ConsumerFunc) error {
 	return c.ReceiveOpts(queue, consumer, nil)
 }
 
-// Send 如果使用了 Channel.SetXxx 设置了配置，将使用设定的配置发送消息，否则使用默认配置
+// Send 使用默认发送选项向指定交换器与路由键发布消息。
 func (c *Channel) Send(exchange string, routingKey string, body []byte) error {
 	return c.SendOpts(exchange, routingKey, body, nil)
 }
 
-// SendOpts 发送消息。此方法不支持并发操作，如果需要并发发送，请先创建新的 Channel，再执行此方法。
-// 参数 body 即需要发送的消息。
-// 参数 opts 即发送消息需要配置的选项。如果 opts 为 nil，则表示使用默认配置。可以通过配置 SendOpts.retryable
-// 启用消息重发的能力。请注意，由于消息重发使用的是同步的方式处理 ack，因此启用消息重发会极大降低 QPS。
+// SendOpts 向指定交换器与路由键发布消息；opts 为 nil 时使用默认配置。
+//
+// 该方法不支持并发操作，并发发送须先创建新的 Channel。opts.retryable 非空时进入同步发布确认
+// 流程，消息确认前不会继续发送下一条，会显著降低 QPS；不希望阻塞后续消息时应使用不同的 Channel
+// 或 Connection 发送。
 func (c *Channel) SendOpts(exchange string, routingKey string, body []byte, opts *SendOpts) error {
 	if opts == nil {
 		opts = DefaultSendOpts()
@@ -222,15 +225,14 @@ func (c *Channel) SendOpts(exchange string, routingKey string, body []byte, opts
 	return c.reSendSyncOpts(exchange, routingKey, body, opts)
 }
 
-// sendOpts 发送消息，但不确保送达。参数 opts 一定不能为 nil。
+// sendOpts 直接发布消息，不保证送达；调用方须保证 opts 非 nil。
 func (c *Channel) sendOpts(exchange string, routingKey string, body []byte, opts *SendOpts) error {
 	opts.messageFactory = getNonNilMessageFactory(opts.messageFactory)
 	return c.Publish(exchange, routingKey, opts.mandatory, opts.immediate, opts.messageFactory(body))
 }
 
-// reSendSyncOpts 按照 Retryable 的配置内容确保发送消息是否到达。
-// 该方法会在发送后等待确认消息，由于消息的发送和确认是同步的，所以在消息确认之前，不会继续发送下一个消息。
-// 如果不想后续的消息被阻塞，请使用不同的 Channel 或 Connection 发送。
+// reSendSyncOpts 按重试策略确保消息送达：发送后同步等待发布确认，确认前阻塞后续消息；收到 nack
+// 或连接错误时按策略重试，重试耗尽仍未确认则返回 nack 错误。
 func (c *Channel) reSendSyncOpts(exchange string, routingKey string, body []byte, opts *SendOpts) (err error) {
 	err = c.enableConfirm()
 	if err != nil && !isConnectedErr(err) {
@@ -256,17 +258,17 @@ func (c *Channel) reSendSyncOpts(exchange string, routingKey string, body []byte
 	return
 }
 
-// sendAndWaitConfirmation 发送消息并等待确认信息。需要配合 enableConfirm 一起使用。
+// sendAndWaitConfirmation 发布消息并阻塞等待一条发布确认结果，须在 enableConfirm 之后调用。
 func (c *Channel) sendAndWaitConfirmation(exchange string, routingKey string, body []byte, opts *SendOpts) (*amqp.Confirmation, error) {
 	err := c.sendOpts(exchange, routingKey, body, opts)
 	confirm := <-c.confirms
 	return &confirm, err
 }
 
-// resetChannelIfNeeded 如果必要（发生网络错误），则重置 Channel.Channel
+// resetChannelIfNeeded 在发生可恢复连接错误时重建底层通道并重新进入 Confirm 模式；错误不可恢复
+// 或连接已关闭时不做处理，返回 false。
 func (c *Channel) resetChannelIfNeeded(err error) bool {
 	if err == nil || !isConnectedErr(err) {
-		// 如果 err==nil 也会从此退出
 		return false
 	}
 	var e error
@@ -290,8 +292,7 @@ func (c *Channel) resetChannelIfNeeded(err error) bool {
 	return true
 }
 
-// enableConfirm 启用 Confirm Mode。该方法会创建一个监听通道，用于监听发送是否成功
-// 详见 (*amqp.Channel).enableConfirm
+// enableConfirm 将通道切换到 Confirm 模式并创建确认监听通道；重复调用直接返回 nil。
 func (c *Channel) enableConfirm() error {
 	if c.confirming {
 		return nil
@@ -304,7 +305,7 @@ func (c *Channel) enableConfirm() error {
 	return nil
 }
 
-// resetChannel 重置 Channel。关闭旧的 amqp.Channel，赋予新的 amqp.Channel，重置 Confirm Mode。
+// resetChannel 关闭旧的底层通道并替换为新通道，同时重置 Confirm 模式状态与确认通道。
 func (c *Channel) resetChannel(ch *amqp.Channel) {
 	err := c.Channel.Close()
 	if err != nil {

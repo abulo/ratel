@@ -12,8 +12,11 @@ import (
 	"github.com/spf13/cast"
 )
 
+// GenerateInterface 按 InterfaceTemplate 渲染 TypeScript 接口定义文件，写入
+// fullInterfaceDir 下以表名命名的 .ts 文件；同名文件已存在时先删除再创建。
+//
+// 文件创建或模板解析失败时打印错误并返回，不向调用方返回错误。
 func GenerateInterface(moduleParam base.ModuleParam, fullInterfaceDir, tableName string) {
-	// 模板变量
 	tpl := template.Must(template.New("interface").Funcs(template.FuncMap{
 		"Convert":               base.Convert,
 		"SymbolChar":            base.SymbolChar,
@@ -29,7 +32,6 @@ func GenerateInterface(moduleParam base.ModuleParam, fullInterfaceDir, tableName
 		"TypeScript":            base.TypeScript,
 	}).Parse(InterfaceTemplate()))
 
-	// 文件夹路径
 	outInterfaceFile := path.Join(fullInterfaceDir, base.Helper(tableName)+".ts")
 	if util.FileExists(outInterfaceFile) {
 		util.Delete(outInterfaceFile)
@@ -41,7 +43,6 @@ func GenerateInterface(moduleParam base.ModuleParam, fullInterfaceDir, tableName
 		return
 	}
 
-	//渲染输出
 	err = tpl.Execute(file, moduleParam)
 	if err != nil {
 		fmt.Println("模板解析错误:", color.RedString(err.Error()))
@@ -50,6 +51,10 @@ func GenerateInterface(moduleParam base.ModuleParam, fullInterfaceDir, tableName
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(outInterfaceFile))
 }
 
+// InterfaceTemplate 返回 TypeScript 接口定义模板字符串。
+//
+// 配置项 template.VueInterface 指定了自定义模板文件且文件存在时，读取该文件内容并返回；
+// 否则返回包内置模板，模板占位符由 GenerateInterface 渲染填充。
 func InterfaceTemplate() string {
 	if exists := base.Config.Exists("template.VueInterface"); exists {
 		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.VueInterface"))

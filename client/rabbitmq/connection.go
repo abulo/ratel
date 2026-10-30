@@ -11,28 +11,45 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// 协议方案名，用于拼接 AMQP 连接 URL。
 const (
-	AMQP  Schema = "amqp"
+	// AMQP 为明文 AMQP 协议方案。
+	AMQP Schema = "amqp"
+	// AMQPS 为 TLS 加密的 AMQP 协议方案。
 	AMQPS Schema = "amqps"
 )
 
+// Schema 表示 AMQP 连接 URL 使用的协议方案名。
 type Schema string
+
+// Operation 表示断线重连后需要重新执行的通道操作，key 为注册时分配的唯一标识。
 type Operation func(key string, ch *Channel)
+
+// Operations 以唯一标识索引一组待重连后重新执行的通道操作。
 type Operations map[string]Operation
 
-// Connection amqp 连接。 Connection 创建后不会直接连接服务器，而是要调用 Dial 后才会执行连接服务器操作
+// Connection 封装一条 AMQP 连接，负责断线检测、按配置重试重连，以及重连后重新执行已注册的操作。
+//
+// 须通过 NewConnection 创建并调用 Dial 完成首次连接，Dial 仅允许调用一次；内部锁保护连接与
+// 操作表的并发访问。
 type Connection struct {
-	c             *amqp.Connection // 用于真正发起一个 amqp 连接
-	cMut          sync.RWMutex     // 用于读写 c 时加锁
-	url           string
-	retryable     Retryable // 重试配置
-	operations    Operations
-	oMut          sync.Mutex    // 用于读写 operations 时加锁
-	genOptKeyFunc func() string // 用于生成 operations 的 key，每次调用都会生成新的 key
-	sync.Once                   // 用于保证 Dial 只被调用一次
+	// c 为底层 AMQP 连接。
+	c *amqp.Connection
+	// cMut 保护 c 的并发读写。
+	cMut sync.RWMutex
+	url  string
+	// retryable 为重连重试策略；nil 会被替换为不重试的空实现。
+	retryable  Retryable
+	operations Operations
+	// oMut 保护 operations 的并发读写。
+	oMut sync.Mutex
+	// genOptKeyFunc 为已注册操作生成唯一标识。
+	genOptKeyFunc func() string
+	sync.Once
 }
 
-// NewConnection retryable 如果为 nil，则使用 emptyRetryable 替换。emptyRetryable 不会尝试重试操作。
+// NewConnection 创建一条尚未连接的 Connection；retryable 为 nil 时使用不做任何重试的空实现。
+// 创建后必须调用 Dial 才会真正连接服务器。
 func NewConnection(url string, retryable Retryable) *Connection {
 	return &Connection{
 		url:           url,
@@ -48,7 +65,7 @@ func (c *Connection) setConn(conn *amqp.Connection) {
 	c.c = conn
 }
 
-// Dial 连接服务器。仅允许被调用一次。
+// Dial 建立与服务器的首次连接；借助 sync.Once 保证仅执行一次，重连过程遵循配置的重试策略。
 func (c *Connection) Dial() error {
 	var err error
 	c.Do(func() {
@@ -57,7 +74,7 @@ func (c *Connection) Dial() error {
 	return err
 }
 
-// dial 连接服务器，但不提供断线重连
+// dial 直接发起一次 AMQP 拨号，不携带断线重连逻辑。
 func (c *Connection) dial() error {
 	var err error
 	conn, err := amqp.Dial(c.url)
@@ -68,35 +85,32 @@ func (c *Connection) dial() error {
 	return nil
 }
 
-// 尝试重连，如果重连成功，执行监听操作
+// reDial 按重试策略完成拨号，并在连接成功后注册关闭事件监听器，用于后续断线检测。
 func (c *Connection) reDial() error {
 	err := c.doReDial()
 	if err != nil {
 		return err
 	}
 
-	// 注册重连监听器
 	c.cMut.RLock()
 	defer c.cMut.RUnlock()
 	if c.c == nil {
 		return amqp.ErrClosed
 	}
 
-	// 执行监听操作
 	monitor := c.c.NotifyClose(make(chan *amqp.Error))
 	go c.reconnectListener(monitor)
 
 	return nil
 }
 
-// 根据配置尝试重连
+// doReDial 依据重试策略反复拨号，连接成功或遇到非网络类错误时停止重试。
 func (c *Connection) doReDial() error {
 	retryable := c.retryable
 	var err error
 	retryable.retry(func() (brk bool) {
 		err = c.dial()
-		// 连接成功，退出循环；
-		// 不是网络连接错误，退出循环。
+		// 连接成功退出循环；非网络连接错误同样退出循环，交由上层判断。
 		if err == nil || !isConnectedErr(err) {
 			return true
 		}
@@ -106,7 +120,8 @@ func (c *Connection) doReDial() error {
 	return err
 }
 
-// reconnect 根据错误判断是否需要重连，并返回成功与否。如果 err 为 nil，将直接返回 true。
+// reconnect 根据错误类型判断是否需要重连；err 为 nil 直接返回 true。非可恢复的连接错误
+// 不会重试，返回 false。
 func (c *Connection) reconnect(err error) bool {
 	if err == nil {
 		return true
@@ -118,7 +133,7 @@ func (c *Connection) reconnect(err error) bool {
 			return false
 		}
 
-		// 先关闭以前的 conn
+		// 重连前先关闭旧连接，避免残留的底层连接。
 		_ = c.Close()
 
 		err = c.reDial()
@@ -130,10 +145,8 @@ func (c *Connection) reconnect(err error) bool {
 	return true
 }
 
-// Channel 可用于发送、接收消息。
-// 函数会先判断是否已连接，否则将尝试重连（使用您之前设置的 Retryable 配置）。
-// 在获得连接的情况下，会立刻创建 Channel。但可能会存在极少数情况下，因为网络不稳定等因素，
-// Channel 创建之前，连接又断开，则会因为网络原因产生错误。
+// Channel 在当前底层连接上新建一条通道并封装为 Channel；底层连接由后台断线监听器维护，
+// 连接尚未建立或已关闭时调用会失败。极少数情况下通道创建前连接再次断开，也会因此返回网络错误。
 func (c *Connection) Channel() (*Channel, error) {
 	var ch, err = c.channel()
 	if err != nil {
@@ -148,7 +161,8 @@ func (c *Connection) channel() (*amqp.Channel, error) {
 	return c.c.Channel()
 }
 
-// RetryChannel 将在 Channel 创建失败后，尝试重试。如果仍然失败，将返回造成失败的原因。
+// RetryChannel 在通道创建失败后按传入策略反复重试；重试耗尽仍失败时返回最后一次错误。
+// retryable 为 nil 时使用不重试的空实现。
 func (c *Connection) RetryChannel(retryable Retryable) (ch *Channel, err error) {
 	retryable = getNonNilRetryable(retryable)
 	ch, err = c.Channel()
@@ -161,11 +175,10 @@ func (c *Connection) RetryChannel(retryable Retryable) (ch *Channel, err error) 
 	return ch, err
 }
 
-// RegisterAndExec 注册并执行 Operation 。
-// 每次重连后，重连监听器会自动使用 exec 执行一遍所有的 Operation 函数。
-// 注意：
-//   - 函数会在 Operation 执行完后主动关闭 Channel，因此我们无需在 Operation 中手动关闭 Channel。
-//   - 由于使用了 go routine，该方法可能会在 Operation 操作执行完毕前返回。
+// RegisterAndExec 注册一个断线重连后需重新执行的操作，并立即在新通道上执行一次。
+//
+// 操作执行完后本方法会主动关闭通道，实现内无需手动关闭；操作在后台 goroutine 中执行，方法可能
+// 先于操作完成返回。opt 为 nil 时会 panic。
 func (c *Connection) RegisterAndExec(opt Operation) {
 	if opt == nil {
 		panic("Operation must not be nil")
@@ -174,7 +187,7 @@ func (c *Connection) RegisterAndExec(opt Operation) {
 	c.execOperation(key, opt)
 }
 
-// 如果 Channel 创建出错，立即返回错误；否则使用 go routine 执行 Operation。
+// execOperation 创建通道失败时立即返回错误；成功则在后台 goroutine 中执行操作并关闭通道。
 func (c *Connection) execOperation(key string, opt Operation) error {
 	channel, err := c.Channel()
 	if err != nil {
@@ -187,19 +200,20 @@ func (c *Connection) execOperation(key string, opt Operation) error {
 	return nil
 }
 
-// 添加你想通过 Channel 执行的断线重连操作。
+// addOperation 登记一条断线重连后需要重新执行的操作，并返回其唯一标识。
 //
-// 一般建议添加用于"接收消息"的操作，因为我们通常不会需要每次断线重连后重发消息。
+// 一般只在此注册“接收消息”类操作：通常无需在每次重连后重新发送已发出的消息。
 func (c *Connection) addOperation(opt Operation) (key string) {
 	c.oMut.Lock()
 	defer c.oMut.Unlock()
-	// genOptKeyFunc 能生成从 0 开始到 2^64-1 个数，一纳秒一个 key，可以用 585 年。
+	// 标识由自增计数器生成（十六进制字符串），取值空间足以支撑长期运行。
 	key = c.genOptKeyFunc()
 	c.operations[key] = opt
 	return key
 }
 
-// exec 将会使用 go routine 逐个执行 Operation
+// exec 遍历执行全部已注册操作，通常用于断线重连成功后恢复消费；每个操作在独立 goroutine 中运行，
+// 通道创建失败时记录告警并中止后续操作。
 func (c *Connection) exec() {
 	var opts Operations
 	c.oMut.Lock()
@@ -216,6 +230,7 @@ func (c *Connection) exec() {
 	}
 }
 
+// RemoveOperation 异步移除指定标识的已注册操作，之后断线重连不再重新执行该操作。
 func (c *Connection) RemoveOperation(key string) {
 	go func() {
 		c.oMut.Lock()
@@ -224,9 +239,9 @@ func (c *Connection) RemoveOperation(key string) {
 	}()
 }
 
-// Close 关闭 Connection。
+// Close 关闭底层 AMQP 连接并置空；重复调用安全返回 nil。
 func (c *Connection) Close() error {
-	// 防止 c.Connection 并发关闭
+	// 加锁防止底层连接被并发关闭。
 	c.cMut.Lock()
 	defer c.cMut.Unlock()
 
@@ -237,37 +252,35 @@ func (c *Connection) Close() error {
 	return nil
 }
 
-// IsOpen returns true
+// IsOpen 返回底层连接当前是否存在。
 func (c *Connection) IsOpen() bool {
 	c.cMut.RLock()
 	defer c.cMut.RUnlock()
 	return c.c != nil
 }
 
-// CanRetry returns true
+// CanRetry 返回当前重试策略是否尚未放弃重试。
 func (c *Connection) CanRetry() bool {
 	return !c.retryable.hasGaveUp()
 }
 
-// Consumer returns the consumer for the connection
+// Consumer 返回绑定到当前连接的消费者入口。
 func (c *Connection) Consumer() *Consumer {
 	return &Consumer{c}
 }
 
-// Producer returns the producer for the connection
+// Producer 返回绑定到当前连接的生产者入口。
 func (c *Connection) Producer() *Producer {
 	return &Producer{c}
 }
 
-// QueueBuilder returns the queue builder for the connection
+// QueueBuilder 返回绑定到当前连接的队列构造器。
 func (c *Connection) QueueBuilder() *QueueBuilder {
 	return NewQueueBuilder(c)
 }
 
-// reconnectListener 重连监听器。会不断监听是否断线。如果断线了，则尝试重连。
-// 如果重连成功，则执行注册的 Operation 。
-// 理论上只要通过 dial 部分的连接，后面不大可能存在连接不上的问题。
-// 因此此处使用了无限循环重试的方式，除非 dial 失败达到指定次数。
+// reconnectListener 监听底层连接的关闭事件：收到可恢复错误时尝试重连，重连成功后重新执行
+// 全部已注册操作；监听到通道关闭时直接退出。
 func (c *Connection) reconnectListener(monitor chan *amqp.Error) {
 	err, ok := <-monitor
 	if !ok {
@@ -278,6 +291,7 @@ func (c *Connection) reconnectListener(monitor chan *amqp.Error) {
 	}
 }
 
+// isAmqpConnectedErr 判断错误是否为 AMQP 层的可恢复连接错误（连接被关闭、EOF 或被强制断开）。
 func isAmqpConnectedErr(err error) bool {
 	var amqpErr *amqp.Error
 	return errors.As(err, &amqpErr) &&
@@ -286,7 +300,7 @@ func isAmqpConnectedErr(err error) bool {
 			amqpErr.Code == amqp.ConnectionForced)
 }
 
-// 是否为传输层网络错误
+// isTransportNetError 判断错误是否为传输层网络错误（超时、DNS 解析失败、连接被拒绝或连接超时）。
 func isTransportNetError(err error) bool {
 	netErr, ok := err.(net.Error)
 	if !ok {
@@ -323,7 +337,7 @@ func isTransportNetError(err error) bool {
 	return false
 }
 
-// 判断是否为连接错误
+// isConnectedErr 判断错误是否属于可触发重连的连接错误（传输层网络错误或 AMQP 层连接错误）。
 func isConnectedErr(err error) bool {
 	return isTransportNetError(err) || isAmqpConnectedErr(err)
 }

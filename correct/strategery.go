@@ -2,7 +2,8 @@ package correct
 
 import "regexp"
 
-// Strategery for define rule
+// strategery 封装一条排版规则：space 为 true 时按正向、反向正则在两类字符之间补空格，
+// 否则去除两类字符之间已有的空格；reverse 控制是否同时处理反向顺序。
 type strategery struct {
 	addSpaceRe           *regexp.Regexp
 	addSpaceReverseRe    *regexp.Regexp

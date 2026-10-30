@@ -8,73 +8,64 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// Option 是 Client 的配置选项函数，以函数式选项模式在 NewRedisClient 中初始化客户端。
 type Option func(r *Client)
 
-// Options options to initiate your client
+// Client 保存 Redis 客户端的全部配置项，支持单节点、集群、哨兵与分片四种模式。
+//
+// 零值不可直接使用，须通过 NewRedisClient 结合 Option 初始化并完成模式校验；
+// Client 为配置载体，应在初始化阶段一次性写入，不保证并发安全。
 type Client struct {
-	ClientType string // 模式(normal => 单节点,cluster =>  集群,failover => 哨兵,ring => 分片)
-	// Host address with port number
-	// For normal client will only used the first value
-	// A seed list of host:port addresses of sentinel nodes.
-	Hosts []string // 集群 哨兵 需要填写
-	// host:port address.
-	Addr string // 单节点客户端
-	// Map of name => host:port addresses of ring shards.
-	Addrs map[string]string // 分片客户端  shardName => host:port
-	// The master name.
+	// ClientType 指定客户端模式：normal 为单节点，cluster 为集群，
+	// failover 为哨兵，ring 为分片；为空时默认按单节点处理。
+	ClientType string
+	// Hosts 为节点地址列表，格式 host:port；集群与哨兵模式必填，单节点模式仅取第一个值。
+	Hosts []string
+	// Addr 为单节点模式下的 host:port 地址。
+	Addr string
+	// Addrs 为分片模式下分片名称到 host:port 地址的映射。
+	Addrs map[string]string
+	// MasterName 为哨兵模式下的主节点名称，必填。
 	MasterName string
-	// The network type, either tcp or unix.
-	// Default is tcp.
-	// Only for normal client
+	// Network 为网络类型，取值 tcp 或 unix，仅单节点模式生效，默认 tcp。
 	Network string
-	// Database to be selected after connecting to the server.
-	Database int // 数据库
-	// In normal client this is the MaxRetries option
+	// Database 为连接后选中的数据库编号。
+	Database int
+	// MaxRedirects 在单节点模式下作为最大重试次数，在集群模式下作为最大重定向次数。
 	MaxRedirects int
-	// Enables read queries for a connection to a Redis Cluster slave node.
+	// IsReadOnly 允许将读请求路由到集群从节点。
 	IsReadOnly bool
-	// Enables routing read-only queries to the closest master or slave node.
-	// If set will change this client to read-only mode
+	// RouteByLatency 将只读请求路由到延迟最低的主节点或从节点，开启后客户端进入只读模式。
 	RouteByLatency bool
-	// Following options are copied from Options struct.
-	Password string // 密码
-	// Dial timeout for establishing new connections.
-	// Default is 5 seconds.
+	// Password 为连接密码。
+	Password string
+	// DialTimeout 为建立新连接的超时时间，默认 5 秒。
 	DialTimeout time.Duration
-	// Timeout for socket reads. If reached, commands will fail
-	// with a timeout instead of blocking.
-	// Default is 3 seconds.
+	// ReadTimeout 为套接字读取超时时间，超时后命令失败而非阻塞，默认 3 秒。
 	ReadTimeout time.Duration
-	// Timeout for socket writes. If reached, commands will fail
-	// with a timeout instead of blocking.
-	// Default is 3 seconds.
+	// WriteTimeout 为套接字写入超时时间，超时后命令失败而非阻塞，默认 3 秒。
 	WriteTimeout time.Duration
-	// PoolSize applies per cluster node and not for the whole cluster.
-	// Maximum number of socket connections.
-	// Default is 10 connections.
-	PoolSize int // 连接池大小
-	// Amount of time client waits for connection if all connections
-	// are busy before returning an error.
-	// Default is ReadTimeout + 1 second.
+	// PoolSize 为连接池中最大的套接字连接数，集群模式下按节点计；为 0 时由 NewRedisClient 设为 64。
+	PoolSize int
+	// PoolTimeout 为连接池耗尽时的等待超时时间，默认 ReadTimeout 加 1 秒。
 	PoolTimeout time.Duration
-	// Amount of time after which client closes idle connections.
-	// Should be less than server's timeout.
-	// Default is to not close idle connections.
+	// IdleTimeout 为关闭空闲连接的等待时长，应小于服务端超时时间，默认不关闭空闲连接。
 	IdleTimeout time.Duration
-	// Frequency of idle checks.
-	// Default is 1 minute.
-	// When minus value is set, then idle check is disabled.
+	// IdleCheckFrequency 为空闲连接检查频率，默认 1 分钟；设置为负值可关闭检查。
 	IdleCheckFrequency time.Duration
-	// TLS Config to use. When set TLS will be negotiated.
-	// Only for normal client
-	TLSConfig    *tls.Config
-	EnableMetric bool // 开启指标采集
-	EnableTrace  bool // 开启链路追踪
-	brk          resource.Breaker
-	Name         string // 节点名称
+	// TLSConfig 为 TLS 配置，设置后启用 TLS 加密，仅单节点模式生效。
+	TLSConfig *tls.Config
+	// EnableMetric 是否开启指标采集。
+	EnableMetric bool
+	// EnableTrace 是否开启链路追踪。
+	EnableTrace bool
+	// brk 为熔断器。
+	brk resource.Breaker
+	// Name 为节点名称。
+	Name string
 }
 
-// GetRingClientConfig 获取分片配置
+// GetRingClientConfig 将 Client 配置转换为分片（ring）模式的 redis.RingOptions。
 func (o *Client) GetRingClientConfig() *redis.RingOptions {
 	opts := &redis.RingOptions{
 		Addrs:           o.Addrs,
@@ -92,7 +83,7 @@ func (o *Client) GetRingClientConfig() *redis.RingOptions {
 	return opts
 }
 
-// GetFailoverClient 获取哨兵配置
+// GetFailoverClientConfig 将 Client 配置转换为哨兵（failover）模式的 redis.FailoverOptions。
 func (o *Client) GetFailoverClientConfig() *redis.FailoverOptions {
 	opts := &redis.FailoverOptions{
 		MasterName:      o.MasterName,
@@ -112,7 +103,7 @@ func (o *Client) GetFailoverClientConfig() *redis.FailoverOptions {
 	return opts
 }
 
-// GetClusterClientConfig 获取集群配置
+// GetClusterClientConfig 将 Client 配置转换为集群（cluster）模式的 redis.ClusterOptions。
 func (o *Client) GetClusterClientConfig() *redis.ClusterOptions {
 	opts := &redis.ClusterOptions{
 		Addrs:           o.Hosts,
@@ -135,7 +126,7 @@ func (o *Client) GetClusterClientConfig() *redis.ClusterOptions {
 	return opts
 }
 
-// GetClientConfig 获取单节点配置
+// GetClientConfig 将 Client 配置转换为单节点（normal）模式的 redis.Options。
 func (o *Client) GetClientConfig() *redis.Options {
 	opts := &redis.Options{
 		Addr:            o.Addr,
@@ -156,39 +147,37 @@ func (o *Client) GetClientConfig() *redis.Options {
 	return opts
 }
 
-// ClientType type to define a redis client connector
-
-// ClientNormal ...
+// ClientType 类型常量，定义 Redis 客户端的连接模式。
 const (
-	// ClientNormal for standard instance client
+	// ClientNormal 为标准单节点实例客户端。
 	ClientNormal = "normal"
-	// ClientCluster for official redis cluster
+	// ClientCluster 为官方 Redis 集群客户端。
 	ClientCluster = "cluster"
-	// FailoverClient for official redis failover
+	// ClientFailover 为官方 Redis 哨兵（failover）客户端。
 	ClientFailover = "failover"
-	// RingClient for official redis ring
+	// ClientRing 为官方 Redis 分片（ring）客户端。
 	ClientRing = "ring"
 )
 
-// RWType Client Reader and Writer
+// RWType 表示客户端读写类型，用于拼接配置参数与键的后缀。
 type RWType string
 
-// OnlyRead ...
+// 读写类型常量，作为配置参数搜索后缀使用。
 const (
-	// OnlyRead serves as a search suffix for configuration parameters
+	// OnlyRead 仅读模式，后缀为 "READER"。
 	OnlyRead RWType = "READER"
-	// OnlyWrite serves as a search suffix for configuration parameters
+	// OnlyWrite 仅写模式，后缀为 "WRITER"。
 	OnlyWrite RWType = "WRITER"
-	// ReadAndWrite serves as a search suffix for configuration parameters
+	// ReadAndWrite 读写模式，不追加后缀。
 	ReadAndWrite RWType = ""
 )
 
-// IsReadOnly will return Is it read-only
+// IsReadOnly 返回当前读写类型是否为仅读模式。
 func (rw *RWType) IsReadOnly() bool {
 	return *rw == OnlyRead
 }
 
-// FmtSuffix get fmtstring of  key+ "_" + suffix
+// FmtSuffix 返回 key 拼接读写类型后缀的结果；读写模式不拼接，直接返回原 key。
 func (rw *RWType) FmtSuffix(key string) string {
 	if *rw == ReadAndWrite {
 		return key

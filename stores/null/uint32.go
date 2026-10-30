@@ -12,14 +12,20 @@ import (
 	"github.com/spf13/cast"
 )
 
-// Uint32 is an nullable uint32.
+// Uint32 是可空的 uint32，实现 sql.Scanner、driver.Valuer 以及 JSON 与文本编解码接口。
+//
+// 零值（Set 为 false）表示未赋值，可直接使用；结构体为值类型，不提供并发保护，
+// 同一实例的并发读写需由调用方自行加锁。
 type Uint32 struct {
+	// Uint32 为内部保存的 uint32 取值。
 	Uint32 uint32
-	Valid  bool
-	Set    bool
+	// Valid 表示是否持有非空有效值。
+	Valid bool
+	// Set 表示是否已被显式赋值，包含赋值为 null 的情形。
+	Set bool
 }
 
-// NewUint32 creates a new Uint32
+// NewUint32 使用给定取值与有效性标记创建 Uint32；valid 为 false 时得到空值。
 func NewUint32(i uint32, valid bool) Uint32 {
 	return Uint32{
 		Uint32: i,
@@ -28,12 +34,12 @@ func NewUint32(i uint32, valid bool) Uint32 {
 	}
 }
 
-// Uint32From creates a new Uint32 that will always be valid.
+// Uint32From 创建一个始终有效的 Uint32。
 func Uint32From(i uint32) Uint32 {
 	return NewUint32(i, true)
 }
 
-// Uint32FromPtr creates a new Uint32 that be null if i is nil.
+// Uint32FromPtr 根据指针创建 Uint32；指针为 nil 时得到空值。
 func Uint32FromPtr(i *uint32) Uint32 {
 	if i == nil {
 		return NewUint32(0, false)
@@ -41,18 +47,18 @@ func Uint32FromPtr(i *uint32) Uint32 {
 	return NewUint32(*i, true)
 }
 
-// IsValid returns true if this carries and explicit value and
-// is not null.
+// IsValid 报告是否持有显式赋值且非空的取值。
 func (u Uint32) IsValid() bool {
 	return u.Set && u.Valid
 }
 
-// IsSet returns true if this carries an explicit value (null inclusive)
+// IsSet 报告是否已被显式赋值，包含赋值为 null 的情形。
 func (u Uint32) IsSet() bool {
 	return u.Set
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
+// UnmarshalJSON 实现 json.Unmarshaler；输入为 JSON null 时置为空值，取值超出 uint32 范围时
+// 返回溢出错误，其余情况解析失败同样返回对应错误。
 func (u *Uint32) UnmarshalJSON(data []byte) error {
 	u.Set = true
 	if bytes.Equal(data, NullBytes) {
@@ -75,7 +81,8 @@ func (u *Uint32) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
+// UnmarshalText 实现 encoding.TextUnmarshaler；空文本置为空值，按十进制 uint32 解析，
+// 解析失败时返回错误且不更新内部取值。
 func (u *Uint32) UnmarshalText(text []byte) error {
 	u.Set = true
 	if len(text) == 0 {
@@ -91,7 +98,7 @@ func (u *Uint32) UnmarshalText(text []byte) error {
 	return err
 }
 
-// MarshalJSON implements json.Marshaler.
+// MarshalJSON 实现 json.Marshaler；空值序列化为 JSON null。
 func (u Uint32) MarshalJSON() ([]byte, error) {
 	if !u.Valid {
 		return json.Marshal(nil)
@@ -99,7 +106,7 @@ func (u Uint32) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.FormatUint(uint64(u.Uint32), 10)), nil
 }
 
-// MarshalText implements encoding.TextMarshaler.
+// MarshalText 实现 encoding.TextMarshaler；空值序列化为空字节切片。
 func (u Uint32) MarshalText() ([]byte, error) {
 	if !u.Valid {
 		return []byte{}, nil
@@ -107,14 +114,14 @@ func (u Uint32) MarshalText() ([]byte, error) {
 	return []byte(strconv.FormatUint(uint64(u.Uint32), 10)), nil
 }
 
-// SetValid changes this Uint32's value and also sets it to be non-null.
+// SetValid 将内部取值置为 n，并同时标记为有效、已赋值。
 func (u *Uint32) SetValid(n uint32) {
 	u.Uint32 = n
 	u.Valid = true
 	u.Set = true
 }
 
-// Ptr returns a pointer to this Uint32's value, or a nil pointer if this Uint32 is null.
+// Ptr 返回指向内部取值的指针；空值时返回 nil。
 func (u Uint32) Ptr() *uint32 {
 	if !u.Valid {
 		return nil
@@ -122,12 +129,12 @@ func (u Uint32) Ptr() *uint32 {
 	return &u.Uint32
 }
 
-// IsZero returns true for invalid Uint32's, for future omitempty support (Go 1.4?)
+// IsZero 报告是否为空值，供结构体标签 omitempty 判定使用。
 func (u Uint32) IsZero() bool {
 	return !u.Valid
 }
 
-// Scan implements the Scanner interface.
+// Scan 实现 sql.Scanner；value 为 nil 时清空状态，否则按驱动值转换后写入内部取值。
 func (u *Uint32) Scan(value any) error {
 	if value == nil {
 		u.Uint32, u.Valid, u.Set = 0, false, false
@@ -137,7 +144,7 @@ func (u *Uint32) Scan(value any) error {
 	return convert.ConvertAssign(&u.Uint32, value)
 }
 
-// Value implements the driver Valuer interface.
+// Value 实现 driver.Valuer；空值返回 nil。
 func (u Uint32) Value() (driver.Value, error) {
 	if !u.Valid {
 		return nil, nil
@@ -145,7 +152,7 @@ func (u Uint32) Value() (driver.Value, error) {
 	return int64(u.Uint32), nil
 }
 
-// ValueOrDefault returns the inner value if valid, otherwise default.
+// ValueOrDefault 返回内部取值；空值时返回类型零值。
 func (u Uint32) ValueOrDefault() uint32 {
 	if !u.Valid {
 		return 0
@@ -153,7 +160,7 @@ func (u Uint32) ValueOrDefault() uint32 {
 	return u.Uint32
 }
 
-// String returns the string representation of the float or null.
+// Result 返回内部取值的字符串形式；空值返回 "NULL"。
 func (t Uint32) Result() string {
 	if !t.Valid {
 		return "NULL"

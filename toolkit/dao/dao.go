@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// CmdNew 是 toolkit dao 子命令，按数据库表清单生成 GORM 模型结构体代码。
 var (
 	CmdNew = &cobra.Command{
 		Use:   "dao",
@@ -25,18 +26,20 @@ var (
 	}
 )
 
+// Run 执行 dao 子命令：初始化运行环境后读取配置数据库的表清单，命令行首个参数可指定
+// 单表或以逗号分隔的多表进行过滤；逐表读取字段元数据并调用 GenerateDao 生成模型文件，
+// 最后在 dao 目录执行 go fmt 与 goimports 整理格式。
+//
+// 环境初始化或表清单读取失败时打印错误并返回；单表字段读取失败时跳过该表，不中断其余表。
 func Run(cmd *cobra.Command, args []string) {
-	// 数据初始化
 	if err := base.InitBase(); err != nil {
 		fmt.Println("初始化:", color.RedString(err.Error()))
 		return
 	}
 
-	// 创建文件夹
 	dir := path.Join(cast.ToString(base.Path), "dao")
 	_ = os.MkdirAll(dir, os.ModePerm)
 
-	// 初始化上下文
 	timeout := "60s"
 	t, err := time.ParseDuration(timeout)
 	if err != nil {
@@ -46,7 +49,6 @@ func Run(cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), t)
 	defer cancel()
 
-	//获取表信息
 	tableList, err := base.TableList(ctx, base.Config.String("db.Database"))
 	if err != nil {
 		fmt.Println("数据库信息获取:", color.RedString(err.Error()))
@@ -71,7 +73,6 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 		GenerateDao(table, column)
 	}
-	//格式化代码
 	_ = os.Chdir(dir)
 	cmdShell := exec.Command("go", "fmt")
 	if _, err := cmdShell.CombinedOutput(); err != nil {
@@ -82,10 +83,12 @@ func Run(cmd *cobra.Command, args []string) {
 	cmdImport.CombinedOutput()
 }
 
-// GenerateDao
+// GenerateDao 按 DaoTemplate 渲染一张表的 GORM 模型文件，写入项目 dao 目录下以表名
+// 命名的 Go 文件；同名文件已存在时先删除再创建。
+//
+// 文件创建或模板解析失败时打印错误并返回，不向调用方返回错误。
 func GenerateDao(table base.Table, column []base.Column) {
 	filePath := path.Join(cast.ToString(base.Path), "dao", table.TableName+".go")
-	//存在文件,需要先将文件删除掉
 	if util.FileExists(filePath) {
 		util.Delete(filePath)
 	}
@@ -94,7 +97,6 @@ func GenerateDao(table base.Table, column []base.Column) {
 		fmt.Println("文件句柄错误:", color.RedString(err.Error()))
 		return
 	}
-	//go文件生成地址
 	tpl := template.Must(template.New("name").Funcs(template.FuncMap{
 		"CamelStr":   base.CamelStr,
 		"Helper":     base.Helper,
@@ -102,12 +104,10 @@ func GenerateDao(table base.Table, column []base.Column) {
 		"Pointer":    base.Pointer,
 	}).Parse(DaoTemplate()))
 
-	//定义结构体接收数据
 	data := base.DaoParam{
 		Table:       table,
 		TableColumn: column,
 	}
-	//渲染输出
 	err = tpl.Execute(file, data)
 	if err != nil {
 		fmt.Println("模板解析错误:", color.RedString(err.Error()))
@@ -116,7 +116,10 @@ func GenerateDao(table base.Table, column []base.Column) {
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(filePath))
 }
 
-// DaoTemplate 模板
+// DaoTemplate 返回 DAO 模型结构体代码模板字符串。
+//
+// 配置项 template.Dao 指定了自定义模板文件且文件存在时，读取该文件内容并返回；
+// 否则返回包内置模板，模板占位符由 GenerateDao 渲染填充。
 func DaoTemplate() string {
 	if exists := base.Config.Exists("template.Dao"); exists {
 		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.Dao"))
@@ -152,18 +155,3 @@ func ({{CamelStr .Table.TableName}}) TableName() string {
 `
 	return outString
 }
-
-// package dao
-
-// import "github.com/abulo/ratel/v3/stores/null"
-
-// // {{CamelStr .Table.TableName}} {{.Table.TableComment}} {{.Table.TableName}}
-// type {{CamelStr .Table.TableName}} struct {
-// 	{{- range .TableColumn }}
-// 	{{- if eq .IsNullable "YES" }}
-// 	{{CamelStr .ColumnName}}	{{.DataTypeMap.Empty}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
-// 	{{- else }}
-// 	{{CamelStr .ColumnName}}	{{.DataTypeMap.Default}}	{{SymbolChar}}db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"{{SymbolChar}}  //{{.DataType}} {{.ColumnComment}}
-// 	{{- end}}
-// 	{{- end}}
-// }

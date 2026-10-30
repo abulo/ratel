@@ -6,11 +6,10 @@ import (
 	"strings"
 )
 
-//////////// URL Functions ////////////
-
-// ParseURL parse_url()
-// Parse a URL and return its components
-// -1: all; 1: scheme; 2: host; 4: port; 8: user; 16: pass; 32: path; 64: query; 128: fragment
+// ParseURL 解析 URL 并按 component 位掩码返回各组成部分。
+//
+// 位掩码取值：1 scheme、2 host、4 port、8 user、16 pass、32 path、64 query、
+// 128 fragment；component 为 -1 时返回全部八项。URL 非法时返回错误。
 func ParseURL(str string, component int) (map[string]string, error) {
 	u, err := url.Parse(str)
 	if err != nil {
@@ -47,37 +46,38 @@ func ParseURL(str string, component int) (map[string]string, error) {
 	return components, nil
 }
 
-// URLEncode urlencode()
+// URLEncode 对字符串做查询参数编码，空格被编码为加号 "+"。
 func URLEncode(str string) string {
 	return url.QueryEscape(str)
 }
 
-// URLDecode urldecode()
+// URLDecode 解码查询参数字符串；编码非法时返回错误。
 func URLDecode(str string) (string, error) {
 	return url.QueryUnescape(str)
 }
 
-// RawURLEncode Rawurlencode rawurlencode()
+// RawURLEncode 按 RFC 3986 做原始 URL 编码，空格被编码为 %20 而非加号。
 func RawURLEncode(str string) string {
 	return strings.Replace(url.QueryEscape(str), "+", "%20", -1)
 }
 
-// RawURLDecode Rawurldecode rawurldecode()
+// RawURLDecode 解码原始 URL 编码字符串；编码非法时返回错误。
 func RawURLDecode(str string) (string, error) {
 	return url.QueryUnescape(strings.Replace(str, "%20", "+", -1))
 }
 
-// HTTPBuildQuery http_build_query()
+// HTTPBuildQuery 将 url.Values 编码为以 & 连接的查询字符串。
 func HTTPBuildQuery(queryData url.Values) string {
 	return queryData.Encode()
 }
 
-// Base64Encode base64_encode()
+// Base64Encode 返回字符串的标准 Base64 编码结果。
 func Base64Encode(str string) string {
 	return base64.StdEncoding.EncodeToString([]byte(str))
 }
 
-// Base64Decode base64_decode()
+// Base64Decode 解码标准 Base64 字符串；长度不是 4 的倍数时自动补齐等号，
+// 输入非法时返回空字符串与错误。
 func Base64Decode(str string) (string, error) {
 	switch len(str) % 4 {
 	case 2:

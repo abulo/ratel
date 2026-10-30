@@ -2,23 +2,23 @@ package registry
 
 import "github.com/abulo/ratel/v3/server"
 
+// Operation 表示服务节点变更事件的操作类型。
 type Operation uint8
 
 const (
-	// Add indicates an Endpoint is added.
+	// Add 表示新增一个服务节点。
 	Add Operation = iota
-	// Delete indicates an existing address is deleted.
+	// Delete 表示删除一个已存在的服务节点。
 	Delete
 )
 
-// Update defines a name resolution update. Notice that it is not valid having both
-// empty string Addr and nil Metadata in an Update.
+// Update 描述一次服务发现变更通知；同一 Update 中 Addr 为空字符串且 Metadata 为 nil
+// 属于无效状态，调用方不应构造该组合。
 type Update struct {
-	// Op indicates the operation of the update.
+	// Op 为本次变更的操作类型。
 	Op Operation
-	// Addr is the updated address. It is empty string if there is no address update.
+	// Addr 为变更后的节点地址；未更新地址时为空字符串。
 	Addr string
-	// Metadata is the updated metadata. It is nil if there is no metadata update.
-	// Metadata is not required for a custom naming implementation.
+	// Metadata 为变更后的节点元数据；未更新元数据时为 nil，自定义命名实现可不提供该字段。
 	Metadata *server.ServiceInfo
 }

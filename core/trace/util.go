@@ -8,12 +8,14 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 )
 
-// ParseFullMethod returns the method name and attributes.
+// ParseFullMethod 解析 gRPC 全量方法名（/package.service/method），返回简短方法名与服务、方法属性。
+//
+// 格式不符合两段式时仅返回原名，属性切片为 nil。
 func ParseFullMethod(fullMethod string) (string, []attribute.KeyValue) {
 	name := strings.TrimLeft(fullMethod, "/")
 	parts := strings.SplitN(name, "/", 2)
 	if len(parts) != 2 {
-		// Invalid format, does not follow `/package.service/method`.
+		// 不符合 /service/method 两段格式，无法拆分出服务与方法属性。
 		return name, []attribute.KeyValue(nil)
 	}
 
@@ -28,7 +30,9 @@ func ParseFullMethod(fullMethod string) (string, []attribute.KeyValue) {
 	return name, attrs
 }
 
-// PeerAttr returns the peer attributes.
+// PeerAttr 由 host:port 地址构造对端网络属性；地址格式非法时返回 nil。
+//
+// 主机名为空时回填 127.0.0.1。
 func PeerAttr(addr string) []attribute.KeyValue {
 	host, port, err := net.SplitHostPort(addr)
 	if err != nil {

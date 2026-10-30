@@ -14,9 +14,12 @@ var (
 	scheme      = []string{"git", "https", "http", "git+ssh", "ssh", "file", "ftp", "ftps"}
 )
 
-// ParseVCSUrl ref https://github.com/golang/go/blob/master/src/cmd/go/internal/vcs/vcs.go
-// see https://go-review.googlesource.com/c/go/+/12226/
-// git url define https://git-scm.com/docs/git-clone#_git_urls
+// ParseVCSUrl 将给定的仓库地址解析为标准的 url.URL，支持 SCP 风格与常见 Git 协议地址。
+//
+// 协议不在支持列表内时返回错误；解析过程不校验地址是否可访问。
+//
+// 参考：Go 源码实现 https://github.com/golang/go/blob/master/src/cmd/go/internal/vcs/vcs.go
+// Git 地址规范 https://git-scm.com/docs/git-clone#_git_urls
 func ParseVCSUrl(repo string) (*url.URL, error) {
 	var (
 		repoURL *url.URL
@@ -24,9 +27,7 @@ func ParseVCSUrl(repo string) (*url.URL, error) {
 	)
 
 	if m := scpSyntaxRe.FindStringSubmatch(repo); m != nil {
-		// Match SCP-like syntax and convert it to a URL.
-		// Eg, "git@github.com:user/repo" becomes
-		// "ssh://git@github.com/user/repo".
+		// 匹配 SCP 风格地址（如 git@github.com:user/repo），转换为 ssh:// 形式的 URL。
 		repoURL = &url.URL{
 			Scheme: "ssh",
 			User:   url.User(m[1]),
@@ -48,9 +49,8 @@ func ParseVCSUrl(repo string) (*url.URL, error) {
 		}
 	}
 
-	// Iterate over insecure schemes too, because this function simply
-	// reports the state of the repo. If we can't see insecure schemes then
-	// we can't report the actual repo URL.
+	// 白名单同时包含 http、ftp 等非加密协议：本函数只负责还原地址本身，
+	// 不区分协议是否安全，否则无法得到真实的仓库 URL。
 	if slices.Contains(scheme, repoURL.Scheme) {
 		return repoURL, nil
 	}

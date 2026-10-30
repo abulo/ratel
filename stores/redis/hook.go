@@ -17,12 +17,13 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// OpenTraceHook ...
+// OpenTraceHook 是 Redis 链路追踪钩子，包装 go-redis 的连接、单命令与管道命令处理流程，
+// 为每段流程生成 OpenTelemetry span。零值可用，直接通过 AddHook 挂载即可。
 type OpenTraceHook struct {
 	redis.Hook
 }
 
-// DialHook 返回redis连接hook hook: 原始redis连接hook
+// DialHook 包装底层连接钩子，在建立连接前后创建 redis.dial span；连接失败时错误原样返回。
 func (op OpenTraceHook) DialHook(hook redis.DialHook) redis.DialHook {
 
 	tracer := globalTrace.NewTracer(trace.SpanKindServer)
@@ -47,7 +48,8 @@ func (op OpenTraceHook) DialHook(hook redis.DialHook) redis.DialHook {
 	}
 }
 
-// ProcessHook 返回redis命令处理hook hook: 原始redis命令处理hook
+// ProcessHook 包装单命令处理钩子，创建以命令名命名的 span，记录调用位置与命令语句；
+// 命令执行错误原样透传给上层。
 func (op OpenTraceHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
 	tracer := globalTrace.NewTracer(trace.SpanKindServer)
 	attrs := []attribute.KeyValue{
@@ -78,7 +80,8 @@ func (op OpenTraceHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
 	}
 }
 
-// ProcessPipelineHook 返回redis管道命令处理hook hook: 原始redis管道命令处理hook
+// ProcessPipelineHook 包装管道命令处理钩子，创建 redis.pipeline span，记录命令数量与汇总语句；
+// 管道执行错误原样透传给上层。
 func (op OpenTraceHook) ProcessPipelineHook(hook redis.ProcessPipelineHook) redis.ProcessPipelineHook {
 	tracer := globalTrace.NewTracer(trace.SpanKindServer)
 	attrs := []attribute.KeyValue{
@@ -110,10 +113,13 @@ func (op OpenTraceHook) ProcessPipelineHook(hook redis.ProcessPipelineHook) redi
 	}
 }
 
+// MetricsHook 是 Redis 指标采集钩子，记录连接、单命令与管道命令的执行耗时，以及成功/失败计数。
+// 零值可用，直接通过 AddHook 挂载即可。
 type MetricsHook struct {
 	redis.Hook
 }
 
+// DialHook 包装连接钩子，测量建连耗时并写入连接耗时直方图。
 func (op MetricsHook) DialHook(hook redis.DialHook) redis.DialHook {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
 		start := time.Now()
@@ -124,6 +130,7 @@ func (op MetricsHook) DialHook(hook redis.DialHook) redis.DialHook {
 	}
 }
 
+// ProcessHook 包装单命令钩子，按命令成功或失败累加计数，并记录命令执行耗时。
 func (op MetricsHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
 	return func(ctx context.Context, cmd redis.Cmder) error {
 		start := time.Now()
@@ -139,6 +146,7 @@ func (op MetricsHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
 	}
 }
 
+// ProcessPipelineHook 包装管道钩子，按管道成功或失败累加计数，并记录管道执行耗时。
 func (op MetricsHook) ProcessPipelineHook(hook redis.ProcessPipelineHook) redis.ProcessPipelineHook {
 	return func(ctx context.Context, cmds []redis.Cmder) error {
 		start := time.Now()

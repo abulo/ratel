@@ -10,14 +10,20 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Bool is a nullable bool.
+// Bool 是可空的布尔值，实现 sql.Scanner、driver.Valuer 以及 JSON 与文本编解码接口。
+//
+// 零值（Set 为 false）表示未赋值，可直接使用；结构体为值类型，不提供并发保护，
+// 同一实例的并发读写需由调用方自行加锁。
 type Bool struct {
-	Bool  bool
+	// Bool 为内部保存的布尔取值。
+	Bool bool
+	// Valid 表示是否持有非空有效值。
 	Valid bool
-	Set   bool
+	// Set 表示是否已被显式赋值，包含赋值为 null 的情形。
+	Set bool
 }
 
-// NewBool creates a new Bool
+// NewBool 使用给定取值与有效性标记创建 Bool；valid 为 false 时得到空值。
 func NewBool(b, valid bool) Bool {
 	return Bool{
 		Bool:  b,
@@ -26,12 +32,12 @@ func NewBool(b, valid bool) Bool {
 	}
 }
 
-// BoolFrom creates a new Bool that will always be valid.
+// BoolFrom 创建一个始终有效的 Bool。
 func BoolFrom(b bool) Bool {
 	return NewBool(b, true)
 }
 
-// BoolFromPtr creates a new Bool that will be null if f is nil.
+// BoolFromPtr 根据指针创建 Bool；指针为 nil 时得到空值。
 func BoolFromPtr(b *bool) Bool {
 	if b == nil {
 		return NewBool(false, false)
@@ -39,18 +45,18 @@ func BoolFromPtr(b *bool) Bool {
 	return NewBool(*b, true)
 }
 
-// IsValid returns true if this carries and explicit value and
-// is not null.
+// IsValid 报告是否持有显式赋值且非空的取值。
 func (b Bool) IsValid() bool {
 	return b.Set && b.Valid
 }
 
-// IsSet returns true if this carries an explicit value (null inclusive)
+// IsSet 报告是否已被显式赋值，包含赋值为 null 的情形。
 func (b Bool) IsSet() bool {
 	return b.Set
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
+// UnmarshalJSON 实现 json.Unmarshaler；输入为 JSON null 时置为空值，其余内容按布尔值解析，
+// 解析失败时返回对应错误。
 func (b *Bool) UnmarshalJSON(data []byte) error {
 	b.Set = true
 
@@ -68,7 +74,8 @@ func (b *Bool) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
+// UnmarshalText 实现 encoding.TextUnmarshaler；空文本置为空值，仅接受 "true" 与 "false"，
+// 其余文本返回错误。
 func (b *Bool) UnmarshalText(text []byte) error {
 	b.Set = true
 	if len(text) == 0 {
@@ -90,7 +97,7 @@ func (b *Bool) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// MarshalJSON implements json.Marshaler.
+// MarshalJSON 实现 json.Marshaler；空值序列化为 JSON null。
 func (b Bool) MarshalJSON() ([]byte, error) {
 	if !b.Valid {
 		return json.Marshal(nil)
@@ -101,7 +108,7 @@ func (b Bool) MarshalJSON() ([]byte, error) {
 	return []byte("true"), nil
 }
 
-// MarshalText implements encoding.TextMarshaler.
+// MarshalText 实现 encoding.TextMarshaler；空值序列化为空字节切片。
 func (b Bool) MarshalText() ([]byte, error) {
 	if !b.Valid {
 		return []byte{}, nil
@@ -112,14 +119,14 @@ func (b Bool) MarshalText() ([]byte, error) {
 	return []byte("true"), nil
 }
 
-// SetValid changes this Bool's value and also sets it to be non-null.
+// SetValid 将内部取值置为 v，并同时标记为有效、已赋值。
 func (b *Bool) SetValid(v bool) {
 	b.Bool = v
 	b.Valid = true
 	b.Set = true
 }
 
-// Ptr returns a pointer to this Bool's value, or a nil pointer if this Bool is null.
+// Ptr 返回指向内部取值的指针；空值时返回 nil。
 func (b Bool) Ptr() *bool {
 	if !b.Valid {
 		return nil
@@ -127,12 +134,12 @@ func (b Bool) Ptr() *bool {
 	return &b.Bool
 }
 
-// IsZero returns true for invalid Bools, for future omitempty support (Go 1.4?)
+// IsZero 报告是否为空值，供结构体标签 omitempty 判定使用。
 func (b Bool) IsZero() bool {
 	return !b.Valid
 }
 
-// Scan implements the Scanner interface.
+// Scan 实现 sql.Scanner；value 为 nil 时清空状态，否则按驱动值转换后写入内部取值。
 func (b *Bool) Scan(value any) error {
 	if value == nil {
 		b.Bool, b.Valid, b.Set = false, false, false
@@ -142,7 +149,7 @@ func (b *Bool) Scan(value any) error {
 	return convert.ConvertAssign(&b.Bool, value)
 }
 
-// Value implements the driver Valuer interface.
+// Value 实现 driver.Valuer；空值返回 nil。
 func (b Bool) Value() (driver.Value, error) {
 	if !b.Valid {
 		return nil, nil
@@ -150,7 +157,7 @@ func (b Bool) Value() (driver.Value, error) {
 	return b.Bool, nil
 }
 
-// ValueOrDefault returns the inner value if valid, otherwise default.
+// ValueOrDefault 返回内部取值；空值时返回类型零值。
 func (t Bool) ValueOrDefault() bool {
 	if !t.Valid {
 		return false
@@ -158,7 +165,7 @@ func (t Bool) ValueOrDefault() bool {
 	return t.Bool
 }
 
-// Result returns the string representation of the float or null.
+// Result 返回内部取值的字符串形式；空值返回 "NULL"。
 func (t Bool) Result() string {
 	if !t.Valid {
 		return "NULL"

@@ -5,6 +5,7 @@ import (
 )
 
 var (
+	// fullwidthMaps 记录需要替换的半角标点到对应全角标点的映射。
 	fullwidthMaps = map[string]string{
 		",": "，",
 		".": "。",
@@ -13,8 +14,6 @@ var (
 		"!": "！",
 		"?": "？",
 		"~": "～",
-		// "(": "（",
-		// ")": "）",
 	}
 
 	spcialPunctuations = `[.:]`
@@ -27,7 +26,8 @@ var (
 	punctuationsRe                  = regexp.MustCompile(`(` + spcialPunctuations + `|` + normalPunctuations + `)`)
 )
 
-// fullwidth correct punctuations near the CJK chars
+// fullwidth 将紧邻 CJK 字符的半角标点替换为对应全角标点，覆盖标点位于 CJK 左侧、
+// 右侧、两侧以及位于文本末尾的情形。
 func fullwidth(text string) (out string) {
 	out = text
 

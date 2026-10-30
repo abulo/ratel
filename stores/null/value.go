@@ -1,10 +1,9 @@
 package null
 
-// Value specifies methods that allow introspection into the
-// state of a value.
+// Value 描述可空类型的状态查询接口，用于区分未赋值、赋值为 null 与持有有效值三种状态。
 type Value interface {
-	// IsValid returns true iff the value is set and non-null
+	// IsValid 报告是否持有显式赋值且非空的取值。
 	IsValid() bool
-	// IsSet returns true iff the value is set (null inclusive)
+	// IsSet 报告是否已被显式赋值，包含赋值为 null 的情形。
 	IsSet() bool
 }

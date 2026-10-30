@@ -11,13 +11,20 @@ import (
 	"github.com/fatih/color"
 )
 
-// Project is a project template.
+// Project 描述待创建项目的名称与模块路径，仅在脚手架命令执行期间使用，不保证并发安全。
+//
+// 零值字段均为空，不可直接用于创建，须先填充 Name 与 Path。
 type Project struct {
+	// Name 为项目目录名（路径末级）。
 	Name string
+	// Path 为项目在模块内的相对路径。
 	Path string
 }
 
-// New new a project from remote repo.
+// New 从 layout 远程仓库克隆后端项目模板到 dir/Name；目标目录已存在时先弹出确认，
+// 用户同意覆盖后删除原目录再复制；ctx 用于控制整个拉取过程的超时。
+//
+// 仓库复制失败时返回对应错误；用户拒绝覆盖或确认流程被中断时返回错误。
 func (p *Project) New(ctx context.Context, dir string, layout string, branch string) error {
 	to := path.Join(dir, p.Name)
 	if _, err := os.Stat(to); !os.IsNotExist(err) {
@@ -51,7 +58,8 @@ func (p *Project) New(ctx context.Context, dir string, layout string, branch str
 	return nil
 }
 
-// New new a project from remote repo.
+// NewFront 从 layout 远程仓库克隆前端项目模板，目录覆盖确认与超时约定同 New；区别在于
+// 复制的是前端模板内容。
 func (p *Project) NewFront(ctx context.Context, dir string, layout string, branch string) error {
 	to := path.Join(dir, p.Name)
 	if _, err := os.Stat(to); !os.IsNotExist(err) {

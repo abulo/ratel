@@ -1,22 +1,30 @@
 package nlpword
 
-// Trie 短语组成的Trie树.
+// Trie 是由敏感词构成的 Aho-Corasick 自动机树。
+//
+// 零值不可直接使用，须通过 NewTrie 构造；向树中插入新词后、匹配前须调用
+// BuildFailureLinks 重建失败指针。该树不保证并发安全。
 type Trie struct {
+	// Root 为自动机根节点。
 	Root *Node
 }
 
-// Node Trie树上的一个节点.
+// Node 表示 Trie 树上的一个节点，保存字符、子节点、失败指针、父节点与层级信息。
 type Node struct {
 	isRootNode bool
 	isPathEnd  bool
+	// Character 为该节点对应的字符。
 	Character  rune
+	// Children 为字符到子节点的映射。
 	Children   map[rune]*Node
+	// Failure 为 Aho-Corasick 失败指针。
 	Failure    *Node
+	// Parent 为父节点，根节点的父节点为 nil。
 	Parent     *Node
 	depth      int
 }
 
-// BuildFailureLinks 更新Aho-Corasick的失败表
+// BuildFailureLinks 按广度优先遍历重建整棵树的失败指针；须在词库构建完成后、匹配前调用。
 func (tree *Trie) BuildFailureLinks() {
 	for node := range tree.bfs() {
 		pointer := node.Parent
@@ -30,13 +38,12 @@ func (tree *Trie) BuildFailureLinks() {
 			pointer = pointer.Failure
 
 		}
-		// fmt.Printf("%s[%d] link to %s[%d] \n", string(node.Character), node.depth, string(link.Character), link.depth)
 		node.Failure = link
 
 	}
 }
 
-// bfs Breadth First Search
+// bfs 以通道方式按广度优先顺序逐个返回树中的节点，遍历结束后关闭通道。
 func (tree *Trie) bfs() <-chan *Node {
 	ch := make(chan *Node)
 	go func() {
@@ -58,14 +65,14 @@ func (tree *Trie) bfs() <-chan *Node {
 	return ch
 }
 
-// NewTrie 新建一棵Trie
+// NewTrie 创建一棵空 Trie 树并初始化根节点。
 func NewTrie() *Trie {
 	return &Trie{
 		Root: NewRootNode(0),
 	}
 }
 
-// Add 添加若干个词
+// Add 向树中插入一个或多个敏感词。
 func (tree *Trie) Add(words ...string) {
 	for _, word := range words {
 		tree.add(word)
@@ -92,7 +99,7 @@ func (tree *Trie) add(word string) {
 	}
 }
 
-// Replace 词语替换
+// Replace 将文本中全部命中的敏感词替换为 character 字符，返回替换后的文本。
 func (tree *Trie) Replace(text string, character rune) string {
 	var (
 		node  = tree.Root
@@ -114,7 +121,7 @@ func (tree *Trie) Replace(text string, character rune) string {
 	return string(runes)
 }
 
-// Filter 直接过滤掉字符串中的敏感词
+// Filter 删除文本中全部命中的敏感词，返回过滤后的文本。
 func (tree *Trie) Filter(text string) string {
 	var (
 		parent      = tree.Root
@@ -147,8 +154,8 @@ func (tree *Trie) Filter(text string) string {
 	return string(resultRunes)
 }
 
-// Validate 验证字符串是否合法，如不合法则返回false和检测到
-// 的第一个敏感词
+// Validate 校验文本是否合法；不合法时返回 false 与第一个命中的敏感词，
+// 合法时返回 true 与空字符串。
 func (tree *Trie) Validate(text string) (bool, string) {
 	const EMPTY = ""
 	var (
@@ -173,13 +180,13 @@ func (tree *Trie) Validate(text string) (bool, string) {
 	return true, EMPTY
 }
 
-// FindIn 判断text中是否含有词库中的词
+// FindIn 判断文本中是否包含词库中的词，返回是否命中与第一个命中的敏感词。
 func (tree *Trie) FindIn(text string) (bool, string) {
 	validated, first := tree.Validate(text)
 	return !validated, first
 }
 
-// FindAll 找有所有包含在词库中的词
+// FindAll 返回文本中命中的全部敏感词列表；未命中时返回空列表。
 func (tree *Trie) FindAll(text string) []string {
 	var (
 		node  = tree.Root
@@ -202,7 +209,7 @@ func (tree *Trie) FindAll(text string) []string {
 
 }
 
-// NewNode 新建子节点
+// NewNode 创建一个代表指定字符的新节点。
 func NewNode(character rune) *Node {
 	return &Node{
 		Character: character,
@@ -210,7 +217,7 @@ func NewNode(character rune) *Node {
 	}
 }
 
-// NewRootNode 新建根节点
+// NewRootNode 创建根节点，其失败指针指向自身。
 func NewRootNode(character rune) *Node {
 	root := &Node{
 		isRootNode: true,
@@ -224,17 +231,17 @@ func NewRootNode(character rune) *Node {
 	return root
 }
 
-// IsLeafNode 判断是否叶子节点
+// IsLeafNode 判断节点是否为叶子节点（无子节点）。
 func (node *Node) IsLeafNode() bool {
 	return len(node.Children) == 0
 }
 
-// IsRootNode 判断是否为根节点
+// IsRootNode 判断节点是否为根节点。
 func (node *Node) IsRootNode() bool {
 	return node.isRootNode
 }
 
-// IsPathEnd 判断是否为某个路径的结束
+// IsPathEnd 判断节点是否为某个敏感词路径的结束节点。
 func (node *Node) IsPathEnd() bool {
 	return node.isPathEnd
 }

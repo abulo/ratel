@@ -15,20 +15,28 @@ import (
 	"gorm.io/gorm"
 )
 
+// 以下包级变量为代码生成流程共享的运行时状态，由 InitBase 系列函数初始化，非并发安全。
 var (
-	Config         *config.Config // 配置文件
-	Query          *gorm.DB       // 数据库连接
-	Path           *string        // 路径
-	Url            *string        // url
-	Driver         *string        // 驱动
-	DefaultDefault = "mysql"      // 默认驱动
+	// Config 为加载完成的 toolkit.toml 配置实例。
+	Config *config.Config
+	// Query 为已建立连接的数据库查询句柄。
+	Query *gorm.DB
+	// Path 为当前项目的工作目录。
+	Path *string
+	// Url 为通过 SetUrl 设置的模板或仓库地址。
+	Url *string
+	// Driver 为当前数据库驱动名，默认 mysql。
+	Driver *string
+	// DefaultDefault 为未在配置中指定驱动时使用的默认驱动名 mysql。
+	DefaultDefault = "mysql"
 )
 
+// SetUrl 将模板或仓库地址保存到包级变量 Url。
 func SetUrl(url string) {
 	Url = &url
 }
 
-// InitPath 初始化路径
+// InitPath 初始化当前工作目录 Path，并将数据库驱动重置为默认驱动；获取当前目录失败时返回错误。
 func InitPath() error {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -40,7 +48,7 @@ func InitPath() error {
 	return nil
 }
 
-// InitConfig 初始化
+// InitConfig 读取工作目录下的 toolkit.toml 并加载到包级变量 Config；配置文件缺失或解析失败时返回错误。
 func InitConfig() error {
 	configPath := path.Join(*Path, "toolkit.toml")
 	if !util.FileExists(configPath) {
@@ -48,7 +56,6 @@ func InitConfig() error {
 		fmt.Println("初始化目录错误:", color.RedString(err.Error()))
 		return err
 	}
-	//加载配置文件
 	Config = config.New()
 	if err := Config.LoadFile(configPath); err != nil {
 		fmt.Println("初始化目录错误:", color.RedString(err.Error()))
@@ -57,12 +64,11 @@ func InitConfig() error {
 	return nil
 }
 
-// InitQuery 初始化数据查询
+// InitQuery 依据 Config 中的 db.* 配置项创建数据库客户端并保存到 Query；创建失败时返回错误。
+//
+// 指标采集、链路追踪与调试日志在此流程中固定关闭。
 func InitQuery() error {
 	opts := make([]sql.Option, 0)
-	// DisableMetric = false # 关闭指标采集
-	// DisableTrace = false # 关闭链路追踪
-	// DriverName = "mysql" # 数据库驱动名称
 	if Host := cast.ToString(Config.String("db.Host")); Host != "" {
 		opts = append(opts, sql.WithHost(Host))
 	}
@@ -123,7 +129,7 @@ func InitQuery() error {
 	return nil
 }
 
-// InitBase 初始化数据
+// InitBase 按顺序初始化工作目录、配置文件与数据库连接，任一步骤失败时直接返回该步骤的错误。
 func InitBase() error {
 	if err := InitPath(); err != nil {
 		return err

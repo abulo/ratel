@@ -35,35 +35,35 @@ type options struct {
 	out        io.Writer
 }
 
-// SetMaxQueues 设置缓冲区的数量
+// SetMaxQueues 设置异步队列允许缓冲的最大日志条目数。
 func SetMaxQueues(maxQueues int) Option {
 	return func(o *options) {
 		o.maxQueues = maxQueues
 	}
 }
 
-// SetMaxWorkers 设置工作线程数
+// SetMaxWorkers 设置后台消费日志条目数的工作协程数量。
 func SetMaxWorkers(maxWorkers int) Option {
 	return func(o *options) {
 		o.maxWorkers = maxWorkers
 	}
 }
 
-// SetExtra 设置扩展参数
+// SetExtra 为每条日志附加固定的扩展字段；条目已存在的同名字段不会被覆盖。
 func SetExtra(extra map[string]any) Option {
 	return func(o *options) {
 		o.extra = extra
 	}
 }
 
-// SetExec 设置Execer接口
+// SetExec 自定义日志条目的后端写入器；未设置时由 Default 使用内部默认实现。
 func SetExec(exec ExecCloser) Option {
 	return func(o *options) {
 		o.exec = exec
 	}
 }
 
-// SetLevels 设置可用的日志级别
+// SetLevels 指定钩子需要处理的日志级别集合；传入空级别列表时保留默认级别集合。
 func SetLevels(levels ...logrus.Level) Option {
 	return func(o *options) {
 		if len(levels) == 0 {
@@ -73,17 +73,19 @@ func SetLevels(levels ...logrus.Level) Option {
 	}
 }
 
-// SetOut 设置错误输出
+// SetOut 指定写入失败时错误信息的输出目标；缺省输出到标准错误。
 func SetOut(out io.Writer) Option {
 	return func(o *options) {
 		o.out = out
 	}
 }
 
-// Option 钩子参数选项
+// Option 是 Hook 的配置选项函数，以函数式选项模式在 New 中修改内部配置。
 type Option func(*options)
 
-// Default create a default es hook
+// Default 创建默认的 Elasticsearch 日志钩子，使用 NewExec 将条目写入指定索引。
+//
+// 索引创建失败时构造函数直接 panic；调用方可通过 opts 覆盖队列容量、级别等配置。
 func Default(client *elasticsearch.Client, index string, opts ...Option) *Hook {
 	var options []Option
 	options = append(options, opts...)
@@ -95,7 +97,9 @@ func Default(client *elasticsearch.Client, index string, opts ...Option) *Hook {
 	return New(options...)
 }
 
-// DefaultWithURL create a default es hook
+// DefaultWithURL 创建默认的 Elasticsearch 日志钩子，使用 NewExecWithURL 将条目写入指定索引。
+//
+// 索引创建失败时构造函数直接 panic。
 func DefaultWithURL(client *elasticsearch.Client, index string, opts ...Option) *Hook {
 	var options []Option
 	options = append(options, opts...)
@@ -106,7 +110,9 @@ func DefaultWithURL(client *elasticsearch.Client, index string, opts ...Option) 
 	return New(options...)
 }
 
-// New 创建一个要添加到logger实例的钩子
+// New 根据给定选项构造日志钩子并启动后台异步队列。
+//
+// 未提供写入器时仅记录一条提示日志，条目将无法写入后端。
 func New(opt ...Option) *Hook {
 	opts := defaultOptions
 	for _, o := range opt {
@@ -114,7 +120,6 @@ func New(opt ...Option) *Hook {
 	}
 
 	if opts.exec == nil {
-		// panic("Unknown Execer interface implementation")
 		logrus.Info("Unknown Execer interface implementation")
 	}
 
@@ -127,18 +132,22 @@ func New(opt ...Option) *Hook {
 	}
 }
 
-// Hook 将日志发送到 es 数据库
+// Hook 是挂载到 logrus 的 Elasticsearch 日志钩子，按配置级别把日志异步提交到后台队列。
+//
+// Hook 须由 New 或 Default 创建，不要直接构造零值；队列中的日志条目在 Flush 时统一等待处理完成。
 type Hook struct {
 	opts options
 	q    *queue.Queue
 }
 
-// Levels 返回可用的日志记录级别
+// Levels 返回钩子启用的日志级别集合，供 logrus 判断是否触发 Fire。
 func (h *Hook) Levels() []logrus.Level {
 	return h.opts.levels
 }
 
-// Fire 触发日志事件时将调用
+// Fire 在日志级别命中时被 logrus 调用，将 logrus 条目转换为 entry.Entry 后投入异步队列。
+//
+// 转换与入队流程不阻断业务日志，Fire 始终返回 nil；写入后端的失败在后台消费阶段记录到错误输出。
 func (h *Hook) Fire(entryLogrus *logrus.Entry) error {
 	var funcVal string
 	var fileVal string
@@ -180,7 +189,7 @@ func (h *Hook) exec(entry *entry.Entry) {
 	}
 }
 
-// Flush 等待日志队列为空
+// Flush 等待后台队列中的日志条目处理完毕并关闭工作协程。
 func (h *Hook) Flush() {
 	h.q.Terminate()
 }

@@ -12,7 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// CmdNew represents the new command.
+// CmdNew 是 toolkit project 子命令，在当前目录创建新项目脚手架，支持指定模板仓库、
+// 分支与超时时间。
 var CmdNew = &cobra.Command{
 	Use:   "project",
 	Short: "项目",
@@ -20,6 +21,7 @@ var CmdNew = &cobra.Command{
 	Run:   run,
 }
 
+// 以下变量为 project 子命令的命令行选项，在 init 中绑定默认值与标志。
 var (
 	repoURL string
 	branch  string
@@ -34,6 +36,8 @@ func init() {
 	CmdNew.Flags().StringVarP(&timeout, "timeout", "t", timeout, "time out")
 }
 
+// run 交互式读取项目名称（可由命令行参数直接提供），在超时上下文中调用 NewFront 创建
+// 项目；超时或创建失败时向标准错误打印对应错误信息。
 func run(cmd *cobra.Command, args []string) {
 	wd, err := os.Getwd()
 	if err != nil {

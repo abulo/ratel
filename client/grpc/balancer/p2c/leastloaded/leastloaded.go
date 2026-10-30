@@ -21,7 +21,7 @@ type leastLoaded struct {
 	rand  *rand.Rand
 }
 
-// New ...
+// New 创建最少在途负载选择器，内部随机源以当前时间为种子。
 func New() basep2c.P2c {
 	return &leastLoaded{
 		items: make([]*leastLoadedNode, 0),
@@ -29,12 +29,13 @@ func New() basep2c.P2c {
 	}
 }
 
-// Add ...
+// Add 向选择器加入一个候选节点，初始在途计数为 0。
 func (p *leastLoaded) Add(item any) {
 	p.items = append(p.items, &leastLoadedNode{item: item})
 }
 
-// Next ...
+// Next 选出下一个候选节点：无候选时返回 nil 与空回调；仅一个候选时直接选中；多个候选时随机抽取
+// 两个并选择在途请求数较少者。选中后在途计数加 1，返回的 Done 回调在请求结束后将计数减回。
 func (p *leastLoaded) Next() (any, func(balancer.DoneInfo)) {
 	var sc, backsc *leastLoadedNode
 
@@ -44,7 +45,7 @@ func (p *leastLoaded) Next() (any, func(balancer.DoneInfo)) {
 	case 1:
 		sc = p.items[0]
 	default:
-		// rand needs lock
+		// rand.Rand 非并发安全，取随机数期间需要加锁。
 		p.mu.Lock()
 		a := p.rand.Intn(len(p.items))
 		b := p.rand.Intn(len(p.items) - 1)
@@ -55,7 +56,7 @@ func (p *leastLoaded) Next() (any, func(balancer.DoneInfo)) {
 		}
 		sc, backsc = p.items[a], p.items[b]
 
-		// choose the least loaded item based on inflight
+		// 比较在途数，选择负载较低的节点。
 		if sc.inflight > backsc.inflight {
 			sc, _ = backsc, sc
 		}

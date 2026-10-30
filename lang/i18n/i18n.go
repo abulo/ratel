@@ -11,84 +11,72 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FileMode ...
+// 语言文件加载模式与消息渲染模式常量。
 const (
-	// I18n.LoadMode language file load mode
-
-	// FileMode language name is file name. "en" -> "lang/en.ini"
+	// FileMode 表示语言名即文件名，例如 "en" 对应 lang/en.ini。
 	FileMode uint8 = 0
-	// DirMode language name is dir name, will load all file in the dir. "en" -> "lang/en/*.ini"
+	// DirMode 表示语言名即目录名，加载该目录下全部 ini 文件，例如 "en" 对应 lang/en/*.ini。
 	DirMode uint8 = 1
 
-	// I18n.TransMode translate message mode.
-
-	// SprintfMode render message arguments by fmt.Sprintf
+	// SprintfMode 使用 fmt.Sprintf 按顺序填充消息中的占位参数。
 	SprintfMode uint8 = 0
-	// ReplaceMode render message arguments by string replace
+	// ReplaceMode 使用字符串替换方式填充消息中的 {键} 占位参数。
 	ReplaceMode uint8 = 1
 )
 
-// I18n language manager
+// I18n 是多语言管理器，负责加载语言文件、注册语言并按语言翻译消息。
+//
+// 零值不可直接使用，须通过 New、NewEmpty、NewWithInit 或 Init 构造；
+// 语言文件须先经 Init 加载完成后再调用翻译方法。
 type I18n struct {
-	// languages data
+	// data 保存各语言已加载的 INI 数据。
 	data map[string]*ini.Ini
 
-	// language files directory
+	// langDir 为语言文件所在目录。
 	langDir string
-	// language list {en:English, zh-CN:简体中文}
+	// languages 为已注册语言映射，键为语言名，值为显示名（如 en:English、zh-CN:简体中文）。
 	languages map[string]string
-	// loaded lang files
-	// loadedFiles []string
 
-	// ------------ config for i18n ------------
-
-	// mode for the load language files.
-	//  0 single language file
-	//  1 multi language directory
+	// LoadMode 为语言文件加载模式，取值 FileMode 或 DirMode，Init 校验非法值时 panic。
 	LoadMode uint8
-	// TODO translate mode.
-	//  0 sprintf
-	//  1 replace
+	// TransMode 为消息参数渲染模式，取值 SprintfMode 或 ReplaceMode。
 	TransMode uint8
-	// default language name. eg. "en"
+	// DefaultLang 为默认语言名，Dt、DefTr 等方法按该语言翻译。
 	DefaultLang string
-	// spare(fallback) language name. eg. "en"
+	// FallbackLang 为备用语言名，当前语言缺失键时回退到该语言查找。
 	FallbackLang string
 }
 
-/************************************************************
- * default instance
- ************************************************************/
-
-// default instance
+// defI18n 为包级默认管理器实例。
 var defI18n = NewEmpty()
 
-// Default get default i18n instance
+// Default 返回包级默认的 I18n 实例。
 func Default() *I18n {
 	return defI18n
 }
 
-// T translate language key to value string
+// T 通过默认实例按 lang 翻译 key，args 用于填充消息参数；等价于默认实例的 T 方法。
 func T(lang string, key string, args ...any) string {
 	return defI18n.T(lang, key, args...)
 }
 
-// Tr translate language key to value string
+// Tr 通过默认实例按 lang 翻译 key，args 用于填充消息参数；等价于默认实例的 Tr 方法。
 func Tr(lang string, key string, args ...any) string {
 	return defI18n.Tr(lang, key, args...)
 }
 
-// Dt translate language key from default language
+// Dt 通过默认实例按默认语言翻译 key，args 用于填充消息参数。
 func Dt(key string, args ...any) string {
 	return defI18n.DefTr(key, args...)
 }
 
-// DefTr translate language key from default language
+// DefTr 通过默认实例按默认语言翻译 key，args 用于填充消息参数。
 func DefTr(key string, args ...any) string {
 	return defI18n.DefTr(key, args...)
 }
 
-// Init the default language instance
+// Init 配置默认实例的语言目录、默认语言与语言列表，并按当前 LoadMode 加载语言文件；
+// 返回加载完成的默认实例。
 func Init(langDir string, defLang string, languages map[string]string) *I18n {
 	defI18n.langDir = langDir
 	defI18n.languages = languages
@@ -97,96 +85,79 @@ func Init(langDir string, defLang string, languages map[string]string) *I18n {
 	return defI18n.Init()
 }
 
-/************************************************************
- * create instance
- ************************************************************/
-
-// New an i18n instance
+// New 按给定语言目录、默认语言与语言列表构造一个空实例，不会自动加载语言文件。
 func New(langDir string, defLang string, languages map[string]string) *I18n {
 	return &I18n{
-		data: make(map[string]*ini.Ini),
-		// language data config
-		langDir:   langDir,
-		languages: languages,
-		// set default lang
+		data:        make(map[string]*ini.Ini),
+		langDir:     langDir,
+		languages:   languages,
 		DefaultLang: defLang,
 	}
 }
 
-// NewEmpty nwe an empty i18n instance
+// NewEmpty 构造一个不含目录、默认语言与语言列表的空实例。
 func NewEmpty() *I18n {
 	return &I18n{
-		data: make(map[string]*ini.Ini),
-		// init languages
+		data:      make(map[string]*ini.Ini),
 		languages: make(map[string]string),
 	}
 }
 
-// NewWithInit a i18n instance and call init
+// NewWithInit 构造实例并立即调用 Init 加载语言文件，返回加载完成的实例。
 func NewWithInit(langDir string, defLang string, languages map[string]string) *I18n {
 	m := New(langDir, defLang, languages)
 
 	return m.Init()
 }
 
-/************************************************************
- * translate message
- ************************************************************/
-
-// Dt translate from default lang
+// Dt 按默认语言翻译 key，args 用于填充消息参数。
 func (l *I18n) Dt(key string, args ...any) string {
 	return l.Tr(l.DefaultLang, key, args...)
 }
 
-// DefTr translate from default lang
+// DefTr 按默认语言翻译 key，args 用于填充消息参数。
 func (l *I18n) DefTr(key string, args ...any) string {
 	return l.Tr(l.DefaultLang, key, args...)
 }
 
-// T translate from a lang by key
+// T 按指定语言翻译 key，args 用于填充消息参数。
 func (l *I18n) T(lang, key string, args ...any) string {
 	return l.Tr(lang, key, args...)
 }
 
-// Tr translate from a lang by key
-// site.name => [site]
+// Tr 按指定语言翻译 key，args 用于填充消息参数。
 //
-//	name = my blog
+// 语言未注册或当前语言缺失键时，回退到 FallbackLang 查找；备用语言仍取不到时
+// 原样返回 key。键路径可使用节名前缀，例如 site.name 对应 INI 的 [site] 节。
 func (l *I18n) Tr(lang, key string, args ...any) string {
 	if !l.HasLang(lang) {
-		// find from fallback lang
 		msg := l.transFromFallback(key)
 		if msg == "" {
 			return key
 		}
 
-		// if has args for the message
 		if len(args) > 0 {
 			msg = l.renderMessage(msg, args...)
 		}
 		return msg
 	}
 
-	// find message by key
 	msg, ok := l.data[lang].GetValue(key)
 	if !ok {
-		// key not exists, find from fallback lang
 		msg = l.transFromFallback(key)
 	}
 
-	// message is empty
 	if msg == "" {
 		return key
 	}
 
-	// if has args for the message
 	if len(args) > 0 {
 		msg = l.renderMessage(msg, args...)
 	}
 	return msg
 }
 
-// HasKey in the language data
+// HasKey 判断已注册的 lang 语言下是否存在 key。
 func (l *I18n) HasKey(lang, key string) (ok bool) {
 	if !l.HasLang(lang) {
 		return
@@ -196,7 +167,7 @@ func (l *I18n) HasKey(lang, key string) (ok bool) {
 	return
 }
 
-// translate from fallback language
+// transFromFallback 从备用语言中查找 key；备用语言未注册时返回空串。
 func (l *I18n) transFromFallback(key string) string {
 	fl := l.FallbackLang
 	if !l.HasLang(fl) {
@@ -206,26 +177,26 @@ func (l *I18n) transFromFallback(key string) string {
 	return l.data[fl].String(key)
 }
 
+// renderMessage 按 TransMode 用 args 填充消息 msg；ReplaceMode 支持 []string 替换对、
+// map[string]any 以及交替出现的键、值参数。
 func (l *I18n) renderMessage(msg string, args ...any) string {
 	if l.TransMode == SprintfMode {
 		return fmt.Sprintf(msg, args...)
 	}
 
-	// if args[0] is []string
 	if ss, ok := args[0].([]string); ok {
 		return strings.NewReplacer(ss...).Replace(msg)
 	}
 
 	var ss []string
 
-	// if args is map[string]any
 	if mp, ok := args[0].(map[string]any); ok {
 		for k, v := range mp {
 			ss = append(ss, "{"+k+"}")
 			ss = append(ss, toString(v))
 		}
 	} else {
-		// if args is: {field1, value1, field2, value2, ...}, try convert all element to string.
+		// 交替传入 键、值、键、值……，偶数下标补充为 {键} 形式。
 		for i, val := range args {
 			str := toString(val)
 			if i%2 == 0 {
@@ -239,7 +210,7 @@ func (l *I18n) renderMessage(msg string, args ...any) string {
 	return strings.NewReplacer(ss...).Replace(msg)
 }
 
-// convert value to string
+// toString 将参数转换为字符串；不支持的类型返回占位标记 "CANNOT-TO-STRING"。
 func toString(val any) (str string) {
 	switch tVal := val.(type) {
 	case int:
@@ -276,11 +247,8 @@ func toString(val any) (str string) {
 	return
 }
 
-/************************************************************
- * data manage
- ************************************************************/
-
-// Init load add language files
+// Init 按 LoadMode 加载全部已注册语言的文件；LoadMode 取值非法时直接 panic，
+// 语言文件加载失败时同样 panic；返回实例自身以便链式调用。
 func (l *I18n) Init() *I18n {
 	if l.LoadMode == FileMode {
 		l.loadSingleFiles()
@@ -293,7 +261,7 @@ func (l *I18n) Init() *I18n {
 	return l
 }
 
-// load language files when LoadMode is 0
+// loadSingleFiles 在 FileMode 模式下逐个加载各语言对应的单个 ini 文件。
 func (l *I18n) loadSingleFiles() {
 	pathSep := string(os.PathSeparator)
 
@@ -308,7 +276,7 @@ func (l *I18n) loadSingleFiles() {
 	}
 }
 
-// load language files when LoadMode is 1
+// loadDirFiles 在 DirMode 模式下遍历各语言目录，加载其中全部 ini 文件。
 func (l *I18n) loadDirFiles() {
 	pathSep := string(os.PathSeparator)
 
@@ -322,7 +290,6 @@ func (l *I18n) loadDirFiles() {
 		sl := l.data[lang]
 
 		for _, fi := range files {
-			// skip dir and filter the specified format
 			if fi.IsDir() || !strings.HasSuffix(fi.Name(), ".ini") {
 				continue
 			}
@@ -330,7 +297,7 @@ func (l *I18n) loadDirFiles() {
 			var err error
 			if sl != nil {
 				err = sl.LoadFiles(dirPath + pathSep + fi.Name())
-			} else { // create new language instance
+			} else {
 				sl = ini.New()
 				err = sl.LoadFiles(dirPath + pathSep + fi.Name())
 				l.data[lang] = sl
@@ -343,17 +310,13 @@ func (l *I18n) loadDirFiles() {
 	}
 }
 
-// Add new language
+// Add 注册新语言，是 NewLang 的别名。
 func (l *I18n) Add(lang string, name string) {
 	l.NewLang(lang, name)
 }
 
-// NewLang create/add a new language
-// Usage:
-//
-//	i18n.NewLang("zh-CN", "简体中文")
+// NewLang 注册一个新语言及其显示名；语言已存在时直接忽略，不覆盖原有数据。
 func (l *I18n) NewLang(lang string, name string) {
-	// lang exist
 	if _, ok := l.languages[lang]; ok {
 		return
 	}
@@ -362,12 +325,8 @@ func (l *I18n) NewLang(lang string, name string) {
 	l.languages[lang] = name
 }
 
-// LoadFile append data to a exist language
-// Usage:
-//
-//	i18n.LoadFile("zh-CN", "path/to/zh-CN.ini")
+// LoadFile 将 ini 文件内容追加到已注册的 lang 语言；语言未注册或文件加载失败时返回错误。
 func (l *I18n) LoadFile(lang string, file string) (err error) {
-	// append data
 	if ld, ok := l.data[lang]; ok {
 		err = ld.LoadFiles(file)
 		if err != nil {
@@ -380,12 +339,9 @@ func (l *I18n) LoadFile(lang string, file string) (err error) {
 	return
 }
 
-// LoadString load language data form a string
-// Usage:
-//
-//	i18n.Set("zh-CN", "name = blog")
+// LoadString 将 INI 格式字符串内容追加到已注册的 lang 语言；
+// 语言未注册或内容解析失败时返回错误。
 func (l *I18n) LoadString(lang string, data string) (err error) {
-	// append data
 	if ld, ok := l.data[lang]; ok {
 		err = ld.LoadStrings(data)
 		if err != nil {
@@ -398,7 +354,7 @@ func (l *I18n) LoadString(lang string, data string) (err error) {
 	return
 }
 
-// Lang get language data instance
+// Lang 返回 lang 语言对应的 INI 实例；语言未注册时返回 nil。
 func (l *I18n) Lang(lang string) *ini.Ini {
 	if _, ok := l.languages[lang]; ok {
 		return l.data[lang]
@@ -407,7 +363,7 @@ func (l *I18n) Lang(lang string) *ini.Ini {
 	return nil
 }
 
-// Export a language data as INI string
+// Export 将 lang 语言的数据导出为 INI 格式字符串；语言未注册时返回空串，写出失败时 panic。
 func (l *I18n) Export(lang string) string {
 	if _, ok := l.languages[lang]; !ok {
 		return ""
@@ -423,13 +379,13 @@ func (l *I18n) Export(lang string) string {
 	return buf.String()
 }
 
-// HasLang in the manager
+// HasLang 判断管理器中是否已注册 lang 语言。
 func (l *I18n) HasLang(lang string) bool {
 	_, ok := l.languages[lang]
 	return ok
 }
 
-// DelLang from the i18n manager
+// DelLang 移除指定语言及其翻译数据，返回是否确实移除了已存在的语言。
 func (l *I18n) DelLang(lang string) bool {
 	_, ok := l.languages[lang]
 	if ok {
@@ -440,7 +396,7 @@ func (l *I18n) DelLang(lang string) bool {
 	return ok
 }
 
-// Languages get all languages
+// Languages 返回已注册语言映射（语言名到显示名）；返回的是内部 map，调用方不应修改。
 func (l *I18n) Languages() map[string]string {
 	return l.languages
 }

@@ -6,83 +6,125 @@ import (
 	"github.com/spf13/cast"
 )
 
+// DaoParam 承载生成 DAO 代码所需的表信息与字段列表，零值不可直接使用，须先填充 Table 与 TableColumn。
 type DaoParam struct {
 	Table       Table
 	TableColumn []Column
 }
 
-// Table 表信息
+// Table 描述数据库中一张表的元信息。
 type Table struct {
-	TableName    string `gorm:"column:TABLE_NAME"`    // 表名
-	TableComment string `gorm:"column:TABLE_COMMENT"` // 表注释
+	// TableName 为表名。
+	TableName string `gorm:"column:TABLE_NAME"`
+	// TableComment 为表注释。
+	TableComment string `gorm:"column:TABLE_COMMENT"`
 }
 
-// Column 字段新
+// Column 描述表中一个字段的元信息及其在各目标语言下的类型映射。
 type Column struct {
-	ColumnName      string   `gorm:"column:COLUMN_NAME"`    // 字段名
-	IsNullable      string   `gorm:"column:IS_NULLABLE"`    // 是否为空
-	DataType        string   `gorm:"column:DATA_TYPE"`      // 字段类型
-	ColumnKey       string   `gorm:"column:COLUMN_KEY"`     // 是否索引
-	ColumnComment   string   `gorm:"column:COLUMN_COMMENT"` // 字段描述
-	PosiTion        int64    `gorm:"-"`
-	DataTypeMap     DataType `gorm:"-"`
-	AlisaColumnName string   `gorm:"-"`
+	// ColumnName 为字段名。
+	ColumnName string `gorm:"column:COLUMN_NAME"`
+	// IsNullable 表示字段是否允许为 NULL，取值 YES 或 NO。
+	IsNullable string `gorm:"column:IS_NULLABLE"`
+	// DataType 为归一化后的数据库字段类型。
+	DataType string `gorm:"column:DATA_TYPE"`
+	// ColumnKey 为索引键类型，主键为 PRI，唯一索引为 UNIQUE。
+	ColumnKey string `gorm:"column:COLUMN_KEY"`
+	// ColumnComment 为字段注释。
+	ColumnComment string `gorm:"column:COLUMN_COMMENT"`
+	// PosiTion 为字段在生成代码中的位置序号。
+	PosiTion int64 `gorm:"-"`
+	// DataTypeMap 为该字段对应的多语言类型映射。
+	DataTypeMap DataType `gorm:"-"`
+	// AlisaColumnName 为字段别名，主键字段固定为 id。
+	AlisaColumnName string `gorm:"-"`
 }
 
-// DataType 字段类型信息
+// DataType 描述单个数据库类型在 Go、Proto、TypeScript、JSON 各场景下的类型表示。
 type DataType struct {
-	Default     string // 不空时
-	Empty       string // 为空时
-	Proto       string // Grpc 协议
-	OptionProto bool   // Grpc 协议
-	TypeScript  string // TypeScript
-	Json        string // Json
+	// Default 为非空场景使用的 Go 类型。
+	Default string
+	// Empty 为允许为空场景使用的 null 包类型。
+	Empty string
+	// Proto 为 gRPC Proto 类型名。
+	Proto string
+	// OptionProto 表示是否以 optional 形式生成 Proto 字段。
+	OptionProto bool
+	// TypeScript 为 TypeScript 类型名。
+	TypeScript string
+	// Json 为 JSON 序列化时使用的默认值。
+	Json string
 }
 
-// Index 索引信息
+// Index 描述表上一个索引的元信息。
 type Index struct {
-	IndexName string `gorm:"column:INDEX_NAME"` // 索引名称
-	Field     string `gorm:"column:FIELD"`      // 索引作用字段
+	// IndexName 为索引名称。
+	IndexName string `gorm:"column:INDEX_NAME"`
+	// Field 为索引覆盖的字段，多个字段以逗号分隔。
+	Field string `gorm:"column:FIELD"`
 }
 
+// ModuleParam 承载生成一个模块所需的表、方法与路径上下文，由命令行交互流程填充。
 type ModuleParam struct {
-	Table       Table
+	// Table 为表信息。
+	Table Table
+	// TableColumn 为表字段列表。
 	TableColumn []Column
-	Method      []Method // 方法
-	Pkg         string   // 包名
-	PkgPath     string   // 包名路径
-	Primary     Column   // 主键信息
-	ModName     string   // go.mod 信息
-	Page        bool     // 是否分页
-	SoftDelete  bool     // 是否删除
-	Condition   []Column // 函数需要的条件信息
+	// Method 为待生成的方法列表。
+	Method []Method
+	// Pkg 为生成代码的包名（路径末级）。
+	Pkg string
+	// PkgPath 为包在模块内的相对路径。
+	PkgPath string
+	// Primary 为主键字段信息。
+	Primary Column
+	// ModName 为当前 go.mod 的模块路径。
+	ModName string
+	// Page 表示方法是否需要分页参数。
+	Page bool
+	// SoftDelete 表示是否使用软删除。
+	SoftDelete bool
+	// Condition 为构造查询条件所需的字段列表。
+	Condition []Column
 }
 
-// Method 构造的函数
+// Method 描述待生成的一个数据访问方法及其绑定的表上下文。
 type Method struct {
-	Type           string   // 方法类型(List多个/Item单条/Create新增/Update修改/Delete删除/Only单个)
-	Name           string   // 函数名称
-	Alias          string   // 函数别名
-	Condition      []Column // 函数需要的条件信息
-	ConditionTotal int      // 条件数量
-	Table          Table    // 表信息
-	TableColumn    []Column // 表结构信息
-	Pkg            string   // 包名
-	PkgPath        string   // 包名路径
-	Primary        Column   // 主键信息
-	ModName        string   // go.mod 信息
-	Page           bool     // 是否分页
-	SoftDelete     bool     // 是否删除
+	// Type 为方法类型，取值 Create、Update、Delete、Show、Item、List、Recover、Drop。
+	Type string
+	// Name 为生成的函数名。
+	Name string
+	// Alias 为函数别名。
+	Alias string
+	// Condition 为该方法查询条件的字段列表。
+	Condition []Column
+	// ConditionTotal 为查询条件字段数量。
+	ConditionTotal int
+	// Table 为绑定的表信息。
+	Table Table
+	// TableColumn 为表结构信息。
+	TableColumn []Column
+	// Pkg 为包名。
+	Pkg string
+	// PkgPath 为包在模块内的相对路径。
+	PkgPath string
+	// Primary 为主键字段信息。
+	Primary Column
+	// ModName 为 go.mod 的模块路径。
+	ModName string
+	// Page 表示是否分页。
+	Page bool
+	// SoftDelete 表示是否软删除。
+	SoftDelete bool
 }
 
-// convert
+// SqlResultConvert 记录需要归一化的数据库类型映射，键为原始类型，值为归一化后的类型。
 var SqlResultConvert = map[string]string{
 	"int8": "bigint",
 	"int4": "int",
 }
 
-// var unExpandVarPath = []string{"~", ".", ".."}
-
+// NewDataType 返回数据库类型到各目标语言类型映射的完整对照表，调用方不应修改返回结果。
 func NewDataType() map[string]DataType {
 	res := make(map[string]DataType)
 	res["numeric"] = DataType{Default: "float64", Empty: "null.Float64", Proto: "double", OptionProto: true, TypeScript: "number", Json: "0"}
@@ -126,7 +168,9 @@ func NewDataType() map[string]DataType {
 	return res
 }
 
-// TableList 获取数据中表的信息
+// TableList 查询指定数据库下全部数据表的元信息。
+//
+// 依据当前 Driver 选择 MySQL 或 PostgreSQL 的系统表执行查询；SQL 执行失败时返回对应错误。
 func TableList(ctx context.Context, DbName string) ([]Table, error) {
 	var res []Table
 	var query string
@@ -145,7 +189,7 @@ func TableList(ctx context.Context, DbName string) ([]Table, error) {
 	return res, err
 }
 
-// TableItem 获取数据中表的信息
+// TableItem 查询指定数据库中某一张表的元信息；表不存在时返回零值 Table 与查询错误。
 func TableItem(ctx context.Context, DbName, TableName string) (Table, error) {
 	var res Table
 	var query string
@@ -164,7 +208,7 @@ func TableItem(ctx context.Context, DbName, TableName string) (Table, error) {
 	return res, err
 }
 
-// TableColumn 获取数据中表中字段的信息
+// TableColumn 查询指定表的全部字段信息，并补全类型映射与字段位置序号；SQL 执行失败时返回错误。
 func TableColumn(ctx context.Context, DbName, TableName string) ([]Column, error) {
 	var res []Column
 	var query string
@@ -182,8 +226,6 @@ func TableColumn(ctx context.Context, DbName, TableName string) ([]Column, error
 	handle.Scan(&res)
 	err = handle.Error
 	if err == nil {
-		//首先去进行一个数据的装换
-		//SqlResultConvert
 		for k, v := range res {
 			if val, ok := SqlResultConvert[v.DataType]; ok {
 				res[k].DataType = val
@@ -199,7 +241,7 @@ func TableColumn(ctx context.Context, DbName, TableName string) ([]Column, error
 	return res, err
 }
 
-// TableIndex 获取表的索引信息
+// TableIndex 查询指定表的索引信息，主键索引不在结果内；SQL 执行失败时返回错误。
 func TableIndex(ctx context.Context, DbName, TableName string) ([]Index, error) {
 	var res []Index
 	var query string
@@ -218,7 +260,7 @@ func TableIndex(ctx context.Context, DbName, TableName string) ([]Index, error) 
 	return res, err
 }
 
-// TablePrimary 获取主键
+// TablePrimary 查询指定表的主键字段信息，并将字段别名固定为 id；表没有主键或查询失败时返回错误。
 func TablePrimary(ctx context.Context, DbName, TableName string) (Column, error) {
 	var res Column
 	var query string
@@ -235,8 +277,6 @@ func TablePrimary(ctx context.Context, DbName, TableName string) (Column, error)
 	handle.Scan(&res)
 	err = handle.Error
 	if err == nil {
-		//首先去进行一个数据的装换
-		//SqlResultConvert
 		if val, ok := SqlResultConvert[res.DataType]; ok {
 			res.DataType = val
 		}

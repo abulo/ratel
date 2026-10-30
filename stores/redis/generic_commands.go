@@ -7,7 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// Del 删除给定的一个或多个key keys: 要删除的key列表
+// Del 删除给定的一个或多个键，返回实际删除的数量；不存在的键被忽略。
 func (r *Client) Del(ctx context.Context, keys ...string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -20,7 +20,7 @@ func (r *Client) Del(ctx context.Context, keys ...string) (val int64, err error)
 	return
 }
 
-// Dump 序列化给定key key: 要序列化的key
+// Dump 序列化给定键的值，返回 RDB 格式的字符串；键不存在时返回 redis.Nil。
 func (r *Client) Dump(ctx context.Context, key string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -33,7 +33,7 @@ func (r *Client) Dump(ctx context.Context, key string) (val string, err error) {
 	return
 }
 
-// Exists 检查给定key是否存在 key: 要检查的key
+// Exists 判断给定键是否存在，存在键数量大于 0 时返回 true；支持一次传入多个键。
 func (r *Client) Exists(ctx context.Context, key ...string) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -47,7 +47,7 @@ func (r *Client) Exists(ctx context.Context, key ...string) (val bool, err error
 	return
 }
 
-// Expire 为给定key设置生存时间 key: 要设置的key expiration: 生存时间
+// Expire 为 key 设置生存时间 expiration，设置成功返回 true；键不存在时返回 false。
 func (r *Client) Expire(ctx context.Context, key string, expiration time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -60,7 +60,7 @@ func (r *Client) Expire(ctx context.Context, key string, expiration time.Duratio
 	return
 }
 
-// ExpireAt 以UNIX时间戳格式设置key的过期时间 key: 要设置的key tm: 过期时间
+// ExpireAt 以 UNIX 时间戳 tm 设置 key 的过期时刻，成功返回 true。
 func (r *Client) ExpireAt(ctx context.Context, key string, tm time.Time) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -73,7 +73,7 @@ func (r *Client) ExpireAt(ctx context.Context, key string, tm time.Time) (val bo
 	return
 }
 
-// ExpireTime 返回key的剩余生存时间 key: 要查询的key
+// ExpireTime 返回 key 的剩余生存时间；键不存在或未设置过期时间时返回服务端约定的负值。
 func (r *Client) ExpireTime(ctx context.Context, key string) (val time.Duration, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -86,7 +86,7 @@ func (r *Client) ExpireTime(ctx context.Context, key string) (val time.Duration,
 	return
 }
 
-// ExpireNX 仅在key不存在时设置生存时间 key: 要设置的key tm: 生存时间
+// ExpireNX 仅当 key 当前未设置过期时间时设置生存时间 tm。
 func (r *Client) ExpireNX(ctx context.Context, key string, tm time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -99,7 +99,7 @@ func (r *Client) ExpireNX(ctx context.Context, key string, tm time.Duration) (va
 	return
 }
 
-// ExpireXX 仅在key存在时设置生存时间 key: 要设置的key tm: 生存时间
+// ExpireXX 仅当 key 已设置过期时间时更新生存时间 tm。
 func (r *Client) ExpireXX(ctx context.Context, key string, tm time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -112,7 +112,7 @@ func (r *Client) ExpireXX(ctx context.Context, key string, tm time.Duration) (va
 	return
 }
 
-// ExpireGT 仅在当前生存时间大于给定值时设置 key: 要设置的key tm: 生存时间
+// ExpireGT 仅当 key 当前剩余生存时间大于 tm 时将其更新为 tm。
 func (r *Client) ExpireGT(ctx context.Context, key string, tm time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -125,7 +125,7 @@ func (r *Client) ExpireGT(ctx context.Context, key string, tm time.Duration) (va
 	return
 }
 
-// ExpireLT 仅在当前生存时间小于给定值时设置 key: 要设置的key tm: 生存时间
+// ExpireLT 仅当 key 当前剩余生存时间小于 tm 时将其更新为 tm。
 func (r *Client) ExpireLT(ctx context.Context, key string, tm time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -138,7 +138,7 @@ func (r *Client) ExpireLT(ctx context.Context, key string, tm time.Duration) (va
 	return
 }
 
-// Keys 查找符合模式的key key: 要匹配的模式
+// Keys 返回匹配模式 pattern 的全部键；该命令在大库上会阻塞服务器，生产环境应改用 Scan。
 func (r *Client) Keys(ctx context.Context, key string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -151,7 +151,7 @@ func (r *Client) Keys(ctx context.Context, key string) (val []string, err error)
 	return
 }
 
-// Migrate 将key迁移到其他实例 host: 目标主机 port: 目标端口 key: 要迁移的key db: 目标数据库 timeout: 超时时间
+// Migrate 将 key 迁移到 host:port 指定的目标实例的 db 数据库，timeout 为迁移操作超时时间。
 func (r *Client) Migrate(ctx context.Context, host, port, key string, db int, timeout time.Duration) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -164,7 +164,7 @@ func (r *Client) Migrate(ctx context.Context, host, port, key string, db int, ti
 	return
 }
 
-// Move 将key移动到其他数据库 key: 要移动的key db: 目标数据库
+// Move 将 key 移动到当前实例的 db 数据库；目标库已存在同名键时移动失败。
 func (r *Client) Move(ctx context.Context, key string, db int) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -177,7 +177,7 @@ func (r *Client) Move(ctx context.Context, key string, db int) (val bool, err er
 	return
 }
 
-// ObjectFreq 返回key引用对象的频率 key: 要查询的key
+// ObjectFreq 返回 key 对应对象的对数访问频率（LFU 计数器）。
 func (r *Client) ObjectFreq(ctx context.Context, key string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -190,7 +190,7 @@ func (r *Client) ObjectFreq(ctx context.Context, key string) (val int64, err err
 	return
 }
 
-// ObjectRefCount 返回key的引用计数 key: 要查询的key
+// ObjectRefCount 返回 key 对应对象被引用的次数。
 func (r *Client) ObjectRefCount(ctx context.Context, key string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -203,7 +203,7 @@ func (r *Client) ObjectRefCount(ctx context.Context, key string) (val int64, err
 	return
 }
 
-// ObjectEncoding 返回key的内部编码格式 key: 要查询的key
+// ObjectEncoding 返回 key 对应对象的内部编码格式。
 func (r *Client) ObjectEncoding(ctx context.Context, key string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -216,7 +216,7 @@ func (r *Client) ObjectEncoding(ctx context.Context, key string) (val string, er
 	return
 }
 
-// ObjectIdleTime 返回key的空转时间 key: 要查询的key
+// ObjectIdleTime 返回 key 对应对象自上次被访问以来的空闲时长。
 func (r *Client) ObjectIdleTime(ctx context.Context, key string) (val time.Duration, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -229,7 +229,7 @@ func (r *Client) ObjectIdleTime(ctx context.Context, key string) (val time.Durat
 	return
 }
 
-// Persist 移除key的生存时间 key: 要操作的key
+// Persist 移除 key 的生存时间使其持久保留，操作成功返回 true。
 func (r *Client) Persist(ctx context.Context, key string) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -242,7 +242,7 @@ func (r *Client) Persist(ctx context.Context, key string) (val bool, err error) 
 	return
 }
 
-// PExpire 以毫秒为单位设置key生存时间 key: 要设置的key expiration: 生存时间
+// PExpire 以毫秒为单位为 key 设置生存时间 expiration。
 func (r *Client) PExpire(ctx context.Context, key string, expiration time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -255,7 +255,7 @@ func (r *Client) PExpire(ctx context.Context, key string, expiration time.Durati
 	return
 }
 
-// PExpireAt 以毫秒为单位设置key过期时间戳 key: 要设置的key tm: 过期时间
+// PExpireAt 以毫秒时间戳 tm 设置 key 的过期时刻。
 func (r *Client) PExpireAt(ctx context.Context, key string, tm time.Time) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -268,6 +268,7 @@ func (r *Client) PExpireAt(ctx context.Context, key string, tm time.Time) (val b
 	return
 }
 
+// PExpireTime 以毫秒为单位返回 key 的剩余生存时间；键不存在或未设置过期时间时返回服务端约定的负值。
 func (r *Client) PExpireTime(ctx context.Context, key string) (val time.Duration, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -280,7 +281,7 @@ func (r *Client) PExpireTime(ctx context.Context, key string) (val time.Duration
 	return
 }
 
-// PTTL 以毫秒为单位返回key剩余生存时间 key: 要查询的key
+// PTTL 以毫秒为单位返回 key 的剩余生存时间；键不存在或未设置过期时间时返回服务端约定的负值。
 func (r *Client) PTTL(ctx context.Context, key string) (val time.Duration, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -293,7 +294,7 @@ func (r *Client) PTTL(ctx context.Context, key string) (val time.Duration, err e
 	return
 }
 
-// RandomKey 随机返回一个key
+// RandomKey 随机返回当前数据库中的一个键；数据库为空时返回 redis.Nil。
 func (r *Client) RandomKey(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -306,7 +307,7 @@ func (r *Client) RandomKey(ctx context.Context) (val string, err error) {
 	return
 }
 
-// Rename 重命名key key: 原key名 newkey: 新key名
+// Rename 将 key 重命名为 newkey；原键不存在时报错，目标键已存在时被覆盖。
 func (r *Client) Rename(ctx context.Context, key, newkey string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -319,7 +320,7 @@ func (r *Client) Rename(ctx context.Context, key, newkey string) (val string, er
 	return
 }
 
-// RenameNX 仅在newkey不存在时重命名key key: 原key名 newkey: 新key名
+// RenameNX 仅当 newkey 不存在时将 key 重命名为 newkey，成功返回 true。
 func (r *Client) RenameNX(ctx context.Context, key, newkey string) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -332,7 +333,7 @@ func (r *Client) RenameNX(ctx context.Context, key, newkey string) (val bool, er
 	return
 }
 
-// Restore 反序列化值并与key关联 key: 目标key ttl: 生存时间 value: 序列化值
+// Restore 用 Dump 产生的序列化值重建 key，ttl 为生存时间（0 表示不过期）。
 func (r *Client) Restore(ctx context.Context, key string, ttl time.Duration, value string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -345,7 +346,7 @@ func (r *Client) Restore(ctx context.Context, key string, ttl time.Duration, val
 	return
 }
 
-// RestoreReplace -> Restore
+// RestoreReplace 同 Restore，但目标键已存在时先覆盖再写入。
 func (r *Client) RestoreReplace(ctx context.Context, key string, ttl time.Duration, value string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -358,7 +359,7 @@ func (r *Client) RestoreReplace(ctx context.Context, key string, ttl time.Durati
 	return
 }
 
-// Sort 对key中的元素进行排序 key: 要排序的key sort: 排序参数
+// Sort 按 Sort 参数对 key 中的元素排序并返回结果。
 func (r *Client) Sort(ctx context.Context, key string, sort *redis.Sort) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -371,6 +372,7 @@ func (r *Client) Sort(ctx context.Context, key string, sort *redis.Sort) (val []
 	return
 }
 
+// SortRO 只读模式执行 Sort，排序参数中不允许使用 STORE。
 func (r *Client) SortRO(ctx context.Context, key string, sort *redis.Sort) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -383,7 +385,7 @@ func (r *Client) SortRO(ctx context.Context, key string, sort *redis.Sort) (val 
 	return
 }
 
-// SortStore -> Sort
+// SortStore 按 Sort 参数排序并将结果存入 store 键，返回结果元素数量。
 func (r *Client) SortStore(ctx context.Context, key, store string, sort *redis.Sort) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -396,7 +398,7 @@ func (r *Client) SortStore(ctx context.Context, key, store string, sort *redis.S
 	return
 }
 
-// SortInterfaces -> Sort
+// SortInterfaces 同 Sort，排序结果以 any 切片返回。
 func (r *Client) SortInterfaces(ctx context.Context, key string, sort *redis.Sort) (val []any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -409,7 +411,7 @@ func (r *Client) SortInterfaces(ctx context.Context, key string, sort *redis.Sor
 	return
 }
 
-// Touch 更改key的最后访问时间 keys: 要操作的key列表
+// Touch 更新给定键的最后访问时间，返回实际被更新的键数量；不存在的键被忽略。
 func (r *Client) Touch(ctx context.Context, keys ...string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -422,7 +424,7 @@ func (r *Client) Touch(ctx context.Context, keys ...string) (val int64, err erro
 	return
 }
 
-// TTL 返回key的剩余生存时间 key: 要查询的key
+// TTL 返回 key 的剩余生存时间（秒）；键不存在或未设置过期时间时返回服务端约定的负值。
 func (r *Client) TTL(ctx context.Context, key string) (val time.Duration, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -435,7 +437,7 @@ func (r *Client) TTL(ctx context.Context, key string) (val time.Duration, err er
 	return
 }
 
-// Type 返回key存储值的类型 key: 要查询的key
+// Type 返回 key 存储值的类型（string/list/set/zset/hash/stream 等）。
 func (r *Client) Type(ctx context.Context, key string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -448,7 +450,7 @@ func (r *Client) Type(ctx context.Context, key string) (val string, err error) {
 	return
 }
 
-// Copy 复制key sourceKey: 源key destKey: 目标key db: 目标数据库 replace: 是否替换
+// Copy 将 sourceKey 复制到 destKey 所在的 db 数据库；replace 指定目标键已存在时是否覆盖。
 func (r *Client) Copy(ctx context.Context, sourceKey, destKey string, db int, replace bool) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -461,7 +463,7 @@ func (r *Client) Copy(ctx context.Context, sourceKey, destKey string, db int, re
 	return
 }
 
-// Scan 增量迭代key cursorIn: 起始游标 match: 匹配模式 count: 每次返回数量
+// Scan 以游标 cursorIn 增量迭代键；match 为匹配模式，count 为建议批次大小，返回本次键与新游标。
 func (r *Client) Scan(ctx context.Context, cursorIn uint64, match string, count int64) (val []string, cursor uint64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -474,7 +476,7 @@ func (r *Client) Scan(ctx context.Context, cursorIn uint64, match string, count 
 	return
 }
 
-// ScanIterator 增量迭代key并返回迭代器 cursorIn: 起始游标 match: 匹配模式 count: 每次返回数量
+// ScanIterator 返回 Scan 的迭代器，供调用方顺序遍历当前数据库中的键。
 func (r *Client) ScanIterator(ctx context.Context, cursorIn uint64, match string, count int64) (val *redis.ScanIterator, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -487,7 +489,7 @@ func (r *Client) ScanIterator(ctx context.Context, cursorIn uint64, match string
 	return
 }
 
-// ScanType 增量迭代key并返回指定类型的key cursorIn: 起始游标 match: 匹配模式 count: 每次返回数量 keyType: key类型
+// ScanType 增量迭代并返回指定类型 keyType 的键；match 为匹配模式，count 为建议批次大小。
 func (r *Client) ScanType(ctx context.Context, cursorIn uint64, match string, count int64, keyType string) (val []string, cursor uint64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

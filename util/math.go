@@ -10,20 +10,19 @@ import (
 	"github.com/spf13/cast"
 )
 
-//////////// Mathematical Functions ////////////
-
-// Abs abs()
+// Abs 返回 number 的绝对值。
 func Abs(number float64) float64 {
 	return math.Abs(number)
 }
 
-// Rand rand()
-// Range: [0, 2147483647]
+// Rand 返回区间 [min, max] 内的随机整数。
+//
+// min 必须小于等于 max，否则 panic；max 不得超过 2^31-1，否则 panic；
+// min 等于 max 时直接返回 min。
 func Rand(min, max int) int {
 	if min > max {
 		panic("min: min cannot be greater than max")
 	}
-	// PHP: getrandmax()
 	if int31 := 1<<31 - 1; max > int31 {
 		panic("max: max can not be greater than " + strconv.Itoa(int31))
 	}
@@ -34,28 +33,28 @@ func Rand(min, max int) int {
 	return r.Intn(max+1-min) + min
 }
 
-// Round round()
+// Round 将 value 四舍五入到 precision 位小数。
 func Round(value float64, precision int) float64 {
 	p := math.Pow10(precision)
 	return math.Trunc((value+0.5/p)*p) / p
 }
 
-// Floor floor()
+// Floor 返回不大于 value 的最大整数。
 func Floor(value float64) float64 {
 	return math.Floor(value)
 }
 
-// Ceil ceil()
+// Ceil 返回不小于 value 的最小整数。
 func Ceil(value float64) float64 {
 	return math.Ceil(value)
 }
 
-// Pi pi()
+// Pi 返回圆周率常量 math.Pi。
 func Pi() float64 {
 	return math.Pi
 }
 
-// Max max()
+// Max 返回 nums 中的最大值；参数少于 2 个时 panic。
 func Max(nums ...float64) float64 {
 	if len(nums) < 2 {
 		panic("nums: the nums length is less than 2")
@@ -67,7 +66,7 @@ func Max(nums ...float64) float64 {
 	return max
 }
 
-// Min min()
+// Min 返回 nums 中的最小值；参数少于 2 个时 panic。
 func Min(nums ...float64) float64 {
 	if len(nums) < 2 {
 		panic("nums: the nums length is less than 2")
@@ -79,12 +78,12 @@ func Min(nums ...float64) float64 {
 	return min
 }
 
-// DecBin Decbin decbin()
+// DecBin 将整数转换为二进制字符串。
 func DecBin(number int64) string {
 	return strconv.FormatInt(number, 2)
 }
 
-// BinDec Bindec bindec()
+// BinDec 将二进制字符串解析为十进制数字字符串；解析失败时返回错误。
 func BinDec(str string) (string, error) {
 	i, err := strconv.ParseInt(str, 2, 0)
 	if err != nil {
@@ -93,7 +92,7 @@ func BinDec(str string) (string, error) {
 	return strconv.FormatInt(i, 10), nil
 }
 
-// Hex2bin hex2bin()
+// Hex2bin 将十六进制字符串转换为二进制字符串；解析失败时返回错误。
 func Hex2bin(data string) (string, error) {
 	i, err := strconv.ParseInt(data, 16, 0)
 	if err != nil {
@@ -102,11 +101,13 @@ func Hex2bin(data string) (string, error) {
 	return strconv.FormatInt(i, 2), nil
 }
 
-// Bin2hex bin2hex()
+// Bin2hex 将二进制字符串转换为十六进制字符串。
+//
+// 输入无法按二进制解析时，退化为按原始字节逐个转换为两位十六进制；其他解析错误
+// 原样返回。
 func Bin2hex(str string) (string, error) {
 	i, err := strconv.ParseInt(str, 2, 0)
 	if err != nil {
-		// If input is not binary number
 		if err.(*strconv.NumError).Err == strconv.ErrSyntax {
 			byteArray := []byte(str)
 			var out strings.Builder
@@ -121,27 +122,27 @@ func Bin2hex(str string) (string, error) {
 	return strconv.FormatInt(i, 16), nil
 }
 
-// Dechex dechex()
+// Dechex 将整数转换为十六进制字符串。
 func Dechex(number int64) string {
 	return strconv.FormatInt(number, 16)
 }
 
-// Hexdec hexdec()
+// Hexdec 将十六进制字符串解析为十进制整数；解析失败时返回错误。
 func Hexdec(str string) (int64, error) {
 	return strconv.ParseInt(str, 16, 0)
 }
 
-// Decoct decoct()
+// Decoct 将整数转换为八进制字符串。
 func Decoct(number int64) string {
 	return strconv.FormatInt(number, 8)
 }
 
-// Octdec Octdec()
+// Octdec 将八进制字符串解析为十进制整数；解析失败时返回错误。
 func Octdec(str string) (int64, error) {
 	return strconv.ParseInt(str, 8, 0)
 }
 
-// BaseConvert base_convert()
+// BaseConvert 将 number 从 frombase 进制转换为 tobase 进制字符串；解析失败时返回错误。
 func BaseConvert(number string, frombase, tobase int) (string, error) {
 	i, err := strconv.ParseInt(number, frombase, 0)
 	if err != nil {
@@ -150,18 +151,18 @@ func BaseConvert(number string, frombase, tobase int) (string, error) {
 	return strconv.FormatInt(i, tobase), nil
 }
 
-// IsNan is_nan()
+// IsNan 判断 value 是否为 NaN（非数字）。
 func IsNan(val float64) bool {
 	return math.IsNaN(val)
 }
 
-// Divide 查询是否被整除
+// Divide 判断 m 是否能被 n 整除；两者先转换为浮点值再取模，余数为 0 时返回 true。
 func Divide(m, n any) bool {
 	r := math.Mod(cast.ToFloat64(m), cast.ToFloat64(n))
 	return r == 0
 }
 
-// Add ...
+// Add 将 m 与 n 转换为整数后相加并返回结果。
 func Add(m, n any) int {
 	return cast.ToInt(m) + cast.ToInt(n)
 }

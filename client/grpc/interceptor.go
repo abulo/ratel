@@ -27,6 +27,8 @@ var (
 	errSlowCommand = errors.New("grpc unary slow command")
 )
 
+// debugUnaryClientInterceptor 构造调试用单向拦截器，在控制台打印目标地址、远端地址、时间戳、
+// 错误或响应内容，供本地排查使用。
 func debugUnaryClientInterceptor(addr string) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		var p peer.Peer
@@ -45,6 +47,8 @@ func debugUnaryClientInterceptor(addr string) grpc.UnaryClientInterceptor {
 	}
 }
 
+// aidUnaryClientInterceptor 构造应用 ID 透传拦截器，将当前应用标识写入出站 metadata 的 aid 键，
+// 供服务端识别调用方。
 func aidUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		md, ok := metadata.FromOutgoingContext(ctx)
@@ -60,11 +64,12 @@ func aidUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 	}
 }
 
-// timeoutUnaryClientInterceptor gRPC客户端超时拦截器
+// timeoutUnaryClientInterceptor 构造单向调用超时与慢调用统计拦截器：上下文未携带截止时间时按
+// timeout 补加超时；调用耗时超过 slowThreshold 时按慢命令记录错误日志。
 func timeoutUnaryClientInterceptor(timeout time.Duration, slowThreshold time.Duration) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		now := time.Now()
-		// 若无自定义超时设置，默认设置超时
+		// 上下文未显式设置截止时间时，使用配置的调用超时兜底。
 		_, ok := ctx.Deadline()
 		if !ok {
 			var cancel context.CancelFunc
@@ -90,6 +95,8 @@ func timeoutUnaryClientInterceptor(timeout time.Duration, slowThreshold time.Dur
 	}
 }
 
+// traceUnaryClientInterceptor 构造单向调用链路追踪拦截器，启动客户端 Span、透传并回写 metadata、
+// 记录方法名与错误状态。
 func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 	tracer := globalTrace.NewTracer(trace.SpanKindClient)
 	attrs := []attribute.KeyValue{
@@ -118,16 +125,16 @@ func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 	}
 }
 
-// loggerUnaryClientInterceptor gRPC客户端日志中间件
+// loggerUnaryClientInterceptor 构造访问日志拦截器：系统级错误记 Error，业务错误记 Warn；
+// 调用成功且级别为 info 时记录访问日志，日志携带方法名、耗时、请求与响应内容。
 func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		beg := time.Now()
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		spbStatus := ecode.ExtractCodes(err)
 		if err != nil {
-			// 只记录系统级别错误
+			// 系统级别错误使用 Error 级别记录。
 			if spbStatus.Code < ecode.EcodeNum {
-				// 只记录系统级别错误
 				logger.Logger.WithFields(logrus.Fields{
 					"code":   spbStatus.Code,
 					"msg":    spbStatus.Message,
@@ -139,7 +146,7 @@ func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) gr
 				}).Error("access_unary")
 
 			} else {
-				// 业务报错只做warning
+				// 业务错误降级为 Warn，避免淹没系统故障日志。
 				logger.Logger.WithFields(logrus.Fields{
 					"code":   spbStatus.Code,
 					"msg":    spbStatus.Message,
@@ -167,17 +174,16 @@ func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) gr
 	}
 }
 
-// metric统计
+// metricUnaryClientInterceptor 构造指标采集拦截器，按方法与目标统计调用次数与耗时；
+// 系统错误与业务错误分别标注错误信息或 biz error。
 func metricUnaryClientInterceptor(name string) func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		beg := time.Now()
 		err := invoker(ctx, method, req, reply, cc, opts...)
 
-		// 收敛err错误，将err过滤后，可以知道err是否为系统错误码
+		// 解析错误码以区分系统错误与业务错误。
 		spbStatus := ecode.ExtractCodes(err)
-		// 只记录系统级别错误
 		if spbStatus.Code < ecode.EcodeNum {
-			// 只记录系统级别的详细错误码
 			metric.ClientHandleCounter.Inc(metric.TypeGRPCUnary, name, method, cc.Target(), spbStatus.GetMessage())
 			metric.ClientHandleHistogram.Observe(time.Since(beg).Seconds(), metric.TypeGRPCUnary, name, method, cc.Target())
 		} else {

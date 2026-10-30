@@ -17,7 +17,10 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-// Server ...
+// Server 在 grpc.Server 之上封装 gRPC 服务端的监听、生命周期管理与注册信息查询。
+//
+// 零值不可直接使用，须由 Config.Build 或 MustBuild 创建；Server 实现 server.Server 接口，
+// 监听地址在创建时由系统端口分配后回填到配置中。
 type Server struct {
 	*grpc.Server
 	listener net.Listener
@@ -67,16 +70,23 @@ func newServer(config *Config) (*Server, error) {
 	)
 
 	kasp := keepalive.ServerParameters{
-		MaxConnectionIdle:     15 * time.Second, // If a client is idle for 15 seconds, send a GOAWAY
-		MaxConnectionAge:      30 * time.Second, // If any connection is alive for more than 30 seconds, send a GOAWAY
-		MaxConnectionAgeGrace: 5 * time.Second,  // Allow 5 seconds for pending RPCs to complete before forcibly closing connections
-		Time:                  5 * time.Second,  // Ping the client if it is idle for 5 seconds to ensure the connection is still active
-		Timeout:               1 * time.Second,  // Wait 1 second for the ping ack before assuming the connection is dead
+		// 客户端空闲 15 秒后发送 GOAWAY。
+		MaxConnectionIdle:     15 * time.Second,
+		// 连接存活超过 30 秒后发送 GOAWAY。
+		MaxConnectionAge:      30 * time.Second,
+		// 给在途 RPC 5 秒宽限期后再强制关闭连接。
+		MaxConnectionAgeGrace: 5 * time.Second,
+		// 连接空闲 5 秒后向客户端发送 Ping 确认存活。
+		Time:                  5 * time.Second,
+		// 等待 Ping 应答 1 秒，超时即判定连接已失效。
+		Timeout:               1 * time.Second,
 	}
 
 	kaep := keepalive.EnforcementPolicy{
-		MinTime:             5 * time.Second, // If a client pings more than once every 5 seconds, terminate the connection
-		PermitWithoutStream: true,            // Allow pings even when there are no active streams
+		// 客户端 Ping 间隔短于 5 秒时断开连接。
+		MinTime:             5 * time.Second,
+		// 允许没有活跃流时发送 Ping。
+		PermitWithoutStream: true,
 	}
 	config.serverOptions = append(config.serverOptions,
 		grpc.KeepaliveParams(kasp),
@@ -97,7 +107,7 @@ func newServer(config *Config) (*Server, error) {
 	}, nil
 }
 
-// Health ...
+// Health 通过尝试接受一条探测连接判断监听端口是否可用，连接可接受时返回 true。
 func (s *Server) Health() bool {
 	conn, err := s.listener.Accept()
 	if err != nil {
@@ -108,27 +118,25 @@ func (s *Server) Health() bool {
 	return true
 }
 
-// Serve implements server.Serve interface.
+// Serve 启动 gRPC 服务并阻塞监听，返回底层服务端退出时的错误。
 func (s *Server) Serve() error {
 	err := s.Server.Serve(s.listener)
 	return err
 }
 
-// Stop implements server.Server interface
-// it will terminate echo server immediately
+// Stop 立即停止 gRPC 服务，不再等待在途 RPC 完成。
 func (s *Server) Stop() error {
 	s.Server.Stop()
 	return nil
 }
 
-// GracefulStop implements server.Server interface
-// it will stop echo server gracefully
+// GracefulStop 等待在途 RPC 处理完成后优雅停止 gRPC 服务。
 func (s *Server) GracefulStop(ctx context.Context) error {
 	s.Server.GracefulStop()
 	return nil
 }
 
-// Info returns server info, used by governor and consumer balancer
+// Info 返回服务注册信息，协议为 grpc；注册地址优先取配置中的 ServiceAddress，否则使用实际监听地址。
 func (s *Server) Info() *server.ServiceInfo {
 	serviceAddress := s.listener.Addr().String()
 	if s.Config.ServiceAddress != "" {

@@ -32,22 +32,20 @@ var (
 	slash     = []byte("/")
 )
 
+// metadataProvider 将 Hertz 请求头适配为链路追踪所需的元数据读写载体。
 type metadataProvider struct {
 	metadata map[string]string
 	headers  *protocol.RequestHeader
 }
 
-// Get a value from metadata by key
 func (m *metadataProvider) Get(key string) string {
 	return m.headers.Get(key)
 }
 
-// Set a value to metadata by k/v
 func (m *metadataProvider) Set(key, value string) {
 	m.headers.Set(key, value)
 }
 
-// Keys Iteratively get all keys of metadata
 func (m *metadataProvider) Keys() []string {
 	out := make([]string, 0, len(m.metadata))
 
@@ -58,6 +56,7 @@ func (m *metadataProvider) Keys() []string {
 	return out
 }
 
+// metricServerInterceptor 返回 HTTP 服务指标采集中间件：请求处理结束后记录耗时直方图与请求计数器。
 func metricServerInterceptor() app.HandlerFunc {
 	return func(c context.Context, ctx *app.RequestContext) {
 		beg := time.Now()
@@ -67,6 +66,7 @@ func metricServerInterceptor() app.HandlerFunc {
 	}
 }
 
+// traceServerInterceptor 返回服务端链路追踪中间件：创建服务端 Span、填充 HTTP 属性并结束 Span。
 func traceServerInterceptor() app.HandlerFunc {
 	return func(c context.Context, ctx *app.RequestContext) {
 		tracer := globalTrace.NewTracer(trace.SpanKindServer)
@@ -88,6 +88,9 @@ func traceServerInterceptor() app.HandlerFunc {
 	}
 }
 
+// recoverMiddleware 返回 panic 恢复与访问日志中间件：捕获 panic 并记录错误与调用栈，
+// 识别客户端断管（broken pipe、connection reset）后直接中止，其余 panic 返回 500；
+// 请求耗时超过阈值时在日志中标记慢查询。
 func recoverMiddleware(slowQueryThresholdInMilli int64) app.HandlerFunc {
 	return func(c context.Context, ctx *app.RequestContext) {
 
@@ -134,19 +137,17 @@ func recoverMiddleware(slowQueryThresholdInMilli int64) app.HandlerFunc {
 	}
 }
 
-// stack returns a nicely formatted stack frame, skipping skip frames.
+// stack 返回跳过 skip 帧后格式化的调用栈，包含文件、行号、函数名与对应源码行；源码不可读时用占位符表示。
 func stack(skip int) []byte {
-	buf := new(bytes.Buffer) // the returned data
-	// As we loop, we open files and read them. These variables record the currently
-	// loaded file.
+	buf := new(bytes.Buffer)
 	var lines [][]byte
 	var lastFile string
-	for i := skip; ; i++ { // Skip the expected number of frames
+	for i := skip; ; i++ {
 		pc, file, line, ok := runtime.Caller(i)
 		if !ok {
 			break
 		}
-		// Print this much at least.  If we can't find the source, it won't show.
+		// 找不到源码文件时至少输出文件、行号与程序计数器地址。
 		fmt.Fprintf(buf, "%s:%d (0x%x)\n", file, line, pc)
 		if file != lastFile {
 			data, err := os.ReadFile(file)
@@ -161,21 +162,15 @@ func stack(skip int) []byte {
 	return buf.Bytes()
 }
 
-// function returns, if possible, the name of the function containing the PC.
+// function 返回程序计数器 pc 对应函数的简称：剥离包路径前缀并将包名中的中点替换为点。
 func function(pc uintptr) []byte {
 	fn := runtime.FuncForPC(pc)
 	if fn == nil {
 		return dunno
 	}
 	name := []byte(fn.Name())
-	// The name includes the path name to the package, which is unnecessary
-	// since the file name is already included.  Plus, it has center dots.
-	// That is, we see
-	//	runtime/debug.*T·ptrmethod
-	// and want
-	//	*T.ptrmethod
-	// Also the package path might contains dot (e.g. code.google.com/...),
-	// so first eliminate the path prefix
+	// runtime.FuncForPC 返回的全名带有包路径前缀，而文件路径已经输出在前一行；
+	// 同时先按斜杠去除路径前缀，再按点去除包名，避免包名本身含点时误删。
 	if lastSlash := bytes.LastIndex(name, slash); lastSlash >= 0 {
 		name = name[lastSlash+1:]
 	}
@@ -186,9 +181,10 @@ func function(pc uintptr) []byte {
 	return name
 }
 
-// source returns a space-trimmed slice of the n'th line.
+// source 返回源码行切片中第 n 行去除首尾空白后的内容；行号越界时返回 "???" 占位符。
 func source(lines [][]byte, n int) []byte {
-	n-- // in stack trace, lines are 1-indexed but our array is 0-indexed
+	// 调用栈中行号从 1 开始计数，而切片下标从 0 开始。
+	n--
 	if n < 0 || n >= len(lines) {
 		return dunno
 	}
@@ -199,40 +195,39 @@ func extractAID(ctx *app.RequestContext) string {
 	return ctx.Request.Header.Get("AID")
 }
 
-// HTTPHeader is provided to wrap an http.Header into an HTTPHeaderCarrier.
+// HTTPHeader 将标准库 http.Header 适配为键到单值切片的映射，供链路追踪载体使用。
 type HTTPHeader map[string][]string
 
-// Visit implements the HTTPHeaderCarrier interface.
+// Visit 遍历映射中每个键的第一个值并调用回调，实现 HTTPHeaderCarrier 接口。
 func (h HTTPHeader) Visit(v func(k, v string)) {
 	for k, vs := range h {
 		v(k, vs[0])
 	}
 }
 
-// Set sets the header entries associated with key to the single element value.
-// The key will converted into lowercase as the HTTP/2 protocol requires.
+// Set 将指定键的值设置为单元素切片；键名统一转为小写，符合 HTTP/2 协议要求。
 func (h HTTPHeader) Set(key, value string) {
 	h[strings.ToLower(key)] = []string{value}
 }
 
-// HTTPHeaderCarrier accepts a visitor to access all key value pairs in an HTTP header.
+// HTTPHeaderCarrier 抽象对 HTTP 头部全部键值对的遍历访问能力。
 type HTTPHeaderCarrier interface {
 	Visit(func(k, v string))
 }
 
-// HTTPHeaderSetter sets a key with a value into a HTTP header.
+// HTTPHeaderSetter 抽象向 HTTP 头部写入单个键值对的能力。
 type HTTPHeaderSetter interface {
 	Set(key, value string)
 }
 
-// HTTPHeaderToCGIVariable performs an CGI variable conversion.
-// For example, an HTTP header key `abc-def` will result in `ABC_DEF`.
+// HTTPHeaderToCGIVariable 将 HTTP 头部键名转换为 CGI 变量名：连字符转为下划线并整体大写，
+// 例如 abc-def 转换为 ABC_DEF。
 func HTTPHeaderToCGIVariable(key string) string {
 	return strings.ToUpper(strings.ReplaceAll(key, "-", "_"))
 }
 
-// CGIVariableToHTTPHeader converts a CGI variable into an HTTP header key.
-// For example, `ABC_DEF` will be converted to `abc-def`.
+// CGIVariableToHTTPHeader 将 CGI 变量名转换回 HTTP 头部键名：下划线转为连字符并整体小写，
+// 例如 ABC_DEF 转换为 abc-def。
 func CGIVariableToHTTPHeader(key string) string {
 	return strings.ToLower(strings.ReplaceAll(key, "_", "-"))
 }

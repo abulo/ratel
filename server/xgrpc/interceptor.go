@@ -20,7 +20,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// StreamInterceptorChain returns stream interceptors chain.
+// StreamInterceptorChain 将多个流式服务端拦截器按传入顺序串联为单个拦截器；
+// 未传入拦截器时返回直接调用处理器的拦截器。
 func StreamInterceptorChain(interceptors ...grpc.StreamServerInterceptor) grpc.StreamServerInterceptor {
 	build := func(c grpc.StreamServerInterceptor, n grpc.StreamHandler, info *grpc.StreamServerInfo) grpc.StreamHandler {
 		return func(srv any, stream grpc.ServerStream) error {
@@ -36,7 +37,8 @@ func StreamInterceptorChain(interceptors ...grpc.StreamServerInterceptor) grpc.S
 	}
 }
 
-// UnaryInterceptorChain returns interceptors chain.
+// UnaryInterceptorChain 将多个一元服务端拦截器按传入顺序串联为单个拦截器；
+// 未传入拦截器时返回直接调用处理器的拦截器。
 func UnaryInterceptorChain(interceptors ...grpc.UnaryServerInterceptor) grpc.UnaryServerInterceptor {
 	build := func(c grpc.UnaryServerInterceptor, n grpc.UnaryHandler, info *grpc.UnaryServerInfo) grpc.UnaryHandler {
 		return func(ctx context.Context, req any) (any, error) {
@@ -53,6 +55,7 @@ func UnaryInterceptorChain(interceptors ...grpc.UnaryServerInterceptor) grpc.Una
 	}
 }
 
+// prometheusUnaryServerInterceptor 记录一元 RPC 的耗时直方图与请求计数器，错误码从返回错误中提取。
 func prometheusUnaryServerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	startTime := time.Now()
 	resp, err := handler(ctx, req)
@@ -62,6 +65,7 @@ func prometheusUnaryServerInterceptor(ctx context.Context, req any, info *grpc.U
 	return resp, err
 }
 
+// prometheusStreamServerInterceptor 记录流式 RPC 的耗时直方图与请求计数器，错误码从返回错误中提取。
 func prometheusStreamServerInterceptor(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	startTime := time.Now()
 	err := handler(srv, ss)
@@ -71,6 +75,8 @@ func prometheusStreamServerInterceptor(srv any, ss grpc.ServerStream, info *grpc
 	return err
 }
 
+// NewTraceUnaryServerInterceptor 返回一元 RPC 服务端链路追踪拦截器：创建服务端 Span、
+// 填充方法、主机与对端属性，请求结束时记录错误状态并结束 Span。
 func NewTraceUnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	tracer := globalTrace.NewTracer(trace.SpanKindServer)
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (reply any, err error) {
@@ -110,16 +116,19 @@ func NewTraceUnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
+// contextedServerStream 在包装底层 ServerStream 的同时携带替换后的上下文，供追踪拦截器向下传递。
 type contextedServerStream struct {
 	grpc.ServerStream
 	ctx context.Context
 }
 
-// Context ...
+// Context 返回携带追踪信息的上下文，覆盖底层流的原始上下文。
 func (css contextedServerStream) Context() context.Context {
 	return css.ctx
 }
 
+// NewTraceStreamServerInterceptor 返回流式 RPC 服务端链路追踪拦截器：创建服务端 Span、
+// 填充方法、主机与对端属性，并将携带追踪上下文的流传给下游处理器。
 func NewTraceStreamServerInterceptor() grpc.StreamServerInterceptor {
 	return func(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		tracer := globalTrace.NewTracer(trace.SpanKindServer)

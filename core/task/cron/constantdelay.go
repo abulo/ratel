@@ -2,15 +2,14 @@ package cron
 
 import "time"
 
-// ConstantDelaySchedule represents a simple recurring duty cycle, e.g. "Every 5 minutes".
-// It does not support jobs more frequent than once a second.
+// ConstantDelaySchedule 表示按固定时间间隔循环触发的调度表。
 type ConstantDelaySchedule struct {
+	// Delay 为两次触发之间的间隔。
 	Delay time.Duration
 }
 
-// Every returns a crontab Schedule that activates once every duration.
-// Delays of less than a second are not supported (will round up to 1 second).
-// Any fields less than a Second are truncated.
+// Every 构造一个每隔 duration 触发一次的调度表；duration 小于 1 秒时提升为 1 秒，
+// 不足 1 秒的纳秒部分会被截断，因此实际触发频率不会高于每秒一次。
 func Every(duration time.Duration) ConstantDelaySchedule {
 	if duration < time.Second {
 		duration = time.Second
@@ -20,8 +19,7 @@ func Every(duration time.Duration) ConstantDelaySchedule {
 	}
 }
 
-// Next returns the next time this should be run.
-// This rounds so that the next activation time will be on the second.
+// Next 返回晚于 t 的下一次触发时间，并对齐到整秒。
 func (schedule ConstantDelaySchedule) Next(t time.Time) time.Time {
 	return t.Add(schedule.Delay - time.Duration(t.Nanosecond())*time.Nanosecond)
 }

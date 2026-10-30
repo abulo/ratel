@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 )
 
-// NewQueue 创建一个队列，指定缓冲区数和工作线程数
+// NewQueue 创建带缓冲通道队列；maxCapacity 为待缓冲任务上限，maxThread 为消费 worker 数量。
 func NewQueue(maxCapacity, maxThread int) *Queue {
 	return &Queue{
 		jobQueue:   make(chan Jober, maxCapacity),
@@ -16,7 +16,9 @@ func NewQueue(maxCapacity, maxThread int) *Queue {
 	}
 }
 
-// Queue 任务队列排队以在高并发情况下减轻服务器压力并改进任务处理
+// Queue 基于带缓冲通道与 worker 协程池实现任务队列。
+//
+// 零值不可直接使用，须经 NewQueue 构造并调用 Run 启动；同一实例重复调用 Run 不会重复创建 worker。
 type Queue struct {
 	maxWorkers int
 	jobQueue   chan Jober
@@ -26,7 +28,7 @@ type Queue struct {
 	wg         *sync.WaitGroup
 }
 
-// Run 开始运行队列
+// Run 启动队列；重复调用时直接返回，不会重复创建 worker。
 func (q *Queue) Run() {
 	if q.running.Load() == 1 {
 		return
@@ -48,7 +50,7 @@ func (q *Queue) dispatcher() {
 	}
 }
 
-// Terminate 终止队列以接收任务并释放资源
+// Terminate 停止接收新任务，等待已入队任务执行完毕后关闭通道与 worker；队列未运行时直接返回。
 func (q *Queue) Terminate() {
 	if q.running.Load() != 1 {
 		return
@@ -64,7 +66,7 @@ func (q *Queue) Terminate() {
 	close(q.workerPool)
 }
 
-// Push 将可执行任务放入队列
+// Push 将任务放入队列；队列未运行时直接返回、任务被丢弃；缓冲已满时调用方阻塞等待空位。
 func (q *Queue) Push(job Jober) {
 	if q.running.Load() != 1 {
 		return

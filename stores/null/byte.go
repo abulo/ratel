@@ -10,14 +10,20 @@ import (
 	"github.com/spf13/cast"
 )
 
-// Byte is an nullable int.
+// Byte 是可空的 byte，实现 sql.Scanner、driver.Valuer 以及 JSON 与文本编解码接口。
+//
+// 零值（Set 为 false）表示未赋值，可直接使用；结构体为值类型，不提供并发保护，
+// 同一实例的并发读写需由调用方自行加锁。
 type Byte struct {
-	Byte  byte
+	// Byte 为内部保存的字节取值。
+	Byte byte
+	// Valid 表示是否持有非空有效值。
 	Valid bool
-	Set   bool
+	// Set 表示是否已被显式赋值，包含赋值为 null 的情形。
+	Set bool
 }
 
-// NewByte creates a new Byte
+// NewByte 使用给定取值与有效性标记创建 Byte；valid 为 false 时得到空值。
 func NewByte(b byte, valid bool) Byte {
 	return Byte{
 		Byte:  b,
@@ -26,12 +32,12 @@ func NewByte(b byte, valid bool) Byte {
 	}
 }
 
-// ByteFrom creates a new Byte that will always be valid.
+// ByteFrom 创建一个始终有效的 Byte。
 func ByteFrom(b byte) Byte {
 	return NewByte(b, true)
 }
 
-// ByteFromPtr creates a new Byte that be null if i is nil.
+// ByteFromPtr 根据指针创建 Byte；指针为 nil 时得到空值。
 func ByteFromPtr(b *byte) Byte {
 	if b == nil {
 		return NewByte(0, false)
@@ -39,18 +45,18 @@ func ByteFromPtr(b *byte) Byte {
 	return NewByte(*b, true)
 }
 
-// IsValid returns true if this carries and explicit value and
-// is not null.
+// IsValid 报告是否持有显式赋值且非空的取值。
 func (b Byte) IsValid() bool {
 	return b.Set && b.Valid
 }
 
-// IsSet returns true if this carries an explicit value (null inclusive)
+// IsSet 报告是否已被显式赋值，包含赋值为 null 的情形。
 func (b Byte) IsSet() bool {
 	return b.Set
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
+// UnmarshalJSON 实现 json.Unmarshaler；输入为空或 JSON null 时置为空值；其余内容按单字符字符串解析，
+// 长度大于 1 或解析失败时返回错误。
 func (b *Byte) UnmarshalJSON(data []byte) error {
 	b.Set = true
 
@@ -74,7 +80,8 @@ func (b *Byte) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
+// UnmarshalText 实现 encoding.TextUnmarshaler；空文本置为空值，文本长度大于 1 时返回错误，
+// 否则取首字节写入内部取值。
 func (b *Byte) UnmarshalText(text []byte) error {
 	b.Set = true
 	if len(text) == 0 {
@@ -91,7 +98,7 @@ func (b *Byte) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// MarshalJSON implements json.Marshaler.
+// MarshalJSON 实现 json.Marshaler；空值序列化为 JSON null，有效值序列化为带引号的单字符字符串。
 func (b Byte) MarshalJSON() ([]byte, error) {
 	if !b.Valid {
 		return json.Marshal(nil)
@@ -99,7 +106,7 @@ func (b Byte) MarshalJSON() ([]byte, error) {
 	return []byte{'"', b.Byte, '"'}, nil
 }
 
-// MarshalText implements encoding.TextMarshaler.
+// MarshalText 实现 encoding.TextMarshaler；空值序列化为空字节切片。
 func (b Byte) MarshalText() ([]byte, error) {
 	if !b.Valid {
 		return []byte{}, nil
@@ -107,14 +114,14 @@ func (b Byte) MarshalText() ([]byte, error) {
 	return []byte{b.Byte}, nil
 }
 
-// SetValid changes this Byte's value and also sets it to be non-null.
+// SetValid 将内部取值置为 n，并同时标记为有效、已赋值。
 func (b *Byte) SetValid(n byte) {
 	b.Byte = n
 	b.Valid = true
 	b.Set = true
 }
 
-// Ptr returns a pointer to this Byte's value, or a nil pointer if this Byte is null.
+// Ptr 返回指向内部取值的指针；空值时返回 nil。
 func (b Byte) Ptr() *byte {
 	if !b.Valid {
 		return nil
@@ -122,12 +129,12 @@ func (b Byte) Ptr() *byte {
 	return &b.Byte
 }
 
-// IsZero returns true for invalid Bytes, for future omitempty support (Go 1.4?)
+// IsZero 报告是否为空值，供结构体标签 omitempty 判定使用。
 func (b Byte) IsZero() bool {
 	return !b.Valid
 }
 
-// Scan implements the Scanner interface.
+// Scan 实现 sql.Scanner；value 为 nil 或空字符串时清空状态，否则取字符串首字节写入内部取值。
 func (b *Byte) Scan(value any) error {
 	if value == nil {
 		b.Byte, b.Valid, b.Set = 0, false, false
@@ -144,7 +151,7 @@ func (b *Byte) Scan(value any) error {
 	return nil
 }
 
-// Value implements the driver Valuer interface.
+// Value 实现 driver.Valuer；空值返回 nil。
 func (b Byte) Value() (driver.Value, error) {
 	if !b.Valid {
 		return nil, nil
@@ -152,7 +159,7 @@ func (b Byte) Value() (driver.Value, error) {
 	return []byte{b.Byte}, nil
 }
 
-// ValueOrDefault returns the inner value if valid, otherwise default.
+// ValueOrDefault 返回内部取值；空值时返回类型零值。
 func (t Byte) ValueOrDefault() byte {
 	if !t.Valid {
 		return 0
@@ -160,7 +167,7 @@ func (t Byte) ValueOrDefault() byte {
 	return t.Byte
 }
 
-// String returns the string representation of the float or null.
+// Result 返回内部取值的字符串形式；空值返回 "NULL"。
 func (t Byte) Result() string {
 	if !t.Valid {
 		return "NULL"

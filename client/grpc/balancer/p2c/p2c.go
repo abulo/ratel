@@ -8,12 +8,12 @@ import (
 	"google.golang.org/grpc/grpclog"
 )
 
-// Name is the name of p2c with least loaded balancer.
 const (
+	// Name 为 P2C 最少负载均衡器在 gRPC 注册中心的策略名称。
 	Name = "p2c_least_loaded"
 )
 
-// newBuilder creates a new balance builder.
+// newBuilder 创建带健康检查开关的 P2C 均衡器 Builder。
 func newBuilder() balancer.Builder {
 	return base.NewBalancerBuilder(Name, &p2cPickerBuilder{}, base.Config{HealthCheck: true})
 }
@@ -24,7 +24,7 @@ func init() {
 
 type p2cPickerBuilder struct{}
 
-// Build ...
+// Build 在无就绪连接时返回错误 Picker；否则初始化最少在途负载选择器，装入全部就绪 SubConn。
 func (*p2cPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
 	grpclog.Infof("p2cPickerBuilder: newPicker called with readySCs: %v", info.ReadySCs)
 	if len(info.ReadySCs) == 0 {
@@ -47,7 +47,8 @@ type p2cPicker struct {
 	p2c basep2c.P2c
 }
 
-// Pick ...
+// Pick 通过 P2C 选择器取出在途负载最低的 SubConn；无可用候选时返回 ErrNoSubConnAvailable。
+// 返回的 Done 回调会在请求结束后递减对应节点的在途计数。
 func (p *p2cPicker) Pick(opts balancer.PickInfo) (balancer.PickResult, error) {
 	item, done := p.p2c.Next()
 	if item == nil {

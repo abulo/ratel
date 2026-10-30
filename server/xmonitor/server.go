@@ -10,7 +10,10 @@ import (
 	"github.com/abulo/ratel/v3/server"
 )
 
-// Server ...
+// Server 封装独立的监控 HTTP 服务端，对外暴露 pprof、路由清单与构建信息等治理接口。
+//
+// 零值不可直接使用，须由 Config.Build 创建；Server 实现 server.Server 接口，
+// 路由统一注册到 DefaultServeMux。
 type Server struct {
 	*http.Server
 	listener net.Listener
@@ -33,7 +36,7 @@ func newServer(config *Config) *Server {
 	}
 }
 
-// Serve ..
+// Serve 启动监控 HTTP 服务并阻塞监听；服务被正常关闭（http.ErrServerClosed）时返回 nil，其余错误原样返回。
 func (s *Server) Serve() error {
 	err := s.Server.Serve(s.listener)
 	if err == http.ErrServerClosed {
@@ -43,23 +46,25 @@ func (s *Server) Serve() error {
 
 }
 
-// Stop ..
+// Stop 立即关闭监控 HTTP 服务，不再等待在途请求完成。
 func (s *Server) Stop() error {
 	return s.Server.Close()
 }
 
-// GracefulStop ..
+// GracefulStop 在 ctx 取消前等待在途请求处理完成后关闭服务；ctx 超时后由底层服务强制退出。
 func (s *Server) GracefulStop(ctx context.Context) error {
 	return s.Server.Shutdown(ctx)
 }
 
-// Health
-// TODO(roamerlv):
+// Health 当前固定返回 true。
+//
+// TODO(roamerlv): 待补充基于实际进程状态的健康检查逻辑。
 func (s *Server) Health() bool {
 	return true
 }
 
-// Info ..
+// Info 返回监控服务的注册信息，服务类型为 ServiceMonitor；注册地址优先取配置中的
+// ServiceAddress，否则使用实际监听地址。
 func (s *Server) Info() *server.ServiceInfo {
 	serviceAddr := s.listener.Addr().String()
 	if s.Config.ServiceAddress != "" {
@@ -71,6 +76,5 @@ func (s *Server) Info() *server.ServiceInfo {
 		server.WithAddress(serviceAddr),
 		server.WithKind(constant.ServiceMonitor),
 	)
-	// info.Name = info.Name + "." + ModName
 	return &info
 }

@@ -10,15 +10,10 @@ import (
 	"unicode"
 )
 
-//////////// Program execution Functions ////////////
-
-// Exec exec()
-// returnVar, 0: succ; 1: fail
-// Return the last line from the result of the command.
-// command format eg:
+// Exec 解析 command 并执行，命令支持用双引号或单引号包裹包含空格的参数。
 //
-//	"ls -a"
-//	"/bin/bash -c \"ls -a\""
+// 执行成功时将按行拆分的全部输出写入 output，returnVar 置 0，并返回最后一行输出；
+// 执行失败时 returnVar 置 1 并返回空字符串。
 func Exec(command string, output *[]string, returnVar *int) string {
 	q := rune(0)
 	parts := strings.FieldsFunc(command, func(r rune) bool {
@@ -35,7 +30,6 @@ func Exec(command string, output *[]string, returnVar *int) string {
 			return unicode.IsSpace(r)
 		}
 	})
-	// remove the " and ' on both sides
 	for i, v := range parts {
 		f, l := v[0], len(v)
 		if l >= 2 && (f == '"' || f == '\'') {
@@ -56,15 +50,15 @@ func Exec(command string, output *[]string, returnVar *int) string {
 	return ""
 }
 
-// System system()
-// returnVar, 0: succ; 1: fail
-// Returns the last line of the command output on success, and "" on failure.
+// System 解析 command 并执行，标准输出与标准错误同时透传到终端并缓存到内存。
+//
+// 执行成功时 returnVar 置 0，返回缓存输出的最后一行；启动、读取或等待失败时
+// returnVar 置 1，错误信息打印到标准输出并返回空字符串。
 func System(command string, returnVar *int) string {
 	*returnVar = 0
 	var stdBuf bytes.Buffer
 	var err, err1, err2, err3 error
 
-	// split command
 	q := rune(0)
 	parts := strings.FieldsFunc(command, func(r rune) bool {
 		switch {
@@ -80,7 +74,6 @@ func System(command string, returnVar *int) string {
 			return unicode.IsSpace(r)
 		}
 	})
-	// remove the " and ' on both sides
 	for i, v := range parts {
 		f, l := v[0], len(v)
 		if l >= 2 && (f == '"' || f == '\'') {
@@ -130,8 +123,9 @@ func System(command string, returnVar *int) string {
 	return ""
 }
 
-// PassThru Passthru passthru()
-// returnVar, 0: succ; 1: fail
+// PassThru 解析 command 并执行，标准输出与标准错误直接透传到终端，不做缓存。
+//
+// 执行成功时 returnVar 置 0；失败时 returnVar 置 1，并将错误打印到标准输出。
 func PassThru(command string, returnVar *int) {
 	q := rune(0)
 	parts := strings.FieldsFunc(command, func(r rune) bool {
@@ -148,7 +142,6 @@ func PassThru(command string, returnVar *int) {
 			return unicode.IsSpace(r)
 		}
 	})
-	// remove the " and ' on both sides
 	for i, v := range parts {
 		f, l := v[0], len(v)
 		if l >= 2 && (f == '"' || f == '\'') {

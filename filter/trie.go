@@ -9,65 +9,74 @@ import (
 	"unicode/utf8"
 )
 
-// trie表示trie树中的每个节点，具有next、fail、len和end四个属性。
+// trie 表示自动机中的一个节点，保存子节点映射、失败指针、路径长度与结束标记。
 type trie struct {
-	next map[rune]*trie // 映射表，用于存储下一个字符的节点
-	fail *trie          // 指向该节点的失败指针
-	len  uint8          // 表示该节点代表的字符串长度
-	end  bool           // 表示是否是一个单词的结尾节点
+	// next 为字符到子节点的映射。
+	next map[rune]*trie
+	// fail 为失败指针。
+	fail *trie
+	// len 为该节点对应路径的字节长度。
+	len  uint8
+	// end 标记是否为单词结束节点。
+	end  bool
 }
 
-// NewTrieWriter 返回一个新的TrieWriter对象，其中tireRoot属性为一个空的trie树根节点。
+// NewTrieWriter 创建一个空的词库写入器，内部初始化自动机根节点。
 func NewTrieWriter() *TrieWriter {
 	return &TrieWriter{tireRoot: &trie{next: map[rune]*trie{}}}
 }
 
-// TrieWriter 表示一个Trie写入器，包含了一些trie树的相关操作。
+// TrieWriter 负责向 Trie 自动机插入词库、维护跳过字符集合并构建失败指针。
+//
+// 该类型不保证并发安全，词库构建应在单 goroutine 内完成后再交给扫描器使用。
 type TrieWriter struct {
-	size     int   // trie树中单词的数量
-	skip     *Skip // 需要跳过的字符集合
-	tireRoot *trie // trie树根节点
+	// size 为词库中已插入的单词数量。
+	size     int
+	// skip 为匹配时需要跳过的字符集合。
+	skip     *Skip
+	// tireRoot 为自动机根节点。
+	tireRoot *trie
 }
 
-// setSkip设置需要跳过的字符集合，并返回当前对象。
+// setSkip 设置需要跳过的字符集合并返回写入器本身。
 func (t *TrieWriter) setSkip(skip *Skip) *TrieWriter {
 	t.skip = skip
 	return t
 }
 
-// Skip 获取需要跳过的字符集合。
+// Skip 返回当前跳过字符集合。
 func (t *TrieWriter) Skip() *Skip {
 	return t.skip
 }
 
-// Size 获取trie树中单词的数量。
+// Size 返回词库中已插入的单词数量。
 func (t *TrieWriter) Size() int {
 	return t.size
 }
 
-// Insert 向trie树中插入一个单词，返回当前对象。
+// Insert 向词库插入一个单词，自动跳过集合中的字符；返回写入器本身以支持链式调用。
 func (t *TrieWriter) Insert(word string) *TrieWriter {
-	node := t.tireRoot // 从trie树的根节点开始
+	node := t.tireRoot
 	wLen := 0
-	for _, v := range word { // 遍历单词中的每个字符
-		if t.skip.ShouldSkip(v) { // 如果该字符应该跳过，则继续下一个字符
+	for _, v := range word {
+		if t.skip.ShouldSkip(v) {
 			continue
 		}
-		if _, ok := node.next[v]; !ok { // 如果下一个节点不存在，则创建一个新节点
+		if _, ok := node.next[v]; !ok {
 			node.next[v] = &trie{next: map[rune]*trie{}}
 		}
-		wLen += utf8.RuneLen(v) // 更新单词长度
+		wLen += utf8.RuneLen(v)
 		node = node.next[v]
 		node.len = uint8(wLen)
 	}
-	if wLen > 0 && !node.end { // 如果单词不为空，将结尾节点标记为end，并且数量加1。
+	if wLen > 0 && !node.end {
 		node.end = true
 		t.size++
 	}
 	return t
 }
 
-// InsertWords 向trie树中插入一个字符串数组中的所有单词，返回当前对象。调用了Insert(word string)方法。
+// InsertWords 批量插入词表中的全部单词，返回写入器本身以支持链式调用。
 func (t *TrieWriter) InsertWords(words []string) *TrieWriter {
 	for _, word := range words {
 		t.Insert(word)
@@ -75,23 +84,25 @@ func (t *TrieWriter) InsertWords(words []string) *TrieWriter {
 	return t
 }
 
-// WriteString 将一个字符串写入到trie树中，返回写入的字节数和nil错误。调用了Insert(word string)方法。
+// WriteString 将字符串作为单个单词插入词库，实现 io.Writer 接口；返回字符串长度与 nil 错误。
 func (t *TrieWriter) WriteString(s string) (n int, err error) {
 	t.Insert(s)
 	return len(s), nil
 }
 
-// trie返回trie树的根节点。
+// trie 返回自动机根节点。
 func (t *TrieWriter) trie() *trie {
 	return t.tireRoot
 }
 
+// InsertScanner 按扫描器每行读取单词并插入词库。
 func (t *TrieWriter) InsertScanner(scanner *bufio.Scanner) {
 	for scanner.Scan() {
 		t.Insert(scanner.Text())
 	}
 }
 
+// InsertFile 从指定文件按换行分隔读取单词并插入词库；文件打开失败时直接 panic。
 func (t *TrieWriter) InsertFile(filename string) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -103,6 +114,7 @@ func (t *TrieWriter) InsertFile(filename string) {
 	_, _ = t.InsertReader(file, '\n')
 }
 
+// InsertReader 从读取器按分隔符批量读取单词并插入词库，返回已读取的字节数与读取错误。
 func (t *TrieWriter) InsertReader(reader io.Reader, delim byte) (n int, err error) {
 	return t.insertReader(reader, make([]byte, 64*1024), delim)
 }
@@ -138,105 +150,105 @@ func (t *TrieWriter) insertReader(reader io.Reader, buf []byte, delim byte) (n i
 	return
 }
 
-// InsertBytes 将一个字节数组写入到trie树中，返回写入的字节数和nil错误。在遍历字节数组的过程中，跳过被定义在skip属性中的字符，如果遇到换行符则在该单词的结尾节点标记为end
+// InsertBytes 按分隔符从字节切片解析单词并插入词库，插入过程中跳过集合中的字符；返回切片长度。
 func (t *TrieWriter) InsertBytes(p []byte, delim byte) (n int) {
-	n = len(p)           // 获取字节数组的长度
-	for i := 0; i < n; { // 遍历字节数组
-		node := t.trie() // 从trie树的根节点开始
+	n = len(p)
+	for i := 0; i < n; {
+		node := t.trie()
 		wLen := 0
 
-		for i < n && p[i] != delim { // 判断字符是否为换行符并且还没有遍历完整个字节数组
-			r, l := decodeBytes(p[i:]) // 解码字节数组中的一个rune，并且获取该rune的字节数量
+		for i < n && p[i] != delim {
+			r, l := decodeBytes(p[i:])
 
-			// 跳过一些无意义的字符
 			if t.skip.ShouldSkip(r) {
 				i += l
 				continue
 			}
 
-			if _, ok := node.next[r]; !ok { // 如果下一个节点不存在，则创建一个新节点
+			if _, ok := node.next[r]; !ok {
 				node.next[r] = &trie{next: map[rune]*trie{}}
 			}
-			wLen += l // 更新单词长度
+			wLen += l
 			node = node.next[r]
-			node.len = uint8(wLen) // 更新节点代表的字符串长度
-			i += l                 // 向后移动光标
+			node.len = uint8(wLen)
+			i += l
 		}
 
-		if wLen > 0 && !node.end { // 如果单词不为空，将结尾节点标记为end，并且数量加1。
+		if wLen > 0 && !node.end {
 			node.end = true
 			t.size++
 		}
 
-		for i < n && p[i] == delim { // 判断是否为分隔符
-			i++ // 向后移动光标
+		for i < n && p[i] == delim {
+			i++
 		}
 	}
 
 	return
 }
 
-// BuildFail 用于构建trie树中每个节点的失败指针，返回当前对象。
+// BuildFail 按广度优先遍历为所有节点构建失败指针，返回遍历的节点数量；
+// 须在插入词库完成后、扫描前调用。
 func (t *TrieWriter) BuildFail() int {
-	// 创建队列并将根节点的所有子节点加入队列中
 	queue := make([]*trie, 0, len(t.tireRoot.next))
 	for _, node := range t.tireRoot.next {
-		node.fail = t.tireRoot // 设置节点的失败指针为根节点
+		node.fail = t.tireRoot
 		queue = append(queue, node)
 	}
 
-	count := 0                                // 计数器用于记录遍历的节点数
-	for level := 1; len(queue) > 0; level++ { // 遍历节点直到队列为空
-		temp := make([]*trie, len(queue)) // 创建临时队列并将队列中的元素复制到临时队列中
+	count := 0
+	for level := 1; len(queue) > 0; level++ {
+		temp := make([]*trie, len(queue))
 		copy(temp, queue)
-		queue = queue[:0]           // 清空队列
-		for _, prev := range temp { // 遍历临时队列中的节点
-			for c, curr := range prev.next { // 遍历当前节点的所有子节点
+		queue = queue[:0]
+		for _, prev := range temp {
+			for c, curr := range prev.next {
 				count++
-				queue = append(queue, curr)                  // 将子节点加入队列
-				failTo := prev.fail                          // 获取当前节点的失败指针
-				for failTo != nil && failTo.next[c] == nil { // 查找失败指针直到找到一个匹配字符c的节点或者到达根节点
+				queue = append(queue, curr)
+				failTo := prev.fail
+				for failTo != nil && failTo.next[c] == nil {
 					failTo = failTo.fail
 				}
-				if failTo == nil { // 如果没有找到匹配字符c的节点，则将当前节点的失败指针设置为根节点
+				if failTo == nil {
 					curr.fail = t.tireRoot
-				} else { // 如果找到了匹配字符c的节点，则将当前节点的失败指针设置为该节点
+				} else {
 					curr.fail = failTo.next[c]
 				}
 			}
 		}
 	}
-	return count // 返回遍历的节点数
+	return count
 }
 
+// String 以每行一个单词的形式输出词库内容，最多输出 1000 条，避免词库过大时输出失控。
 func (t *TrieWriter) String() string {
-	type pair struct { // 定义一个键值对，trie表示trie树中的节点，runes表示从根节点到当前节点的字符序列
+	type pair struct {
 		trie  *trie
 		runes []rune
 	}
-	buf := bytes.Buffer{}             // 创建缓冲区
-	limit := 1000                     // 设置限制输出结果的条数
-	queue := []*pair{{t.trie(), nil}} // 创建队列并将根节点加入队列中
+	buf := bytes.Buffer{}
+	limit := 1000
+	queue := []*pair{{t.trie(), nil}}
 loop:
-	for len(queue) > 0 { // 遍历队列直到队列为空或者达到限制的输出结果数
-		temp := make([]*pair, len(queue)) // 创建临时队列并将队列中的元素复制到临时队列中
+	for len(queue) > 0 {
+		temp := make([]*pair, len(queue))
 		copy(temp, queue)
-		queue = queue[:0]        // 清空队列
-		for _, p := range temp { // 遍历临时队列中的节点
-			if p.trie.end { // 如果当前节点是单词的结尾，则将字符序列转为字符串并添加到缓冲区中
+		queue = queue[:0]
+		for _, p := range temp {
+			if p.trie.end {
 				buf.WriteString(string(p.runes))
 				buf.WriteByte('\n')
 				limit--
-				if limit == 0 { // 如果达到限制的输出结果数，则跳出循环
+				if limit == 0 {
 					break loop
 				}
 			}
-			for r, node := range p.trie.next { // 遍历当前节点的所有子节点
-				queue = append(queue, &pair{node, appendRunes(p.runes, r)}) // 将子节点加入队列，并更新字符序列
+			for r, node := range p.trie.next {
+				queue = append(queue, &pair{node, appendRunes(p.runes, r)})
 			}
 		}
 	}
-	return string(buf.Bytes()[:buf.Len()-1]) // 返回缓冲区中的字符串，去掉最后一个换行符
+	return string(buf.Bytes()[:buf.Len()-1])
 }
 
 func appendRunes(runes []rune, r rune) []rune {
@@ -246,23 +258,24 @@ func appendRunes(runes []rune, r rune) []rune {
 	return res
 }
 
+// Array 返回词库中全部单词的字符串列表。
 func (t *TrieWriter) Array() []string {
-	type pair struct { // 定义一个键值对，trie表示trie树中的节点，runes表示从根节点到当前节点的字符序列
+	type pair struct {
 		trie  *trie
 		runes []rune
 	}
 	res := make([]string, 0, t.Size())
 	queue := []*pair{{t.trie(), nil}}
-	for len(queue) > 0 { // 遍历队列直到队列为空或者达到限制的输出结果数
-		temp := make([]*pair, len(queue)) // 创建临时队列并将队列中的元素复制到临时队列中
+	for len(queue) > 0 {
+		temp := make([]*pair, len(queue))
 		copy(temp, queue)
-		queue = queue[:0]        // 清空队列
-		for _, p := range temp { // 遍历临时队列中的节点
-			if p.trie.end { // 如果当前节点是单词的结尾，则将字符序列转为字符串并添加到缓冲区中
+		queue = queue[:0]
+		for _, p := range temp {
+			if p.trie.end {
 				res = append(res, string(p.runes))
 			}
-			for r, node := range p.trie.next { // 遍历当前节点的所有子节点
-				queue = append(queue, &pair{node, appendRunes(p.runes, r)}) // 将子节点加入队列，并更新字符序列
+			for r, node := range p.trie.next {
+				queue = append(queue, &pair{node, appendRunes(p.runes, r)})
 			}
 		}
 	}

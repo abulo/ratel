@@ -1,13 +1,15 @@
 package nlpword
 
-// LinkList ...
+// LinkList 是基于链表实现的先进先出队列，供 Trie 树广度优先遍历使用。
+//
+// 该队列不保证并发安全，仅在单次遍历的同一 goroutine 内使用。
 type LinkList struct {
 	head  *listNode
 	tail  *listNode
 	count int64
 }
 
-// Push appends a node
+// Push 在队尾追加一个元素。
 func (list *LinkList) Push(v any) {
 	node := &listNode{
 		Value: v,
@@ -22,7 +24,7 @@ func (list *LinkList) Push(v any) {
 	list.count++
 }
 
-// Pop returns the value of the first node
+// Pop 取出队首元素并返回其值；队列为空时返回 nil。
 func (list *LinkList) Pop() any {
 	if list.Empty() {
 		return nil
@@ -34,7 +36,7 @@ func (list *LinkList) Pop() any {
 	return n.Value
 }
 
-// Empty returns true if there is none node
+// Empty 判断队列是否为空。
 func (list *LinkList) Empty() bool {
 	return list.count == 0
 }

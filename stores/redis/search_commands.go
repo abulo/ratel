@@ -6,7 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// FT_List 获取所有索引的名称 ctx: 上下文
+// FT_List 返回当前全部已创建搜索索引的名称。
 func (r *Client) FT_List(ctx context.Context) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -19,7 +19,7 @@ func (r *Client) FT_List(ctx context.Context) (val []string, err error) {
 	return
 }
 
-// FTAggregate 执行聚合查询 ctx: 上下文, index: 索引名称, query: 查询语句
+// FTAggregate 在 index 上执行聚合查询 query，返回聚合结果 map。
 func (r *Client) FTAggregate(ctx context.Context, index, query string) (val map[string]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -32,7 +32,7 @@ func (r *Client) FTAggregate(ctx context.Context, index, query string) (val map[
 	return
 }
 
-// FTAggregateWithArgs 执行聚合查询 ctx: 上下文, index: 索引名称, query: 查询语句, options: 聚合选项
+// FTAggregateWithArgs 按 FTAggregateOptions 执行聚合查询，可配置分组、排序、分页与加载字段。
 func (r *Client) FTAggregateWithArgs(ctx context.Context, index, query string, options *redis.FTAggregateOptions) (val *redis.FTAggregateResult, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -45,7 +45,7 @@ func (r *Client) FTAggregateWithArgs(ctx context.Context, index, query string, o
 	return
 }
 
-// FTAliasAdd 添加别名 ctx: 上下文, index: 索引名称, alias: 别名
+// FTAliasAdd 为索引 index 添加别名 alias，查询时可使用别名访问该索引。
 func (r *Client) FTAliasAdd(ctx context.Context, index, alias string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -58,7 +58,7 @@ func (r *Client) FTAliasAdd(ctx context.Context, index, alias string) (val strin
 	return
 }
 
-// FTAliasDel 删除别名 ctx: 上下文, alias: 别名
+// FTAliasDel 删除别名 alias。
 func (r *Client) FTAliasDel(ctx context.Context, alias string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -71,7 +71,7 @@ func (r *Client) FTAliasDel(ctx context.Context, alias string) (val string, err 
 	return
 }
 
-// FTAliasUpdate 更新别名 ctx: 上下文, index: 索引名称, alias: 别名
+// FTAliasUpdate 将别名 alias 重新指向索引 index。
 func (r *Client) FTAliasUpdate(ctx context.Context, index, alias string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -84,7 +84,7 @@ func (r *Client) FTAliasUpdate(ctx context.Context, index, alias string) (val st
 	return
 }
 
-// FTAlter 修改索引 ctx: 上下文, index: 索引名称, skipInitialScan: 是否跳过初始扫描, definition: 定义
+// FTAlter 为索引 index 追加字段定义；skipInitialScan 指示是否跳过对现有文档的初始扫描。
 func (r *Client) FTAlter(ctx context.Context, index string, skipInitialScan bool, definition []any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -97,7 +97,7 @@ func (r *Client) FTAlter(ctx context.Context, index string, skipInitialScan bool
 	return
 }
 
-// FTConfigGet 获取配置 ctx: 上下文, option: 配置项
+// FTConfigGet 返回 option 指定的全文检索配置项；option 为空或通配时返回全部配置。
 func (r *Client) FTConfigGet(ctx context.Context, option string) (val map[string]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -110,7 +110,7 @@ func (r *Client) FTConfigGet(ctx context.Context, option string) (val map[string
 	return
 }
 
-// FTConfigSet 设置配置 ctx: 上下文, option: 配置项, value: 配置值
+// FTConfigSet 将 option 配置项设置为 value。
 func (r *Client) FTConfigSet(ctx context.Context, option string, value any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -123,7 +123,7 @@ func (r *Client) FTConfigSet(ctx context.Context, option string, value any) (val
 	return
 }
 
-// FTCreate 创建索引 ctx: 上下文, index: 索引名称, options: 创建选项, schema: 字段模式
+// FTCreate 按 FTCreateOptions 与字段 schema 创建名为 index 的搜索索引。
 func (r *Client) FTCreate(ctx context.Context, index string, options *redis.FTCreateOptions, schema ...*redis.FieldSchema) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -136,7 +136,7 @@ func (r *Client) FTCreate(ctx context.Context, index string, options *redis.FTCr
 	return
 }
 
-// FTCursorDel 删除游标 ctx: 上下文, index: 索引名称, cursorId: 游标ID
+// FTCursorDel 删除聚合查询游标 index 上的 cursorId，释放服务端资源。
 func (r *Client) FTCursorDel(ctx context.Context, index string, cursorId int) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -149,7 +149,7 @@ func (r *Client) FTCursorDel(ctx context.Context, index string, cursorId int) (v
 	return
 }
 
-// FTCursorRead 读取游标 ctx: 上下文, index: 索引名称, cursorId: 游标ID, count: 读取数量
+// FTCursorRead 从聚合游标 cursorId 读取 count 条后续结果。
 func (r *Client) FTCursorRead(ctx context.Context, index string, cursorId, count int) (val map[string]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -162,7 +162,7 @@ func (r *Client) FTCursorRead(ctx context.Context, index string, cursorId, count
 	return
 }
 
-// FTDictAdd 添加字典 ctx: 上下文, dict: 字典名称, term: 术语列表
+// FTDictAdd 向停用词/扩展词典 dict 添加 term 术语，返回新增术语数量。
 func (r *Client) FTDictAdd(ctx context.Context, dict string, term ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -175,7 +175,7 @@ func (r *Client) FTDictAdd(ctx context.Context, dict string, term ...any) (val i
 	return
 }
 
-// FTDictDel 删除字典 ctx: 上下文, dict: 字典名称, term: 术语列表
+// FTDictDel 从词典 dict 删除 term 术语。
 func (r *Client) FTDictDel(ctx context.Context, dict string, term ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -188,7 +188,7 @@ func (r *Client) FTDictDel(ctx context.Context, dict string, term ...any) (val i
 	return
 }
 
-// FTDictDump 导出字典 ctx: 上下文, dict: 字典名称
+// FTDictDump 导出词典 dict 中的全部术语。
 func (r *Client) FTDictDump(ctx context.Context, dict string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -201,7 +201,7 @@ func (r *Client) FTDictDump(ctx context.Context, dict string) (val []string, err
 	return
 }
 
-// FTDropIndex 删除索引 ctx: 上下文, index: 索引名称
+// FTDropIndex 删除索引 index；索引内文档默认保留。
 func (r *Client) FTDropIndex(ctx context.Context, index string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -214,7 +214,7 @@ func (r *Client) FTDropIndex(ctx context.Context, index string) (val string, err
 	return
 }
 
-// FTDropIndexWithArgs 删除索引 ctx: 上下文, index: 索引名称, options: 删除选项
+// FTDropIndexWithArgs 按 FTDropIndexOptions 删除索引，选项可指定是否同时删除文档。
 func (r *Client) FTDropIndexWithArgs(ctx context.Context, index string, options *redis.FTDropIndexOptions) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -227,7 +227,7 @@ func (r *Client) FTDropIndexWithArgs(ctx context.Context, index string, options 
 	return
 }
 
-// FTExplain 解释查询 ctx: 上下文, index: 索引名称, query: 查询语句
+// FTExplain 返回 index 上 query 的执行计划文本，用于分析检索流程。
 func (r *Client) FTExplain(ctx context.Context, index, query string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -240,7 +240,7 @@ func (r *Client) FTExplain(ctx context.Context, index, query string) (val string
 	return
 }
 
-// FTExplainWithArgs 解释查询 ctx: 上下文, index: 索引名称, query: 查询语句, options: 解释选项
+// FTExplainWithArgs 按 FTExplainOptions 返回查询执行计划。
 func (r *Client) FTExplainWithArgs(ctx context.Context, index, query string, options *redis.FTExplainOptions) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -253,7 +253,7 @@ func (r *Client) FTExplainWithArgs(ctx context.Context, index, query string, opt
 	return
 }
 
-// FTInfo 获取索引信息 ctx: 上下文, index: 索引名称
+// FTInfo 返回索引 index 的字段、文档数、索引大小等统计信息。
 func (r *Client) FTInfo(ctx context.Context, index string) (val redis.FTInfoResult, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -266,7 +266,7 @@ func (r *Client) FTInfo(ctx context.Context, index string) (val redis.FTInfoResu
 	return
 }
 
-// FTSpellCheck 拼写检查 ctx: 上下文, index: 索引名称, query: 查询语句
+// FTSpellCheck 对 query 做拼写检查，返回各词的候选纠正结果。
 func (r *Client) FTSpellCheck(ctx context.Context, index, query string) (val []redis.SpellCheckResult, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -279,7 +279,7 @@ func (r *Client) FTSpellCheck(ctx context.Context, index, query string) (val []r
 	return
 }
 
-// FTSpellCheckWithArgs 拼写检查 ctx: 上下文, index: 索引名称, query: 查询语句, options: 拼写检查选项
+// FTSpellCheckWithArgs 按 FTSpellCheckOptions 执行拼写检查，可限定词典与距离阈值。
 func (r *Client) FTSpellCheckWithArgs(ctx context.Context, index, query string, options *redis.FTSpellCheckOptions) (val []redis.SpellCheckResult, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -292,7 +292,7 @@ func (r *Client) FTSpellCheckWithArgs(ctx context.Context, index, query string, 
 	return
 }
 
-// FTSearch 执行搜索 ctx: 上下文, index: 索引名称, query: 查询语句
+// FTSearch 在 index 上执行 query 全文检索，返回命中文档与高亮、打分结果。
 func (r *Client) FTSearch(ctx context.Context, index, query string) (val redis.FTSearchResult, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -305,7 +305,7 @@ func (r *Client) FTSearch(ctx context.Context, index, query string) (val redis.F
 	return
 }
 
-// FTSearchWithArgs 执行搜索 ctx: 上下文, index: 索引名称, query: 查询语句, options: 搜索选项
+// FTSearchWithArgs 按 FTSearchOptions 执行检索，可配置过滤、排序、分页、返回字段与摘要。
 func (r *Client) FTSearchWithArgs(ctx context.Context, index, query string, options *redis.FTSearchOptions) (val redis.FTSearchResult, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -318,7 +318,7 @@ func (r *Client) FTSearchWithArgs(ctx context.Context, index, query string, opti
 	return
 }
 
-// FTSynDump 导出同义词 ctx: 上下文, index: 索引名称
+// FTSynDump 导出索引 index 的全部同义词组及其术语。
 func (r *Client) FTSynDump(ctx context.Context, index string) (val []redis.FTSynDumpResult, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -331,7 +331,7 @@ func (r *Client) FTSynDump(ctx context.Context, index string) (val []redis.FTSyn
 	return
 }
 
-// FTSynUpdate 更新同义词 ctx: 上下文, index: 索引名称, synGroupId: 同义词组ID, terms: 术语列表
+// FTSynUpdate 将 terms 加入索引 index 的同义词组 synGroupId。
 func (r *Client) FTSynUpdate(ctx context.Context, index string, synGroupId any, terms []any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -344,7 +344,7 @@ func (r *Client) FTSynUpdate(ctx context.Context, index string, synGroupId any, 
 	return
 }
 
-// FTSynUpdateWithArgs 更新同义词 ctx: 上下文, index: 索引名称, synGroupId: 同义词组ID, options: 更新选项, terms: 术语列表
+// FTSynUpdateWithArgs 按 FTSynUpdateOptions 更新同义词组，可配置是否清空现有术语。
 func (r *Client) FTSynUpdateWithArgs(ctx context.Context, index string, synGroupId any, options *redis.FTSynUpdateOptions, terms []any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -357,7 +357,7 @@ func (r *Client) FTSynUpdateWithArgs(ctx context.Context, index string, synGroup
 	return
 }
 
-// FTTagVals 获取标签值 ctx: 上下文, index: 索引名称, field: 字段名称
+// FTTagVals 返回索引 index 标签字段 field 中出现过的全部标签值。
 func (r *Client) FTTagVals(ctx context.Context, index, field string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

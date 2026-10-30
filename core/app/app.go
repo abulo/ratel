@@ -25,7 +25,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Application ...
+// Application 是应用程序实例，持有待启动的 Server、Worker、定时任务、执行器与生命周期钩子，
+// 负责协调启动、信号监听、停止与清理的完整流程。
+//
+// 零值不可直接使用，须通过 New 或 DefaultApp 创建；初始化流程与停止流程都只执行一次。
 type Application struct {
 	cycle      *cycle.Cycle
 	smu        *sync.RWMutex
@@ -35,35 +38,45 @@ type Application struct {
 	workers    []worker.Worker
 	jobs       map[string]job.Runner
 	disableMap map[Disable]bool
+	// HideBanner 为 true 时启动阶段不打印版本横幅信息。
 	HideBanner bool
 	stopped    chan struct{}
 	components []component.Component
 	sig        chan os.Signal
 }
 
+// Option 是用于配置 Application 的函数式选项。
 type Option func(a *Application)
 
+// Disable 标识应用启动流程中可被关闭的环节。
 type Disable int
 
+// 可关闭环节常量，配合 WithDisable 使用。
 const (
-	DisableParserFlag      Disable = 1
-	DisableLoadConfig      Disable = 2
+	// DisableParserFlag 关闭命令行参数解析。
+	DisableParserFlag Disable = 1
+	// DisableLoadConfig 关闭配置加载。
+	DisableLoadConfig Disable = 2
+	// DisableDefaultGovernor 关闭默认治理能力。
 	DisableDefaultGovernor Disable = 3
 )
 
+// WithOptions 将传入的选项依次应用到当前应用实例。
 func (a *Application) WithOptions(options ...Option) {
 	for _, option := range options {
 		option(a)
 	}
 }
 
+// WithDisable 返回一个选项，用于关闭指定的启动环节。
 func WithDisable(d Disable) Option {
 	return func(a *Application) {
 		a.disableMap[d] = true
 	}
 }
 
-// New create a new Application instance
+// New 创建应用实例并按串行顺序依次执行传入的启动函数；任一启动函数返回错误时，
+// 返回 nil 与该错误。
 func New(fns ...func() error) (*Application, error) {
 	app := &Application{}
 	if err := app.Startup(fns...); err != nil {
@@ -72,27 +85,24 @@ func New(fns ...func() error) (*Application, error) {
 	return app, nil
 }
 
-// DefaultApp ...
+// DefaultApp 初始化并返回一个不带自定义启动函数的应用实例。
 func DefaultApp() *Application {
 	app := &Application{}
 	app.initialize()
 	return app
 }
 
-// run hooks
 func (app *Application) runHooks(stage hooks.Stage) {
 	hooks.Do(stage)
 }
 
-// RegisterHooks register a stage Hook
+// RegisterHooks 为指定生命周期阶段注册钩子函数，钩子在对应阶段由 Do 触发执行。
 func (app *Application) RegisterHooks(stage hooks.Stage, fns ...func()) {
 	hooks.Register(stage, fns...)
 }
 
-// initialize application
 func (app *Application) initialize() {
 	app.initOnce.Do(func() {
-		//assign
 		app.cycle = cycle.NewCycle()
 		app.smu = &sync.RWMutex{}
 		app.servers = make([]server.Server, 0)
@@ -106,13 +116,13 @@ func (app *Application) initialize() {
 	})
 }
 
-// Startup ...
+// Startup 初始化应用实例，并串行执行传入的启动函数；任一函数返回错误时立即中断并返回该错误。
 func (app *Application) Startup(fns ...func() error) error {
 	app.initialize()
 	return goroutine.SerialUntilError(fns...)()
 }
 
-// Serve start server
+// Serve 将传入的 Server 追加到应用托管列表，供 Run 统一启动与停止；当前实现始终返回 nil。
 func (app *Application) Serve(s ...server.Server) error {
 	app.smu.Lock()
 	defer app.smu.Unlock()
@@ -120,16 +130,15 @@ func (app *Application) Serve(s ...server.Server) error {
 	return nil
 }
 
-// Schedule ..
+// Schedule 将传入的 Worker 追加到应用托管列表，供 Run 统一启动与停止；当前实现始终返回 nil。
 func (app *Application) Schedule(w worker.Worker) error {
 	app.workers = append(app.workers, w)
 	return nil
 }
 
-// Job ..
+// Job 注册一个定时任务；任务须实现 GetJobName 以提供唯一名称，未实现该方法的任务会被静默忽略。
 func (app *Application) Job(runner job.Runner) error {
 	namedJob, ok := runner.(interface{ GetJobName() string })
-	// job runner must implement GetJobName
 	if !ok {
 		return nil
 	}
@@ -138,22 +147,24 @@ func (app *Application) Job(runner job.Runner) error {
 	return nil
 }
 
-// Executor ...
+// Executor 将执行器按其地址登记到全局执行器注册表，由应用统一管理启动与停止。
 func (app *Application) Executor(e executor.Executor) {
 	executor.Register(e.GetAddress(), e)
 }
 
-// SetRegistry set customize registry
+// SetRegistry 替换应用默认使用的服务注册中心实现。
 func (app *Application) SetRegistry(reg registry.Registry) {
 	registry.DefaultRegisterer = reg
 }
 
-// clean after app quit
 func (app *Application) clean() {
 
 }
 
-// Run run application
+// Run 是应用的阻塞式入口：先追加传入的 Server，触发 BeforeRun 钩子并启动信号监听，
+// 随后并行启动定时任务、Server 与 Worker，阻塞等待整个生命周期结束。
+//
+// 生命周期以错误结束时记录错误日志并返回该错误；正常退出时返回 nil。
 func (app *Application) Run(servers ...server.Server) error {
 	app.smu.Lock()
 	app.servers = append(app.servers, servers...)
@@ -161,17 +172,14 @@ func (app *Application) Run(servers ...server.Server) error {
 
 	hooks.Do(hooks.Stage_BeforeRun)
 
-	app.waitSignals() //start signal listen task in goroutine
+	app.waitSignals()
 	defer app.clean()
 
-	// todo jobs not graceful
+	// TODO(owner): 定时任务当前不支持优雅停止。
 	_ = app.startJobs()
 
-	// start servers and govern server
 	app.cycle.Run(app.startServers)
-	// start workers
 	app.cycle.Run(app.startWorkers)
-	//blocking and wait quit
 	if err := <-app.cycle.Wait(); err != nil {
 		logger.Logger.WithFields(logrus.Fields{
 			"app": ecode.ModApp,
@@ -183,12 +191,12 @@ func (app *Application) Run(servers ...server.Server) error {
 	return nil
 }
 
-// Stop application immediately after necessary cleanup
+// Stop 在必要清理完成后立即停止应用：执行 BeforeStop 钩子，注销并停止全部 Server 与 Worker，
+// 等待后台任务结束后执行 AfterStop 钩子并关闭生命周期；重复调用安全，停止流程只执行一次。
 func (app *Application) Stop() (err error) {
 	app.stopOnce.Do(func() {
 		app.stopped <- struct{}{}
 		app.runHooks(hooks.Stage_BeforeStop)
-		//stop servers
 		for _, s := range app.servers {
 			func(s server.Server) {
 				app.smu.RLock()
@@ -204,7 +212,6 @@ func (app *Application) Stop() (err error) {
 				app.smu.RUnlock()
 			}(s)
 		}
-		//stop workers
 		for _, w := range app.workers {
 			func(w worker.Worker) {
 				app.cycle.Run(w.WorkerStop)
@@ -212,19 +219,19 @@ func (app *Application) Stop() (err error) {
 		}
 
 		<-app.cycle.Done()
-		// run hook
 		app.runHooks(hooks.Stage_AfterStop)
 		app.cycle.Close()
 	})
 	return
 }
 
-// GracefulStop application after necessary cleanup
+// GracefulStop 使用给定上下文优雅停止应用：注销服务时将上下文透传给注册中心，
+// 依次停止 Server、Worker 与执行器，等待后台任务结束后执行 AfterStop 钩子并关闭生命周期；
+// 重复调用安全，停止流程只执行一次。
 func (app *Application) GracefulStop(ctx context.Context) (err error) {
 	app.stopOnce.Do(func() {
 		app.stopped <- struct{}{}
 		app.runHooks(hooks.Stage_BeforeStop)
-		//stop servers
 		for _, s := range app.servers {
 			func(s server.Server) {
 				app.cycle.Run(func() error {
@@ -242,16 +249,13 @@ func (app *Application) GracefulStop(ctx context.Context) (err error) {
 				})
 			}(s)
 		}
-		//stop workers
 		for _, w := range app.workers {
 			func(w worker.Worker) {
 				app.cycle.Run(w.WorkerStop)
 			}(w)
 		}
-		// stop executor
 		app.cycle.Run(executor.GracefulStop)
 		<-app.cycle.Done()
-		// run hooks
 		app.runHooks(hooks.Stage_AfterStop)
 		app.cycle.Close()
 	})
@@ -265,7 +269,6 @@ func (app *Application) startServers() error {
 		<-app.stopped
 		cancel()
 	}()
-	// start multi servers
 	app.smu.Lock()
 	for _, s := range app.servers {
 		eg.Go(func() (err error) {
@@ -288,7 +291,6 @@ func (app *Application) startServers() error {
 
 func (app *Application) startWorkers() error {
 	var eg errgroup.Group
-	// start multi workers
 	for _, w := range app.workers {
 		eg.Go(func() error {
 			return w.WorkerStart()
@@ -297,16 +299,14 @@ func (app *Application) startWorkers() error {
 	return eg.Wait()
 }
 
-// startJobs starts jobs
 func (app *Application) startJobs() error {
 	if len(app.jobs) == 0 {
 		return nil
 	}
 	var jobs = make([]func(), 0)
-	//warp jobs
 	for name, runner := range app.jobs {
 		jobs = append(jobs, func() {
-			// runner.Run panic 错误在更上层抛出
+			// runner.Run 内部 panic 不在此层捕获，由更上层统一处理。
 			logger.Logger.WithFields(logrus.Fields{
 				"jobName": name,
 			}).Info("job run begin")
@@ -322,7 +322,6 @@ func (app *Application) startJobs() error {
 	return nil
 }
 
-// start executor
 func (app *Application) startExecutors() error {
 	return executor.Run()
 }
@@ -368,7 +367,6 @@ func (app *Application) exitHandler() {
 	}
 }
 
-// printBanner init
 func (app *Application) printBanner() error {
 	if app.HideBanner {
 		return nil

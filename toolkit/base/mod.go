@@ -11,7 +11,7 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-// ModulePath returns go module path.
+// ModulePath 读取指定 go.mod 文件并返回其 module 声明路径；文件读取失败时返回错误。
 func ModulePath(filename string) (string, error) {
 	modBytes, err := os.ReadFile(filename)
 	if err != nil {
@@ -20,7 +20,7 @@ func ModulePath(filename string) (string, error) {
 	return modfile.ModulePath(modBytes), nil
 }
 
-// ModuleVersion returns module version.
+// ModuleVersion 通过 go mod graph 在模块依赖图中查找指定模块的路径与版本；未找到或命令失败时返回错误。
 func ModuleVersion(path string) (string, error) {
 	stdout := &bytes.Buffer{}
 	fd := exec.Command("go", "mod", "graph")
@@ -43,7 +43,7 @@ func ModuleVersion(path string) (string, error) {
 	}
 }
 
-// RatelMod returns ratel mod.
+// RatelMod 返回当前环境中 ratel 框架源码或模块缓存的本地目录路径；无法获取版本时回退到 GOPATH 源码目录。
 func RatelMod() string {
 	cacheOut, _ := exec.Command("go", "env", "GOMODCACHE").Output()
 	cachePath := strings.Trim(string(cacheOut), "\n")

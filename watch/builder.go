@@ -11,23 +11,35 @@ import (
 )
 
 type builder struct {
-	exts        []string // 需要监视的文件扩展名
+	// exts 为需要监视的文件扩展名。
+	exts        []string
+	// anyExt 标记是否监视所有文件类型。
 	anyExt      bool
+	// excludes 为忽略文件的路径匹配模式列表。
 	excludes    []string
-	appName     string // 输出的程序文件
+	// appName 为输出的可执行文件路径。
+	appName     string
+	// logs 为日志输出对象。
 	logs        Logger
+	// watcherFreq 为判定文件变更的时间间隔。
 	watcherFreq time.Duration
 
-	// 被编译程序的执行环境
-	appWD      string    // 工作目录
-	appCmd     *exec.Cmd // appName 的命令行包装引用，方便结束其进程。
-	appArgs    []string  // 传递给 appCmd 的参数
+	// appWD 为被编译程序的工作目录。
+	appWD      string
+	// appCmd 为被编译程序的进程句柄，用于结束旧进程。
+	appCmd     *exec.Cmd
+	// appArgs 为传给被编译程序启动命令的参数。
+	appArgs    []string
+	// appKillMux 保护 appCmd 的互斥锁。
 	appKillMux sync.Mutex
 
-	// go build 或是 go mod tidy 的运行环境
-	goTidy    bool      // 自动运行 go mod tidy
-	goCmd     *exec.Cmd // go build 或是 go mod 进程
-	goArgs    []string  // 传递给 go build 的参数，go mod tidy 忽略此参数。
+	// goTidy 标记是否自动执行 go mod tidy。
+	goTidy    bool
+	// goCmd 为 go build 或 go mod tidy 的进程句柄。
+	goCmd     *exec.Cmd
+	// goArgs 为传给 go build 的参数，go mod tidy 忽略该参数。
+	goArgs    []string
+	// goKillMux 保护 goCmd 的互斥锁。
 	goKillMux sync.Mutex
 }
 
@@ -50,14 +62,15 @@ func (opt *Options) newBuilder() *builder {
 	}
 }
 
-// 输出翻译后的内容
+// logf 按指定日志类型输出一条消息。
 func (b *builder) logf(typ int8, msg string) {
 	b.logs.Output(typ, msg)
 }
 
-// 确定文件 path 是否属于被忽略的格式
+// isIgnore 判断指定路径是否应被忽略而不监视；被编译程序自身、匹配忽略模式
+// 或扩展名不在监视列表中的文件返回 true。
 func (b *builder) isIgnore(path string) bool {
-	if b.appCmd != nil && b.appCmd.Path == path { // 忽略程序本身的监视
+	if b.appCmd != nil && b.appCmd.Path == path {
 		return true
 	}
 
@@ -88,6 +101,7 @@ func (b *builder) isIgnore(path string) bool {
 	return true
 }
 
+// tidy 中止现存编译进程后执行 go mod tidy，输出走 Go 编译器日志通道。
 func (b *builder) tidy() {
 	b.killGo()
 
@@ -105,7 +119,7 @@ func (b *builder) tidy() {
 	b.goCmd = nil
 }
 
-// 开始编译代码
+// build 中止现存编译进程后执行 go build；编译成功后重启被编译程序，失败仅记录日志。
 func (b *builder) build() {
 	b.killGo()
 
@@ -125,6 +139,7 @@ func (b *builder) build() {
 	b.restartApp()
 }
 
+// killGo 结束仍在运行的 go 编译进程并等待其退出。
 func (b *builder) killGo() {
 	b.goKillMux.Lock()
 	defer b.goKillMux.Unlock()
@@ -142,7 +157,7 @@ func (b *builder) killGo() {
 	}
 }
 
-// 重启被编译的程序
+// restartApp 先结束旧进程，再以配置的工作目录启动新进程；启动过程中的异常被 recover 后仅记录日志。
 func (b *builder) restartApp() {
 	defer func() {
 		if err := recover(); err != nil {
@@ -162,6 +177,7 @@ func (b *builder) restartApp() {
 	}
 }
 
+// killApp 结束仍在运行的被编译程序并等待其退出。
 func (b *builder) killApp() {
 	b.appKillMux.Lock()
 	defer b.appKillMux.Unlock()
@@ -179,8 +195,7 @@ func (b *builder) killApp() {
 	}
 }
 
-// 过滤掉不需要监视的目录。以下目录会被过滤掉：
-// - 整个目录下都没需要监视的文件；
+// filterPaths 剔除目录下不存在任何需监视文件的目录。
 func (b *builder) filterPaths(paths []string) []string {
 	ret := make([]string, 0, len(paths))
 

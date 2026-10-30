@@ -10,51 +10,43 @@ import (
 	"github.com/spf13/cast"
 )
 
-// DateFormat pattern rules.
+// datePatterns 保存 PHP 日期格式字符到 Go time 布局字符串的两两映射，
+// 供 StrToTime 与 Date 在解析和格式化前替换格式串使用。
 var datePatterns = []string{
-	// year
-	"Y", "2006", // A full numeric representation of a year, 4 digits   Examples: 1999 or 2003
-	"y", "06", // A two digit representation of a year   Examples: 99 or 03
+	"Y", "2006",
+	"y", "06",
 
-	// month
-	"m", "01", // Numeric representation of a month, with leading zeros 01 through 12
-	"n", "1", // Numeric representation of a month, without leading zeros   1 through 12
-	"M", "Jan", // A short textual representation of a month, three letters Jan through Dec
-	"F", "January", // A full textual representation of a month, such as January or March   January through December
+	"m", "01",
+	"n", "1",
+	"M", "Jan",
+	"F", "January",
 
-	// day
-	"d", "02", // Day of the month, 2 digits with leading zeros 01 to 31
-	"j", "2", // Day of the month without leading zeros 1 to 31
+	"d", "02",
+	"j", "2",
 
-	// week
-	"D", "Mon", // A textual representation of a day, three letters Mon through Sun
-	"l", "Monday", // A full textual representation of the day of the week  Sunday through Saturday
+	"D", "Mon",
+	"l", "Monday",
 
-	// time
-	"g", "3", // 12-hour format of an hour without leading zeros    1 through 12
-	"G", "15", // 24-hour format of an hour without leading zeros   0 through 23
-	"h", "03", // 12-hour format of an hour with leading zeros  01 through 12
-	"H", "15", // 24-hour format of an hour with leading zeros  00 through 23
+	"g", "3",
+	"G", "15",
+	"h", "03",
+	"H", "15",
 
-	"a", "pm", // Lowercase Ante meridiem and Post meridiem am or pm
-	"A", "PM", // Uppercase Ante meridiem and Post meridiem AM or PM
+	"a", "pm",
+	"A", "PM",
 
-	"i", "04", // Minutes with leading zeros    00 to 59
-	"s", "05", // Seconds, with leading zeros   00 through 59
+	"i", "04",
+	"s", "05",
 
-	// time zone
 	"T", "MST",
 	"P", "-07:00",
 	"O", "-0700",
 
-	// RFC 2822
 	"r", time.RFC1123Z,
 }
 
-// timeZone 默认时区
-// var timeZone *time.Location
-
-// DateTimeParse 时间解析
+// DateTimeParse 将 "HH:MM:SS" 格式的时间字符串解析为自当日零点起经过的总秒数；
+// 无法读出三个整数字段时返回零值与错误。
 func DateTimeParse(st string) (int, error) {
 	var h, m, s int
 	n, err := fmt.Sscanf(st, "%d:%d:%d", &h, &m, &s)
@@ -64,7 +56,8 @@ func DateTimeParse(st string) (int, error) {
 	return h*3600 + m*60 + s, nil
 }
 
-// FormatDuring 格式化秒
+// FormatDuring 计算 t 到当前时刻的经过时长，格式化为 "天小时分钟秒.十分之一秒" 的
+// 中文字符串；t 在未来时天数部分带负号，其余时分秒仍取正值。
 func FormatDuring(t time.Time) string {
 	const (
 		Decisecond = 100 * time.Millisecond
@@ -89,13 +82,15 @@ func FormatDuring(t time.Time) string {
 	return fmt.Sprintf("%d天%d小时%d分钟%d.%d秒", d, h, m, s, f)
 }
 
-// GetHourDiffer 获取相差时间
+// GetHourDiffer 返回 endTime 相对 startTime 的 Unix 秒差。
+//
+// 仅当 startTime 早于 endTime 时返回两者差值；其他情况返回 0。
 func GetHourDiffer(startTime, endTime any) int64 {
 	var s int64
 	t1 := cast.ToTime(startTime)
 	t2 := cast.ToTime(endTime)
 	if t1.Before(t2) {
-		diff := t2.Unix() - t1.Unix() //
+		diff := t2.Unix() - t1.Unix()
 		s = diff
 		return s
 	} else {
@@ -103,39 +98,23 @@ func GetHourDiffer(startTime, endTime any) int64 {
 	}
 }
 
-// TimeZone GetTimeZone 获取时区
+// TimeZone 返回进程当前使用的本地时区。
 func TimeZone() *time.Location {
-	// if timeZone == nil {
-	// 	timeZone, _ = time.LoadLocation("Local")
-	// }
 	return time.Local
 }
 
-// // SetTimeZone 设置时区
-// func SetTimeZone(zone string) *time.Location {
-// 	//loc, err := time.LoadLocation("Asia/Shanghai")
-// res, _ := time.LoadLocation(zone)
-// 	timeZone = res
-
-// 	fmt.Println(timeZone.String())
-// 	return res
-// }
-
-// DateTime Functions
-
-// Time time()
+// Time 返回当前时刻在本地时区下的 Unix 时间戳（秒）。
 func Time() int64 {
-	//cstZone := time.FixedZone("CST", 8*3600)
 	cstZone := TimeZone()
 	return time.Now().In(cstZone).Unix()
 }
 
-// 时间戳，毫秒级别
+// ToTime 返回给定 time.Time 的 Unix 时间戳（秒）。
 func ToTime(now time.Time) int64 {
 	return now.Unix()
 }
 
-// Duration ...
+// Duration 将时长字符串（如 "1h30m"）解析为 time.Duration；格式非法时 panic。
 func Duration(str string) time.Duration {
 	dur, err := time.ParseDuration(str)
 	if err != nil {
@@ -144,21 +123,21 @@ func Duration(str string) time.Duration {
 	return dur
 }
 
-// Now time.Now()
+// Now 返回本地时区下的当前时刻。
 func Now() time.Time {
 	cstZone := TimeZone()
 	return time.Now().In(cstZone)
 }
 
-// Timestamp 毫秒
+// Timestamp 返回当前时刻的毫秒级 Unix 时间戳。
 func Timestamp() int64 {
 	cstZone := TimeZone()
 	return time.Now().In(cstZone).UnixNano() / int64(time.Millisecond)
 }
 
-// StrToTime StrToTime()
-// StrToTime("02/01/2006 15:04:05", "02/01/2016 15:04:05") == 1451747045
-// StrToTime("3 04 PM", "8 41 PM") == -62167144740
+// StrToTime 按 PHP 格式 format 解析 strtime，返回本地时区下的 Unix 时间戳（秒）。
+//
+// 格式字符支持 datePatterns 中定义的 PHP 日期字符；解析失败时返回 0 与错误。
 func StrToTime(format, strtime string) (int64, error) {
 	replacer := strings.NewReplacer(datePatterns...)
 	format = replacer.Replace(format)
@@ -170,7 +149,7 @@ func StrToTime(format, strtime string) (int64, error) {
 	return t.Unix(), nil
 }
 
-// Date date()
+// Date 按 PHP 格式 format 格式化时间；不传可变参数时使用当前时刻，时区取 TimeZone。
 func Date(format string, ts ...time.Time) string {
 
 	cstZone := TimeZone()
@@ -183,14 +162,15 @@ func Date(format string, ts ...time.Time) string {
 
 	res := t.In(cstZone).Format(formats)
 
+	// PHP 的 G 表示 24 小时制且不带前导零，布局串 "15" 在整点前仍可能补出 "0"，
+	// 这里手工剥掉结果首位的前导零。
 	if format == "G" && res[:1] == "0" {
 		return res[1:]
 	}
 	return res
 }
 
-// CheckDate Checkdate checkdate()
-// Validate a Gregorian date
+// CheckDate 校验年、月、日是否构成合法的公历日期，并按闰年规则校验 2 月天数。
 func CheckDate(month, day, year int) bool {
 	if month < 1 || month > 12 || day < 1 || day > 31 || year < 1 || year > 32767 {
 		return false
@@ -201,7 +181,6 @@ func CheckDate(month, day, year int) bool {
 			return false
 		}
 	case 2:
-		// leap year
 		if year%4 == 0 && (year%100 != 0 || year%400 == 0) {
 			if day > 29 {
 				return false
@@ -214,22 +193,22 @@ func CheckDate(month, day, year int) bool {
 	return true
 }
 
-// Sleep sleep()
+// Sleep 阻塞当前协程 t 秒。
 func Sleep(t int64) {
 	time.Sleep(time.Duration(t) * time.Second)
 }
 
-// USleep Usleep usleep()
+// USleep 阻塞当前协程 t 微秒。
 func USleep(t int64) {
 	time.Sleep(time.Duration(t) * time.Microsecond)
 }
 
-// UnixTimeFormatDate ...
+// UnixTimeFormatDate 将可转换为时间的值格式化为 "YYYY-MM-DD HH:mm:ss"。
 func UnixTimeFormatDate(str any) string {
 	return Date("Y-m-d H:i:s", cast.ToTimeInDefaultLocation(cast.ToInt64(str), TimeZone()))
 }
 
-// FormatDateTime ...
+// FormatDateTime 将可转换为时间的值格式化为 "YYYY-MM-DD HH:mm:ss"；值为空时返回空字符串。
 func FormatDateTime(str any) string {
 	if Empty(str) {
 		return ""
@@ -237,31 +216,26 @@ func FormatDateTime(str any) string {
 	return Date("Y-m-d H:i:s", cast.ToTimeInDefaultLocation(str, TimeZone()))
 }
 
-// FormatDate ...
+// FormatDate 将可转换为时间的值格式化为 "YYYY-MM-DD"。
 func FormatDate(str any) string {
 	return Date("Y-m-d", cast.ToTimeInDefaultLocation(str, TimeZone()))
 }
 
-// ordinalInYear returns the ordinal (within a year) day number.
+// ordinalInYear 返回给定日期在当年中的序数，1 月 1 日为 1。
 func ordinalInYear(year int, month time.Month, day int) (dayNo int) {
 	return DateToJulian(year, month, day) - DateToJulian(year, 1, 1) + 1
 }
 
-// ISOWeekday returns the ISO 8601 weekday number of given day.
-// (1 = Mon, 2 = Tue,.. 7 = Sun)
+// ISOWeekday 返回给定日期的 ISO 8601 星期编号，周一为 1，周日为 7。
 //
-// This is different from Go's standard time.Weekday.
+// 该编号与标准库 time.Weekday（周日为 0）的取值不同。
 func ISOWeekday(year int, month time.Month, day int) (weekday int) {
-	// Richards, E. G. (2013) pp. 592, 618
-
 	return DateToJulian(year, month, day)%7 + 1
 }
 
-// DateToJulian converts a date to a Julian day number.
+// DateToJulian 将公历日期转换为儒略日数。
 func DateToJulian(year int, month time.Month, day int) (dayNo int) {
-	// Claus Tøndering's Calendar FAQ
-	// http://www.tondering.dk/claus/cal/julperiod.php#formula
-
+	// 采用公历至儒略日数的标准换算公式。
 	if month < 3 {
 		year = year - 1
 		month = month + 12
@@ -272,10 +246,8 @@ func DateToJulian(year int, month time.Month, day int) (dayNo int) {
 		year/4 - year/100 + year/400 - 32045
 }
 
-// JulianToDate converts a Julian day number to a date.
+// JulianToDate 将儒略日数转换为公历年、月、日。
 func JulianToDate(dayNo int) (year int, month time.Month, day int) {
-	// Richards, E. G. (2013) pp. 585–624
-
 	e := 4*(dayNo+1401+(4*dayNo+274277)/146097*3/4-38) + 3
 	h := e%1461/4*5 + 2
 
@@ -286,26 +258,20 @@ func JulianToDate(dayNo int) (year int, month time.Month, day int) {
 	return year, month, day
 }
 
-// startOffset returns the offset (in days) from the start of a year to
-// Monday of the given week. Offset may be negative.
+// startOffset 返回给定 ISO 周的周一相对于年初的天数偏移，偏移值可能为负。
 func startOffset(y, week int) (offset int) {
-	// This is optimized version of the following:
-	//
-	// return week*7 - ISOWeekday(y, 1, 4) - 3
-	//
-	// Uses Tomohiko Sakamoto's algorithm for calculating the weekday.
-
+	// 由 Tomohiko Sakamoto 星期算法推导而来，等价于 week*7 - ISOWeekday(y,1,4) - 3。
 	y = y - 1
 	return week*7 - (y+y/4-y/100+y/400+3)%7 - 4
 }
 
-// StartDate returns the starting date (Monday) of the given ISO 8601 week.
+// StartDate 返回给定 ISO 8601 年、周数对应的周一日期。
 func StartDate(wyear, week int) (year int, month time.Month, day int) {
 	return JulianToDate(
 		DateToJulian(wyear, 1, 1) + startOffset(wyear, week))
 }
 
-// FromYearWeek ...
+// FromYearWeek 返回给定日期所属的 ISO 8601 年份与周数。
 func FromYearWeek(year, month, day int) (wyear, week int) {
 	return fromYearWeek(year, time.Month(month), day)
 }
@@ -313,17 +279,17 @@ func FromYearWeek(year, month, day int) (wyear, week int) {
 func fromYearWeek(year int, month time.Month, day int) (wyear, week int) {
 	week = (ordinalInYear(year, month, day) - ISOWeekday(year, month, day) + 10) / 7
 	if week < 1 {
-		return fromYearWeek(year-1, 12, 31) // last week of preceding year
+		return fromYearWeek(year-1, 12, 31)
 	}
 
 	if week == 53 &&
 		DateToJulian(StartDate(year+1, 1)) <= DateToJulian(year, month, day) {
-		return year + 1, 1 // first week of following year
+		return year + 1, 1
 	}
 	return year, week
 }
 
-// NextMonthDate 获取当前日期的下个月的第一天和最后一天
+// NextMonthDate 返回日期 d 所在月份下一个月的第一天与最后一天，格式均为 Y-m-d。
 func NextMonthDate(d string) (string, string) {
 	now := cast.ToTimeInDefaultLocation(d, TimeZone())
 	var nextMonth int
@@ -346,7 +312,7 @@ func NextMonthDate(d string) (string, string) {
 	return Date("Y-m-d", firstDate), Date("Y-m-d", lastDate)
 }
 
-// PrevMonthDate NextMonthDate 获取当前日期的上个月的第一天和最后一天
+// PrevMonthDate 返回日期 d 所在月份上一个月的第一天与最后一天，格式均为 Y-m-d。
 func PrevMonthDate(d string) (string, string) {
 	now := cast.ToTimeInDefaultLocation(d, TimeZone())
 	var prevMonth int
@@ -369,7 +335,7 @@ func PrevMonthDate(d string) (string, string) {
 	return Date("Y-m-d", firstDate), Date("Y-m-d", lastDate)
 }
 
-// MonthDate 获取当前日期的当月的第一天和最后一天
+// MonthDate 返回日期 d 所在月份的第一天与最后一天，格式均为 Y-m-d。
 func MonthDate(d string) (string, string) {
 	now := cast.ToTimeInDefaultLocation(d, TimeZone())
 	year, month, _ := now.Date()
@@ -379,7 +345,8 @@ func MonthDate(d string) (string, string) {
 	return Date("Y-m-d", firstDate), Date("Y-m-d", lastDate)
 }
 
-// Month 获取当前月份前一年的月份 d Y-m-d
+// Month 返回以 d 对应月份的上一个月为起点的连续 12 个月，分别给出 Y-m 字符串列表
+// 与 Ym 数字列表，两个列表下标一一对应。
 func Month(d string) ([]string, []int64) {
 	now := cast.ToTimeInDefaultLocation(d, TimeZone())
 	prevTime := now.AddDate(-1, 1, 0)
@@ -397,7 +364,8 @@ func Month(d string) ([]string, []int64) {
 	return res, resInt64
 }
 
-// Day 获取起止日期中的天 s,e Y-m-d
+// Day 返回起止日期 s 与 e 之间的全部日期，分别给出 Y-m-d 字符串列表与 Ymd 数字列表，
+// 两个列表下标一一对应。
 func Day(s string, e string) ([]string, []int64) {
 	start := cast.ToTimeInDefaultLocation(s, TimeZone())
 	end := cast.ToTimeInDefaultLocation(e, TimeZone())
@@ -420,7 +388,8 @@ func Day(s string, e string) ([]string, []int64) {
 	return res, resInt64
 }
 
-// Hour Day 获取起止日期中的小时 YmdH
+// Hour 返回起止时刻 s 与 e 之间的全部小时，分别给出 "Y-m-d H" 字符串列表与
+// YmdH 数字列表，两个列表下标一一对应。
 func Hour(s string, e string) ([]string, []int64) {
 	start := cast.ToTimeInDefaultLocation(s, TimeZone())
 	end := cast.ToTimeInDefaultLocation(e, TimeZone())
@@ -438,8 +407,7 @@ func Hour(s string, e string) ([]string, []int64) {
 	return res, resInt64
 }
 
-// ToWeekDay ...
-// ToWeekDay ...
+// ToWeekDay 将可转换为时间的值转换为中文星期名，取值为周日至周六。
 func ToWeekDay(t any) string {
 	weekday := [7]string{"周日", "周一", "周二", "周三", "周四", "周五", "周六"}
 	now := cast.ToTimeInDefaultLocation(t, TimeZone())
@@ -455,8 +423,8 @@ func ToWeekDay(t any) string {
 		c = (year - 1) / 100
 	}
 
-	// 使用 int 避免无符号类型问题
+	// 使用有符号整数运算，避免无符号类型在取模时出现负数问题。
 	week := int(y) + int(y)/4 + int(c)/4 - 2*int(c) + (26*(int(m)+1))/10 + int(day) - 1
-	which_week := (week%7 + 7) % 7 // 确保非负
+	which_week := (week%7 + 7) % 7
 	return weekday[which_week]
 }

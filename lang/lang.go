@@ -1,12 +1,11 @@
 package lang
 
-// Placeholder is a placeholder object that can be used globally.
+// Placeholder 是可全局复用的空结构体占位实例，不携带任何数据。
 var Placeholder PlaceholderType
 
-// AnyType ...
 type (
-	// AnyType can be used to hold any type.
+	// AnyType 表示可容纳任意类型的值，等价于 any。
 	AnyType = any
-	// PlaceholderType represents a placeholder type.
+	// PlaceholderType 表示不携带数据的空结构体占位类型。
 	PlaceholderType = struct{}
 )

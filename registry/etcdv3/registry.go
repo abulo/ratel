@@ -35,9 +35,9 @@ type etcdv3Registry struct {
 }
 
 const (
-	// defaultRetryTimes default retry times
+	// defaultRetryTimes 为租约失效后重新批量注册的最大重试次数。
 	defaultRetryTimes = 3
-	// defaultKeepAliveTimeout is the default timeout for keepalive requests.
+	// defaultRegisterTimeout 为单次重新注册等待与 keepalive 重连的超时时长。
 	defaultRegisterTimeout = 5 * time.Second
 )
 
@@ -58,10 +58,12 @@ func newETCDRegistry(config *Config) (*etcdv3Registry, error) {
 	return reg, nil
 }
 
-// Kind ...
+// Kind 返回 etcdv3 注册器的类型标识 "etcdv3"。
 func (reg *etcdv3Registry) Kind() string { return "etcdv3" }
 
-// RegisterService register service to registry
+// RegisterService 将服务业务信息与监控信息写入注册中心。
+//
+// 业务信息写入失败时直接返回错误；仅在业务注册成功后继续注册监控信息。
 func (reg *etcdv3Registry) RegisterService(ctx context.Context, info *server.ServiceInfo) error {
 	err := reg.registerBiz(ctx, info)
 	if err != nil {
@@ -70,12 +72,12 @@ func (reg *etcdv3Registry) RegisterService(ctx context.Context, info *server.Ser
 	return reg.registerMetric(ctx, info)
 }
 
-// UnregisterService unregister service from registry
+// UnregisterService 从注册中心删除指定服务节点的注册信息，删除成功时同步清理本地缓存。
 func (reg *etcdv3Registry) UnregisterService(ctx context.Context, info *server.ServiceInfo) error {
 	return reg.unregister(ctx, reg.registerKey(info))
 }
 
-// ListServices list service registered in registry with name `name`
+// ListServices 按前缀查询注册中心中已注册的服务节点；已存在但反序列化失败的条目会被跳过。
 func (reg *etcdv3Registry) ListServices(ctx context.Context, prefix string) (services []*server.ServiceInfo, err error) {
 	getResp, getErr := reg.client.Get(ctx, prefix, clientv3.WithPrefix())
 	if getErr != nil {
@@ -115,7 +117,10 @@ func (reg *etcdv3Registry) ListServices(ctx context.Context, prefix string) (ser
 	return
 }
 
-// WatchServices watch service change event, then return address list
+// WatchServices 监听指定前缀下的节点变更，返回携带当前全量快照的结果通道。
+//
+// 调用方在收到首个消息后持续从通道读取最新节点清单；监听建立失败时返回错误。
+// 通道容量为 10，新事件写入失败时会被丢弃并记录告警，调用方应及时消费。
 func (reg *etcdv3Registry) WatchServices(ctx context.Context, prefix string) (chan registry.Endpoints, error) {
 	watch, err := reg.client.WatchPrefix(context.Background(), prefix)
 	if err != nil {
@@ -151,10 +156,8 @@ func (reg *etcdv3Registry) WatchServices(ctx context.Context, prefix string) (ch
 				deleteAddrList(al, prefix, scheme, event.Kv)
 			}
 
-			// var snapshot registry.Endpoints
 			out := al.DeepCopy()
 			select {
-			// case addresses <- snapshot:
 			case addresses <- *out:
 			default:
 				logger.Logger.Warnf("invalid event")
@@ -165,6 +168,7 @@ func (reg *etcdv3Registry) WatchServices(ctx context.Context, prefix string) (ch
 	return addresses, nil
 }
 
+// unregister 删除指定键；上下文未携带超时时间时按配置的读取超时补充超时控制。
 func (reg *etcdv3Registry) unregister(ctx context.Context, key string) error {
 	if _, ok := ctx.Deadline(); !ok {
 		var cancel context.CancelFunc
@@ -179,7 +183,7 @@ func (reg *etcdv3Registry) unregister(ctx context.Context, key string) error {
 	return err
 }
 
-// Close ...
+// Close 取消监听上下文，并逐个注销本地缓存的服务节点；注销错误仅记录日志，不阻断其余节点清理。
 func (reg *etcdv3Registry) Close() error {
 	if reg.cancel != nil {
 		reg.cancel()
@@ -211,6 +215,7 @@ func (reg *etcdv3Registry) Close() error {
 	return nil
 }
 
+// registerMetric 仅对监控类型服务写入 Prometheus 作业注册键，其余类型直接跳过。
 func (reg *etcdv3Registry) registerMetric(ctx context.Context, info *server.ServiceInfo) error {
 	if info.Kind != constant.ServiceMonitor {
 		return nil
@@ -230,9 +235,8 @@ func (reg *etcdv3Registry) registerBiz(ctx context.Context, info *server.Service
 
 func (reg *etcdv3Registry) registerKV(ctx context.Context, key, val string) error {
 	opOptions := make([]clientv3.OpOption, 0)
-	// opOptions = append(opOptions, clientv3.WithSerializable())
 	if ttl := reg.Config.ServiceTTL.Seconds(); ttl > 0 {
-		// 这里基于应用名为key做缓存，每个服务实例应该只需要创建一个lease，降低etcd的压力
+		// 每个服务实例复用同一个租约，减少向 etcd 重复申请租约的压力。
 		lease, err := reg.getOrGrantLeaseID(ctx)
 		if err != nil {
 			logger.Logger.WithFields(logrus.Fields{
@@ -245,7 +249,7 @@ func (reg *etcdv3Registry) registerKV(ctx context.Context, key, val string) erro
 		}
 
 		reg.once.Do(func() {
-			// we use reg.ctx to manully cancel lease keepalive loop
+			// 使用 reg.ctx 在关闭注册器时统一取消 keepalive 循环。
 			go reg.doKeepalive(reg.ctx)
 		})
 		opOptions = append(opOptions, clientv3.WithLease(lease))
@@ -267,6 +271,7 @@ func (reg *etcdv3Registry) registerKV(ctx context.Context, key, val string) erro
 	return nil
 }
 
+// getOrGrantLeaseID 返回已创建的租约标识；尚未创建时按配置 TTL 向 etcd 申请新租约。
 func (reg *etcdv3Registry) getOrGrantLeaseID(ctx context.Context) (clientv3.LeaseID, error) {
 	reg.rmu.Lock()
 	defer reg.rmu.Unlock()
@@ -300,8 +305,8 @@ func (reg *etcdv3Registry) setLeaseID(leaseId clientv3.LeaseID) {
 	reg.leaseID = leaseId
 }
 
-// doKeepAlive periodically sends keep alive requests to etcd server.
-// when the keep alive request fails or timeout, it will try to re-establish the lease.
+// doKeepalive 持续向 etcd 续租；租约失效或连接异常时重新批量注册本地缓存的键并重建租约，
+// 直到注册器上下文被取消才退出循环。
 func (reg *etcdv3Registry) doKeepalive(ctx context.Context) {
 	logger.Logger.Debug("start keepalive...")
 	kac, err := reg.client.KeepAlive(ctx, reg.getLeaseID())
@@ -317,7 +322,7 @@ func (reg *etcdv3Registry) doKeepalive(ctx context.Context) {
 			cancelCtx, cancel := context.WithCancel(ctx)
 			done := make(chan struct{}, 1)
 			go func() {
-				// do register again, and retry 3 times
+				// 租约失效后重新批量注册本地缓存的键，并按固定次数重试。
 				err := reg.registerAllKvs(cancelCtx)
 				if err != nil {
 					cancel()
@@ -327,23 +332,16 @@ func (reg *etcdv3Registry) doKeepalive(ctx context.Context) {
 				done <- struct{}{}
 			}()
 
-			// wait registerAllKvs success
 			select {
 			case <-time.After(defaultRegisterTimeout):
-				// when timeout happens
-				// we should cancel the context and retry again
+				// 重新注册超时则取消上下文，并将租约标识置零进入下一轮重试。
 				cancel()
-				// mark leaseID as 0 to retry register
 				reg.setLeaseID(0)
 
 				continue
 			case <-done:
-				// when done happens, we just receive the kac channel
-				// or wait the registry context done
 			}
 
-			// try do keepalive again
-			// when error or timeout happens, just continue and try again
 			kac, err = reg.client.KeepAlive(ctx, reg.getLeaseID())
 			if err != nil {
 				logger.Logger.WithFields(logrus.Fields{
@@ -362,8 +360,7 @@ func (reg *etcdv3Registry) doKeepalive(ctx context.Context) {
 		select {
 		case data, ok := <-kac:
 			if !ok {
-				// when error happens
-				// mark leaseID as 0 to retry register
+				// keepalive 通道关闭时将租约标识置零，触发后续重新注册。
 				reg.setLeaseID(0)
 				logger.Logger.WithFields(logrus.Fields{
 					"leaseid": reg.getLeaseID(),
@@ -397,12 +394,11 @@ func (reg *etcdv3Registry) registerValue(info *server.ServiceInfo) string {
 	return string(val)
 }
 
+// registerAllKvs 遍历本地缓存的键重新写入注册中心，按固定次数重试；任一节点注册失败即停止继续遍历。
 func (reg *etcdv3Registry) registerAllKvs(ctx context.Context) error {
-	// do register again, and retry 3 times
 	return util.Do(defaultRetryTimes, time.Second, func() error {
 		var err error
 
-		// all kvs stored in reg.kvs, and we can range this map to register again
 		reg.kvs.Range(func(key, value any) bool {
 			err = reg.registerKV(ctx, key.(string), value.(string))
 			if err != nil {
@@ -424,7 +420,7 @@ func deleteAddrList(al *registry.Endpoints, prefix, scheme string, kvs ...*mvccp
 		var addr = strings.TrimPrefix(string(kv.Key), prefix)
 
 		if isIPPort(addr) {
-			// 直接删除addr 因为Delete操作的value值为空
+			// 删除事件的 value 为空，无需解析元数据，直接移除对应节点条目。
 			delete(al.Nodes, addr)
 			delete(al.RouteConfigs, addr)
 		}

@@ -6,7 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// ACLDryRun 用于在不实际执行命令的情况下检查用户是否具有执行给定命令的权限。ctx:上下文 username:用户名 command:要检查的命令
+// ACLDryRun 不实际执行命令，仅检查用户 username 是否有权执行 command，返回权限判定结果。
 func (r *Client) ACLDryRun(ctx context.Context, username string, command ...any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -19,7 +19,7 @@ func (r *Client) ACLDryRun(ctx context.Context, username string, command ...any)
 	return
 }
 
-// ACLLog 获取 ACL 日志。ctx:上下文 count:要获取的日志条数
+// ACLLog 返回最近 count 条 ACL 拒绝与安全事件日志记录。
 func (r *Client) ACLLog(ctx context.Context, count int64) (val []*redis.ACLLogEntry, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -32,7 +32,7 @@ func (r *Client) ACLLog(ctx context.Context, count int64) (val []*redis.ACLLogEn
 	return
 }
 
-// ACLLogReset 重置 ACL 日志。ctx:上下文
+// ACLLogReset 清空当前服务器内存中的 ACL 日志。
 func (r *Client) ACLLogReset(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -45,7 +45,7 @@ func (r *Client) ACLLogReset(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ACLSetUser(ctx context.Context, username string, rules ...string) *StringCmd
+// ACLSetUser 按 rules 配置用户 username 的 ACL 规则（密码、命令权限、键权限等），规则语法由服务器定义。
 func (r *Client) ACLSetUser(ctx context.Context, username string, rules ...string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -58,6 +58,7 @@ func (r *Client) ACLSetUser(ctx context.Context, username string, rules ...strin
 	return
 }
 
+// ACLDelUser 删除指定用户 username，返回实际被删除的用户数量。
 func (r *Client) ACLDelUser(ctx context.Context, username string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -70,6 +71,7 @@ func (r *Client) ACLDelUser(ctx context.Context, username string) (val int64, er
 	return
 }
 
+// ACLList 返回所有用户 ACL 规则的原始文本列表。
 func (r *Client) ACLList(ctx context.Context) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -82,6 +84,7 @@ func (r *Client) ACLList(ctx context.Context) (val []string, err error) {
 	return
 }
 
+// ACLCat 返回服务器全部命令类别名称。
 func (r *Client) ACLCat(ctx context.Context) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -94,6 +97,7 @@ func (r *Client) ACLCat(ctx context.Context) (val []string, err error) {
 	return
 }
 
+// ACLCatArgs 按 ACLCatArgs 查询指定命令类别下的命令列表。
 func (r *Client) ACLCatArgs(ctx context.Context, options *redis.ACLCatArgs) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

@@ -9,15 +9,14 @@ import (
 	"strings"
 )
 
-//////////// Network Functions ////////////
-
-// GetHostName Gethostname gethostname()
+// GetHostName 返回本机主机名；系统获取失败时返回错误。
 func GetHostName() (string, error) {
 	return os.Hostname()
 }
 
-// GetHostByName Gethostbyname gethostbyname()
-// Get the IPv4 address corresponding to a given Internet host name
+// GetHostByName 返回 hostname 对应的第一个 IPv4 地址。
+//
+// DNS 查询成功但结果中不包含 IPv4 地址时返回错误；查询本身失败时返回底层错误。
 func GetHostByName(hostname string) (string, error) {
 	ips, err := net.LookupIP(hostname)
 	if ips != nil {
@@ -31,8 +30,7 @@ func GetHostByName(hostname string) (string, error) {
 	return "", err
 }
 
-// GetHostByNameL Gethostbynamel gethostbynamel()
-// Get a list of IPv4 addresses corresponding to a given Internet host name
+// GetHostByNameL 返回 hostname 对应的全部 IPv4 地址列表；查询失败时返回错误。
 func GetHostByNameL(hostname string) ([]string, error) {
 	ips, err := net.LookupIP(hostname)
 	if ips != nil {
@@ -47,8 +45,8 @@ func GetHostByNameL(hostname string) ([]string, error) {
 	return nil, err
 }
 
-// GetHostByAddr Gethostbyaddr gethostbyaddr()
-// Get the Internet host name corresponding to a given IP address
+// GetHostByAddr 返回 IP 地址 ipAddress 反向解析得到的主机名，末尾的点号被去除；
+// 解析失败时返回错误。
 func GetHostByAddr(ipAddress string) (string, error) {
 	names, err := net.LookupAddr(ipAddress)
 	if names != nil {
@@ -57,8 +55,7 @@ func GetHostByAddr(ipAddress string) (string, error) {
 	return "", err
 }
 
-// IP2long ip2long()
-// IPv4
+// IP2long 将 IPv4 地址转换为大端 32 位无符号整数；地址非法时返回 0。
 func IP2long(ipAddress string) uint32 {
 	ip := net.ParseIP(ipAddress)
 	if ip == nil {
@@ -67,8 +64,7 @@ func IP2long(ipAddress string) uint32 {
 	return binary.BigEndian.Uint32(ip.To4())
 }
 
-// Long2ip long2ip()
-// IPv4
+// Long2ip 将大端 32 位无符号整数还原为 IPv4 地址字符串。
 func Long2ip(properAddress uint32) string {
 	ipByte := make([]byte, 4)
 	binary.BigEndian.PutUint32(ipByte, properAddress)
@@ -76,9 +72,12 @@ func Long2ip(properAddress uint32) string {
 	return ip.String()
 }
 
-// ExtractIP returns a real ip
+// ExtractIP 解析可用的本机 IP 地址。
+//
+// addr 非空且不是 0.0.0.0、:: 等通配地址时直接返回；否则遍历本机网卡，优先返回
+// 内网地址，内网不存在时再返回公网或虚拟地址；回环地址排在普通网卡之后尝试。
+// 找不到任何地址时返回错误。
 func ExtractIP(addr string) (string, error) {
-	// if addr specified then its returned
 	if len(addr) > 0 && (addr != "0.0.0.0" && addr != "[::]" && addr != "::") {
 		return addr, nil
 	}
@@ -93,7 +92,7 @@ func ExtractIP(addr string) (string, error) {
 	for _, iface := range ifaces {
 		ifaceAddrs, err := iface.Addrs()
 		if err != nil {
-			// ignore error, interface can dissapear from system
+			// 网卡可能在运行过程中消失，跳过本次错误即可。
 			continue
 		}
 		if iface.Flags&net.FlagLoopback != 0 {
@@ -127,12 +126,10 @@ func ExtractIP(addr string) (string, error) {
 		break
 	}
 
-	// return private ip
 	if ipAddr != nil {
 		return net.IP(ipAddr).String(), nil
 	}
 
-	// return public or virtual ip
 	if publicIP != nil {
 		return net.IP(publicIP).String(), nil
 	}
@@ -140,6 +137,7 @@ func ExtractIP(addr string) (string, error) {
 	return "", errors.New("no IP address found, and explicit IP not provided")
 }
 
+// isPrivateIP 判断 ipAddr 是否属于内网、保留或运营商 NAT 保留网段。
 func isPrivateIP(ipAddr string) bool {
 	var privateBlocks []*net.IPNet
 

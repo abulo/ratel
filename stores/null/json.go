@@ -11,20 +11,23 @@ import (
 	"github.com/spf13/cast"
 )
 
-// JSON is a nullable []byte that contains JSON.
+// JSON 是保存原始 JSON 字节的可空 []byte，适用于数据库中可为 null 的 JSON 列。
 //
-// You might want to use this in the case where you have say a nullable
-// JSON column in postgres for instance, where there is one layer of null for
-// the postgres column, and then you also have the opportunity to have null
-// as a value contained in the json. When unmarshalling json however you
-// cannot set 'null' as a value.
+// 它需要区分两层空值：数据库列本身为 null，以及 JSON 内容为 null；序列化时无法把
+// JSON 值 null 单独表达，因此以 Valid 标记内容是否有效、以 Set 标记字段是否出现。
+//
+// 零值（Set 为 false）表示未赋值，可直接使用；结构体为值类型，不提供并发保护，
+// 同一实例的并发读写需由调用方自行加锁。
 type JSON struct {
-	JSON  []byte
+	// JSON 为内部保存的原始 JSON 字节。
+	JSON []byte
+	// Valid 表示是否持有非空有效值。
 	Valid bool
-	Set   bool
+	// Set 表示是否已被显式赋值，包含赋值为 null 的情形。
+	Set bool
 }
 
-// NewJSON creates a new JSON
+// NewJSON 使用给定字节与有效性标记创建 JSON；valid 为 false 时得到空值。
 func NewJSON(b []byte, valid bool) JSON {
 	return JSON{
 		JSON:  b,
@@ -33,12 +36,12 @@ func NewJSON(b []byte, valid bool) JSON {
 	}
 }
 
-// JSONFrom creates a new JSON that will be invalid if nil.
+// JSONFrom 根据字节切片创建 JSON；传入 nil 时得到空值，空切片仍视为有效。
 func JSONFrom(b []byte) JSON {
 	return NewJSON(b, b != nil)
 }
 
-// JSONFromPtr creates a new JSON that will be invalid if nil.
+// JSONFromPtr 根据指针创建 JSON；指针为 nil 时得到空值。
 func JSONFromPtr(b *[]byte) JSON {
 	if b == nil {
 		return NewJSON(nil, false)
@@ -47,28 +50,23 @@ func JSONFromPtr(b *[]byte) JSON {
 	return n
 }
 
-// IsValid returns true if this carries and explicit value and
-// is not null.
+// IsValid 报告是否持有显式赋值且非空的取值。
 func (j JSON) IsValid() bool {
 	return j.Set && j.Valid
 }
 
-// IsSet returns true if this carries an explicit value (null inclusive)
+// IsSet 报告是否已被显式赋值，包含赋值为 null 的情形。
 func (j JSON) IsSet() bool {
 	return j.Set
 }
 
-// Unmarshal will unmarshal your JSON stored in
-// your JSON object and store the result in the
-// value pointed to by dest.
+// Unmarshal 将内部保存的 JSON 解码到 dest 指向的对象；dest 不能为 nil，
+// 返回编码或解码过程中产生的错误。
 func (j JSON) Unmarshal(dest any) error {
 	if dest == nil {
 		return errors.New("destination is nil, not a valid pointer to an object")
 	}
 
-	// Call our implementation of
-	// JSON MarshalJSON through json.Marshal
-	// to get the value of the JSON object
 	res, err := json.Marshal(j)
 	if err != nil {
 		return err
@@ -77,17 +75,15 @@ func (j JSON) Unmarshal(dest any) error {
 	return json.Unmarshal(res, dest)
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
+// UnmarshalJSON 实现 json.Unmarshaler。
 //
-// Example if you have a struct with a null.JSON called v:
+// 以结构体中名为 v 的 JSON 字段为例，三种输入状态分别为：
 //
-//			{}          -> does not call unmarshaljson: !set & !valid
-//			{"v": null} -> calls unmarshaljson, set & !valid
-//	     {"v": {}}   -> calls unmarshaljson, set & valid (json value is '{}')
+//	{}          未调用本方法，Set 与 Valid 均为 false；
+//	{"v": null} 调用本方法，Set 为 true、Valid 为 false；
+//	{"v": {}}   调用本方法，Set 与 Valid 均为 true，JSON 内容为 "{}"。
 //
-// That's to say if 'null' is passed in at the json level we do not capture that
-// value - instead we set the value-level null flag so that an sql value will
-// turn out null.
+// JSON 层面传入 null 时不保留该内容，而是置为值层面的空标记，使数据库落库结果为 SQL NULL。
 func (j *JSON) UnmarshalJSON(data []byte) error {
 	if data == nil {
 		return fmt.Errorf("null: cannot unmarshal nil into Go value of type null.JSON")
@@ -108,7 +104,7 @@ func (j *JSON) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
+// UnmarshalText 实现 encoding.TextUnmarshaler；空文本置为空值，非空文本覆盖写入内部字节。
 func (j *JSON) UnmarshalText(text []byte) error {
 	j.Set = true
 	if len(text) == 0 {
@@ -122,21 +118,17 @@ func (j *JSON) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// Marshal will marshal the passed in object,
-// and store it in the JSON member on the JSON object.
+// Marshal 将 obj 编码为 JSON 并保存到接收者内部；返回编码过程中产生的错误。
 func (j *JSON) Marshal(obj any) error {
 	res, err := json.Marshal(obj)
 	if err != nil {
 		return err
 	}
 
-	// Call our implementation of
-	// JSON UnmarshalJSON through json.Unmarshal
-	// to Set the result to the JSON object
 	return json.Unmarshal(res, j)
 }
 
-// MarshalJSON implements json.Marshaler.
+// MarshalJSON 实现 json.Marshaler；空值或空字节序列化为 JSON null，有效值原样返回内部字节。
 func (j JSON) MarshalJSON() ([]byte, error) {
 	if !j.Valid {
 		return json.Marshal(nil)
@@ -147,7 +139,7 @@ func (j JSON) MarshalJSON() ([]byte, error) {
 	return j.JSON, nil
 }
 
-// MarshalText implements encoding.TextMarshaler.
+// MarshalText 实现 encoding.TextMarshaler；空值返回 nil。
 func (j JSON) MarshalText() ([]byte, error) {
 	if !j.Valid {
 		return nil, nil
@@ -155,14 +147,14 @@ func (j JSON) MarshalText() ([]byte, error) {
 	return j.JSON, nil
 }
 
-// SetValid changes this JSON's value and also sets it to be non-null.
+// SetValid 将内部取值置为 n，并同时标记为有效、已赋值。
 func (j *JSON) SetValid(n []byte) {
 	j.JSON = n
 	j.Valid = true
 	j.Set = true
 }
 
-// Ptr returns a pointer to this JSON's value, or a nil pointer if this JSON is null.
+// Ptr 返回指向内部取值的指针；空值时返回 nil。
 func (j JSON) Ptr() *[]byte {
 	if !j.Valid {
 		return nil
@@ -170,12 +162,12 @@ func (j JSON) Ptr() *[]byte {
 	return &j.JSON
 }
 
-// IsZero returns true for null or zero JSON's, for future omitempty support (Go 1.4?)
+// IsZero 报告是否为空值，供结构体标签 omitempty 判定使用。
 func (j JSON) IsZero() bool {
 	return !j.Valid
 }
 
-// Scan implements the Scanner interface.
+// Scan 实现 sql.Scanner；value 为 nil 时清空状态，否则按驱动值转换后写入内部取值。
 func (j *JSON) Scan(value any) error {
 	if value == nil {
 		j.JSON, j.Valid, j.Set = nil, false, false
@@ -185,7 +177,7 @@ func (j *JSON) Scan(value any) error {
 	return convert.ConvertAssign(&j.JSON, value)
 }
 
-// Value implements the driver Valuer interface.
+// Value 实现 driver.Valuer；空值返回 nil。
 func (j JSON) Value() (driver.Value, error) {
 	if !j.Valid {
 		return nil, nil
@@ -193,7 +185,7 @@ func (j JSON) Value() (driver.Value, error) {
 	return j.JSON, nil
 }
 
-// ValueOrDefault returns the inner value if valid, otherwise default.
+// ValueOrDefault 返回内部取值；空值时返回空字节切片。
 func (t JSON) ValueOrDefault() []byte {
 	if !t.Valid {
 		return []byte{}
@@ -201,7 +193,7 @@ func (t JSON) ValueOrDefault() []byte {
 	return t.JSON
 }
 
-// String returns the string representation of the float or null.
+// Result 返回内部取值的字符串形式；空值返回 "NULL"。
 func (t JSON) Result() string {
 	if !t.Valid {
 		return "NULL"

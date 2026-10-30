@@ -13,6 +13,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// CmdNew 是 toolkit build 子命令，按 watch 配置并行监听多个入口文件并在变更后自动重新编译。
 var (
 	CmdNew = &cobra.Command{
 		Use:   "build",
@@ -22,6 +23,7 @@ var (
 	}
 )
 
+// buildOption 绑定配置文件 watch 段落的热编译选项，各字段与 watch.Options 一一对应。
 type buildOption struct {
 	AutoTidy         bool     `toml:"AutoTidy"`
 	MainFiles        []string `toml:"MainFiles"`
@@ -38,6 +40,10 @@ type buildOption struct {
 	Ld               string   `toml:"Ld"`
 }
 
+// Run 执行 build 子命令：初始化路径与配置，校验 MainFiles 与 OutputName 均已配置且
+// 数量一致，随后为每个入口文件构造监听配置，并行启动文件监听并阻塞等待全部监听结束。
+//
+// 路径或配置初始化失败、入口文件/输出名称缺失或两者数量不一致时打印错误并直接返回。
 func Run(cmd *cobra.Command, args []string) {
 	if err := base.InitPath(); err != nil {
 		fmt.Println("初始化:", color.RedString(err.Error()))
@@ -49,7 +55,6 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// 初始化
 	optionInfo := buildOption{}
 	if err := base.Config.BindStruct("watch", &optionInfo); err != nil {
 		fmt.Println("初始化:", color.RedString(err.Error()))
@@ -74,7 +79,6 @@ func Run(cmd *cobra.Command, args []string) {
 	builderNumber := len(optionInfo.MainFiles)
 	watchOptionList := make([]*watch.Options, 0)
 	for i := range builderNumber {
-		// 获取配置文件
 		option := &watch.Options{}
 		option.AutoTidy = optionInfo.AutoTidy
 		option.MainFiles = optionInfo.MainFiles[i]

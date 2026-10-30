@@ -4,14 +4,14 @@ var (
 	internalQueue Queuer
 )
 
-// Queuer 是一个任务队列，用于在高并发情况下缓解服务器压力并改进任务处理
+// Queuer 抽象任务队列的生命周期与任务提交契约：Run 启动消费，Push 提交任务，Terminate 停止并释放资源。
 type Queuer interface {
 	Run()
 	Push(job Jober)
 	Terminate()
 }
 
-// Run 运行start running queue，指定缓冲区数和工作线程数
+// Run 启动包级共享队列；首次调用按给定缓冲容量与 worker 数量创建队列，队列已存在时忽略新参数直接复用。
 func Run(maxCapacity, maxThread int) {
 	if internalQueue == nil {
 		internalQueue = NewQueue(maxCapacity, maxThread)
@@ -19,7 +19,7 @@ func Run(maxCapacity, maxThread int) {
 	internalQueue.Run()
 }
 
-// RunListQueue 启动运行列表队列，指定工作线程数
+// RunListQueue 启动包级共享的链表队列；队列已创建时不再按新参数重建。
 func RunListQueue(maxThread int) {
 	if internalQueue == nil {
 		internalQueue = NewListQueue(maxThread)
@@ -27,7 +27,7 @@ func RunListQueue(maxThread int) {
 	internalQueue.Run()
 }
 
-// Push 将可执行任务推入队列
+// Push 将任务提交到包级共享队列；队列尚未初始化时直接返回，任务被丢弃。
 func Push(job Jober) {
 	if internalQueue == nil {
 		return
@@ -35,7 +35,7 @@ func Push(job Jober) {
 	internalQueue.Push(job)
 }
 
-// Terminate 终止队列以接收任务并释放资源
+// Terminate 停止包级共享队列并等待已入队任务处理完成；队列未初始化时直接返回。
 func Terminate() {
 	if internalQueue == nil {
 		return

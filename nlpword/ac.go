@@ -1,10 +1,11 @@
 package nlpword
 
-// ac 自动机
+// ac 是 Aho-Corasick 匹配过程中的临时状态，负责沿失败指针回溯并收集匹配结果。
 type ac struct {
 	results []string
 }
 
+// fail 沿失败指针回溯，直到找到字符 c 的子节点；到达根节点仍无匹配时返回根节点。
 func (ac *ac) fail(node *Node, c rune) *Node {
 	var next *Node
 	for {
@@ -22,6 +23,7 @@ func (ac *ac) fail(node *Node, c rune) *Node {
 
 }
 
+// next 返回节点在字符 c 上的子节点，不存在时返回 nil。
 func (ac *ac) next(node *Node, c rune) *Node {
 	next, ok := node.Children[c]
 	if ok {
@@ -30,6 +32,7 @@ func (ac *ac) next(node *Node, c rune) *Node {
 	return nil
 }
 
+// output 沿失败指针收集当前位置命中的全部敏感词到 results。
 func (ac *ac) output(node *Node, runes []rune, position int) {
 	if node.IsRootNode() {
 		return
@@ -42,6 +45,7 @@ func (ac *ac) output(node *Node, runes []rune, position int) {
 	ac.output(node.Failure, runes, position)
 }
 
+// firstOutput 返回沿失败指针回溯命中的第一个敏感词，未命中时返回空字符串。
 func (ac *ac) firstOutput(node *Node, runes []rune, position int) string {
 	if node.IsRootNode() {
 		return ""
@@ -54,6 +58,7 @@ func (ac *ac) firstOutput(node *Node, runes []rune, position int) string {
 	return ac.firstOutput(node.Failure, runes, position)
 }
 
+// replace 将当前位置命中的敏感词在 rune 切片中改写为指定字符，并沿失败指针继续处理重叠命中。
 func (ac *ac) replace(node *Node, runes []rune, position int, replace rune) {
 	if node.IsRootNode() {
 		return

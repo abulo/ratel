@@ -8,7 +8,10 @@ import (
 	"github.com/spf13/cast"
 )
 
-// GinTemplate 模板
+// GinTemplate 返回 gin 框架的接口代码模板字符串。
+//
+// 配置项 template.Gin 指定了自定义模板文件且文件存在时，读取该文件内容并返回；
+// 否则返回包内置的 gin 模板。模板中使用 {{.Name}} 等占位符，由 Generate 渲染填充。
 func GinTemplate() string {
 	if exists := base.Config.Exists("template.Gin"); exists {
 		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.Gin"))

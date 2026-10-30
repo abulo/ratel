@@ -11,7 +11,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// NewRedisClient 创建新的Redis客户端 opts: 配置选项
+// NewRedisClient 根据给定的 Option 构造 Redis 客户端配置 Client。
+//
+// 该方法只完成配置装配与模式校验，并不立即建立底层连接；实际连接在首次执行命令时
+// 按 ClientType 懒加载并复用。未指定 ClientType 时按单节点处理，PoolSize 为 0 时
+// 默认设为 64；分片模式缺少 Addrs、哨兵模式缺少 MasterName、集群模式缺少 Hosts 时
+// 返回对应错误。
 func NewRedisClient(opts ...Option) (*Client, error) {
 	c := &Client{}
 	c.brk = resource.NewBreaker()
@@ -45,123 +50,133 @@ func NewRedisClient(opts ...Option) (*Client, error) {
 	return c, nil
 }
 
-// WithClientType 设置Redis客户端类型 ClientType: 客户端类型(normal,cluster,failover,ring)
+// WithClientType 设置客户端连接模式，取值 normal、cluster、failover、ring，
+// 对应 ClientNormal、ClientCluster、ClientFailover、ClientRing 常量。
 func WithClientType(ClientType string) Option {
 	return func(r *Client) {
 		r.ClientType = ClientType
 	}
 }
 
-// WithHosts 设置Redis主机地址 Hosts: 主机地址列表
+// WithHosts 设置节点地址列表，格式 host:port；集群与哨兵模式必填。
 func WithHosts(Hosts []string) Option {
 	return func(r *Client) {
 		r.Hosts = Hosts
 	}
 }
 
-// WithPassword 设置Redis密码 Password: 认证密码
+// WithPassword 设置连接认证密码。
 func WithPassword(Password string) Option {
 	return func(r *Client) {
 		r.Password = Password
 	}
 }
 
-// WithDatabase 设置Redis数据库 Database: 数据库编号
+// WithDatabase 设置连接后选中的数据库编号。
 func WithDatabase(Database int) Option {
 	return func(r *Client) {
 		r.Database = Database
 	}
 }
 
-// WithPoolSize 设置连接池大小 PoolSize: 连接池大小
+// WithPoolSize 设置连接池最大连接数；为 0 时由 NewRedisClient 默认为 64。
 func WithPoolSize(PoolSize int) Option {
 	return func(r *Client) {
 		r.PoolSize = PoolSize
 	}
 }
 
-// WithEnableMetric 禁用指标采集 EnableMetric: 是否禁用指标采集
+// WithEnableMetric 开关是否采集 Redis 操作指标。
 func WithEnableMetric(EnableMetric bool) Option {
 	return func(r *Client) {
 		r.EnableMetric = EnableMetric
 	}
 }
 
-// WithEnableTrace 禁用链路追踪 EnableTrace: 是否禁用链路追踪
+// WithEnableTrace 开关是否为命令挂载链路追踪钩子。
 func WithEnableTrace(EnableTrace bool) Option {
 	return func(r *Client) {
 		r.EnableTrace = EnableTrace
 	}
 }
 
-// WithAddr 设置单节点地址 Addr: 单节点地址
+// WithAddr 设置单节点模式下的 host:port 地址。
 func WithAddr(Addr string) Option {
 	return func(r *Client) {
 		r.Addr = Addr
 	}
 }
 
+// WithName 设置客户端节点名称，参与底层连接实例的去重键。
 func WithName(Name string) Option {
 	return func(r *Client) {
 		r.Name = Name
 	}
 }
 
-// WithAddrs 设置分片地址 Addrs: 分片地址映射
+// WithAddrs 设置分片模式下分片名称到 host:port 地址的映射。
 func WithAddrs(Addrs map[string]string) Option {
 	return func(r *Client) {
 		r.Addrs = Addrs
 	}
 }
 
-// WithMasterName 设置哨兵主节点名称 MasterName: 主节点名称
+// WithMasterName 设置哨兵模式下的主节点名称，哨兵模式必填。
 func WithMasterName(MasterName string) Option {
 	return func(r *Client) {
 		r.MasterName = MasterName
 	}
 }
+
+// WithDialTimeout 设置建立新连接的超时时间。
 func WithDialTimeout(t time.Duration) Option {
 	return func(r *Client) {
 		r.DialTimeout = t
 	}
 }
+
+// WithReadTimeout 设置套接字读取超时时间，超时后命令失败而非阻塞。
 func WithReadTimeout(t time.Duration) Option {
 	return func(r *Client) {
 		r.ReadTimeout = t
 	}
 }
 
+// WithWriteTimeout 设置套接字写入超时时间，超时后命令失败而非阻塞。
 func WithWriteTimeout(t time.Duration) Option {
 	return func(r *Client) {
 		r.WriteTimeout = t
 	}
 }
 
+// WithPoolTimeout 设置连接池耗尽时等待连接的超时时间。
 func WithPoolTimeout(t time.Duration) Option {
 	return func(r *Client) {
 		r.PoolTimeout = t
 	}
 }
 
+// WithIdleTimeout 设置关闭空闲连接的等待时长。
 func WithIdleTimeout(t time.Duration) Option {
 	return func(r *Client) {
 		r.IdleTimeout = t
 	}
 }
 
+// WithIdleCheckFrequency 设置空闲连接检查频率，传入负值可关闭检查。
 func WithIdleCheckFrequency(t time.Duration) Option {
 	return func(r *Client) {
 		r.IdleCheckFrequency = t
 	}
 }
 
-// RedisNode interface represents a redis node.
+// RedisNode 是各连接模式底层实例的统一命令接口，组合 go-redis 的 UniversalClient
+// 与 Cmdable，使上层方法无需区分单节点、集群、哨兵与分片实例类型。
 type RedisNode interface {
 	redis.UniversalClient
 	redis.Cmdable
 }
 
-// getRedis 获取Redis客户端实例 r: 客户端配置
 func getRedis(r *Client) (RedisNode, error) {
 	switch r.ClientType {
 	case ClientNormal:
@@ -181,7 +196,6 @@ func getRedis(r *Client) (RedisNode, error) {
 
 var clientManager = resource.NewResourceManager()
 
-// getClient 获取单节点Redis客户端 r: 客户端配置
 func getClient(r *Client) (RedisNode, error) {
 	driverName := r.Addr + "@" + r.Name
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
@@ -198,7 +212,6 @@ func getClient(r *Client) (RedisNode, error) {
 	return val.(*redis.Client), nil
 }
 
-// getCluster 获取集群Redis客户端 r: 客户端配置
 func getCluster(r *Client) (RedisNode, error) {
 	driverName := util.Implode(";", r.Hosts) + "@" + r.Name
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
@@ -215,7 +228,6 @@ func getCluster(r *Client) (RedisNode, error) {
 	return val.(*redis.Client), nil
 }
 
-// getFailover 获取哨兵Redis客户端 r: 客户端配置
 func getFailover(r *Client) (RedisNode, error) {
 	driverName := r.MasterName + "://" + util.Implode(";", r.Hosts) + "@" + r.Name
 	val, err := clientManager.GetResource(driverName, func() (io.Closer, error) {
@@ -232,7 +244,6 @@ func getFailover(r *Client) (RedisNode, error) {
 	return val.(*redis.Client), nil
 }
 
-// getRing 获取分片Redis客户端 r: 客户端配置
 func getRing(r *Client) (RedisNode, error) {
 	var driverName string
 	for k, v := range r.Addrs {

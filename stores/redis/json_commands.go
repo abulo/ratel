@@ -6,7 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// JSONArrAppend 向JSON数组追加元素 ctx: 上下文, key: Redis键名, path: JSON路径, values: 要追加的值
+// JSONArrAppend 在 key 的 path 对应 JSON 数组末尾追加 values，返回各路径更新后的数组长度。
 func (r *Client) JSONArrAppend(ctx context.Context, key, path string, values ...any) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -20,7 +20,7 @@ func (r *Client) JSONArrAppend(ctx context.Context, key, path string, values ...
 	return
 }
 
-// JSONArrIndex 查找JSON数组中元素的索引 ctx: 上下文, key: Redis键名, path: JSON路径, value: 要查找的值
+// JSONArrIndex 返回 path 数组中 value 首次出现的索引；未找到时对应位置为 nil。
 func (r *Client) JSONArrIndex(ctx context.Context, key, path string, value ...any) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -34,7 +34,7 @@ func (r *Client) JSONArrIndex(ctx context.Context, key, path string, value ...an
 	return
 }
 
-// JSONArrIndexWithArgs 带参数查找JSON数组中元素的索引 ctx: 上下文, key: Redis键名, path: JSON路径, options: 查找选项, value: 要查找的值
+// JSONArrIndexWithArgs 按 JSONArrIndexArgs（起止位置、范围）查找 value 在数组中的索引。
 func (r *Client) JSONArrIndexWithArgs(ctx context.Context, key, path string, options *redis.JSONArrIndexArgs, value ...any) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -48,7 +48,7 @@ func (r *Client) JSONArrIndexWithArgs(ctx context.Context, key, path string, opt
 	return
 }
 
-// JSONArrInsert 向JSON数组插入元素 ctx: 上下文, key: Redis键名, path: JSON路径, index: 插入位置, values: 要插入的值
+// JSONArrInsert 在 path 数组的 index 位置插入 values，返回各路径更新后的数组长度。
 func (r *Client) JSONArrInsert(ctx context.Context, key, path string, index int64, values ...any) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -62,7 +62,7 @@ func (r *Client) JSONArrInsert(ctx context.Context, key, path string, index int6
 	return
 }
 
-// JSONArrLen 获取JSON数组长度 ctx: 上下文, key: Redis键名, path: JSON路径
+// JSONArrLen 返回 path 对应 JSON 数组的长度切片，非数组路径对应位置为 nil。
 func (r *Client) JSONArrLen(ctx context.Context, key, path string) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -76,7 +76,7 @@ func (r *Client) JSONArrLen(ctx context.Context, key, path string) (val []int64,
 	return
 }
 
-// JSONArrPop 从JSON数组弹出元素 ctx: 上下文, key: Redis键名, path: JSON路径, index: 弹出位置
+// JSONArrPop 弹出 path 数组中 index 位置的元素并返回；index 为负表示从尾部计数。
 func (r *Client) JSONArrPop(ctx context.Context, key, path string, index int) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -90,7 +90,7 @@ func (r *Client) JSONArrPop(ctx context.Context, key, path string, index int) (v
 	return
 }
 
-// JSONArrTrim 修剪JSON数组 ctx: 上下文, key: Redis键名, path: JSON路径
+// JSONArrTrim 将 path 数组修剪为合法长度；本封装使用默认起止位置，返回各路径修剪后长度。
 func (r *Client) JSONArrTrim(ctx context.Context, key, path string) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -104,7 +104,7 @@ func (r *Client) JSONArrTrim(ctx context.Context, key, path string) (val []int64
 	return
 }
 
-// JSONArrTrimWithArgs 带参数修剪JSON数组 ctx: 上下文, key: Redis键名, path: JSON路径, options: 修剪选项
+// JSONArrTrimWithArgs 按 JSONArrTrimArgs 指定的起止位置修剪数组，返回修剪后长度。
 func (r *Client) JSONArrTrimWithArgs(ctx context.Context, key, path string, options *redis.JSONArrTrimArgs) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -118,7 +118,7 @@ func (r *Client) JSONArrTrimWithArgs(ctx context.Context, key, path string, opti
 	return
 }
 
-// JSONClear 清除JSON值 ctx: 上下文, key: Redis键名, path: JSON路径
+// JSONClear 清空 path 下的 JSON 对象与数组内容（标量置空），返回被清除的值数量。
 func (r *Client) JSONClear(ctx context.Context, key, path string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -132,7 +132,7 @@ func (r *Client) JSONClear(ctx context.Context, key, path string) (val int64, er
 	return
 }
 
-// JSONDebugMemory 调试JSON内存使用 ctx: 上下文, key: Redis键名, path: JSON路径
+// JSONDebugMemory 返回 key 的 path 下 JSON 值占用的内存字节数。
 func (r *Client) JSONDebugMemory(ctx context.Context, key, path string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -146,7 +146,7 @@ func (r *Client) JSONDebugMemory(ctx context.Context, key, path string) (val int
 	return
 }
 
-// JSONDel 删除JSON值 ctx: 上下文, key: Redis键名, path: JSON路径
+// JSONDel 删除 key 的 path 下的 JSON 值，返回被删除的路径数量。
 func (r *Client) JSONDel(ctx context.Context, key, path string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -160,7 +160,7 @@ func (r *Client) JSONDel(ctx context.Context, key, path string) (val int64, err 
 	return
 }
 
-// JSONForget 删除JSON值（别名） ctx: 上下文, key: Redis键名, path: JSON路径
+// JSONForget 是 JSONDel 的别名，删除指定 path 下的 JSON 值。
 func (r *Client) JSONForget(ctx context.Context, key, path string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -174,7 +174,7 @@ func (r *Client) JSONForget(ctx context.Context, key, path string) (val int64, e
 	return
 }
 
-// JSONGet 获取JSON值 ctx: 上下文, key: Redis键名, paths: JSON路径
+// JSONGet 返回 key 在 paths 路径下的 JSON 文本；多路径时结果为按路径组织的 JSON。
 func (r *Client) JSONGet(ctx context.Context, key string, paths ...string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -188,7 +188,7 @@ func (r *Client) JSONGet(ctx context.Context, key string, paths ...string) (val 
 	return
 }
 
-// JSONGetWithArgs 带参数获取JSON值 ctx: 上下文, key: Redis键名, options: 获取选项, paths: JSON路径
+// JSONGetWithArgs 按 JSONGetArgs（换行、缩进、转义等）读取指定 paths 的 JSON 值。
 func (r *Client) JSONGetWithArgs(ctx context.Context, key string, options *redis.JSONGetArgs, paths ...string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -202,7 +202,7 @@ func (r *Client) JSONGetWithArgs(ctx context.Context, key string, options *redis
 	return
 }
 
-// JSONMerge 合并JSON值 ctx: 上下文, key: Redis键名, path: JSON路径, value: 要合并的值
+// JSONMerge 将 value 合并到 key 的 path 下，对象按键递归合并，标量与数组直接覆盖。
 func (r *Client) JSONMerge(ctx context.Context, key, path string, value string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -216,7 +216,7 @@ func (r *Client) JSONMerge(ctx context.Context, key, path string, value string) 
 	return
 }
 
-// JSONMSetArgs 批量设置JSON值（带参数） ctx: 上下文, docs: JSON设置参数列表
+// JSONMSetArgs 按 JSONSetArgs 列表批量写入多个键的 JSON 值。
 func (r *Client) JSONMSetArgs(ctx context.Context, docs []redis.JSONSetArgs) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -229,7 +229,7 @@ func (r *Client) JSONMSetArgs(ctx context.Context, docs []redis.JSONSetArgs) (va
 	return
 }
 
-// JSONMSet 批量设置JSON值 ctx: 上下文, params: 设置参数
+// JSONMSet 批量写入 JSON 值，参数按 键、路径、值 成对传入。
 func (r *Client) JSONMSet(ctx context.Context, params ...any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -242,7 +242,7 @@ func (r *Client) JSONMSet(ctx context.Context, params ...any) (val string, err e
 	return
 }
 
-// JSONMGet 批量获取JSON值 ctx: 上下文, path: JSON路径, keys: Redis键名列表
+// JSONMGet 批量读取多个 keys 在同一 path 下的 JSON 值，切片顺序与 keys 一致。
 func (r *Client) JSONMGet(ctx context.Context, path string, keys ...string) (val []any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -255,7 +255,7 @@ func (r *Client) JSONMGet(ctx context.Context, path string, keys ...string) (val
 	return
 }
 
-// JSONNumIncrBy 增加JSON数值 ctx: 上下文, key: Redis键名, path: JSON路径, value: 增加值
+// JSONNumIncrBy 将 key 的 path 数值增加 value，返回更新后的 JSON 数值文本；非数值路径报错。
 func (r *Client) JSONNumIncrBy(ctx context.Context, key, path string, value float64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -268,7 +268,7 @@ func (r *Client) JSONNumIncrBy(ctx context.Context, key, path string, value floa
 	return
 }
 
-// JSONObjKeys 获取JSON对象键名列表 ctx: 上下文, key: Redis键名, path: JSON路径
+// JSONObjKeys 返回 path 对应 JSON 对象的顶层键名列表切片。
 func (r *Client) JSONObjKeys(ctx context.Context, key, path string) (val []any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -281,7 +281,7 @@ func (r *Client) JSONObjKeys(ctx context.Context, key, path string) (val []any, 
 	return
 }
 
-// JSONObjLen 获取JSON对象长度 ctx: 上下文, key: Redis键名, path: JSON路径
+// JSONObjLen 返回 path 对应 JSON 对象的成员数量切片，非对象路径对应位置为 nil。
 func (r *Client) JSONObjLen(ctx context.Context, key, path string) (val []*int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -295,7 +295,7 @@ func (r *Client) JSONObjLen(ctx context.Context, key, path string) (val []*int64
 
 }
 
-// JSONSet 设置JSON值 ctx: 上下文, key: Redis键名, path: JSON路径, value: 要设置的值
+// JSONSet 将 key 的 path 设为 value；路径不存在时自动创建对象或数组层级。
 func (r *Client) JSONSet(ctx context.Context, key, path string, value any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -308,7 +308,7 @@ func (r *Client) JSONSet(ctx context.Context, key, path string, value any) (val 
 	return
 }
 
-// JSONSetMode 带模式设置JSON值 ctx: 上下文, key: Redis键名, path: JSON路径, value: 要设置的值, mode: 设置模式
+// JSONSetMode 按 mode（NX/XX）条件设置 JSON 值，仅在路径不存在或已存在时写入。
 func (r *Client) JSONSetMode(ctx context.Context, key, path string, value any, mode string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -321,7 +321,7 @@ func (r *Client) JSONSetMode(ctx context.Context, key, path string, value any, m
 	return
 }
 
-// JSONStrAppend 向JSON字符串追加内容 ctx: 上下文, key: Redis键名, path: JSON路径, value: 要追加的值
+// JSONStrAppend 在 key 的 path 字符串末尾追加 value，返回各路径更新后的字符串长度。
 func (r *Client) JSONStrAppend(ctx context.Context, key, path, value string) (val []*int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -335,7 +335,7 @@ func (r *Client) JSONStrAppend(ctx context.Context, key, path, value string) (va
 
 }
 
-// JSONStrLen 获取JSON字符串长度 ctx: 上下文, key: Redis键名, path: JSON路径
+// JSONStrLen 返回 path 对应 JSON 字符串的长度切片，非字符串路径对应位置为 nil。
 func (r *Client) JSONStrLen(ctx context.Context, key, path string) (val []*int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -349,7 +349,7 @@ func (r *Client) JSONStrLen(ctx context.Context, key, path string) (val []*int64
 
 }
 
-// JSONToggle 切换JSON布尔值 ctx: 上下文, key: Redis键名, path: JSON路径
+// JSONToggle 翻转 path 处布尔值（true/false 互换），返回翻转后布尔状态切片。
 func (r *Client) JSONToggle(ctx context.Context, key, path string) (val []*int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -363,7 +363,7 @@ func (r *Client) JSONToggle(ctx context.Context, key, path string) (val []*int64
 
 }
 
-// JSONType 获取JSON值类型 ctx: 上下文, key: Redis键名, path: JSON路径
+// JSONType 返回各 path 下 JSON 值的类型（object/array/string/number/boolean/null）切片。
 func (r *Client) JSONType(ctx context.Context, key, path string) (val []any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

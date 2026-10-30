@@ -6,7 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// TSAdd 向时间序列中添加数据点 ctx: 上下文, key: 时间序列键名, timestamp: 时间戳, value: 数据值
+// TSAdd 向时间序列 key 追加 timestamp 时刻的 value 数据点，返回写入后的时间戳。
 func (r *Client) TSAdd(ctx context.Context, key string, timestamp any, value float64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -19,7 +19,7 @@ func (r *Client) TSAdd(ctx context.Context, key string, timestamp any, value flo
 	return
 }
 
-// TSAddWithArgs 向时间序列中添加数据点（带选项） ctx: 上下文, key: 时间序列键名, timestamp: 时间戳, value: 数据值, options: 时间序列选项
+// TSAddWithArgs 按 TSOptions 向时间序列 key 追加数据点，选项可控制是否创建序列与去重策略。
 func (r *Client) TSAddWithArgs(ctx context.Context, key string, timestamp any, value float64, options *redis.TSOptions) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -32,7 +32,7 @@ func (r *Client) TSAddWithArgs(ctx context.Context, key string, timestamp any, v
 	return
 }
 
-// TSCreate 创建新的时间序列 ctx: 上下文, key: 时间序列键名
+// TSCreate 创建新的空时间序列 key；键已存在时报错。
 func (r *Client) TSCreate(ctx context.Context, key string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -45,7 +45,7 @@ func (r *Client) TSCreate(ctx context.Context, key string) (val string, err erro
 	return
 }
 
-// TSCreateWithArgs 创建新的时间序列（带选项） ctx: 上下文, key: 时间序列键名, options: 时间序列选项
+// TSCreateWithArgs 按 TSOptions 创建时间序列 key，可配置保留策略、标签与压缩规则。
 func (r *Client) TSCreateWithArgs(ctx context.Context, key string, options *redis.TSOptions) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -58,7 +58,7 @@ func (r *Client) TSCreateWithArgs(ctx context.Context, key string, options *redi
 	return
 }
 
-// TSAlter 修改时间序列属性 ctx: 上下文, key: 时间序列键名, options: 修改选项
+// TSAlter 修改已存在时间序列 key 的保留策略、标签等属性。
 func (r *Client) TSAlter(ctx context.Context, key string, options *redis.TSAlterOptions) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -71,7 +71,7 @@ func (r *Client) TSAlter(ctx context.Context, key string, options *redis.TSAlter
 	return
 }
 
-// TSCreateRule 创建时间序列聚合规则 ctx: 上下文, sourceKey: 源时间序列键名, destKey: 目标时间序列键名, aggregator: 聚合器类型, bucketDuration: 时间桶大小
+// TSCreateRule 将 sourceKey 按 aggregator 聚合、bucketDuration 为时间桶生成规则写入 destKey。
 func (r *Client) TSCreateRule(ctx context.Context, sourceKey string, destKey string, aggregator redis.Aggregator, bucketDuration int) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -84,7 +84,7 @@ func (r *Client) TSCreateRule(ctx context.Context, sourceKey string, destKey str
 	return
 }
 
-// TSCreateRuleWithArgs 创建时间序列聚合规则（带选项） ctx: 上下文, sourceKey: 源时间序列键名, destKey: 目标时间序列键名, aggregator: 聚合器类型, bucketDuration: 时间桶大小, options: 创建规则选项
+// TSCreateRuleWithArgs 按 TSCreateRuleOptions 创建聚合规则，可指定对齐与优先级等选项。
 func (r *Client) TSCreateRuleWithArgs(ctx context.Context, sourceKey string, destKey string, aggregator redis.Aggregator, bucketDuration int, options *redis.TSCreateRuleOptions) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -97,7 +97,7 @@ func (r *Client) TSCreateRuleWithArgs(ctx context.Context, sourceKey string, des
 	return
 }
 
-// TSIncrBy 增加时间序列值 ctx: 上下文, key: 时间序列键名, timestamp: 时间戳
+// TSIncrBy 将时间序列 key 在 timestamp 时刻的值累加，返回更新后的时间戳。
 func (r *Client) TSIncrBy(ctx context.Context, key string, timestamp float64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -111,7 +111,7 @@ func (r *Client) TSIncrBy(ctx context.Context, key string, timestamp float64) (v
 	return
 }
 
-// TSIncrByWithArgs 增加时间序列值（带选项） ctx: 上下文, key: 时间序列键名, timestamp: 时间戳, options: 增减选项
+// TSIncrByWithArgs 按 TSIncrDecrOptions 累加时间序列值，选项可控制是否创建序列。
 func (r *Client) TSIncrByWithArgs(ctx context.Context, key string, timestamp float64, options *redis.TSIncrDecrOptions) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -125,7 +125,7 @@ func (r *Client) TSIncrByWithArgs(ctx context.Context, key string, timestamp flo
 	return
 }
 
-// TSDecrBy 减少时间序列值 ctx: 上下文, key: 时间序列键名, timestamp: 时间戳
+// TSDecrBy 将时间序列 key 在 timestamp 时刻的值递减，返回更新后的时间戳。
 func (r *Client) TSDecrBy(ctx context.Context, key string, timestamp float64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -139,7 +139,7 @@ func (r *Client) TSDecrBy(ctx context.Context, key string, timestamp float64) (v
 	return
 }
 
-// TSDecrByWithArgs 减少时间序列值（带选项） ctx: 上下文, key: 时间序列键名, timestamp: 时间戳, options: 增减选项
+// TSDecrByWithArgs 按 TSIncrDecrOptions 递减时间序列值。
 func (r *Client) TSDecrByWithArgs(ctx context.Context, key string, timestamp float64, options *redis.TSIncrDecrOptions) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -153,7 +153,7 @@ func (r *Client) TSDecrByWithArgs(ctx context.Context, key string, timestamp flo
 	return
 }
 
-// TSDel 删除时间序列数据点 ctx: 上下文, key: 时间序列键名, fromTimestamp: 起始时间戳, toTimestamp: 结束时间戳
+// TSDel 删除时间序列 key 中 [fromTimestamp, toTimestamp] 区间内的数据点，返回删除数量。
 func (r *Client) TSDel(ctx context.Context, key string, fromTimestamp int, toTimestamp int) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -166,7 +166,7 @@ func (r *Client) TSDel(ctx context.Context, key string, fromTimestamp int, toTim
 	return
 }
 
-// TSDeleteRule 删除时间序列聚合规则 ctx: 上下文, sourceKey: 源时间序列键名, destKey: 目标时间序列键名
+// TSDeleteRule 移除 sourceKey 指向 destKey 的聚合规则。
 func (r *Client) TSDeleteRule(ctx context.Context, sourceKey string, destKey string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -179,7 +179,7 @@ func (r *Client) TSDeleteRule(ctx context.Context, sourceKey string, destKey str
 	return
 }
 
-// TSGet 获取时间序列最新数据点 ctx: 上下文, key: 时间序列键名
+// TSGet 返回时间序列 key 的最新数据点（时间戳与值）。
 func (r *Client) TSGet(ctx context.Context, key string) (val redis.TSTimestampValue, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -192,7 +192,7 @@ func (r *Client) TSGet(ctx context.Context, key string) (val redis.TSTimestampVa
 	return
 }
 
-// TSGetWithArgs 获取时间序列最新数据点（带选项） ctx: 上下文, key: 时间序列键名, options: 获取选项
+// TSGetWithArgs 按 TSGetOptions 返回时间序列 key 的最新数据点。
 func (r *Client) TSGetWithArgs(ctx context.Context, key string, options *redis.TSGetOptions) (val redis.TSTimestampValue, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -205,7 +205,7 @@ func (r *Client) TSGetWithArgs(ctx context.Context, key string, options *redis.T
 	return
 }
 
-// TSInfo 获取时间序列信息 ctx: 上下文, key: 时间序列键名
+// TSInfo 返回时间序列 key 的样本数量、内存占用、标签、规则等统计信息。
 func (r *Client) TSInfo(ctx context.Context, key string) (val map[string]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -218,7 +218,7 @@ func (r *Client) TSInfo(ctx context.Context, key string) (val map[string]any, er
 	return
 }
 
-// TSInfoWithArgs 获取时间序列信息（带选项） ctx: 上下文, key: 时间序列键名, options: 信息获取选项
+// TSInfoWithArgs 按 TSInfoOptions 返回时间序列信息，可限定返回的信息类别。
 func (r *Client) TSInfoWithArgs(ctx context.Context, key string, options *redis.TSInfoOptions) (val map[string]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -231,7 +231,7 @@ func (r *Client) TSInfoWithArgs(ctx context.Context, key string, options *redis.
 	return
 }
 
-// TSMAdd 批量添加时间序列数据点 ctx: 上下文, ktvSlices: 键-时间戳-值切片数组
+// TSMAdd 批量写入多组 键-时间戳-值 数据点，返回各序列写入后的时间戳。
 func (r *Client) TSMAdd(ctx context.Context, ktvSlices [][]any) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -244,7 +244,7 @@ func (r *Client) TSMAdd(ctx context.Context, ktvSlices [][]any) (val []int64, er
 	return
 }
 
-// TSQueryIndex 查询匹配过滤器的时间序列键名 ctx: 上下文, filterExpr: 过滤表达式数组
+// TSQueryIndex 返回满足 filterExpr 标签过滤表达式的全部时间序列键名。
 func (r *Client) TSQueryIndex(ctx context.Context, filterExpr []string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -257,7 +257,7 @@ func (r *Client) TSQueryIndex(ctx context.Context, filterExpr []string) (val []s
 	return
 }
 
-// TSRevRange 反向查询时间序列数据点 ctx: 上下文, key: 时间序列键名, fromTimestamp: 起始时间戳, toTimestamp: 结束时间戳
+// TSRevRange 按时间倒序返回 key 在 [fromTimestamp, toTimestamp] 区间内的数据点。
 func (r *Client) TSRevRange(ctx context.Context, key string, fromTimestamp int, toTimestamp int) (val []redis.TSTimestampValue, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -270,7 +270,7 @@ func (r *Client) TSRevRange(ctx context.Context, key string, fromTimestamp int, 
 	return
 }
 
-// TSRevRangeWithArgs 反向查询时间序列数据点（带选项） ctx: 上下文, key: 时间序列键名, fromTimestamp: 起始时间戳, toTimestamp: 结束时间戳, options: 查询选项
+// TSRevRangeWithArgs 按 TSRevRangeOptions 倒序查询区间数据点，选项支持聚合、过滤与数量限制。
 func (r *Client) TSRevRangeWithArgs(ctx context.Context, key string, fromTimestamp int, toTimestamp int, options *redis.TSRevRangeOptions) (val []redis.TSTimestampValue, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -283,7 +283,7 @@ func (r *Client) TSRevRangeWithArgs(ctx context.Context, key string, fromTimesta
 	return
 }
 
-// TSRange 查询时间序列数据点 ctx: 上下文, key: 时间序列键名, fromTimestamp: 起始时间戳, toTimestamp: 结束时间戳
+// TSRange 按时间正序返回 key 在 [fromTimestamp, toTimestamp] 区间内的数据点。
 func (r *Client) TSRange(ctx context.Context, key string, fromTimestamp int, toTimestamp int) (val []redis.TSTimestampValue, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -296,7 +296,7 @@ func (r *Client) TSRange(ctx context.Context, key string, fromTimestamp int, toT
 	return
 }
 
-// TSRangeWithArgs 查询时间序列数据点（带选项） ctx: 上下文, key: 时间序列键名, fromTimestamp: 起始时间戳, toTimestamp: 结束时间戳, options: 查询选项
+// TSRangeWithArgs 按 TSRangeOptions 正序查询区间数据点，选项支持聚合、过滤与数量限制。
 func (r *Client) TSRangeWithArgs(ctx context.Context, key string, fromTimestamp int, toTimestamp int, options *redis.TSRangeOptions) (val []redis.TSTimestampValue, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -309,7 +309,7 @@ func (r *Client) TSRangeWithArgs(ctx context.Context, key string, fromTimestamp 
 	return
 }
 
-// TSMRange 批量查询时间序列数据点 ctx: 上下文, fromTimestamp: 起始时间戳, toTimestamp: 结束时间戳, filterExpr: 过滤表达式数组
+// TSMRange 跨满足 filterExpr 的多个时间序列，查询 [fromTimestamp, toTimestamp] 区间数据点。
 func (r *Client) TSMRange(ctx context.Context, fromTimestamp int, toTimestamp int, filterExpr []string) (val map[string][]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -322,7 +322,7 @@ func (r *Client) TSMRange(ctx context.Context, fromTimestamp int, toTimestamp in
 	return
 }
 
-// TSMRangeWithArgs 批量查询时间序列数据点（带选项） ctx: 上下文, fromTimestamp: 起始时间戳, toTimestamp: 结束时间戳, filterExpr: 过滤表达式数组, options: 查询选项
+// TSMRangeWithArgs 按 TSMRangeOptions 跨序列查询区间数据点，选项支持聚合、标签过滤与分组。
 func (r *Client) TSMRangeWithArgs(ctx context.Context, fromTimestamp int, toTimestamp int, filterExpr []string, options *redis.TSMRangeOptions) (val map[string][]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -335,7 +335,7 @@ func (r *Client) TSMRangeWithArgs(ctx context.Context, fromTimestamp int, toTime
 	return
 }
 
-// TSMRevRange 批量反向查询时间序列数据点 ctx: 上下文, fromTimestamp: 起始时间戳, toTimestamp: 结束时间戳, filterExpr: 过滤表达式数组
+// TSMRevRange 跨满足 filterExpr 的多个时间序列，按时间倒序查询区间数据点。
 func (r *Client) TSMRevRange(ctx context.Context, fromTimestamp int, toTimestamp int, filterExpr []string) (val map[string][]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -349,7 +349,7 @@ func (r *Client) TSMRevRange(ctx context.Context, fromTimestamp int, toTimestamp
 	return
 }
 
-// TSMRevRangeWithArgs 批量反向查询时间序列数据点（带选项） ctx: 上下文, fromTimestamp: 起始时间戳, toTimestamp: 结束时间戳, filterExpr: 过滤表达式数组, options: 查询选项
+// TSMRevRangeWithArgs 按 TSMRevRangeOptions 跨序列倒序查询区间数据点。
 func (r *Client) TSMRevRangeWithArgs(ctx context.Context, fromTimestamp int, toTimestamp int, filterExpr []string, options *redis.TSMRevRangeOptions) (val map[string][]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -363,7 +363,7 @@ func (r *Client) TSMRevRangeWithArgs(ctx context.Context, fromTimestamp int, toT
 	return
 }
 
-// TSMGet 批量获取时间序列最新数据点 ctx: 上下文, filters: 过滤表达式数组
+// TSMGet 批量返回满足 filters 过滤条件的各时间序列最新数据点。
 func (r *Client) TSMGet(ctx context.Context, filters []string) (val map[string][]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -377,7 +377,7 @@ func (r *Client) TSMGet(ctx context.Context, filters []string) (val map[string][
 	return
 }
 
-// TSMGetWithArgs 批量获取时间序列最新数据点（带选项） ctx: 上下文, filters: 过滤表达式数组, options: 获取选项
+// TSMGetWithArgs 按 TSMGetOptions 批量获取各序列最新数据点。
 func (r *Client) TSMGetWithArgs(ctx context.Context, filters []string, options *redis.TSMGetOptions) (val map[string][]any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

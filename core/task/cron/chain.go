@@ -1,28 +1,22 @@
 package cron
 
-// JobWrapper decorates the given Job with some behavior.
+// JobWrapper 为给定 Job 叠加一层横切行为（如异常恢复、并发互斥、日志记录）。
 type JobWrapper func(Job) Job
 
-// Chain is a sequence of JobWrappers that decorates submitted jobs with
-// cross-cutting behaviors like logging or synchronization.
+// Chain 是一组 JobWrapper 的有序序列，用于统一为提交的任务叠加横切行为。
 type Chain struct {
 	wrappers []JobWrapper
 }
 
-// NewChain returns a Chain consisting of the given JobWrappers.
+// NewChain 由给定的包装器构造一条包装器链。
 func NewChain(c ...JobWrapper) Chain {
 	return Chain{c}
 }
 
-// Then decorates the given job with all JobWrappers in the chain.
+// Then 用链上全部包装器包装给定任务。
 //
-// This:
-//
-//	NewChain(m1, m2, m3).Then(job)
-//
-// is equivalent to:
-//
-//	m1(m2(m3(job)))
+// NewChain(m1, m2, m3).Then(job) 等价于 m1(m2(m3(job)))，
+// 即链首包装器最外层、链尾包装器最内层。
 func (c Chain) Then(j Job) Job {
 	for i := range c.wrappers {
 		j = c.wrappers[len(c.wrappers)-i-1](j)

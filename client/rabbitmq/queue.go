@@ -4,7 +4,9 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// Queue represents a queue of messages
+// Queue 绑定所属连接与队列声明、绑定选项，提供队列声明并绑定到交换器的能力。
+//
+// 由 QueueBuilder.Build 构造，零值缺少连接与选项，不可直接使用。
 type Queue struct {
 	c           *Connection
 	declareOpts *QueueDeclareOpts
@@ -13,8 +15,8 @@ type Queue struct {
 	*amqp.Queue
 }
 
-// DeclareAndBind 根据 queueName 声明队列，并绑定 queueName, key 到指定的 exchange。
-// Queue 可能会因为网络原因创建失败，不提供一定创建成功保证。
+// DeclareAndBind 声明指定队列，并将其按 key 绑定到 exchange；网络原因可能导致声明失败，
+// 不保证一定创建成功。
 func (q *Queue) DeclareAndBind(queueName, key, exchange string) error {
 	ch, err := q.c.Channel()
 	if err != nil {
@@ -40,7 +42,7 @@ func (q *Queue) DeclareAndBind(queueName, key, exchange string) error {
 	return nil
 }
 
-// RetryDeclareAndBind will retry the specified	 messages	 Channels
+// RetryDeclareAndBind 按队列自带的重试策略反复执行声明与绑定，重试耗尽仍失败时返回最后一次错误。
 func (q *Queue) RetryDeclareAndBind(queueName, key, exchange string) error {
 	var err error
 	retryable := q.retryable
@@ -54,35 +56,35 @@ func (q *Queue) RetryDeclareAndBind(queueName, key, exchange string) error {
 	return err
 }
 
-// QueueBuilder ...
+// QueueBuilder 以链式方式为 Connection 装配队列声明、绑定选项与重试策略，最终构造 Queue。
 type QueueBuilder struct {
 	que *Queue
 }
 
-// NewQueueBuilder creates a new QueueBuilder instance
+// NewQueueBuilder 创建绑定到指定连接的 QueueBuilder。
 func NewQueueBuilder(c *Connection) *QueueBuilder {
 	return &QueueBuilder{&Queue{c: c}}
 }
 
-// SetQueueDeclareOpts 	sets the default value for the Queue declaration
+// SetQueueDeclareOpts 设置队列声明选项，返回构造器自身以便链式调用。
 func (bld *QueueBuilder) SetQueueDeclareOpts(builderFn func(builder *QueueDeclareOptsBuilder) *QueueDeclareOpts) *QueueBuilder {
 	bld.que.declareOpts = builderFn(NewQueueDeclareOptsBuilder())
 	return bld
 }
 
-// SetQueueBindOpts sets the binding options for the queue builde
+// SetQueueBindOpts 设置队列绑定选项，返回构造器自身以便链式调用。
 func (bld *QueueBuilder) SetQueueBindOpts(builderFn func(builder *QueueBindOptsBuilder) *QueueBindOpts) *QueueBuilder {
 	bld.que.bindOpts = builderFn(NewQueueBindOptsBuilder())
 	return bld
 }
 
-// SetRetryable sets the retryable flag to true for
+// SetRetryable 设置声明与绑定失败时的重试策略，返回构造器自身以便链式调用。
 func (bld *QueueBuilder) SetRetryable(retryable Retryable) *QueueBuilder {
 	bld.que.retryable = retryable
 	return bld
 }
 
-// Build the queue
+// Build 完成队列构造；未显式设置的选项分别回落到默认声明选项、默认绑定选项与默认持续重试策略。
 func (bld *QueueBuilder) Build() *Queue {
 	que := bld.que
 	if que.declareOpts == nil {
@@ -97,13 +99,13 @@ func (bld *QueueBuilder) Build() *Queue {
 	return que
 }
 
-// QueueDeclareOpts returns the list of queued operations
+// QueueDeclareOpts 封装队列声明的参数，由 QueueDeclareOptsBuilder 构造。
 type QueueDeclareOpts struct {
 	durable, autoDelete, exclusive, noWait bool
 	args                                   *amqp.Table
 }
 
-// DefaultQueueDeclareOpts  holds the default queue declaration
+// DefaultQueueDeclareOpts 返回默认声明选项：队列持久化，不自动删除、不独占、不等服务器确认。
 func DefaultQueueDeclareOpts() *QueueDeclareOpts {
 	return &QueueDeclareOpts{
 		durable:    true,
@@ -114,58 +116,58 @@ func DefaultQueueDeclareOpts() *QueueDeclareOpts {
 	}
 }
 
-// QueueDeclareOptsBuilder is the builder for QueueDeclareOpts
+// QueueDeclareOptsBuilder 以链式方式构造 QueueDeclareOpts。
 type QueueDeclareOptsBuilder struct {
 	opts *QueueDeclareOpts
 }
 
-// NewQueueDeclareOptsBuilder creates a new QueueDeclareOptsBuilder
+// NewQueueDeclareOptsBuilder 创建基于默认选项的 QueueDeclareOptsBuilder。
 func NewQueueDeclareOptsBuilder() *QueueDeclareOptsBuilder {
 	return &QueueDeclareOptsBuilder{DefaultQueueDeclareOpts()}
 }
 
-// SetDurable sets whether the queue declaration
+// SetDurable 设置队列是否持久化（服务器重启后是否保留），返回构造器自身以便链式调用。
 func (bld *QueueDeclareOptsBuilder) SetDurable(b bool) *QueueDeclareOptsBuilder {
 	bld.opts.durable = b
 	return bld
 }
 
-// SetAutoDelete sets the auto delete option
+// SetAutoDelete 设置连接断开后是否自动删除队列，返回构造器自身以便链式调用。
 func (bld *QueueDeclareOptsBuilder) SetAutoDelete(b bool) *QueueDeclareOptsBuilder {
 	bld.opts.autoDelete = b
 	return bld
 }
 
-// SetExclusive sets the exclusive
+// SetExclusive 设置队列是否独占（仅当前连接可访问），返回构造器自身以便链式调用。
 func (bld *QueueDeclareOptsBuilder) SetExclusive(b bool) *QueueDeclareOptsBuilder {
 	bld.opts.exclusive = b
 	return bld
 }
 
-// SetNoWait sets the number of seconds to wait before returning
+// SetNoWait 设置是否不等服务器确认即返回，返回构造器自身以便链式调用。
 func (bld *QueueDeclareOptsBuilder) SetNoWait(b bool) *QueueDeclareOptsBuilder {
 	bld.opts.noWait = b
 	return bld
 }
 
-// SetArgs sets the arguments to be passed to the command
+// SetArgs 设置传给队列声明的自定义参数表，返回构造器自身以便链式调用。
 func (bld *QueueDeclareOptsBuilder) SetArgs(args *amqp.Table) *QueueDeclareOptsBuilder {
 	bld.opts.args = args
 	return bld
 }
 
-// Build returns the queue declaration options
+// Build 完成声明选项构造，返回最终的 QueueDeclareOpts。
 func (bld *QueueDeclareOptsBuilder) Build() *QueueDeclareOpts {
 	return bld.opts
 }
 
-// QueueBindOpts is the queue binding options
+// QueueBindOpts 封装队列绑定到交换器的参数，由 QueueBindOptsBuilder 构造。
 type QueueBindOpts struct {
 	noWait bool
 	args   *amqp.Table
 }
 
-// DefaultBindOpts returns the default queue binding options
+// DefaultBindOpts 返回默认绑定选项：等待服务器确认，无自定义参数。
 func DefaultBindOpts() *QueueBindOpts {
 	return &QueueBindOpts{
 		noWait: false,
@@ -173,29 +175,29 @@ func DefaultBindOpts() *QueueBindOpts {
 	}
 }
 
-// QueueBindOptsBuilder is the builder for QueueBindOptsBuilder
+// QueueBindOptsBuilder 以链式方式构造 QueueBindOpts。
 type QueueBindOptsBuilder struct {
 	opts *QueueBindOpts
 }
 
-// NewQueueBindOptsBuilder returns a new QueueBindOptsBuilder
+// NewQueueBindOptsBuilder 创建基于默认选项的 QueueBindOptsBuilder。
 func NewQueueBindOptsBuilder() *QueueBindOptsBuilder {
 	return &QueueBindOptsBuilder{DefaultBindOpts()}
 }
 
-// SetNoWait sets the default value
+// SetNoWait 设置是否不等服务器确认即返回，返回构造器自身以便链式调用。
 func (bld *QueueBindOptsBuilder) SetNoWait(b bool) *QueueBindOptsBuilder {
 	bld.opts.noWait = b
 	return bld
 }
 
-// SetArgs sets the arguments
+// SetArgs 设置传给绑定命令的自定义参数表，返回构造器自身以便链式调用。
 func (bld *QueueBindOptsBuilder) SetArgs(args *amqp.Table) *QueueBindOptsBuilder {
 	bld.opts.args = args
 	return bld
 }
 
-// Build sets the parameters
+// Build 完成绑定选项构造，返回最终的 QueueBindOpts。
 func (bld *QueueBindOptsBuilder) Build() *QueueBindOpts {
 	return bld.opts
 }

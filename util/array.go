@@ -14,9 +14,7 @@ import (
 	"github.com/spf13/cast"
 )
 
-//////////// Array(Slice/Map) Functions ////////////
-
-// ArrayFill array_fill()
+// ArrayFill 生成以 startIndex 为起点、连续 num 个键均为 value 的 map[int]any。
 func ArrayFill(startIndex int, num uint, value any) map[int]any {
 	m := make(map[int]any)
 	for range num {
@@ -26,7 +24,7 @@ func ArrayFill(startIndex int, num uint, value any) map[int]any {
 	return m
 }
 
-// ArrayFlip array_flip()
+// ArrayFlip 交换 map 的键与值；键值冲突时后遍历到的值覆盖前者。
 func ArrayFlip(m map[any]any) map[any]any {
 	n := make(map[any]any)
 	for i, v := range m {
@@ -35,7 +33,7 @@ func ArrayFlip(m map[any]any) map[any]any {
 	return n
 }
 
-// ArrayKeys array_keys()
+// ArrayKeys 返回 map 的全部键，返回顺序不保证。
 func ArrayKeys(elements map[any]any) []any {
 	i, keys := 0, make([]any, len(elements))
 	for key := range elements {
@@ -45,7 +43,7 @@ func ArrayKeys(elements map[any]any) []any {
 	return keys
 }
 
-// ArrayValues array_values()
+// ArrayValues 返回 map 的全部值，返回顺序不保证。
 func ArrayValues(elements map[any]any) []any {
 	i, vals := 0, make([]any, len(elements))
 	for _, val := range elements {
@@ -55,7 +53,7 @@ func ArrayValues(elements map[any]any) []any {
 	return vals
 }
 
-// ArrayMerge array_merge()
+// ArrayMerge 按参数顺序将多个切片拼接为一个新切片。
 func ArrayMerge(ss ...[]any) []any {
 	n := 0
 	for _, v := range ss {
@@ -68,7 +66,7 @@ func ArrayMerge(ss ...[]any) []any {
 	return s
 }
 
-// ArrayChunk array_chunk()
+// ArrayChunk 将切片按 size 大小切分为多个子切片；size 小于 1 时 panic。
 func ArrayChunk(s []any, size int) [][]any {
 	if size < 1 {
 		panic("size: cannot be less than 1")
@@ -84,7 +82,9 @@ func ArrayChunk(s []any, size int) [][]any {
 	return n
 }
 
-// ArrayPad array_pad()
+// ArrayPad 将切片填充到指定长度。
+//
+// size 为正时在尾部追加 val，为负时在头部前置 val；切片长度已满足要求时原样返回。
 func ArrayPad(s []any, size int, val any) []any {
 	if size == 0 || (size > 0 && size < len(s)) || (size < 0 && size > -len(s)) {
 		return s
@@ -104,7 +104,8 @@ func ArrayPad(s []any, size int, val any) []any {
 	return append(tmp, s...)
 }
 
-// ArraySlice array_slice()
+// ArraySlice 从 offset 起截取 length 个元素；offset 超出切片长度时 panic，
+// length 超出尾部时截到末尾。
 func ArraySlice(s []any, offset, length uint) []any {
 	if offset > uint(len(s)) {
 		panic("offset: the offset is less than the length of s")
@@ -116,7 +117,7 @@ func ArraySlice(s []any, offset, length uint) []any {
 	return s[offset:]
 }
 
-// ArrayRand array_rand()
+// ArrayRand 返回 elements 随机打乱顺序后的新切片，不修改原切片。
 func ArrayRand(elements []any) []any {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	n := make([]any, len(elements))
@@ -126,7 +127,7 @@ func ArrayRand(elements []any) []any {
 	return n
 }
 
-// ArrayColumn array_column()
+// ArrayColumn 从 map 集合中提取每个元素 columnKey 字段的值组成列表；字段不存在的元素被跳过。
 func ArrayColumn(input map[string]map[string]any, columnKey string) []any {
 	columns := make([]any, 0, len(input))
 	for _, val := range input {
@@ -137,15 +138,17 @@ func ArrayColumn(input map[string]map[string]any, columnKey string) []any {
 	return columns
 }
 
-// ArrayPush array_push()
-// Push one or more elements onto the end of slice
+// ArrayPush 将 elements 追加到切片尾部，返回追加后的长度。
+//
+// s 为切片指针，底层切片会被原地修改。
 func ArrayPush(s *[]any, elements ...any) int {
 	*s = append(*s, elements...)
 	return len(*s)
 }
 
-// ArrayPop array_pop()
-// Pop the element off the end of slice
+// ArrayPop 移除并返回切片尾部元素；空切片返回 nil。
+//
+// s 为切片指针，底层切片会被原地修改。
 func ArrayPop(s *[]any) any {
 	if len(*s) == 0 {
 		return nil
@@ -156,15 +159,17 @@ func ArrayPop(s *[]any) any {
 	return e
 }
 
-// ArrayUnshift array_unshift()
-// Prepend one or more elements to the beginning of a slice
+// ArrayUnshift 将 elements 插入切片头部，返回插入后的长度。
+//
+// s 为切片指针，底层切片会被原地修改。
 func ArrayUnshift(s *[]any, elements ...any) int {
 	*s = append(elements, *s...)
 	return len(*s)
 }
 
-// ArrayShift array_shift()
-// Shift an element off the beginning of slice
+// ArrayShift 移除并返回切片头部元素；空切片返回 nil。
+//
+// s 为切片指针，底层切片会被原地修改。
 func ArrayShift(s *[]any) any {
 	if len(*s) == 0 {
 		return nil
@@ -174,13 +179,13 @@ func ArrayShift(s *[]any) any {
 	return f
 }
 
-// ArrayKeyExists array_key_exists()
+// ArrayKeyExists 判断 map m 中是否存在指定键 key。
 func ArrayKeyExists(key any, m map[any]any) bool {
 	_, ok := m[key]
 	return ok
 }
 
-// ArrayCombine array_combine()
+// ArrayCombine 以 s1 为键、s2 为值构造 map；两个切片长度不等时 panic。
 func ArrayCombine(s1, s2 []any) map[any]any {
 	if len(s1) != len(s2) {
 		panic("the number of elements for each slice isn't equal")
@@ -192,7 +197,7 @@ func ArrayCombine(s1, s2 []any) map[any]any {
 	return m
 }
 
-// ArrayReverse array_reverse()
+// ArrayReverse 原地反转切片并返回；原切片内容会被修改。
 func ArrayReverse(s []any) []any {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
@@ -200,7 +205,7 @@ func ArrayReverse(s []any) []any {
 	return s
 }
 
-// Implode implode()
+// Implode 使用 glue 连接字符串切片 pieces。
 func Implode(glue string, pieces []string) string {
 	var buf bytes.Buffer
 	l := len(pieces)
@@ -213,8 +218,8 @@ func Implode(glue string, pieces []string) string {
 	return buf.String()
 }
 
-// InArray in_array()
-// haystack supported types: slice, array or map
+// InArray 判断 needle 是否存在于切片、数组或 map 中，元素比较使用 DeepEqual；
+// haystack 类型不支持时 panic。
 func InArray(needle any, haystack any) bool {
 	val := reflect.ValueOf(haystack)
 	switch val.Kind() {
@@ -237,7 +242,7 @@ func InArray(needle any, haystack any) bool {
 	return false
 }
 
-// ArrayRandMap 随即
+// ArrayRandMap 返回 map 切片随机打乱顺序后的新切片，不修改原切片。
 func ArrayRandMap(elements []map[string]string) []map[string]string {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	n := make([]map[string]string, len(elements))
@@ -247,8 +252,8 @@ func ArrayRandMap(elements []map[string]string) []map[string]string {
 	return n
 }
 
-// InMultiArray in_array()
-// haystack supported types: slice, array or map
+// InMultiArray 判断 needle 中任一值是否出现在 haystack 的切片、数组或 map 中；
+// haystack 类型不支持时 panic。
 func InMultiArray(haystack any, needle ...any) bool {
 	val := reflect.ValueOf(haystack)
 	vals := reflect.ValueOf(needle)
@@ -275,7 +280,7 @@ func InMultiArray(haystack any, needle ...any) bool {
 	return false
 }
 
-// MultiArray 判断二维数组里面是不是只有一条数据
+// MultiArray 判断切片或数组是否包含多于一条元素；其他类型返回 false。
 func MultiArray(haystack any) bool {
 	val := reflect.ValueOf(haystack)
 	switch val.Kind() {
@@ -289,7 +294,7 @@ func MultiArray(haystack any) bool {
 	return false
 }
 
-// InterfaceToString ...
+// InterfaceToString 将 any 切片逐个格式化为字符串并返回字符串切片。
 func InterfaceToString(data []any) (s []string) {
 	for _, v := range data {
 		s = append(s, fmt.Sprintf("%v", v))
@@ -297,14 +302,15 @@ func InterfaceToString(data []any) (s []string) {
 	return s
 }
 
-// SplitString 分割字符串 p 字符串, split 分隔符 , space 是否需要保留文字中的空格
+// SplitString 将 p 中的标点与符号替换为分隔符 split。
+//
+// space 为 false 时同时去除文字中的空格；处理后对结果去重并以 split 重新拼接。
 func SplitString(p, split string, space bool) string {
 	var res string
 	for _, c := range p {
 		if unicode.IsPunct(c) || unicode.IsSymbol(c) {
 			res += string(split)
 		} else {
-			//如果不保留空格空格
 			if !space {
 				if unicode.IsSpace(c) {
 					continue
@@ -333,7 +339,7 @@ func SplitString(p, split string, space bool) string {
 	return Implode(split, data)
 }
 
-// ArrayPluck ...
+// ArrayPluck 从 map 切片中提取每个元素 value 字段的值组成字符串切片。
 func ArrayPluck(data []map[string]string, value string) []string {
 	res := make([]string, 0)
 	for _, v := range data {
@@ -342,7 +348,7 @@ func ArrayPluck(data []map[string]string, value string) []string {
 	return res
 }
 
-// ArrayRemoveRepeatedElement 数组去重
+// ArrayRemoveRepeatedElement 去除字符串切片中的重复元素，保留首次出现的顺序。
 func ArrayRemoveRepeatedElement(arr []string) (newArr []string) {
 	newArr = make([]string, 0)
 	for i := range arr {
@@ -360,7 +366,7 @@ func ArrayRemoveRepeatedElement(arr []string) (newArr []string) {
 	return
 }
 
-// ArrayKeyPluck ...
+// ArrayKeyPluck 以每个元素 key 字段为键、value 字段为值构造 map。
 func ArrayKeyPluck(data []map[string]string, value, key string) map[string]string {
 	res := make(map[string]string, 0)
 	for _, v := range data {
@@ -369,7 +375,7 @@ func ArrayKeyPluck(data []map[string]string, value, key string) map[string]strin
 	return res
 }
 
-// ArrayMultiPluck ...
+// ArrayMultiPluck 以每个元素 key 字段为键、整个 map 为值构造嵌套 map。
 func ArrayMultiPluck(data []map[string]string, key string) map[string]map[string]string {
 	res := make(map[string]map[string]string)
 	for _, v := range data {
@@ -378,14 +384,13 @@ func ArrayMultiPluck(data []map[string]string, key string) map[string]map[string
 	return res
 }
 
-// jsonStringToObject attempts to unmarshall a string as JSON into
-// the object passed as pointer.
+// jsonStringToObject 将 JSON 字符串反序列化到 v 指向的对象；解析失败返回错误。
 func jsonStringToObject(s string, v any) error {
 	data := []byte(s)
 	return json.Unmarshal(data, v)
 }
 
-// AryMapStringToAryMapInterface ...
+// AryMapStringToAryMapInterface 将 []map[string]string 逐个转换为 []map[string]any。
 func AryMapStringToAryMapInterface(d []map[string]string) []map[string]any {
 	data := make([]map[string]any, 0)
 	for _, v := range d {
@@ -394,7 +399,7 @@ func AryMapStringToAryMapInterface(d []map[string]string) []map[string]any {
 	return data
 }
 
-// MapStringToMapInterface ...
+// MapStringToMapInterface 将 map[string]string 的值转换为 any 类型。
 func MapStringToMapInterface(d map[string]string) map[string]any {
 	data := make(map[string]any, 0)
 
@@ -404,7 +409,8 @@ func MapStringToMapInterface(d map[string]string) map[string]any {
 	return data
 }
 
-// AryMapInterfaceToAryMapString ...
+// AryMapInterfaceToAryMapString 将 []map[string]any 逐个转换为 []map[string]string，
+// 值统一转为字符串。
 func AryMapInterfaceToAryMapString(d []map[string]any) []map[string]string {
 	data := make([]map[string]string, 0)
 	for _, v := range d {
@@ -413,7 +419,7 @@ func AryMapInterfaceToAryMapString(d []map[string]any) []map[string]string {
 	return data
 }
 
-// MapInterfaceToMapString ...
+// MapInterfaceToMapString 将 map[string]any 的值转换为字符串并返回新 map。
 func MapInterfaceToMapString(d map[string]any) map[string]string {
 	data := make(map[string]string, 0)
 
@@ -423,7 +429,7 @@ func MapInterfaceToMapString(d map[string]any) map[string]string {
 	return data
 }
 
-// ArgStringToAryInterface ...
+// ArgStringToAryInterface 将字符串切片逐个包装为 any 类型组成新切片。
 func ArgStringToAryInterface(d []string) []any {
 	data := make([]any, 0)
 	for _, v := range d {
@@ -432,7 +438,7 @@ func ArgStringToAryInterface(d []string) []any {
 	return data
 }
 
-// AryInterfaceToArgString ...
+// AryInterfaceToArgString 将 any 切片元素逐个转为字符串组成新切片。
 func AryInterfaceToArgString(d []any) []string {
 	data := make([]string, 0)
 	for _, v := range d {
@@ -441,7 +447,8 @@ func AryInterfaceToArgString(d []any) []string {
 	return data
 }
 
-// InterfaceToAryMapStringInterface ...
+// InterfaceToAryMapStringInterface 将 any 类型的切片元素转换为 []map[string]any；
+// 传入值不是 []any 时会触发类型断言 panic。
 func InterfaceToAryMapStringInterface(in any) []map[string]any {
 	data := make([]map[string]any, 0)
 	newData := in.([]any)
@@ -451,7 +458,8 @@ func InterfaceToAryMapStringInterface(in any) []map[string]any {
 	return data
 }
 
-// InterfaceToAryMapStringString ...
+// InterfaceToAryMapStringString 将 any 类型的切片元素转换为 []map[string]string；
+// 传入值不是 []any 时会触发类型断言 panic。
 func InterfaceToAryMapStringString(in any) []map[string]string {
 	data := make([]map[string]string, 0)
 	newData := in.([]any)
@@ -461,7 +469,7 @@ func InterfaceToAryMapStringString(in any) []map[string]string {
 	return data
 }
 
-// ArrayStringUniq 数组去重
+// ArrayStringUniq 去除字符串切片中的重复元素，保留首次出现的顺序。
 func ArrayStringUniq(arr []string) (newArr []string) {
 	newArr = make([]string, 0)
 	for i := range arr {

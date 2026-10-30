@@ -7,7 +7,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// Append 将字符串追加到key的值末尾 key: 键名 value: 要追加的字符串
+// Append 将 value 追加到 key 字符串值的末尾，返回追加后的字符串长度；
+// key 不存在时按空串新建。
 func (r *Client) Append(ctx context.Context, key string, value string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -20,7 +21,7 @@ func (r *Client) Append(ctx context.Context, key string, value string) (val int6
 	return
 }
 
-// Decr 将key的值减1 key: 键名
+// Decr 将 key 的数值减 1，返回减后的值；key 不存在时先置 0 再减。
 func (r *Client) Decr(ctx context.Context, key string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -33,7 +34,7 @@ func (r *Client) Decr(ctx context.Context, key string) (val int64, err error) {
 	return
 }
 
-// DecrBy 将key的值减去指定数值 key: 键名 value: 要减去的数值
+// DecrBy 将 key 的数值减去给定 value，返回结果；value 为负数时等价于加法。
 func (r *Client) DecrBy(ctx context.Context, key string, value int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -46,7 +47,7 @@ func (r *Client) DecrBy(ctx context.Context, key string, value int64) (val int64
 	return
 }
 
-// Get 获取key的值 key: 键名
+// Get 返回 key 对应的字符串值；键不存在时返回 redis.Nil 错误。
 func (r *Client) Get(ctx context.Context, key string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -59,7 +60,7 @@ func (r *Client) Get(ctx context.Context, key string) (val string, err error) {
 	return
 }
 
-// GetRange 获取key的值的子字符串 key: 键名 start: 起始位置 end: 结束位置
+// GetRange 返回 key 字符串值在 [start, end] 区间内的子串，索引支持负数定位尾部。
 func (r *Client) GetRange(ctx context.Context, key string, start, end int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -72,7 +73,7 @@ func (r *Client) GetRange(ctx context.Context, key string, start, end int64) (va
 	return
 }
 
-// GetSet 设置key的值并返回旧值 key: 键名 value: 新值
+// GetSet 将 key 设置为 value 并返回设置前的旧值；键不存在时旧值返回 redis.Nil。
 func (r *Client) GetSet(ctx context.Context, key string, value any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -85,7 +86,7 @@ func (r *Client) GetSet(ctx context.Context, key string, value any) (val string,
 	return
 }
 
-// GetEx 获取key的值并设置过期时间 key: 键名 ts: 过期时间
+// GetEx 读取 key 值的同时为其设置过期时间，返回读取到的值。
 func (r *Client) GetEx(ctx context.Context, key string, ts time.Duration) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -98,7 +99,7 @@ func (r *Client) GetEx(ctx context.Context, key string, ts time.Duration) (val s
 	return
 }
 
-// GetDel 获取key的值并删除 key: 键名
+// GetDel 读取 key 值并在返回后删除该键；键不存在时返回 redis.Nil。
 func (r *Client) GetDel(ctx context.Context, key string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -111,7 +112,7 @@ func (r *Client) GetDel(ctx context.Context, key string) (val string, err error)
 	return
 }
 
-// Incr 将key的值加1 key: 键名
+// Incr 将 key 的数值加 1，返回加后的值；key 不存在时先置 0 再加。
 func (r *Client) Incr(ctx context.Context, key string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -124,7 +125,7 @@ func (r *Client) Incr(ctx context.Context, key string) (val int64, err error) {
 	return
 }
 
-// IncrBy 将key的值增加指定数值 key: 键名 value: 要增加的数值
+// IncrBy 将 key 的数值增加给定 value，返回结果；value 为负数时等价于减法。
 func (r *Client) IncrBy(ctx context.Context, key string, value int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -137,7 +138,7 @@ func (r *Client) IncrBy(ctx context.Context, key string, value int64) (val int64
 	return
 }
 
-// IncrByFloat 将key的值增加指定浮点数 key: 键名 value: 要增加的浮点数
+// IncrByFloat 将 key 的数值增加给定浮点数增量，返回更新后的结果。
 func (r *Client) IncrByFloat(ctx context.Context, key string, value float64) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -150,7 +151,7 @@ func (r *Client) IncrByFloat(ctx context.Context, key string, value float64) (va
 	return
 }
 
-// LCS 计算两个字符串的最长公共子序列 q: 查询参数
+// LCS 按查询条件计算两个字符串的最长公共子序列（LCS）。
 func (r *Client) LCS(ctx context.Context, q *redis.LCSQuery) (val *redis.LCSMatch, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -163,7 +164,7 @@ func (r *Client) LCS(ctx context.Context, q *redis.LCSQuery) (val *redis.LCSMatc
 	return
 }
 
-// MGet 获取多个key的值 keys: 键名列表
+// MGet 批量返回多个键的值，返回切片顺序与传入键顺序一致；不存在的键对应位置为 nil。
 func (r *Client) MGet(ctx context.Context, keys ...string) (val []any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -176,9 +177,8 @@ func (r *Client) MGet(ctx context.Context, keys ...string) (val []any, err error
 	return
 }
 
-// MSet 设置多个key-value对 values: 键值对列表
+// MSet 批量设置给定的键值对，参数按 key、value 成对传入。
 func (r *Client) MSet(ctx context.Context, values ...any) (val string, err error) {
-	// return getRedis(r).MSet(getCtx(ctx), values...)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -191,7 +191,7 @@ func (r *Client) MSet(ctx context.Context, values ...any) (val string, err error
 
 }
 
-// MSetNX 当所有key都不存在时设置多个key-value对 values: 键值对列表
+// MSetNX 仅当所有给定键都不存在时批量设置键值对；任一键已存在则整个操作不执行，返回 false。
 func (r *Client) MSetNX(ctx context.Context, values ...any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -204,7 +204,7 @@ func (r *Client) MSetNX(ctx context.Context, values ...any) (val bool, err error
 	return
 }
 
-// Set 设置key的值 key: 键名 value: 值 expiration: 过期时间
+// Set 设置 key 的值为 value；expiration 为 0 表示不设置过期时间。
 func (r *Client) Set(ctx context.Context, key string, value any, expiration time.Duration) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -217,7 +217,7 @@ func (r *Client) Set(ctx context.Context, key string, value any, expiration time
 	return
 }
 
-// SetArgs 设置key的值并指定额外参数 key: 键名 value: 值 a: 额外参数
+// SetArgs 按给定 SetArgs（含 NX/XX 条件、过期方式等）设置 key 的值。
 func (r *Client) SetArgs(ctx context.Context, key string, value any, a redis.SetArgs) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -230,7 +230,7 @@ func (r *Client) SetArgs(ctx context.Context, key string, value any, a redis.Set
 	return
 }
 
-// SetEx 设置key的值并指定过期时间 key: 键名 value: 值 expiration: 过期时间
+// SetEx 设置 key 的值并指定过期时间，过期时间必须大于 0。
 func (r *Client) SetEx(ctx context.Context, key string, value any, expiration time.Duration) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -243,7 +243,7 @@ func (r *Client) SetEx(ctx context.Context, key string, value any, expiration ti
 	return
 }
 
-// SetNX 当key不存在时设置值 key: 键名 value: 值 expiration: 过期时间
+// SetNX 仅当 key 不存在时设置值，成功返回 true；键已存在时不修改并返回 false。
 func (r *Client) SetNX(ctx context.Context, key string, value any, expiration time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -256,7 +256,7 @@ func (r *Client) SetNX(ctx context.Context, key string, value any, expiration ti
 	return
 }
 
-// SetXX 当key存在时设置值 key: 键名 value: 值 expiration: 过期时间
+// SetXX 仅当 key 已存在时设置值；键不存在时不创建并返回 false。
 func (r *Client) SetXX(ctx context.Context, key string, value any, expiration time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -269,7 +269,7 @@ func (r *Client) SetXX(ctx context.Context, key string, value any, expiration ti
 	return
 }
 
-// SetRange 从指定位置覆写key的值 key: 键名 offset: 偏移量 value: 新值
+// SetRange 从偏移量 offset 开始覆写 key 字符串的内容，返回修改后的字符串长度。
 func (r *Client) SetRange(ctx context.Context, key string, offset int64, value string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -282,7 +282,7 @@ func (r *Client) SetRange(ctx context.Context, key string, offset int64, value s
 	return
 }
 
-// StrLen 获取key的值的长度 key: 键名
+// StrLen 返回 key 字符串值的字节长度；键不存在时返回 0。
 func (r *Client) StrLen(ctx context.Context, key string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

@@ -4,7 +4,6 @@ import (
 	"sync"
 )
 
-// 创建一个worker队列
 func newWorker(pool chan chan Jober, wg *sync.WaitGroup) *worker {
 	return &worker{
 		pool:    pool,
@@ -14,7 +13,6 @@ func newWorker(pool chan chan Jober, wg *sync.WaitGroup) *worker {
 	}
 }
 
-// worker队列结构体
 type worker struct {
 	pool    chan chan Jober
 	wg      *sync.WaitGroup
@@ -22,13 +20,11 @@ type worker struct {
 	quit    chan struct{}
 }
 
-// Start 开始这个worker
 func (w *worker) Start() {
 	w.pool <- w.jobChan
 	go w.dispatcher()
 }
 
-// 分发执行
 func (w *worker) dispatcher() {
 	for {
 		select {
@@ -44,7 +40,6 @@ func (w *worker) dispatcher() {
 	}
 }
 
-// Stop 停止 这个worker
 func (w *worker) Stop() {
 	close(w.quit)
 }

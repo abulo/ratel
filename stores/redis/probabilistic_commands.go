@@ -6,7 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// BFAdd 添加元素到布隆过滤器 ctx: 上下文, key: 布隆过滤器键名, element: 要添加的元素
+// BFAdd 将 element 加入布隆过滤器 key；首次加入返回 true，重复加入返回 false。
 func (r *Client) BFAdd(ctx context.Context, key string, element any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -19,7 +19,7 @@ func (r *Client) BFAdd(ctx context.Context, key string, element any) (val bool, 
 	return
 }
 
-// BFCard 获取布隆过滤器的元素数量 ctx: 上下文, key: 布隆过滤器键名
+// BFCard 返回布隆过滤器 key 中已加入元素的近似数量。
 func (r *Client) BFCard(ctx context.Context, key string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -32,7 +32,7 @@ func (r *Client) BFCard(ctx context.Context, key string) (val int64, err error) 
 	return
 }
 
-// BFExists 检查元素是否存在于布隆过滤器 ctx: 上下文, key: 布隆过滤器键名, element: 要检查的元素
+// BFExists 判断 element 是否可能存在于布隆过滤器 key；可能误报但不会漏报。
 func (r *Client) BFExists(ctx context.Context, key string, element any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -45,7 +45,7 @@ func (r *Client) BFExists(ctx context.Context, key string, element any) (val boo
 	return
 }
 
-// BFInfo 获取布隆过滤器的信息 ctx: 上下文, key: 布隆过滤器键名
+// BFInfo 返回布隆过滤器 key 的容量、过滤器数量等统计信息。
 func (r *Client) BFInfo(ctx context.Context, key string) (val redis.BFInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -58,7 +58,7 @@ func (r *Client) BFInfo(ctx context.Context, key string) (val redis.BFInfo, err 
 	return
 }
 
-// BFInfoArg 获取布隆过滤器的信息 ctx: 上下文, key: 布隆过滤器键名, option: 信息选项
+// BFInfoArg 按 option 指定字段返回布隆过滤器 key 的信息。
 func (r *Client) BFInfoArg(ctx context.Context, key, option string) (val redis.BFInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -71,7 +71,7 @@ func (r *Client) BFInfoArg(ctx context.Context, key, option string) (val redis.B
 	return
 }
 
-// BFInfoCapacity 获取布隆过滤器的容量 ctx: 上下文, key: 布隆过滤器键名
+// BFInfoCapacity 返回布隆过滤器 key 的配置容量。
 func (r *Client) BFInfoCapacity(ctx context.Context, key string) (val redis.BFInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -84,7 +84,7 @@ func (r *Client) BFInfoCapacity(ctx context.Context, key string) (val redis.BFIn
 	return
 }
 
-// BFInfoSize 获取布隆过滤器的大小 ctx: 上下文, key: 布隆过滤器键名
+// BFInfoSize 返回布隆过滤器 key 当前占用的内存大小。
 func (r *Client) BFInfoSize(ctx context.Context, key string) (val redis.BFInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -97,7 +97,7 @@ func (r *Client) BFInfoSize(ctx context.Context, key string) (val redis.BFInfo, 
 	return
 }
 
-// BFInfoFilters 获取布隆过滤器的过滤器 ctx: 上下文, key: 布隆过滤器键名
+// BFInfoFilters 返回布隆过滤器 key 内部过滤器（子数组）数量。
 func (r *Client) BFInfoFilters(ctx context.Context, key string) (val redis.BFInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -110,7 +110,7 @@ func (r *Client) BFInfoFilters(ctx context.Context, key string) (val redis.BFInf
 	return
 }
 
-// BFInfoItems 获取布隆过滤器的元素 ctx: 上下文, key: 布隆过滤器键名
+// BFInfoItems 返回布隆过滤器 key 中已记录元素的近似数量。
 func (r *Client) BFInfoItems(ctx context.Context, key string) (val redis.BFInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -123,7 +123,7 @@ func (r *Client) BFInfoItems(ctx context.Context, key string) (val redis.BFInfo,
 	return
 }
 
-// BFInfoExpansion 获取布隆过滤器的扩展 ctx: 上下文, key: 布隆过滤器键名
+// BFInfoExpansion 返回布隆过滤器 key 的扩容因子。
 func (r *Client) BFInfoExpansion(ctx context.Context, key string) (val redis.BFInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -136,7 +136,7 @@ func (r *Client) BFInfoExpansion(ctx context.Context, key string) (val redis.BFI
 	return
 }
 
-// BFInsert 插入元素到布隆过滤器 ctx: 上下文, key: 布隆过滤器键名, options: 插入选项, elements: 要插入的元素
+// BFInsert 按 BFInsertOptions 将 elements 批量插入布隆过滤器 key，返回各元素是否为新增。
 func (r *Client) BFInsert(ctx context.Context, key string, options *redis.BFInsertOptions, elements ...any) (val []bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -149,7 +149,7 @@ func (r *Client) BFInsert(ctx context.Context, key string, options *redis.BFInse
 	return
 }
 
-// BFMAdd 添加多个元素到布隆过滤器 ctx: 上下文, key: 布隆过滤器键名, elements: 要添加的元素
+// BFMAdd 将 elements 批量加入布隆过滤器 key，返回各元素是否为新增。
 func (r *Client) BFMAdd(ctx context.Context, key string, elements ...any) (val []bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -162,7 +162,7 @@ func (r *Client) BFMAdd(ctx context.Context, key string, elements ...any) (val [
 	return
 }
 
-// BFMExists 检查多个元素是否存在于布隆过滤器 ctx: 上下文, key: 布隆过滤器键名, elements: 要检查的元素
+// BFMExists 批量判断 elements 是否可能存在于布隆过滤器 key，返回布尔切片顺序与 elements 一致。
 func (r *Client) BFMExists(ctx context.Context, key string, elements ...any) (val []bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -175,7 +175,7 @@ func (r *Client) BFMExists(ctx context.Context, key string, elements ...any) (va
 	return
 }
 
-// BFReserve 创建布隆过滤器 ctx: 上下文, key: 布隆过滤器键名, errorRate: 错误率, capacity: 容量
+// BFReserve 以给定错误率 errorRate 与容量 capacity 创建布隆过滤器 key；键已存在时报错。
 func (r *Client) BFReserve(ctx context.Context, key string, errorRate float64, capacity int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -188,7 +188,7 @@ func (r *Client) BFReserve(ctx context.Context, key string, errorRate float64, c
 	return
 }
 
-// BFReserveExpansion 创建布隆过滤器 ctx: 上下文, key: 布隆过滤器键名, errorRate: 错误率, capacity: 容量, expansion: 扩展因子
+// BFReserveExpansion 以错误率、容量与扩容因子 expansion 创建可扩容布隆过滤器 key。
 func (r *Client) BFReserveExpansion(ctx context.Context, key string, errorRate float64, capacity, expansion int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -201,7 +201,7 @@ func (r *Client) BFReserveExpansion(ctx context.Context, key string, errorRate f
 	return
 }
 
-// BFReserveNonScaling 创建布隆过滤器 ctx: 上下文, key: 布隆过滤器键名, errorRate: 错误率, capacity: 容量
+// BFReserveNonScaling 创建不可扩容的布隆过滤器 key，容量达到上限后不再自动增长。
 func (r *Client) BFReserveNonScaling(ctx context.Context, key string, errorRate float64, capacity int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -214,7 +214,7 @@ func (r *Client) BFReserveNonScaling(ctx context.Context, key string, errorRate 
 	return
 }
 
-// BFReserveWithArgs 创建布隆过滤器 ctx: 上下文, key: 布隆过滤器键名, options: 创建选项
+// BFReserveWithArgs 按 BFReserveOptions 创建布隆过滤器 key。
 func (r *Client) BFReserveWithArgs(ctx context.Context, key string, options *redis.BFReserveOptions) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -227,7 +227,7 @@ func (r *Client) BFReserveWithArgs(ctx context.Context, key string, options *red
 	return
 }
 
-// BFScanDump 获取布隆过滤器的迭代器 ctx: 上下文, key: 布隆过滤器键名, iterator: 迭代器
+// BFScanDump 以 iterator 游标分批导出布隆过滤器 key 的内部数据块，供跨实例恢复使用。
 func (r *Client) BFScanDump(ctx context.Context, key string, iterator int64) (val redis.ScanDump, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -240,7 +240,7 @@ func (r *Client) BFScanDump(ctx context.Context, key string, iterator int64) (va
 	return
 }
 
-// BFLoadChunk 加载布隆过滤器的块 ctx: 上下文, key: 布隆过滤器键名, iterator: 迭代器, data: 数据块
+// BFLoadChunk 将 BFScanDump 导出的数据块按 iterator 写回布隆过滤器 key。
 func (r *Client) BFLoadChunk(ctx context.Context, key string, iterator int64, data any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -253,7 +253,7 @@ func (r *Client) BFLoadChunk(ctx context.Context, key string, iterator int64, da
 	return
 }
 
-// CFAdd 添加元素到计数过滤器 ctx: 上下文, key: 计数过滤器键名, element: 要添加的元素
+// CFAdd 将 element 加入计数布隆过滤器（Cuckoo Filter）key，返回是否插入成功。
 func (r *Client) CFAdd(ctx context.Context, key string, element any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -266,7 +266,7 @@ func (r *Client) CFAdd(ctx context.Context, key string, element any) (val bool, 
 	return
 }
 
-// CFAddNX 添加元素到计数过滤器 ctx: 上下文, key: 计数过滤器键名, element: 要添加的元素
+// CFAddNX 仅当 element 不存在时加入 Cuckoo Filter key，已存在则不重复插入。
 func (r *Client) CFAddNX(ctx context.Context, key string, element any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -279,7 +279,7 @@ func (r *Client) CFAddNX(ctx context.Context, key string, element any) (val bool
 	return
 }
 
-// CFCount 获取计数过滤器的元素数量 ctx: 上下文, key: 计数过滤器键名, element: 要计数的元素
+// CFCount 返回 element 在 Cuckoo Filter key 中的近似计数。
 func (r *Client) CFCount(ctx context.Context, key string, element any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -292,7 +292,7 @@ func (r *Client) CFCount(ctx context.Context, key string, element any) (val int6
 	return
 }
 
-// CFDel 删除计数过滤器的元素 ctx: 上下文, key: 计数过滤器键名, element: 要删除的元素
+// CFDel 从 Cuckoo Filter key 中移除 element，返回是否移除成功。
 func (r *Client) CFDel(ctx context.Context, key string, element any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -305,7 +305,7 @@ func (r *Client) CFDel(ctx context.Context, key string, element any) (val bool, 
 	return
 }
 
-// CFExists 检查元素是否存在于计数过滤器 ctx: 上下文, key: 计数过滤器键名, element: 要检查的元素
+// CFExists 判断 element 是否可能存在于 Cuckoo Filter key。
 func (r *Client) CFExists(ctx context.Context, key string, element any) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -318,7 +318,7 @@ func (r *Client) CFExists(ctx context.Context, key string, element any) (val boo
 	return
 }
 
-// CFInfo 获取计数过滤器的信息 ctx: 上下文, key: 计数过滤器键名
+// CFInfo 返回 Cuckoo Filter key 的大小、桶数、容量等统计信息。
 func (r *Client) CFInfo(ctx context.Context, key string) (val redis.CFInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -331,7 +331,7 @@ func (r *Client) CFInfo(ctx context.Context, key string) (val redis.CFInfo, err 
 	return
 }
 
-// CFInsert 插入元素到计数过滤器 ctx: 上下文, key: 计数过滤器键名, options: 插入选项, elements: 要插入的元素
+// CFInsert 按 CFInsertOptions 将 elements 批量插入 Cuckoo Filter key，返回各元素插入结果。
 func (r *Client) CFInsert(ctx context.Context, key string, options *redis.CFInsertOptions, elements ...any) (val []bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -344,7 +344,7 @@ func (r *Client) CFInsert(ctx context.Context, key string, options *redis.CFInse
 	return
 }
 
-// CFInsertNX 插入元素到计数过滤器 ctx: 上下文, key: 计数过滤器键名, options: 插入选项, elements: 要插入的元素
+// CFInsertNX 仅插入不存在的元素，返回各元素插入前后的计数。
 func (r *Client) CFInsertNX(ctx context.Context, key string, options *redis.CFInsertOptions, elements ...any) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -357,7 +357,7 @@ func (r *Client) CFInsertNX(ctx context.Context, key string, options *redis.CFIn
 	return
 }
 
-// CFMExists 检查多个元素是否存在于计数过滤器 ctx: 上下文, key: 计数过滤器键名, elements: 要检查的元素
+// CFMExists 批量判断 elements 是否可能存在于 Cuckoo Filter key，返回布尔切片顺序与 elements 一致。
 func (r *Client) CFMExists(ctx context.Context, key string, elements ...any) (val []bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -370,7 +370,7 @@ func (r *Client) CFMExists(ctx context.Context, key string, elements ...any) (va
 	return
 }
 
-// CFReserve 创建计数过滤器 ctx: 上下文, key: 计数过滤器键名, capacity: 容量
+// CFReserve 以容量 capacity 创建 Cuckoo Filter key；键已存在时报错。
 func (r *Client) CFReserve(ctx context.Context, key string, capacity int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -383,7 +383,7 @@ func (r *Client) CFReserve(ctx context.Context, key string, capacity int64) (val
 	return
 }
 
-// CFReserveWithArgs 创建计数过滤器 ctx: 上下文, key: 计数过滤器键名, options: 创建选项
+// CFReserveWithArgs 按 CFReserveOptions 创建 Cuckoo Filter key。
 func (r *Client) CFReserveWithArgs(ctx context.Context, key string, options *redis.CFReserveOptions) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -396,7 +396,7 @@ func (r *Client) CFReserveWithArgs(ctx context.Context, key string, options *red
 	return
 }
 
-// CFReserveExpansion 创建计数过滤器 ctx: 上下文, key: 计数过滤器键名, capacity: 容量, expansion: 扩展因子
+// CFReserveExpansion 以容量与扩容因子 expansion 创建可扩容 Cuckoo Filter key。
 func (r *Client) CFReserveExpansion(ctx context.Context, key string, capacity, expansion int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -409,7 +409,7 @@ func (r *Client) CFReserveExpansion(ctx context.Context, key string, capacity, e
 	return
 }
 
-// CFReserveBucketSize 创建计数过滤器 ctx: 上下文, key: 计数过滤器键名, capacity: 容量, bucketsize: 桶大小
+// CFReserveBucketSize 以容量与每桶元素数 bucketsize 创建 Cuckoo Filter key。
 func (r *Client) CFReserveBucketSize(ctx context.Context, key string, capacity, bucketsize int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -422,7 +422,7 @@ func (r *Client) CFReserveBucketSize(ctx context.Context, key string, capacity, 
 	return
 }
 
-// CFReserveMaxIterations 创建计数过滤器 ctx: 上下文, key: 计数过滤器键名, capacity: 容量, maxiterations: 最大迭代次数
+// CFReserveMaxIterations 以容量与最大迭代次数 maxiterations 创建 Cuckoo Filter key。
 func (r *Client) CFReserveMaxIterations(ctx context.Context, key string, capacity, maxiterations int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -435,7 +435,7 @@ func (r *Client) CFReserveMaxIterations(ctx context.Context, key string, capacit
 	return
 }
 
-// CFScanDump 获取计数过滤器的迭代器 ctx: 上下文, key: 计数过滤器键名, iterator: 迭代器
+// CFScanDump 以 iterator 游标分批导出 Cuckoo Filter key 的内部数据块。
 func (r *Client) CFScanDump(ctx context.Context, key string, iterator int64) (val redis.ScanDump, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -448,7 +448,7 @@ func (r *Client) CFScanDump(ctx context.Context, key string, iterator int64) (va
 	return
 }
 
-// CFLoadChunk 加载计数过滤器的块
+// CFLoadChunk 将 CFScanDump 导出的数据块按 iterator 写回 Cuckoo Filter key。
 func (r *Client) CFLoadChunk(ctx context.Context, key string, iterator int64, data any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -461,7 +461,7 @@ func (r *Client) CFLoadChunk(ctx context.Context, key string, iterator int64, da
 	return
 }
 
-// CMSIncrBy 增加元素到计数最小二乘 ctx: 上下文, key: 计数最小二乘键名, elements: 要增加的元素
+// CMSIncrBy 将 elements 批量加入计数草图（Count-Min Sketch）key 并累加计数，返回各元素更新后的计数。
 func (r *Client) CMSIncrBy(ctx context.Context, key string, elements ...any) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -474,7 +474,7 @@ func (r *Client) CMSIncrBy(ctx context.Context, key string, elements ...any) (va
 	return
 }
 
-// CMSInfo 获取计数最小二乘的信息 ctx: 上下文, key: 计数最小二乘键名
+// CMSInfo 返回 Count-Min Sketch key 的宽度、高度与已记录元素统计信息。
 func (r *Client) CMSInfo(ctx context.Context, key string) (val redis.CMSInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -487,7 +487,7 @@ func (r *Client) CMSInfo(ctx context.Context, key string) (val redis.CMSInfo, er
 	return
 }
 
-// CMSInitByDim 初始化计数最小二乘 ctx: 上下文, key: 计数最小二乘键名, width: 宽度, height: 高度
+// CMSInitByDim 以宽度 width、高度 height 初始化 Count-Min Sketch key。
 func (r *Client) CMSInitByDim(ctx context.Context, key string, width, height int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -500,7 +500,7 @@ func (r *Client) CMSInitByDim(ctx context.Context, key string, width, height int
 	return
 }
 
-// CMSInitByProb 初始化计数最小二乘 ctx: 上下文, key: 计数最小二乘键名, errorRate: 错误率, probability: 概率
+// CMSInitByProb 按误差 errorRate 与概率 probability 初始化 Count-Min Sketch key。
 func (r *Client) CMSInitByProb(ctx context.Context, key string, errorRate, probability float64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -513,7 +513,7 @@ func (r *Client) CMSInitByProb(ctx context.Context, key string, errorRate, proba
 	return
 }
 
-// CMSMerge 合并计数最小二乘 ctx: 上下文, destKey: 目标键名, sourceKeys: 源键名
+// CMSMerge 将多个 sourceKeys 的 Count-Min Sketch 合并到 destkey。
 func (r *Client) CMSMerge(ctx context.Context, destkey string, sourceKeys ...string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -526,7 +526,7 @@ func (r *Client) CMSMerge(ctx context.Context, destkey string, sourceKeys ...str
 	return
 }
 
-// CMSMergeWithWeight 合并计数最小二乘 ctx: 上下文, destKey: 目标键名, sourceKeys: 源键名及其权重
+// CMSMergeWithWeight 按 sourceKeys 中给出的权重加权合并到 destkey。
 func (r *Client) CMSMergeWithWeight(ctx context.Context, destkey string, sourceKeys map[string]int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -539,7 +539,7 @@ func (r *Client) CMSMergeWithWeight(ctx context.Context, destkey string, sourceK
 	return
 }
 
-// CMSQuery 查询计数最小二乘 ctx: 上下文, key: 计数最小二乘键名, elements: 要查询的元素
+// CMSQuery 查询 elements 在 Count-Min Sketch key 中的近似计数，返回切片顺序与 elements 一致。
 func (r *Client) CMSQuery(ctx context.Context, key string, elements ...any) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -552,7 +552,7 @@ func (r *Client) CMSQuery(ctx context.Context, key string, elements ...any) (val
 	return
 }
 
-// TopKAdd 添加元素到TopK ctx: 上下文, key: TopK键名, elements: 要添加的元素
+// TopKAdd 将 elements 加入 Top-K 草图 key，返回被挤出 Top-K 名单的元素。
 func (r *Client) TopKAdd(ctx context.Context, key string, elements ...any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -565,7 +565,7 @@ func (r *Client) TopKAdd(ctx context.Context, key string, elements ...any) (val 
 	return
 }
 
-// TopKCount 获取TopK的元素数量 ctx: 上下文, key: TopK键名, elements: 要计数的元素
+// TopKCount 查询 elements 在 Top-K 草图 key 中的近似计数。
 func (r *Client) TopKCount(ctx context.Context, key string, elements ...any) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -578,7 +578,7 @@ func (r *Client) TopKCount(ctx context.Context, key string, elements ...any) (va
 	return
 }
 
-// TopKIncrBy 增加元素到TopK ctx: 上下文, key: TopK键名, elements: 要增加的元素
+// TopKIncrBy 按 elements 给出的元素与增量更新 Top-K 草图 key，返回被挤出名单的元素。
 func (r *Client) TopKIncrBy(ctx context.Context, key string, elements ...any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -591,7 +591,7 @@ func (r *Client) TopKIncrBy(ctx context.Context, key string, elements ...any) (v
 	return
 }
 
-// TopKInfo 获取TopK的信息 ctx: 上下文, key: TopK键名
+// TopKInfo 返回 Top-K 草图 key 的 k、宽度、深度、衰减因子等配置信息。
 func (r *Client) TopKInfo(ctx context.Context, key string) (val redis.TopKInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -604,7 +604,7 @@ func (r *Client) TopKInfo(ctx context.Context, key string) (val redis.TopKInfo, 
 	return
 }
 
-// TopKList 获取TopK的列表 ctx: 上下文, key: TopK键名
+// TopKList 返回当前 Top-K 草图 key 维护的高频元素列表。
 func (r *Client) TopKList(ctx context.Context, key string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -617,7 +617,7 @@ func (r *Client) TopKList(ctx context.Context, key string) (val []string, err er
 	return
 }
 
-// TopKListWithCount 获取TopK的列表 ctx: 上下文, key: TopK键名
+// TopKListWithCount 返回高频元素及其近似计数组成的 map。
 func (r *Client) TopKListWithCount(ctx context.Context, key string) (val map[string]int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -630,7 +630,7 @@ func (r *Client) TopKListWithCount(ctx context.Context, key string) (val map[str
 	return
 }
 
-// TopKQuery 查询TopK ctx: 上下文, key: TopK键名, elements: 要查询的元素
+// TopKQuery 批量判断 elements 是否位于 Top-K 名单中，返回布尔切片顺序与 elements 一致。
 func (r *Client) TopKQuery(ctx context.Context, key string, elements ...any) (val []bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -643,7 +643,7 @@ func (r *Client) TopKQuery(ctx context.Context, key string, elements ...any) (va
 	return
 }
 
-// TopKReserve 创建TopK ctx: 上下文, key: TopK键名, k: 保留元素数量
+// TopKReserve 创建保留前 k 个高频元素的 Top-K 草图 key。
 func (r *Client) TopKReserve(ctx context.Context, key string, k int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -656,7 +656,7 @@ func (r *Client) TopKReserve(ctx context.Context, key string, k int64) (val stri
 	return
 }
 
-// TopKReserveWithOptions 创建TopK ctx: 上下文, key: TopK键名, k: 保留元素数量, width: 宽度, depth: 深度, decay: 衰减因子
+// TopKReserveWithOptions 按 k、宽度 width、深度 depth 与衰减因子 decay 创建 Top-K 草图 key。
 func (r *Client) TopKReserveWithOptions(ctx context.Context, key string, k, width, depth int64, decay float64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -669,7 +669,7 @@ func (r *Client) TopKReserveWithOptions(ctx context.Context, key string, k, widt
 	return
 }
 
-// TDigestAdd 添加元素到TDigest ctx: 上下文, key: TDigest键名, elements: 要添加的元素
+// TDigestAdd 将 elements 样本加入 T-Digest 近似分位数结构 key。
 func (r *Client) TDigestAdd(ctx context.Context, key string, elements ...float64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -682,7 +682,7 @@ func (r *Client) TDigestAdd(ctx context.Context, key string, elements ...float64
 	return
 }
 
-// TDigestByRank 根据排名获取TDigest值 ctx: 上下文, key: TDigest键名, rank: 排名
+// TDigestByRank 返回给定 rank 排名对应的样本值（升序），切片顺序与 rank 一致。
 func (r *Client) TDigestByRank(ctx context.Context, key string, rank ...uint64) (val []float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -695,7 +695,7 @@ func (r *Client) TDigestByRank(ctx context.Context, key string, rank ...uint64) 
 	return
 }
 
-// TDigestByRevRank 根据反向排名获取TDigest值 ctx: 上下文, key: TDigest键名, rank: 反向排名
+// TDigestByRevRank 返回给定反向排名对应的样本值（降序）。
 func (r *Client) TDigestByRevRank(ctx context.Context, key string, rank ...uint64) (val []float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -708,7 +708,7 @@ func (r *Client) TDigestByRevRank(ctx context.Context, key string, rank ...uint6
 	return
 }
 
-// TDigestCDF 获取TDigest的累积分布函数值 ctx: 上下文, key: TDigest键名, elements: 要查询的值
+// TDigestCDF 返回给定样本值在 T-Digest 中的累积分布概率。
 func (r *Client) TDigestCDF(ctx context.Context, key string, elements ...float64) (val []float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -722,7 +722,7 @@ func (r *Client) TDigestCDF(ctx context.Context, key string, elements ...float64
 	return
 }
 
-// TDigestCreate 创建TDigest ctx: 上下文, key: TDigest键名
+// TDigestCreate 创建 T-Digest 结构 key，使用默认压缩参数。
 func (r *Client) TDigestCreate(ctx context.Context, key string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -736,7 +736,7 @@ func (r *Client) TDigestCreate(ctx context.Context, key string) (val string, err
 	return
 }
 
-// TDigestCreateWithCompression 创建TDigest ctx: 上下文, key: TDigest键名, compression: 压缩参数
+// TDigestCreateWithCompression 以压缩参数 compression 创建 T-Digest key，压缩值越大精度越高、占用内存越大。
 func (r *Client) TDigestCreateWithCompression(ctx context.Context, key string, compression int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -751,7 +751,7 @@ func (r *Client) TDigestCreateWithCompression(ctx context.Context, key string, c
 	return
 }
 
-// TDigestInfo 获取TDigest的信息 ctx: 上下文, key: TDigest键名
+// TDigestInfo 返回 T-Digest key 的压缩参数、已记录样本数量等信息。
 func (r *Client) TDigestInfo(ctx context.Context, key string) (val redis.TDigestInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -765,7 +765,7 @@ func (r *Client) TDigestInfo(ctx context.Context, key string) (val redis.TDigest
 	return
 }
 
-// TDigestMax 获取TDigest的最大值 ctx: 上下文, key: TDigest键名
+// TDigestMax 返回 T-Digest key 中记录的最大样本值。
 func (r *Client) TDigestMax(ctx context.Context, key string) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -778,7 +778,7 @@ func (r *Client) TDigestMax(ctx context.Context, key string) (val float64, err e
 	return
 }
 
-// TDigestMin 获取TDigest的最小值 ctx: 上下文, key: TDigest键名
+// TDigestMin 返回 T-Digest key 中记录的最小样本值。
 func (r *Client) TDigestMin(ctx context.Context, key string) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -791,7 +791,7 @@ func (r *Client) TDigestMin(ctx context.Context, key string) (val float64, err e
 	return
 }
 
-// TDigestMerge 合并TDigest ctx: 上下文, destKey: 目标键名, options: 合并选项, sourceKeys: 源键名
+// TDigestMerge 按 TDigestMergeOptions 将多个 sourceKeys 的 T-Digest 合并到 destkey。
 func (r *Client) TDigestMerge(ctx context.Context, destkey string, options *redis.TDigestMergeOptions, sourceKeys ...string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -804,7 +804,7 @@ func (r *Client) TDigestMerge(ctx context.Context, destkey string, options *redi
 	return
 }
 
-// TDigestQuantile 获取TDigest的分位数 ctx: 上下文, key: TDigest键名, elements: 分位数值
+// TDigestQuantile 返回给定分位数（0~1）对应的样本值，切片顺序与 elements 一致。
 func (r *Client) TDigestQuantile(ctx context.Context, key string, elements ...float64) (val []float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -817,7 +817,7 @@ func (r *Client) TDigestQuantile(ctx context.Context, key string, elements ...fl
 	return
 }
 
-// TDigestRank 获取TDigest的排名 ctx: 上下文, key: TDigest键名, values: 要查询的值
+// TDigestRank 返回给定样本值在 T-Digest 中的升序排名。
 func (r *Client) TDigestRank(ctx context.Context, key string, values ...float64) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -831,7 +831,7 @@ func (r *Client) TDigestRank(ctx context.Context, key string, values ...float64)
 	return
 }
 
-// TDigestReset 重置TDigest ctx: 上下文, key: TDigest键名
+// TDigestReset 清空 T-Digest key 中已记录的全部样本。
 func (r *Client) TDigestReset(ctx context.Context, key string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -844,7 +844,7 @@ func (r *Client) TDigestReset(ctx context.Context, key string) (val string, err 
 	return
 }
 
-// TDigestRevRank 获取TDigest的反向排名 ctx: 上下文, key: TDigest键名, values: 要查询的值
+// TDigestRevRank 返回给定样本值在 T-Digest 中的降序排名。
 func (r *Client) TDigestRevRank(ctx context.Context, key string, values ...float64) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -857,7 +857,7 @@ func (r *Client) TDigestRevRank(ctx context.Context, key string, values ...float
 	return
 }
 
-// TDigestTrimmedMean 获取TDigest的修剪均值 ctx: 上下文, key: TDigest键名, lowCutQuantile: 下分位数, highCutQuantile: 上分位数
+// TDigestTrimmedMean 剔除两端 lowCutQuantile、highCutQuantile 分位样本后返回中间部分的均值。
 func (r *Client) TDigestTrimmedMean(ctx context.Context, key string, lowCutQuantile, highCutQuantile float64) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

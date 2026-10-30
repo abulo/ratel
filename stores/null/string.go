@@ -9,19 +9,25 @@ import (
 	"github.com/spf13/cast"
 )
 
-// String is a nullable string. It supports SQL and JSON serialization.
+// String 是可空的 string，实现 sql.Scanner、driver.Valuer 以及 JSON 与文本编解码接口。
+//
+// 零值（Set 为 false）表示未赋值，可直接使用；结构体为值类型，不提供并发保护，
+// 同一实例的并发读写需由调用方自行加锁。
 type String struct {
+	// String 为内部保存的字符串取值。
 	String string
-	Valid  bool
-	Set    bool
+	// Valid 表示是否持有非空有效值。
+	Valid bool
+	// Set 表示是否已被显式赋值，包含赋值为 null 的情形。
+	Set bool
 }
 
-// StringFrom creates a new String that will never be blank.
+// StringFrom 创建一个始终有效的 String。
 func StringFrom(s string) String {
 	return NewString(s, true)
 }
 
-// StringFromPtr creates a new String that be null if s is nil.
+// StringFromPtr 根据指针创建 String；指针为 nil 时得到空值。
 func StringFromPtr(s *string) String {
 	if s == nil {
 		return NewString("", false)
@@ -29,7 +35,7 @@ func StringFromPtr(s *string) String {
 	return NewString(*s, true)
 }
 
-// NewString creates a new String
+// NewString 使用给定取值与有效性标记创建 String；valid 为 false 时得到空值。
 func NewString(s string, valid bool) String {
 	return String{
 		String: s,
@@ -38,18 +44,18 @@ func NewString(s string, valid bool) String {
 	}
 }
 
-// IsValid returns true if this carries and explicit value and
-// is not null.
+// IsValid 报告是否持有显式赋值且非空的取值。
 func (s String) IsValid() bool {
 	return s.Set && s.Valid
 }
 
-// IsSet returns true if this carries an explicit value (null inclusive)
+// IsSet 报告是否已被显式赋值，包含赋值为 null 的情形。
 func (s String) IsSet() bool {
 	return s.Set
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
+// UnmarshalJSON 实现 json.Unmarshaler；输入为 JSON null 时置为空值，其余内容按字符串解析，
+// 解析失败时返回对应错误。
 func (s *String) UnmarshalJSON(data []byte) error {
 	s.Set = true
 	if bytes.Equal(data, NullBytes) {
@@ -66,7 +72,7 @@ func (s *String) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// MarshalJSON implements json.Marshaler.
+// MarshalJSON 实现 json.Marshaler；空值序列化为 JSON null。
 func (s String) MarshalJSON() ([]byte, error) {
 	if !s.Valid {
 		return json.Marshal(nil)
@@ -74,7 +80,7 @@ func (s String) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String)
 }
 
-// MarshalText implements encoding.TextMarshaler.
+// MarshalText 实现 encoding.TextMarshaler；空值序列化为空字节切片。
 func (s String) MarshalText() ([]byte, error) {
 	if !s.Valid {
 		return []byte{}, nil
@@ -82,7 +88,7 @@ func (s String) MarshalText() ([]byte, error) {
 	return []byte(s.String), nil
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
+// UnmarshalText 实现 encoding.TextUnmarshaler；空文本置为空值，非空文本直接写入内部取值。
 func (s *String) UnmarshalText(text []byte) error {
 	s.Set = true
 	if len(text) == 0 {
@@ -95,14 +101,14 @@ func (s *String) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// SetValid changes this String's value and also sets it to be non-null.
+// SetValid 将内部取值置为 v，并同时标记为有效、已赋值。
 func (s *String) SetValid(v string) {
 	s.String = v
 	s.Valid = true
 	s.Set = true
 }
 
-// Ptr returns a pointer to this String's value, or a nil pointer if this String is null.
+// Ptr 返回指向内部取值的指针；空值时返回 nil。
 func (s String) Ptr() *string {
 	if !s.Valid {
 		return nil
@@ -110,12 +116,12 @@ func (s String) Ptr() *string {
 	return &s.String
 }
 
-// IsZero returns true for null strings, for potential future omitempty support.
+// IsZero 报告是否为空值，供结构体标签 omitempty 判定使用。
 func (s String) IsZero() bool {
 	return !s.Valid
 }
 
-// Scan implements the Scanner interface.
+// Scan 实现 sql.Scanner；value 为 nil 时清空状态，否则按驱动值转换后写入内部取值。
 func (s *String) Scan(value any) error {
 	if value == nil {
 		s.String, s.Valid, s.Set = "", false, false
@@ -125,7 +131,7 @@ func (s *String) Scan(value any) error {
 	return convert.ConvertAssign(&s.String, value)
 }
 
-// Value implements the driver Valuer interface.
+// Value 实现 driver.Valuer；空值返回 nil。
 func (s String) Value() (driver.Value, error) {
 	if !s.Valid {
 		return nil, nil
@@ -133,7 +139,7 @@ func (s String) Value() (driver.Value, error) {
 	return s.String, nil
 }
 
-// ValueOrDefault returns the inner value if valid, otherwise default.
+// ValueOrDefault 返回内部取值；空值时返回类型零值。
 func (t String) ValueOrDefault() string {
 	if !t.Valid {
 		return ""
@@ -141,7 +147,7 @@ func (t String) ValueOrDefault() string {
 	return t.String
 }
 
-// Result returns the string representation of the float or null.
+// Result 返回内部取值的字符串形式；空值返回 "NULL"。
 func (t String) Result() string {
 	if !t.Valid {
 		return "NULL"

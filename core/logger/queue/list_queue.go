@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-// NewListQueue 创建一个列表队列，指定工作线程的数量
+// NewListQueue 创建无长度上限的链表队列，maxThread 为消费 worker 数量。
 func NewListQueue(maxThread int) *ListQueue {
 	return NewListQueueWithMaxLen(maxThread, 0)
 }
 
-// NewListQueueWithMaxLen 创建一个列表队列，指定工作线程数和最大元素数
+// NewListQueueWithMaxLen 创建链表队列并限定待缓冲任务上限 maxLen；maxLen 为 0 表示不限制长度。
 func NewListQueueWithMaxLen(maxThread, maxLen int) *ListQueue {
 	return &ListQueue{
 		maxLen:     maxLen,
@@ -25,7 +25,9 @@ func NewListQueueWithMaxLen(maxThread, maxLen int) *ListQueue {
 	}
 }
 
-// ListQueue 是一个列表任务队列，用于在高并发情况下缓解服务器压力并改进任务处理
+// ListQueue 基于双向链表与 worker 协程池实现任务队列，适合待缓冲任务数量需要动态伸缩的场景。
+//
+// 零值不可直接使用，须经 NewListQueue 或 NewListQueueWithMaxLen 构造并调用 Run 启动。
 type ListQueue struct {
 	maxLen     int
 	maxWorker  int
@@ -37,7 +39,7 @@ type ListQueue struct {
 	running    atomic.Uint32
 }
 
-// Run 开始运行队列
+// Run 启动队列；重复调用时直接返回，不会重复创建 worker。
 func (q *ListQueue) Run() {
 	if q.running.Load() == 1 {
 		return
@@ -76,7 +78,7 @@ func (q *ListQueue) dispatcher() {
 	}
 }
 
-// Push 将可执行任务推入队列
+// Push 将任务追加到链表尾部；队列未运行或已超出 maxLen 上限时任务被静默丢弃。
 func (q *ListQueue) Push(job Jober) {
 	if q.running.Load() != 1 {
 		return
@@ -97,7 +99,7 @@ func (q *ListQueue) Push(job Jober) {
 	q.lock.Unlock()
 }
 
-// Terminate 终止队列以接收任务并释放资源
+// Terminate 停止接收新任务，等待已入队任务执行完毕后停止 worker；队列未运行时直接返回。
 func (q *ListQueue) Terminate() {
 	if q.running.Load() != 1 {
 		return

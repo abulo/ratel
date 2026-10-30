@@ -37,17 +37,14 @@ var (
 	errMalformedFlag            = errors.New("cannot decode flag")
 )
 
-// Jaeger propagator serializes SpanContext to/from Jaeger Headers
+// Jaeger 实现 OpenTelemetry 文本传播器，按 Jaeger uber-trace-id 格式在载体上序列化与反序列化 SpanContext。
 //
-// Jaeger format:
-//
-// uber-trace-id: {trace-id}:{span-id}:{parent-span-id}:{flags}.
+// 头格式为 trace-id:span-id:parent-span-id:flags；父 SpanID 已废弃，Inject 时固定填充占位零值。
 type Jaeger struct{}
 
 var _ propagation.TextMapPropagator = &Jaeger{}
 
-// Inject injects a context to the carrier following jaeger format.
-// The parent span ID is set to an dummy parent span id as the most implementations do.
+// Inject 将当前上下文的 SpanContext 按 Jaeger 格式写入载体；TraceID 或 SpanID 无效时不写入任何头。
 func (jaeger Jaeger) Inject(ctx context.Context, carrier propagation.TextMapCarrier) {
 	sc := trace.SpanFromContext(ctx).SpanContext()
 	headers := []string{}
@@ -66,9 +63,8 @@ func (jaeger Jaeger) Inject(ctx context.Context, carrier propagation.TextMapCarr
 	carrier.Set(jaegerHeader, strings.Join(headers, separator))
 }
 
-// Extract extracts a context from the carrier if it contains Jaeger headers.
+// Extract 从载体读取 Jaeger 头并还原远程 SpanContext；头缺失或格式非法时返回原上下文。
 func (jaeger Jaeger) Extract(ctx context.Context, carrier propagation.TextMapCarrier) context.Context {
-	// extract tracing information
 	if h := carrier.Get(jaegerHeader); h != "" {
 		ctx, sc, err := extract(ctx, h)
 		if err == nil && sc.IsValid() {
@@ -90,13 +86,12 @@ func extract(ctx context.Context, headerVal string) (context.Context, trace.Span
 		return ctx, empty, errMalformedTraceContextVal
 	}
 
-	// extract trace ID
 	if parts[0] != "" {
 		id := parts[0]
 		if len(id) > traceID128bitsWidth {
 			return ctx, empty, errInvalidTraceIDLength
 		}
-		// padding when length is less than 32
+		// 长度不足 32 时在左侧补零，对齐 128 位 TraceID。
 		if len(id) < traceID128bitsWidth {
 			padCharCount := traceID128bitsWidth - len(id)
 			id = strings.Repeat(idPaddingChar, padCharCount) + id
@@ -107,13 +102,12 @@ func extract(ctx context.Context, headerVal string) (context.Context, trace.Span
 		}
 	}
 
-	// extract span ID
 	if parts[1] != "" {
 		id := parts[1]
 		if len(id) > spanIDWidth {
 			return ctx, empty, errInvalidSpanIDLength
 		}
-		// padding when length is less than 16
+		// 长度不足 16 时在左侧补零，对齐 64 位 SpanID。
 		if len(id) < spanIDWidth {
 			padCharCount := spanIDWidth - len(id)
 			id = strings.Repeat(idPaddingChar, padCharCount) + id
@@ -124,9 +118,8 @@ func extract(ctx context.Context, headerVal string) (context.Context, trace.Span
 		}
 	}
 
-	// skip third part as it is deprecated
+	// 第三段 parent-span-id 已废弃，直接跳过。
 
-	// extract flag
 	if parts[3] != "" {
 		flagStr := parts[3]
 		flag, err := strconv.ParseInt(flagStr, 16, 64)
@@ -134,7 +127,7 @@ func extract(ctx context.Context, headerVal string) (context.Context, trace.Span
 			return ctx, empty, errMalformedFlag
 		}
 		if flag&flagsSampled == flagsSampled {
-			// if sample bit is set, we check if debug bit is also set
+			// 采样位置位时再判断 debug 位是否同时置位。
 			if flag&flagsDebug == flagsDebug {
 				scc.TraceFlags |= trace.FlagsSampled
 				ctx = withDebug(ctx, true)
@@ -142,12 +135,12 @@ func extract(ctx context.Context, headerVal string) (context.Context, trace.Span
 				scc.TraceFlags |= trace.FlagsSampled
 			}
 		}
-		// ignore other bit, including firehose since we don't have corresponding flag in trace context.
+		// 其余标志位（含 firehose）在 W3C Trace Context 中没有对应位，忽略不处理。
 	}
 	return ctx, trace.NewSpanContext(scc), nil
 }
 
-// Fields returns the Jaeger header key whose value is set with Inject.
+// Fields 返回 Inject 会写入的 Jaeger 头键名。
 func (jaeger Jaeger) Fields() []string {
 	return []string{jaegerHeader}
 }
@@ -158,14 +151,12 @@ const (
 	debugKey jaegerKeyType = iota
 )
 
-// withDebug returns a copy of parent with debug set as the debug flag value .
+// withDebug 返回携带 debug 标记的上下文副本。
 func withDebug(parent context.Context, debug bool) context.Context {
 	return context.WithValue(parent, debugKey, debug)
 }
 
-// debugFromContext returns the debug value stored in ctx.
-//
-// If no debug value is stored in ctx false is returned.
+// debugFromContext 读取上下文中保存的 debug 标记；上下文为空或未写入该标记时返回 false。
 func debugFromContext(ctx context.Context) bool {
 	if ctx == nil {
 		return false

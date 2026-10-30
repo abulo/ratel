@@ -97,6 +97,9 @@ func hasSets(name string, sets []string) bool {
 	return slices.Contains(sets, name)
 }
 
+// Tree 递归遍历目录并打印其中每个文件的相对路径与大小，用于在命令行中展示已生成的文件清单。
+//
+// dir 为打印相对路径时剥离的前缀目录；遍历过程中的错误被忽略，不中断输出。
 func Tree(path string, dir string) {
 	_ = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err == nil && info != nil && !info.IsDir() {

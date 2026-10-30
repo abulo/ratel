@@ -4,8 +4,7 @@ package convert
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Type conversions for Scan.
-// These functions are copied from database/sql/convert.go build 1.6.2
+// 以下转换逻辑移植自标准库 database/sql/convert.go（Go 1.6.2），供 Scan 赋值使用。
 
 import (
 	"database/sql"
@@ -18,13 +17,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-var errNilPtr = errors.New("destination pointer is nil") // embedded in descriptive error
+var errNilPtr = errors.New("destination pointer is nil")
 
-// ConvertAssign copies to dest the value in src, converting it if possible.
-// An error is returned if the copy would result in loss of information.
-// dest should be a pointer type.
+// ConvertAssign 将 src 转换后写入 dest 指向的变量；dest 必须为指针。
+//
+// 目标实现 sql.Scanner 时优先委托其 Scan 方法；无法安全转换或类型不兼容时返回错误。
 func ConvertAssign(dest, src any) error {
-	// Common cases, without reflect.
+	// 先处理无需反射的常见类型。
 	switch s := src.(type) {
 	case string:
 		switch d := dest.(type) {

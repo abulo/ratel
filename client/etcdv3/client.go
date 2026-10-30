@@ -19,13 +19,18 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// Client ...
+// Client 封装 go.etcd.io/etcd/client/v3 客户端及其构建配置，键值、锁、监听等能力均通过该对象发起。
+//
+// 零值不可直接使用，须由 NewClient 或 Config.Build 构建；内嵌的 clientv3.Client 方法可直接调用。
 type Client struct {
 	*clientv3.Client
 	config *Config
 }
 
-// New ...
+// NewClient 依据 config 构建 etcd 客户端并装配指标与（可选的）链路追踪拦截器。
+//
+// Endpoints 为 nil 时返回错误；读取 CA 证书或客户端证书/私钥失败时会直接 panic，调用方须保证
+// 配置的证书文件路径存在且可读；BasicAuth 为 true 时使用配置的用户名密码认证。
 func NewClient(config *Config) (*Client, error) {
 	dialOptions := []grpc.DialOption{
 		grpc.WithChainUnaryInterceptor(grpcprom.UnaryClientInterceptor),
@@ -112,7 +117,7 @@ func NewClient(config *Config) (*Client, error) {
 	return cc, nil
 }
 
-// GetKeyValue queries etcd key, returns mvccpb.KeyValue
+// GetKeyValue 查询单个键对应的 mvccpb.KeyValue；键不存在时返回 (nil, nil)，查询失败时返回错误。
 func (client *Client) GetKeyValue(ctx context.Context, key string) (kv *mvccpb.KeyValue, err error) {
 	rp, err := client.Client.Get(ctx, key)
 	if err != nil {
@@ -126,7 +131,7 @@ func (client *Client) GetKeyValue(ctx context.Context, key string) (kv *mvccpb.K
 	return
 }
 
-// GetPrefix get prefix
+// GetPrefix 查询以 prefix 为前缀的全部键值，返回键到值的映射；查询失败时返回已收集的空映射与错误。
 func (client *Client) GetPrefix(ctx context.Context, prefix string) (map[string]string, error) {
 	var (
 		vars = make(map[string]string)
@@ -144,7 +149,7 @@ func (client *Client) GetPrefix(ctx context.Context, prefix string) (map[string]
 	return vars, nil
 }
 
-// DelPrefix 按前缀删除
+// DelPrefix 删除以 prefix 为前缀的全部键，返回被删除的键数量；删除失败时返回错误。
 func (client *Client) DelPrefix(ctx context.Context, prefix string) (deleted int64, err error) {
 	resp, err := client.Delete(ctx, prefix, clientv3.WithPrefix())
 	if err != nil {
@@ -153,15 +158,16 @@ func (client *Client) DelPrefix(ctx context.Context, prefix string) (deleted int
 	return resp.Deleted, err
 }
 
-// GetValues queries etcd for keys prefixed by prefix.
+// GetValues 按前缀批量查询多组键值并汇总为键到值的映射；任一批次查询失败时返回已收集的映射与错误。
 func (client *Client) GetValues(ctx context.Context, keys ...string) (map[string]string, error) {
 	var (
 		firstRevision = int64(0)
 		vars          = make(map[string]string)
 		maxTxnOps     = 128
-		// getOps        = make([]string, 0, maxTxnOps)
 	)
 
+	// 每批最多 128 个键；首批以最新修订读取，之后各批沿用首个响应的修订版本，保证跨批读取的
+	// 修订基线一致。
 	doTxn := func(ops []string) error {
 		txnOps := make([]clientv3.Op, 0, maxTxnOps)
 
@@ -210,7 +216,8 @@ func (client *Client) GetValues(ctx context.Context, keys ...string) (map[string
 	return vars, nil
 }
 
-// GetLeaseSession 创建租约会话
+// GetLeaseSession 基于当前客户端创建租约会话，可传入 SessionOption 调整 TTL 等参数；
+// 会话创建失败时返回错误。
 func (client *Client) GetLeaseSession(ctx context.Context, opts ...concurrency.SessionOption) (leaseSession *concurrency.Session, err error) {
 	return concurrency.NewSession(client.Client, opts...)
 }

@@ -12,36 +12,36 @@ import (
 	"time"
 )
 
-//////////// Misc. Functions ////////////
-
-// Echo echo
+// Echo 将可变参数依次写入标准输出，参数之间不追加分隔符，也不自动换行。
 func Echo(args ...any) {
 	fmt.Print(args...)
 }
 
-// Uniqid uniqid()
+// Uniqid 基于当前时间生成带前缀的唯一标识字符串，格式为 前缀 + 8 位 Unix 时间
+// 戳十六进制 + 5 位纳秒余数十六进制。
 func Uniqid(prefix string) string {
 	now := time.Now()
 	return fmt.Sprintf("%s%08x%05x", prefix, now.Unix(), now.UnixNano()%0x100000)
 }
 
-// Exit exit()
+// Exit 以指定状态码终止当前进程。
 func Exit(status int) {
 	os.Exit(status)
 }
 
-// Die die()
+// Die 以指定状态码终止当前进程，语义与 Exit 相同。
 func Die(status int) {
 	os.Exit(status)
 }
 
-// Getenv getenv()
+// Getenv 读取环境变量 varname；变量不存在时返回空字符串。
 func Getenv(varname string) string {
 	return os.Getenv(varname)
 }
 
-// Putenv putenv()
-// The setting, like "FOO=BAR"
+// Putenv 按 "KEY=VALUE" 形式设置环境变量。
+//
+// setting 中必须恰好包含一个等号，否则 panic；调用系统设置失败时返回错误。
 func Putenv(setting string) error {
 	s := strings.Split(setting, "=")
 	if len(s) != 2 {
@@ -50,36 +50,34 @@ func Putenv(setting string) error {
 	return os.Setenv(s[0], s[1])
 }
 
-// MemoryGetUsage memory_get_usage()
-// return in bytes
+// MemoryGetUsage 返回当前进程已分配堆内存的字节数。
+//
+// realUsage 参数当前未被使用，返回值始终为运行时统计的 Alloc。
 func MemoryGetUsage(realUsage bool) uint64 {
 	stat := new(runtime.MemStats)
 	runtime.ReadMemStats(stat)
 	return stat.Alloc
 }
 
-// MemoryGetPeakUsage memory_get_peak_usage()
-// return in bytes
+// MemoryGetPeakUsage 返回进程启动以来累计分配内存的字节数。
+//
+// realUsage 参数当前未被使用，返回值始终为运行时统计的 TotalAlloc。
 func MemoryGetPeakUsage(realUsage bool) uint64 {
 	stat := new(runtime.MemStats)
 	runtime.ReadMemStats(stat)
 	return stat.TotalAlloc
 }
 
-// VersionCompare version_compare()
-// The possible operators are: <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne respectively.
-// special version strings these are handled in the following order,
-// (any string not found) < dev < alpha = a < beta = b < RC = rc < # < pl = p
-// Usage:
-// VersionCompare("1.2.3-alpha", "1.2.3RC7", '>=')
-// VersionCompare("1.2.3-beta", "1.2.3pl", 'lt')
-// VersionCompare("1.1_dev", "1.2any", 'eq')
+// VersionCompare 按版本号规则比较 version1 与 version2，并按 operator 返回布尔结果。
+//
+// operator 支持 <、lt、<=、le、>、gt、>=、ge、==、=、eq、!=、<>、ne；非法运算符
+// 会 panic。版本号中的预发布标识按以下顺序比较：普通字符串 < dev < alpha/a <
+// beta/b < RC/rc < # < pl/p。
 func VersionCompare(version1, version2, operator string) bool {
 	var vcompare func(string, string) int
 	var canonicalize func(string) string
 	var special func(string, string) int
 
-	// version compare
 	vcompare = func(origV1, origV2 string) int {
 		if origV1 == "" || origV2 == "" {
 			if origV1 == "" && origV2 == "" {
@@ -118,7 +116,7 @@ func VersionCompare(version1, version2, operator string) bool {
 				p2, ver2 = ver2[:n2], ver2[n2+1:]
 			}
 
-			if (p1[0] >= '0' && p1[0] <= '9') && (p2[0] >= '0' && p2[0] <= '9') { // all is digit
+			if (p1[0] >= '0' && p1[0] <= '9') && (p2[0] >= '0' && p2[0] <= '9') {
 				l1, _ := strconv.Atoi(p1)
 				l2, _ := strconv.Atoi(p2)
 				if l1 > l2 {
@@ -128,10 +126,10 @@ func VersionCompare(version1, version2, operator string) bool {
 				} else {
 					compare = -1
 				}
-			} else if !(p1[0] >= '0' && p1[0] <= '9') && !(p2[0] >= '0' && p2[0] <= '9') { // all digit
+			} else if !(p1[0] >= '0' && p1[0] <= '9') && !(p2[0] >= '0' && p2[0] <= '9') {
 				compare = special(p1, p2)
-			} else { // part is digit
-				if p1[0] >= '0' && p1[0] <= '9' { // is digit
+			} else {
+				if p1[0] >= '0' && p1[0] <= '9' {
 					compare = special("#N#", p2)
 				} else {
 					compare = special(p1, "#N#")
@@ -162,7 +160,6 @@ func VersionCompare(version1, version2, operator string) bool {
 		return compare
 	}
 
-	// canonicalize
 	canonicalize = func(version string) string {
 		ver := []byte(version)
 		l := len(ver)
@@ -173,17 +170,17 @@ func VersionCompare(version1, version2, operator string) bool {
 		j := 0
 		for i, v := range ver {
 			next := uint8(0)
-			if i+1 < l { // Have the next one
+			if i+1 < l {
 				next = ver[i+1]
 			}
-			if v == '-' || v == '_' || v == '+' { // replace '-', '_', '+' to '.'
+			if v == '-' || v == '_' || v == '+' {
 				if j > 0 && buf[j-1] != '.' {
 					buf[j] = '.'
 					j++
 				}
 			} else if (next > 0) &&
 				(!(next >= '0' && next <= '9') && (v >= '0' && v <= '9')) ||
-				(!(v >= '0' && v <= '9') && (next >= '0' && next <= '9')) { // Insert '.' before and after a non-digit
+				(!(v >= '0' && v <= '9') && (next >= '0' && next <= '9')) {
 				buf[j] = v
 				j++
 				if v != '.' && next != '.' {
@@ -192,7 +189,7 @@ func VersionCompare(version1, version2, operator string) bool {
 				}
 				continue
 			} else if !((v >= '0' && v <= '9') ||
-				(v >= 'a' && v <= 'z') || (v >= 'A' && v <= 'Z')) { // Non-letters and numbers
+				(v >= 'a' && v <= 'z') || (v >= 'A' && v <= 'Z')) {
 				if j > 0 && buf[j-1] != '.' {
 					buf[j] = '.'
 					j++
@@ -206,10 +203,9 @@ func VersionCompare(version1, version2, operator string) bool {
 		return string(buf[:j])
 	}
 
-	// compare special version forms
 	special = func(form1, form2 string) int {
 		found1, found2, len1, len2 := -1, -1, len(form1), len(form2)
-		// (Any string not found) < dev < alpha = a < beta = b < RC = rc < # < pl = p
+		// 预发布标识的先后顺序：未识别字符串 < dev < alpha/a < beta/b < RC/rc < # < pl/p。
 		forms := map[string]int{
 			"dev":   0,
 			"alpha": 1,
@@ -271,12 +267,13 @@ func VersionCompare(version1, version2, operator string) bool {
 	}
 }
 
-// ZipOpen zip_open()
+// ZipOpen 打开 filename 指向的 zip 文件并返回读取器；调用方负责在使用完毕后关闭读取器。
 func ZipOpen(filename string) (*zip.ReadCloser, error) {
 	return zip.OpenReader(filename)
 }
 
-// Pack pack()
+// Pack 按 order 指定的字节序将 data 序列化为二进制缓冲区并以字符串返回；写入失败时
+// 返回空字符串与错误。
 func Pack(order binary.ByteOrder, data any) (string, error) {
 	buf := new(bytes.Buffer)
 	err := binary.Write(buf, order, data)
@@ -287,7 +284,7 @@ func Pack(order binary.ByteOrder, data any) (string, error) {
 	return buf.String(), nil
 }
 
-// Unpack unpack()
+// Unpack 按 order 指定的字节序从二进制字符串 data 反序列化；读取失败时返回 nil 与错误。
 func Unpack(order binary.ByteOrder, data string) (any, error) {
 	var result []byte
 	r := bytes.NewReader([]byte(data))
@@ -299,8 +296,9 @@ func Unpack(order binary.ByteOrder, data string) (any, error) {
 	return result, nil
 }
 
-// Ternary Ternary expression
-// max := Ternary(a > b, a, b).(int)
+// Ternary 在 condition 为真时返回 trueVal，否则返回 falseVal。
+//
+// 两个返回值为 any 类型，调用方需要自行做类型断言。
 func Ternary(condition bool, trueVal, falseVal any) any {
 	if condition {
 		return trueVal

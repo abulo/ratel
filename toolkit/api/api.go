@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// CmdNew 是 toolkit api 子命令，交互式采集接口与数据表参数后生成 HTTP 接口代码。
 var (
 	CmdNew = &cobra.Command{
 		Use:   "api",
@@ -27,17 +28,18 @@ var (
 	}
 )
 
+// Run 执行 api 子命令：初始化运行环境，依次询问接口路径、表名、驱动类型、接口地址、
+// 软删除策略、所用索引以及待生成的方法与分页选项，读取数据库元数据后调用 Generate
+// 渲染接口文件。
+//
+// 任一交互式输入被取消，或环境初始化、元数据读取、模板渲染失败时直接返回，不生成文件。
 func Run(cmd *cobra.Command, args []string) {
-	// 数据初始化
 	if err := base.InitBase(); err != nil {
 		fmt.Println("初始化:", color.RedString(err.Error()))
 		return
 	}
-	//接口文件夹
 	dir := ""
-	//表名
 	tableName := ""
-	//驱动类型
 	apiType := ""
 	apiUrl := ""
 	multiSelect := make([]string, 0)
@@ -75,11 +77,9 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// 文件夹的路径
 	fullApiDir := path.Join(cast.ToString(cast.ToString(base.Path)), "api", dir)
 	_ = os.MkdirAll(fullApiDir, os.ModePerm)
 
-	// 初始化上下文
 	timeout := "60s"
 	t, err := time.ParseDuration(timeout)
 	if err != nil {
@@ -89,7 +89,6 @@ func Run(cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), t)
 	defer cancel()
 
-	// 表结构信息
 	tableColumn, err := base.TableColumn(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表结构信息:", color.RedString(err.Error()))
@@ -99,19 +98,16 @@ func Run(cmd *cobra.Command, args []string) {
 	for _, item := range tableColumn {
 		tableColumnMap[item.ColumnName] = item
 	}
-	// 表信息
 	tableItem, err := base.TableItem(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表信息:", color.RedString(err.Error()))
 		return
 	}
-	// 表索引
 	tableIndex, err := base.TableIndex(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表索引:", color.RedString(err.Error()))
 		return
 	}
-	// 表主键
 	tablePrimary, err := base.TablePrimary(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表主键:", color.RedString(err.Error()))
@@ -137,19 +133,16 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	//获取 go.mod
 	mod, err := base.ModulePath(path.Join(cast.ToString(base.Path), "go.mod"))
 	if err != nil {
 		fmt.Println("go.mod文件不存在:", color.RedString(err.Error()))
 		return
 	}
-	// 数字长度
 	strLen := strings.LastIndex(dir, "/")
 
 	var methodList []base.Method
 	needPageMethodList := make([]string, 0)
 
-	// 是否需要分页
 	pageBool := false
 
 	var deleteBool bool
@@ -157,7 +150,6 @@ func Run(cmd *cobra.Command, args []string) {
 		deleteBool = true
 	}
 
-	//添加默认方法
 	methodList = append(methodList, base.Method{
 		Table:          tableItem,
 		TableColumn:    tableColumn,
@@ -259,7 +251,6 @@ func Run(cmd *cobra.Command, args []string) {
 			base.CamelStr(tableItem.TableName)+"Drop",
 		)
 	}
-	//获取的索引信息没有
 	if err != nil {
 		methodName := base.CamelStr(tableItem.TableName) + "List"
 		method := base.Method{
@@ -280,21 +271,17 @@ func Run(cmd *cobra.Command, args []string) {
 		methodList = append(methodList, method)
 		needPageMethodList = append(needPageMethodList, methodName)
 	} else {
-		//存储条件信息
 		field := make([]string, 0)
+		// 索引名约定为「类型_名称」，仅识别 Item、List 两类前缀，分别生成单条查询与列表方法。
 		idx := []string{"Item", "List"}
-		//有索引信息
 		for _, v := range tableIndex {
-			//查询条件
 			condition := make([]base.Column, 0)
-			//数据库索引
 			indexField := v.Field
 			indexFieldSlice := util.Explode(",", indexField)
 			for _, fieldValue := range indexFieldSlice {
 				if !util.InArray(fieldValue, useIndex) {
 					continue
 				}
-				//构造查询条件
 				positionIndex := cast.ToInt64(len(condition)) + 1
 				currentColumn := tableColumnMap[fieldValue]
 				currentColumn.PosiTion = positionIndex
@@ -303,14 +290,11 @@ func Run(cmd *cobra.Command, args []string) {
 					field = append(field, fieldValue)
 				}
 			}
-			// 数据库中的索引名称
 			indexName := v.IndexName
-			// 拆分字符串,得到索引类型和索引名称
 			indexNameSlice := util.Explode("_", indexName)
 			if len(indexNameSlice) < 2 {
 				continue
 			}
-			// 自定义函数名称和索引信息
 			customIndexType := util.UCWords(indexNameSlice[0])
 			customIndexName := util.UCWords(indexNameSlice[1])
 			if !util.InArray(customIndexType, idx) {
@@ -332,7 +316,6 @@ func Run(cmd *cobra.Command, args []string) {
 				SoftDelete:     deleteBool,
 			}
 			multiSelect = append(multiSelect, methodName)
-			//添加到集合中
 			methodList = append(methodList, method)
 			if base.CamelStr(customIndexType) == "List" {
 				needPageMethodList = append(needPageMethodList, methodName)
@@ -340,7 +323,6 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 		condition := make([]base.Column, 0)
 		for _, fieldValue := range field {
-			//构造查询条件
 			positionIndex := cast.ToInt64(len(condition)) + 1
 			currentColumn := tableColumnMap[fieldValue]
 			currentColumn.PosiTion = positionIndex
@@ -387,7 +369,6 @@ func Run(cmd *cobra.Command, args []string) {
 	var newMethodList []base.Method
 	for _, val := range methodList {
 		newMethod := val
-		// 判断是否分页
 		if util.InArray(newMethod.Name, multiPageSelected) {
 			newMethod.Page = true
 		}
@@ -398,7 +379,6 @@ func Run(cmd *cobra.Command, args []string) {
 	if len(multiPageSelected) > 0 {
 		pageBool = true
 	}
-	// 数据模型
 	moduleParam := base.ModuleParam{
 		Pkg:         dir[strLen+1:],
 		PkgPath:     dir,
@@ -412,6 +392,12 @@ func Run(cmd *cobra.Command, args []string) {
 	Generate(moduleParam, fullApiDir, tableName, dir[strLen+1:], dir, apiType, apiUrl)
 }
 
+// Generate 按 apiType 选择 hertz 或 gin 模板，渲染 moduleParam 并写入 fullApiDir 下
+// 以表名命名的 Go 文件；同名文件已存在时先删除再创建。
+//
+// 渲染完成后在 fullApiDir 目录执行 go fmt 与 goimports 整理格式，并在标准输出打印
+// 各方法对应的路由注册代码片段。文件创建、模板解析或格式化失败时打印错误并返回，
+// 不向调用方返回错误。apiType 非 hertz 时一律按 gin 模板处理。
 func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, pkgPath, apiType, apiUrl string) {
 	var tplString string
 	if apiType == "hertz" {
@@ -431,7 +417,6 @@ func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, pkgPath,
 		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
 		"ApiToProto":            base.ApiToProto,
 	}).Parse(tplString))
-	// 文件夹路径
 	outApiFile := path.Join(fullApiDir, tableName+".go")
 	if util.FileExists(outApiFile) {
 		util.Delete(outApiFile)
@@ -441,13 +426,11 @@ func Generate(moduleParam base.ModuleParam, fullApiDir, tableName, pkg, pkgPath,
 		fmt.Println("文件句柄错误:", color.RedString(err.Error()))
 		return
 	}
-	//渲染输出
 	err = tpl.Execute(file, moduleParam)
 	if err != nil {
 		fmt.Println("模板解析错误:", color.RedString(err.Error()))
 		return
 	}
-	//格式化代码
 	_ = os.Chdir(fullApiDir)
 	cmdShell := exec.Command("go", "fmt")
 	if _, err := cmdShell.CombinedOutput(); err != nil {

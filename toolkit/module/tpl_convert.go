@@ -13,8 +13,9 @@ import (
 	"github.com/spf13/cast"
 )
 
+// GenerateConvert 使用 ConvertTemplate 渲染并写出 DAO 与 Proto 对象互转的 Go 文件到 fullConvertDir，
+// 文件已存在时先删除再生成，随后执行 go fmt 与 goimports 整理格式；模板渲染失败时打印错误并返回。
 func GenerateConvert(moduleParam base.ModuleParam, fullConvertDir, tableName string) {
-	// 模板变量
 	tpl := template.Must(template.New("convert").Funcs(template.FuncMap{
 		"Convert":               base.Convert,
 		"SymbolChar":            base.SymbolChar,
@@ -27,7 +28,6 @@ func GenerateConvert(moduleParam base.ModuleParam, fullConvertDir, tableName str
 		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
 		"ApiToProto":            base.ApiToProto,
 	}).Parse(ConvertTemplate()))
-	// 文件夹路径
 	outConvertFile := path.Join(fullConvertDir, tableName+".go")
 	if util.FileExists(outConvertFile) {
 		util.Delete(outConvertFile)
@@ -37,7 +37,6 @@ func GenerateConvert(moduleParam base.ModuleParam, fullConvertDir, tableName str
 		fmt.Println("文件句柄错误:", color.RedString(err.Error()))
 		return
 	}
-	//渲染输出
 	err = tpl.Execute(file, moduleParam)
 	if err != nil {
 		fmt.Println("模板解析错误:", color.RedString(err.Error()))
@@ -55,6 +54,7 @@ func GenerateConvert(moduleParam base.ModuleParam, fullConvertDir, tableName str
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(outConvertFile))
 }
 
+// ConvertTemplate 返回 DAO 与 Proto 对象互转代码模板；配置中 template.Convert 指定了自定义模板文件时优先读取该文件内容。
 func ConvertTemplate() string {
 	if exists := base.Config.Exists("template.Convert"); exists {
 		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.Convert"))

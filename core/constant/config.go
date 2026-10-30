@@ -1,9 +1,6 @@
 package constant
 
-// DefaultNamespace ...
 var (
-	// ConfigPrefix 配置前缀
-	// ConfigPrefix = "ratel"
-	// DefaultNamespace 默认命名空间
+	// DefaultNamespace 为指标、配置等资源使用的默认命名空间。
 	DefaultNamespace = "ratel"
 )

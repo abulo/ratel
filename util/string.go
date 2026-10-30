@@ -24,6 +24,7 @@ import (
 	"golang.org/x/text/language"
 )
 
+// tagPatterns 保存需要在 Tag 中统一替换为 "/" 的标签分隔符及其替换值，按两两配对排列。
 var tagPatterns = []string{
 	",", "/",
 	"，", "/",
@@ -33,15 +34,13 @@ var tagPatterns = []string{
 	";", "/",
 }
 
-//////////// String Functions ////////////
-
-// StrTrim 去除空格
+// StrTrim 去除字符串中的全部空白字符（包括中间位置的空格、制表符等），而非仅去除两端。
 func StrTrim(str string) string {
-	// return strings.TrimSpace(str)
 	return strings.Join(strings.Fields(str), "")
 }
 
-// StrPos Strpos strpos()
+// StrPos 返回 needle 在 haystack 中从 offset 起首次出现的字节位置；
+// 找不到、haystack 为空或 offset 越界时返回 -1。
 func StrPos(haystack, needle string, offset int) int {
 	length := len(haystack)
 	if length == 0 || offset > length || -offset > length {
@@ -58,7 +57,8 @@ func StrPos(haystack, needle string, offset int) int {
 	return pos + offset
 }
 
-// StrIPos Stripos stripos()
+// StrIPos 忽略大小写返回 needle 在 haystack 中从 offset 起首次出现的字节位置；
+// 找不到或 offset 越界时返回 -1。
 func StrIPos(haystack, needle string, offset int) int {
 	length := len(haystack)
 	if length == 0 || offset > length || -offset > length {
@@ -76,7 +76,10 @@ func StrIPos(haystack, needle string, offset int) int {
 	return pos + offset
 }
 
-// StrRPos Strrpos strrpos()
+// StrRPos 返回 needle 在 haystack 中最后一次出现的字节位置。
+//
+// offset 为正时限定在 offset 之后的范围内搜索，为负时限定在其之前的范围内；
+// 找不到或 offset 越界时返回 -1。
 func StrRPos(haystack, needle string, offset int) int {
 	pos, length := 0, len(haystack)
 	if length == 0 || offset > length || -offset > length {
@@ -95,7 +98,8 @@ func StrRPos(haystack, needle string, offset int) int {
 	return pos
 }
 
-// StrRIPos Strripos strripos()
+// StrRIPos 忽略大小写返回 needle 在 haystack 中最后一次出现的字节位置；
+// 范围规则与 StrRPos 相同，找不到或越界时返回 -1。
 func StrRIPos(haystack, needle string, offset int) int {
 	pos, length := 0, len(haystack)
 	if length == 0 || offset > length || -offset > length {
@@ -114,22 +118,22 @@ func StrRIPos(haystack, needle string, offset int) int {
 	return pos
 }
 
-// StrReplace str_replace()
+// StrReplace 将 subject 中前 count 处 search 替换为 replace；count 为负数时替换全部。
 func StrReplace(search, replace, subject string, count int) string {
 	return strings.Replace(subject, search, replace, count)
 }
 
-// StrToUpper Strtoupper strtoupper()
+// StrToUpper 将字符串全部字符转换为大写。
 func StrToUpper(str string) string {
 	return strings.ToUpper(str)
 }
 
-// StrToLower Strtolower strtolower()
+// StrToLower 将字符串全部字符转换为小写。
 func StrToLower(str string) string {
 	return strings.ToLower(str)
 }
 
-// UCfirst Ucfirst ucfirst()
+// UCfirst 将字符串首字符转换为大写，其余字符保持不变；空串返回空字符串。
 func UCfirst(str string) string {
 	for _, v := range str {
 		u := string(unicode.ToUpper(v))
@@ -138,7 +142,7 @@ func UCfirst(str string) string {
 	return ""
 }
 
-// LCFirst Lcfirst lcfirst()
+// LCFirst 将字符串首字符转换为小写，其余字符保持不变；空串返回空字符串。
 func LCFirst(str string) string {
 	for _, v := range str {
 		u := string(unicode.ToLower(v))
@@ -147,13 +151,16 @@ func LCFirst(str string) string {
 	return ""
 }
 
-// UCWords Ucwords ucwords()
+// UCWords 将字符串按单词做标题式大小写处理，每个单词首字母大写。
 func UCWords(str string) string {
 	caser := cases.Title(language.English)
 	return caser.String(str)
 }
 
-// SubStr Substr substr()
+// SubStr 按字节截取子串。
+//
+// start 为负时从末尾倒数；length 为 -1 时取到末尾，为 0 时返回空字符串，
+// 小于 -1 时原样返回整串。
 func SubStr(str string, start int, length int) string {
 	if start < 0 {
 		start = max(len(str)+start, 0)
@@ -171,7 +178,7 @@ func SubStr(str string, start int, length int) string {
 	return str[start:end]
 }
 
-// StrRev Strrev strrev()
+// StrRev 按 Unicode 字符（rune）反转字符串。
 func StrRev(str string) string {
 	runes := []rune(str)
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
@@ -180,31 +187,24 @@ func StrRev(str string) string {
 	return string(runes)
 }
 
-// ParseStr parse_str()
-// f1=m&f2=n -> map[f1:m f2:n]
-// f[a]=m&f[b]=n -> map[f:map[a:m b:n]]
-// f[a][a]=m&f[a][b]=n -> map[f:map[a:map[a:m b:n]]]
-// f[]=m&f[]=n -> map[f:[m n]]
-// f[a][]=m&f[a][]=n -> map[f:map[a:[m n]]]
-// f[][]=m&f[][]=n -> map[f:[map[]]] // Currently does not support nested slice.
-// f=m&f[a]=n -> error // This is not the same as PHP.
-// a .[[b=c -> map[a___[b:c]
+// ParseStr 将查询字符串解析进 result 指向的嵌套 map。
+//
+// 支持 f1=m 形式的平铺键、f[a]=m 形式的嵌套 map，以及 f[]=m、f[a][]=m 形式的
+// 切片；同名键类型冲突或 URL 解码失败时返回错误。暂不支持多层嵌套切片，
+// 与 PHP parse_str 的行为存在差异。
 func ParseStr(encodedString string, result map[string]any) error {
-	// build nested map.
 	var build func(map[string]any, []string, any) error
 
 	build = func(result map[string]any, keys []string, value any) error {
 		length := len(keys)
-		// trim ',"
 		key := strings.Trim(keys[0], "'\"")
 		if length == 1 {
 			result[key] = value
 			return nil
 		}
 
-		// The end is slice. like f[], f[a][]
 		if keys[1] == "" && length == 2 {
-			// todo nested slice
+			// TODO(owner): 暂不支持更深层的嵌套切片。
 			if key == "" {
 				return nil
 			}
@@ -221,7 +221,6 @@ func ParseStr(encodedString string, result map[string]any) error {
 			return nil
 		}
 
-		// The end is slice + map. like f[][a]
 		if keys[1] == "" && length > 2 && keys[2] != "" {
 			val, ok := result[key]
 			if !ok {
@@ -247,7 +246,6 @@ func ParseStr(encodedString string, result map[string]any) error {
 			return nil
 		}
 
-		// map. like f[a], f[a][b]
 		val, ok := result[key]
 		if !ok {
 			result[key] = map[string]any{}
@@ -261,7 +259,6 @@ func ParseStr(encodedString string, result map[string]any) error {
 		return build(children, keys[1:], value)
 	}
 
-	// split encodedString.
 	parts := strings.SplitSeq(encodedString, "&")
 	for part := range parts {
 		pos := strings.Index(part, "=")
@@ -283,7 +280,6 @@ func ParseStr(encodedString string, result map[string]any) error {
 			return err
 		}
 
-		// split into multiple keys
 		var keys []string
 		left := 0
 		for i, k := range key {
@@ -305,7 +301,6 @@ func ParseStr(encodedString string, result map[string]any) error {
 		if len(keys) == 0 {
 			keys = append(keys, key)
 		}
-		// first key
 		var first strings.Builder
 		for i, chr := range keys[0] {
 			if chr == ' ' || chr == '.' || chr == '[' {
@@ -320,7 +315,6 @@ func ParseStr(encodedString string, result map[string]any) error {
 		}
 		keys[0] = first.String()
 
-		// build nested map
 		if err := build(result, keys, value); err != nil {
 			return err
 		}
@@ -329,10 +323,8 @@ func ParseStr(encodedString string, result map[string]any) error {
 	return nil
 }
 
-// NumberFormat number_format()
-// decimals: Sets the number of decimal points.
-// decPoint: Sets the separator for the decimal point.
-// thousandsSep: Sets the thousands' separator.
+// NumberFormat 按小数位数 decimals、小数点 decPoint 与千分位分隔符 thousandsSep
+// 格式化数字；负数保留负号，小数部分按四舍五入处理。
 func NumberFormat(number float64, decimals uint, decPoint, thousandsSep string) string {
 	neg := false
 	if number < 0 {
@@ -340,7 +332,6 @@ func NumberFormat(number float64, decimals uint, decPoint, thousandsSep string) 
 		neg = true
 	}
 	dec := int(decimals)
-	// Will round off
 	str := fmt.Sprintf("%."+strconv.Itoa(dec)+"F", number)
 	prefix, suffix := "", ""
 	if dec > 0 {
@@ -351,7 +342,6 @@ func NumberFormat(number float64, decimals uint, decPoint, thousandsSep string) 
 	}
 	sep := []byte(thousandsSep)
 	n, l1, l2 := 0, len(prefix), len(sep)
-	// thousands sep num
 	c := (l1 - 1) / 3
 	tmp := make([]byte, l2*c+l1)
 	pos := len(tmp) - 1
@@ -375,7 +365,7 @@ func NumberFormat(number float64, decimals uint, decPoint, thousandsSep string) 
 	return s
 }
 
-// ChunkSplit chunk_split()
+// ChunkSplit 将字符串按 chunklen 长度切分，每段末尾追加 end；end 为空时默认 \r\n。
 func ChunkSplit(body string, chunklen uint, end string) string {
 	if end == "" {
 		end = "\r\n"
@@ -398,12 +388,15 @@ func ChunkSplit(body string, chunklen uint, end string) string {
 	return string(ns)
 }
 
-// StrWordCount str_word_count()
+// StrWordCount 按空白字符分词，返回单词组成的切片。
 func StrWordCount(str string) []string {
 	return strings.Fields(str)
 }
 
-// WordWrap Wordwrap wordwrap()
+// WordWrap 按宽度 width 折行，折行处插入 br。
+//
+// cut 为 true 时允许在单词中间强制截断；br 为空字符串时 panic，width 为 0 且
+// cut 为 true 时 panic。
 func WordWrap(str string, width uint, br string, cut bool) string {
 	strlen := len(str)
 	brlen := len(br)
@@ -453,22 +446,23 @@ func WordWrap(str string, width uint, br string, cut bool) string {
 	return string(ns)
 }
 
-// StrLen Strlen strlen()
+// StrLen 返回字符串的字节长度。
 func StrLen(str string) int {
 	return len(str)
 }
 
-// MbStrLen MbStrlen mb_strlen()
+// MbStrLen 返回字符串的 Unicode 字符数（rune 数），多字节字符按一个字符计。
 func MbStrLen(str string) int {
 	return utf8.RuneCountInString(str)
 }
 
-// StrRepeat str_repeat()
+// StrRepeat 将 input 重复 multiplier 次后返回。
 func StrRepeat(input string, multiplier int) string {
 	return strings.Repeat(input, multiplier)
 }
 
-// StrStr Strstr strstr()
+// StrStr 返回从 needle 末字符位置起（仍包含 needle 的末字符）的子串；
+// needle 为空或找不到时返回空字符串。
 func StrStr(haystack string, needle string) string {
 	if needle == "" {
 		return ""
@@ -480,12 +474,11 @@ func StrStr(haystack string, needle string) string {
 	return haystack[idx+len([]byte(needle))-1:]
 }
 
-// StrTr Strtr strtr()
+// StrTr 实现字符或子串替换。
 //
-// If the parameter length is 1, type is: map[string]string
-// Strtr("baab", map[string]string{"ab": "01"}) will return "ba01"
-// If the parameter length is 2, type is: string, string
-// Strtr("baab", "ab", "01") will return "1001", a => 0; b => 1.
+// 传入一个 map[string]string 时按键值对替换对应子串；传入两个字符串时按位置
+// 逐字符映射替换；参数数量不符时原样返回 haystack；实参类型与上述形式不符时触发
+// 类型断言 panic。
 func StrTr(haystack string, params ...any) string {
 	ac := len(params)
 	if ac == 1 {
@@ -527,7 +520,6 @@ func StrTr(haystack string, params ...any) string {
 			}
 			return string(str)
 		}
-		// trlen != 1
 		for {
 			xlat[j] = j
 			if j++; j == 0 {
@@ -546,7 +538,7 @@ func StrTr(haystack string, params ...any) string {
 	return haystack
 }
 
-// StrShuffle str_shuffle()
+// StrShuffle 随机打乱字符串的字符顺序并返回新字符串。
 func StrShuffle(str string) string {
 	runes := []rune(str)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -557,7 +549,7 @@ func StrShuffle(str string) string {
 	return string(s)
 }
 
-// Trim trim()
+// Trim 去除字符串两端空白；提供 characterMask 时改为去除两端指定字符集中的字符。
 func Trim(str string, characterMask ...string) string {
 	if len(characterMask) == 0 {
 		return strings.TrimSpace(str)
@@ -565,7 +557,7 @@ func Trim(str string, characterMask ...string) string {
 	return strings.Trim(str, characterMask[0])
 }
 
-// LTrim Ltrim ltrim()
+// LTrim 去除字符串左端空白；提供 characterMask 时改为去除左端指定字符集中的字符。
 func LTrim(str string, characterMask ...string) string {
 	if len(characterMask) == 0 {
 		return strings.TrimLeftFunc(str, unicode.IsSpace)
@@ -573,7 +565,7 @@ func LTrim(str string, characterMask ...string) string {
 	return strings.TrimLeft(str, characterMask[0])
 }
 
-// RTrim Rtrim rtrim()
+// RTrim 去除字符串右端空白；提供 characterMask 时改为去除右端指定字符集中的字符。
 func RTrim(str string, characterMask ...string) string {
 	if len(characterMask) == 0 {
 		return strings.TrimRightFunc(str, unicode.IsSpace)
@@ -581,24 +573,25 @@ func RTrim(str string, characterMask ...string) string {
 	return strings.TrimRight(str, characterMask[0])
 }
 
-// Explode explode()
+// Explode 按 delimiter 切分字符串 str，返回各段组成的切片。
 func Explode(delimiter, str string) []string {
 	return strings.Split(str, delimiter)
 }
 
-// Chr chr()
+// Chr 将 ASCII 或 Unicode 码点转换为对应字符组成的字符串。
 func Chr(ascii int) string {
 	return string(rune(ascii))
 }
 
-// Ord ord()
+// Ord 返回字符串首字符的 Unicode 码点。
 func Ord(char string) int {
 	r, _ := utf8.DecodeRune([]byte(char))
 	return int(r)
 }
 
-// Nl2br nl2br()
-// \n\r, \r\n, \r, \n
+// Nl2br 将字符串中的换行符替换为 HTML 换行标签。
+//
+// isXhtml 为 true 时使用 <br />，否则使用 <br>；连续的 CR/LF 组合只插入一个标签。
 func Nl2br(str string, isXhtml bool) string {
 	r, n, runes := '\r', '\n', []rune(str)
 	var br []byte
@@ -630,23 +623,23 @@ func Nl2br(str string, isXhtml bool) string {
 	return buf.String()
 }
 
-// JSONDecode json_decode()
+// JSONDecode 将 JSON 字节流反序列化到 val 指向的对象；失败返回错误。
 func JSONDecode(data []byte, val any) error {
 	return json.Unmarshal(data, val)
 }
 
-// JSONEncode json_encode()
+// JSONEncode 将 val 序列化为 JSON 字节；失败返回错误。
 func JSONEncode(val any) ([]byte, error) {
 	return json.Marshal(val)
 }
 
-// JSONString ...
+// JSONString 将对象序列化为 JSON 字符串；序列化错误被忽略，失败时返回空字符串。
 func JSONString(obj any) string {
 	jsByte, _ := json.Marshal(obj)
 	return cast.ToString(jsByte)
 }
 
-// AddSlashes Addslashes addslashes()
+// AddSlashes 为字符串中的单引号、双引号与反斜杠添加反斜杠转义。
 func AddSlashes(str string) string {
 	var buf bytes.Buffer
 	for _, char := range str {
@@ -659,7 +652,7 @@ func AddSlashes(str string) string {
 	return buf.String()
 }
 
-// StripSlashes Stripslashes stripslashes()
+// StripSlashes 去除字符串中的反斜杠转义；连续两个反斜杠视为一个字面反斜杠并跳过其后者。
 func StripSlashes(str string) string {
 	var buf bytes.Buffer
 	l, skip := len(str), false
@@ -677,7 +670,7 @@ func StripSlashes(str string) string {
 	return buf.String()
 }
 
-// QuoteMeta Quotemeta quotemeta()
+// QuoteMeta 为字符串中的正则元字符添加反斜杠转义。
 func QuoteMeta(str string) string {
 	var buf bytes.Buffer
 	for _, char := range str {
@@ -690,24 +683,26 @@ func QuoteMeta(str string) string {
 	return buf.String()
 }
 
-// HtmlEntities Htmlentities htmlentities()
+// HtmlEntities 转义字符串中的 HTML 特殊字符。
 func HtmlEntities(str string) string {
 	return html.EscapeString(str)
 }
 
-// HTMLEntityDecode html_entity_decode()
+// HTMLEntityDecode 反转义字符串中的 HTML 实体。
 func HTMLEntityDecode(str string) string {
 	return html.UnescapeString(str)
 }
 
-// Md5 md5()
+// Md5 返回字符串的 MD5 十六进制摘要。
 func Md5(str string) string {
 	hash := md5.New()
 	hash.Write([]byte(str))
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-// Md5File md5_file()
+// Md5File 计算文件内容的 MD5 十六进制摘要。
+//
+// 小于 1MB 的文件整体读取，较大文件分块读取；打开或读取失败时返回空字符串与错误。
 func Md5File(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -720,7 +715,7 @@ func Md5File(path string) (string, error) {
 		return "", err
 	}
 
-	var size int64 = 1048576 // 1M
+	var size int64 = 1048576
 	hash := md5.New()
 
 	if fi.Size() < size {
@@ -744,14 +739,14 @@ func Md5File(path string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-// Sha1 sha1()
+// Sha1 返回字符串的 SHA1 十六进制摘要。
 func Sha1(str string) string {
 	hash := sha1.New()
 	hash.Write([]byte(str))
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-// Sha1File sha1_file()
+// Sha1File 计算整个文件内容的 SHA1 十六进制摘要；读取失败时返回空字符串与错误。
 func Sha1File(path string) (string, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -762,15 +757,13 @@ func Sha1File(path string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-// Crc32 crc32()
+// Crc32 返回字符串的 IEEE CRC32 校验值。
 func Crc32(str string) uint32 {
 	return crc32.ChecksumIEEE([]byte(str))
 }
 
-// Levenshtein levenshtein()
-// costIns: Defines the cost of insertion.
-// costRep: Defines the cost of replacement.
-// costDel: Defines the cost of deletion.
+// Levenshtein 计算两字符串之间的编辑距离，costIns、costRep、costDel 分别指定
+// 插入、替换、删除代价；任一字符串长度超过 255 时返回 -1。
 func Levenshtein(str1, str2 string, costIns, costRep, costDel int) int {
 	var maxLen = 255
 	l1 := len(str1)
@@ -819,14 +812,15 @@ func Levenshtein(str1, str2 string, costIns, costRep, costDel int) int {
 	return c0
 }
 
-// SimilarText similar_text()
+// SimilarText 返回两字符串最长公共片段的累计匹配长度。
+//
+// percent 非 nil 时通过该指针写入相似度百分比（0–100）；两个字符串均为空时返回 0。
 func SimilarText(first, second string, percent *float64) int {
 	var similarText func(string, string, int, int) int
 	similarText = func(str1, str2 string, len1, len2 int) int {
 		var sum, max int
 		pos1, pos2 := 0, 0
 
-		// Find the longest segment of the same section in two strings
 		for i := range len1 {
 			for j := range len2 {
 				for l := 0; (i+l < len1) && (j+l < len2) && (str1[i+l] == str2[j+l]); l++ {
@@ -864,35 +858,25 @@ func SimilarText(first, second string, percent *float64) int {
 	return sim
 }
 
-// Soundex soundex()
-// Calculate the soundex key of a string.
+// Soundex 计算字符串的 Soundex 语音编码（固定 4 位）；空字符串会 panic。
 func Soundex(str string) string {
 	if str == "" {
 		panic("str: cannot be an empty string")
 	}
+	// 编码表按字母 A–Z 顺序排列，索引即字母在字母表中的位置，0 表示不产生编码。
 	table := [26]rune{
-		// A, B, C, D
 		'0', '1', '2', '3',
-		// E, F, G
 		'0', '1', '2',
-		// H
 		'0',
-		// I, J, K, L, M, N
 		'0', '2', '2', '4', '5', '5',
-		// O, P, Q, R, S, T
 		'0', '1', '2', '6', '2', '3',
-		// U, V
 		'0', '1',
-		// W, X
 		'0', '2',
-		// Y, Z
 		'0', '2',
 	}
 	last, code, small := -1, 0, 0
 	sd := make([]rune, 4)
-	// build soundex string
 	for i := 0; i < len(str) && small < 4; i++ {
-		// ToUpper
 		char := str[i]
 		if char < '\u007F' && 'a' <= char && char <= 'z' {
 			code = int(char - 'a' + 'A')
@@ -916,20 +900,22 @@ func Soundex(str string) string {
 			}
 		}
 	}
-	// pad with "0"
 	for ; small < 4; small++ {
 		sd[small] = '0'
 	}
 	return string(sd)
 }
 
-// Tag 数据标签
+// Tag 将标签字符串中的常见分隔符统一替换为 "/"。
 func Tag(i any) string {
 	replacer := strings.NewReplacer(tagPatterns...)
 	format := cast.ToString(i)
 	return replacer.Replace(format)
 }
 
+// StringToBytes 零拷贝将 string 转换为 []byte。
+//
+// 返回的切片与原字符串共享底层内存，不得修改其内容，否则会破坏字符串的不可变性。
 func StringToBytes(s string) []byte {
 	return *(*[]byte)(unsafe.Pointer(
 		&struct {

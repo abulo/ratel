@@ -16,8 +16,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// CmdNew 定义 toolkit mp 子命令，运行时由 Run 完成数据模型层代码的交互式生成。
 var (
-	// CmdNew represents the new command.
 	CmdNew = &cobra.Command{
 		Use:   "mp",
 		Short: "数据模型层",
@@ -26,21 +26,21 @@ var (
 	}
 )
 
+// Run 执行 toolkit mp 命令：初始化运行环境，交互式采集模型路径、表名、软删除策略与索引，
+// 读取数据库元数据并组装方法列表后，按用户选择生成 module、proto、service、convert 代码。
+//
+// 任一前置步骤失败或交互输入为空时直接返回，不生成文件；数据库查询的超时时间固定为 60 秒。
 func Run(cmd *cobra.Command, args []string) {
-	// 数据初始化
 	if err := base.InitBase(); err != nil {
 		fmt.Println("初始化:", color.RedString(err.Error()))
 		return
 	}
 
-	// 创建文件夹
 	dirModule := path.Join(cast.ToString(base.Path), "module")
 	_ = os.MkdirAll(dirModule, os.ModePerm)
-	// 创建文件夹
 	dirProto := path.Join(cast.ToString(base.Path), "proto")
 	_ = os.MkdirAll(dirProto, os.ModePerm)
 
-	//创建数据
 	dir := ""
 	tableName := ""
 	multiSelect := make([]string, 0)
@@ -64,22 +64,18 @@ func Run(cmd *cobra.Command, args []string) {
 	}, &delete); err != nil || delete == "" {
 		return
 	}
-	// 文件夹的路径
 	fullModuleDir := path.Join(cast.ToString(base.Path), "module", dir)
 	_ = os.MkdirAll(fullModuleDir, os.ModePerm)
 
-	// 文件夹的路径
 	fullProtoDir := path.Join(cast.ToString(base.Path), "proto")
 	_ = os.MkdirAll(fullProtoDir, os.ModePerm)
 
-	// 文件夹的路径
 	fullServiceDir := path.Join(cast.ToString(base.Path), "service", dir)
 	_ = os.MkdirAll(fullServiceDir, os.ModePerm)
 
 	fullConvertDir := path.Join(cast.ToString(base.Path), "service", dir)
 	_ = os.MkdirAll(fullConvertDir, os.ModePerm)
 
-	// 初始化上下文
 	timeout := "60s"
 	t, err := time.ParseDuration(timeout)
 	if err != nil {
@@ -89,7 +85,6 @@ func Run(cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), t)
 	defer cancel()
 
-	// 表结构信息
 	tableColumn, err := base.TableColumn(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表结构信息:", color.RedString(err.Error()))
@@ -99,19 +94,16 @@ func Run(cmd *cobra.Command, args []string) {
 	for _, item := range tableColumn {
 		tableColumnMap[item.ColumnName] = item
 	}
-	// 表信息
 	tableItem, err := base.TableItem(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表信息:", color.RedString(err.Error()))
 		return
 	}
-	// 表索引
 	tableIndex, err := base.TableIndex(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表索引:", color.RedString(err.Error()))
 		return
 	}
-	// 表主键
 	tablePrimary, err := base.TablePrimary(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表主键:", color.RedString(err.Error()))
@@ -135,19 +127,15 @@ func Run(cmd *cobra.Command, args []string) {
 	}, &useIndex); err != nil {
 		return
 	}
-	//获取 go.mod
 	mod, err := base.ModulePath(path.Join(cast.ToString(base.Path), "go.mod"))
 	if err != nil {
 		fmt.Println("go.mod文件不存在:", color.RedString(err.Error()))
 		return
 	}
-	// 数字长度
 	strLen := strings.LastIndex(dir, "/")
 
 	var methodList []base.Method
-	// needPageMethodList := make([]string, 0)
 
-	// 是否需要分页
 	pageBool := false
 
 	var deleteBool bool
@@ -155,7 +143,7 @@ func Run(cmd *cobra.Command, args []string) {
 		deleteBool = true
 	}
 
-	//添加默认方法
+	// 追加不依赖查询条件的默认方法：新增、更新、删除、详情。
 	methodList = append(methodList, base.Method{
 		Table:          tableItem,
 		TableColumn:    tableColumn,
@@ -257,7 +245,6 @@ func Run(cmd *cobra.Command, args []string) {
 			base.CamelStr(tableItem.TableName)+"Drop",
 		)
 	}
-	//获取的索引信息没有
 	if err != nil {
 		methodName := base.CamelStr(tableItem.TableName) + "List"
 		method := base.Method{
@@ -276,25 +263,17 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
-		// needPageMethodList = append(needPageMethodList, methodName)
 	} else {
-		// js, _ := json.Marshal(tableIndex)
-		// fmt.Println(string(js))
-		//存储条件信息
 		field := make([]string, 0)
 		idx := []string{"Item", "List"}
-		//有索引信息
 		for _, v := range tableIndex {
-			//查询条件
 			condition := make([]base.Column, 0)
-			//数据库索引
 			indexField := v.Field
 			indexFieldSlice := util.Explode(",", indexField)
 			for _, fieldValue := range indexFieldSlice {
 				if !util.InArray(fieldValue, useIndex) {
 					continue
 				}
-				//构造查询条件
 				positionIndex := cast.ToInt64(len(condition)) + 1
 				currentColumn := tableColumnMap[fieldValue]
 				currentColumn.PosiTion = positionIndex
@@ -303,15 +282,13 @@ func Run(cmd *cobra.Command, args []string) {
 					field = append(field, fieldValue)
 				}
 			}
-			// 数据库中的索引名称
 			indexName := v.IndexName
 
-			// 拆分字符串,得到索引类型和索引名称
+			// 索引名按下划线拆分为方法类型与方法名两段，段数不足时跳过该索引。
 			indexNameSlice := util.Explode("_", indexName)
 			if len(indexNameSlice) < 2 {
 				continue
 			}
-			// 自定义函数名称和索引信息
 			customIndexType := util.UCWords(indexNameSlice[0])
 			customIndexName := util.UCWords(indexNameSlice[1])
 			if !util.InArray(customIndexType, idx) {
@@ -333,15 +310,10 @@ func Run(cmd *cobra.Command, args []string) {
 				SoftDelete:     deleteBool,
 			}
 			multiSelect = append(multiSelect, methodName)
-			//添加到集合中
 			methodList = append(methodList, method)
-			// if base.CamelStr(customIndexType) == "List" {
-			// 	needPageMethodList = append(needPageMethodList, methodName)
-			// }
 		}
 		condition := make([]base.Column, 0)
 		for _, fieldValue := range field {
-			//构造查询条件
 			positionIndex := cast.ToInt64(len(condition)) + 1
 			currentColumn := tableColumnMap[fieldValue]
 			currentColumn.PosiTion = positionIndex
@@ -364,7 +336,6 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 		multiSelect = append(multiSelect, methodName)
 		methodList = append(methodList, method)
-		// needPageMethodList = append(needPageMethodList, methodName)
 	}
 
 	multiSelected := make([]string, 0)
@@ -392,13 +363,11 @@ func Run(cmd *cobra.Command, args []string) {
 	for _, val := range methodList {
 		if util.InArray(val.Name, multiSelected) {
 			newMethod := val
-			// 判断是否分页
 			newMethod.Page = true
 			newMethodList = append(newMethodList, newMethod)
 		}
 	}
 	pageBool = true
-	// 数据模型
 	moduleParam := base.ModuleParam{
 		Pkg:         dir[strLen+1:],
 		PkgPath:     dir,

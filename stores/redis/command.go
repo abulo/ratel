@@ -7,7 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// Pipeline 获取Redis管道 无参数
+// Pipeline 获取底层连接上的未执行管道对象，供调用方批量组装命令后统一提交。
 func (r *Client) Pipeline() (val redis.Pipeliner, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -20,7 +20,8 @@ func (r *Client) Pipeline() (val redis.Pipeliner, err error) {
 	return
 }
 
-// Pipelined 执行管道操作 ctx: 上下文, fn: 管道操作函数
+// Pipelined 在管道中执行 fn 组装的全部命令并一次性提交，返回批量命令结果；
+// fn 内通过传入的 Pipeliner 追加命令。
 func (r *Client) Pipelined(ctx context.Context, fn func(redis.Pipeliner) error) (val []redis.Cmder, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -33,7 +34,8 @@ func (r *Client) Pipelined(ctx context.Context, fn func(redis.Pipeliner) error) 
 	return
 }
 
-// TxPipelined 执行事务管道操作 ctx: 上下文, fn: 管道操作函数
+// TxPipelined 在事务管道（MULTI/EXEC）中执行 fn 组装的全部命令并一次性提交，
+// 返回事务内的批量命令结果。
 func (r *Client) TxPipelined(ctx context.Context, fn func(redis.Pipeliner) error) (val []redis.Cmder, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -46,7 +48,7 @@ func (r *Client) TxPipelined(ctx context.Context, fn func(redis.Pipeliner) error
 	return
 }
 
-// TxPipeline 获取事务管道 无参数
+// TxPipeline 获取事务管道对象，供调用方批量组装命令后以事务方式统一提交。
 func (r *Client) TxPipeline() (val redis.Pipeliner, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -59,7 +61,7 @@ func (r *Client) TxPipeline() (val redis.Pipeliner, err error) {
 	return
 }
 
-// Command 获取所有Redis命令的详细信息 ctx: 上下文
+// Command 返回服务器支持的全部命令及其详细信息。
 func (r *Client) Command(ctx context.Context) (val map[string]*redis.CommandInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -72,7 +74,7 @@ func (r *Client) Command(ctx context.Context) (val map[string]*redis.CommandInfo
 	return
 }
 
-// CommandList 获取Redis命令列表 ctx: 上下文, filter: 过滤器
+// CommandList 按过滤器返回命令名称列表；filter 为 nil 时返回全部命令名称。
 func (r *Client) CommandList(ctx context.Context, filter *redis.FilterBy) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -85,7 +87,7 @@ func (r *Client) CommandList(ctx context.Context, filter *redis.FilterBy) (val [
 	return
 }
 
-// CommandGetKeys 获取命令对应的键 ctx: 上下文, commands: 命令列表
+// CommandGetKeys 解析给定命令行并返回其涉及的键。
 func (r *Client) CommandGetKeys(ctx context.Context, commands ...any) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -98,7 +100,7 @@ func (r *Client) CommandGetKeys(ctx context.Context, commands ...any) (val []str
 	return
 }
 
-// CommandGetKeysAndFlags 获取命令对应的键及标志 ctx: 上下文, commands: 命令列表
+// CommandGetKeysAndFlags 解析给定命令行，返回其涉及的键及对应的读写访问标志。
 func (r *Client) CommandGetKeysAndFlags(ctx context.Context, commands ...any) (val []redis.KeyFlags, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -111,7 +113,7 @@ func (r *Client) CommandGetKeysAndFlags(ctx context.Context, commands ...any) (v
 	return
 }
 
-// ClientGetName 获取客户端连接名称 ctx: 上下文
+// ClientGetName 返回当前连接通过 CLIENT SETNAME 设置的客户端名称。
 func (r *Client) ClientGetName(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -124,7 +126,7 @@ func (r *Client) ClientGetName(ctx context.Context) (val string, err error) {
 	return
 }
 
-// Echo 返回输入的消息 ctx: 上下文, message: 要返回的消息
+// Echo 原样返回传入的消息，用于连通性校验。
 func (r *Client) Echo(ctx context.Context, message any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -137,7 +139,7 @@ func (r *Client) Echo(ctx context.Context, message any) (val string, err error) 
 	return
 }
 
-// Ping 测试与Redis服务器的连接 ctx: 上下文
+// Ping 探测与服务器的连通性，正常时返回 PONG。
 func (r *Client) Ping(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -150,7 +152,7 @@ func (r *Client) Ping(ctx context.Context) (val string, err error) {
 	return
 }
 
-// Quit 关闭客户端连接 ctx: 上下文
+// Quit 主动关闭当前连接。
 func (r *Client) Quit(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -163,7 +165,7 @@ func (r *Client) Quit(ctx context.Context) (val string, err error) {
 	return
 }
 
-// Unlink 异步删除键 ctx: 上下文, keys: 要删除的键列表
+// Unlink 异步删除给定键，删除由后台执行，命令返回时不保证内存已立即释放。
 func (r *Client) Unlink(ctx context.Context, keys ...string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -176,7 +178,7 @@ func (r *Client) Unlink(ctx context.Context, keys ...string) (val int64, err err
 	return
 }
 
-// BgRewriteAOF 异步重写AOF文件 ctx: 上下文
+// BgRewriteAOF 异步重写 AOF 持久化文件。
 func (r *Client) BgRewriteAOF(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -189,7 +191,7 @@ func (r *Client) BgRewriteAOF(ctx context.Context) (val string, err error) {
 	return
 }
 
-// BgSave 异步保存数据到磁盘 ctx: 上下文
+// BgSave 异步将内存数据快照保存到磁盘，命令不等待保存完成。
 func (r *Client) BgSave(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -202,7 +204,7 @@ func (r *Client) BgSave(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ClientKill 终止客户端连接 ctx: 上下文, ipPort: 客户端地址
+// ClientKill 终止指定 ip:port 的客户端连接。
 func (r *Client) ClientKill(ctx context.Context, ipPort string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -215,7 +217,7 @@ func (r *Client) ClientKill(ctx context.Context, ipPort string) (val string, err
 	return
 }
 
-// ClientKillByFilter 根据条件终止客户端连接 ctx: 上下文, keys: 过滤条件
+// ClientKillByFilter 按过滤条件批量终止匹配的客户端连接。
 func (r *Client) ClientKillByFilter(ctx context.Context, keys ...string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -228,7 +230,7 @@ func (r *Client) ClientKillByFilter(ctx context.Context, keys ...string) (val in
 	return
 }
 
-// ClientList 获取客户端连接列表 ctx: 上下文
+// ClientList 返回已连接客户端的原始信息字符串。
 func (r *Client) ClientList(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -241,7 +243,7 @@ func (r *Client) ClientList(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ClientInfo 获取客户端详细信息 ctx: 上下文
+// ClientInfo 返回当前客户端的连接信息。
 func (r *Client) ClientInfo(ctx context.Context) (val *redis.ClientInfo, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -254,7 +256,7 @@ func (r *Client) ClientInfo(ctx context.Context) (val *redis.ClientInfo, err err
 	return
 }
 
-// ClientPause 暂停处理客户端命令 ctx: 上下文, dur: 暂停时间
+// ClientPause 在指定时长内暂停服务器处理客户端命令。
 func (r *Client) ClientPause(ctx context.Context, dur time.Duration) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -267,7 +269,7 @@ func (r *Client) ClientPause(ctx context.Context, dur time.Duration) (val bool, 
 	return
 }
 
-// ClientUnpause 恢复处理客户端命令 ctx: 上下文
+// ClientUnpause 恢复被 ClientPause 暂停的命令处理。
 func (r *Client) ClientUnpause(ctx context.Context) (val bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -280,7 +282,7 @@ func (r *Client) ClientUnpause(ctx context.Context) (val bool, err error) {
 	return
 }
 
-// ClientID 获取客户端ID ctx: 上下文
+// ClientID 返回当前连接的客户端 ID。
 func (r *Client) ClientID(ctx context.Context) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -293,7 +295,7 @@ func (r *Client) ClientID(ctx context.Context) (val int64, err error) {
 	return
 }
 
-// ClientUnblock 解除客户端阻塞状态 ctx: 上下文, id: 客户端ID
+// ClientUnblock 解除指定 ID 客户端在阻塞命令上的挂起状态。
 func (r *Client) ClientUnblock(ctx context.Context, id int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -306,7 +308,7 @@ func (r *Client) ClientUnblock(ctx context.Context, id int64) (val int64, err er
 	return
 }
 
-// ClientUnblockWithError 解除客户端阻塞状态并返回错误 ctx: 上下文, id: 客户端ID
+// ClientUnblockWithError 解除指定 ID 客户端的阻塞，并以错误方式唤醒被阻塞的命令。
 func (r *Client) ClientUnblockWithError(ctx context.Context, id int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -319,7 +321,7 @@ func (r *Client) ClientUnblockWithError(ctx context.Context, id int64) (val int6
 	return
 }
 
-// ConfigGet 获取配置参数 ctx: 上下文, parameter: 参数名
+// ConfigGet 读取服务器指定配置项；parameter 支持通配匹配模式。
 func (r *Client) ConfigGet(ctx context.Context, parameter string) (val map[string]string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -332,7 +334,7 @@ func (r *Client) ConfigGet(ctx context.Context, parameter string) (val map[strin
 	return
 }
 
-// ConfigResetStat 重置统计信息 ctx: 上下文
+// ConfigResetStat 重置服务器各类运行统计计数器。
 func (r *Client) ConfigResetStat(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -345,7 +347,7 @@ func (r *Client) ConfigResetStat(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ConfigSet 设置配置参数 ctx: 上下文, parameter: 参数名, value: 参数值
+// ConfigSet 将服务器指定配置项修改为给定值。
 func (r *Client) ConfigSet(ctx context.Context, parameter, value string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -358,7 +360,7 @@ func (r *Client) ConfigSet(ctx context.Context, parameter, value string) (val st
 	return
 }
 
-// ConfigRewrite 重写配置文件 ctx: 上下文
+// ConfigRewrite 将当前运行时配置写回服务器配置文件。
 func (r *Client) ConfigRewrite(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -371,7 +373,7 @@ func (r *Client) ConfigRewrite(ctx context.Context) (val string, err error) {
 	return
 }
 
-// DBSize 获取当前数据库键数量 ctx: 上下文
+// DBSize 返回当前数据库中的键数量。
 func (r *Client) DBSize(ctx context.Context) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -384,7 +386,7 @@ func (r *Client) DBSize(ctx context.Context) (val int64, err error) {
 	return
 }
 
-// FlushAll 删除所有数据库的所有键 ctx: 上下文
+// FlushAll 删除所有数据库中的全部键。
 func (r *Client) FlushAll(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -397,7 +399,7 @@ func (r *Client) FlushAll(ctx context.Context) (val string, err error) {
 	return
 }
 
-// FlushAllAsync 异步删除所有数据库的所有键 ctx: 上下文
+// FlushAllAsync 异步删除所有数据库中的全部键。
 func (r *Client) FlushAllAsync(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -410,7 +412,7 @@ func (r *Client) FlushAllAsync(ctx context.Context) (val string, err error) {
 	return
 }
 
-// FlushDB 删除当前数据库的所有键 ctx: 上下文
+// FlushDB 删除当前数据库中的全部键。
 func (r *Client) FlushDB(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -423,7 +425,7 @@ func (r *Client) FlushDB(ctx context.Context) (val string, err error) {
 	return
 }
 
-// FlushDBAsync 异步删除当前数据库的所有键 ctx: 上下文
+// FlushDBAsync 异步删除当前数据库中的全部键。
 func (r *Client) FlushDBAsync(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -436,7 +438,7 @@ func (r *Client) FlushDBAsync(ctx context.Context) (val string, err error) {
 	return
 }
 
-// Info 获取服务器信息 ctx: 上下文, section: 信息模块
+// Info 返回服务器统计信息；section 不传时返回全部模块，传入时限定指定模块。
 func (r *Client) Info(ctx context.Context, section ...string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -449,7 +451,7 @@ func (r *Client) Info(ctx context.Context, section ...string) (val string, err e
 	return
 }
 
-// LastSave 获取最后一次保存时间 ctx: 上下文
+// LastSave 返回最后一次成功快照保存的 UNIX 时间戳（秒）。
 func (r *Client) LastSave(ctx context.Context) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -462,7 +464,7 @@ func (r *Client) LastSave(ctx context.Context) (val int64, err error) {
 	return
 }
 
-// Save 同步保存数据到磁盘 ctx: 上下文
+// Save 同步阻塞执行一次快照保存，完成后才返回。
 func (r *Client) Save(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -475,7 +477,7 @@ func (r *Client) Save(ctx context.Context) (val string, err error) {
 	return
 }
 
-// Shutdown 关闭服务器 ctx: 上下文
+// Shutdown 关闭服务器，是否保存快照由服务端默认策略决定。
 func (r *Client) Shutdown(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -488,7 +490,7 @@ func (r *Client) Shutdown(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ShutdownSave 保存数据并关闭服务器 ctx: 上下文
+// ShutdownSave 先保存快照再关闭服务器。
 func (r *Client) ShutdownSave(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -501,7 +503,7 @@ func (r *Client) ShutdownSave(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ShutdownNoSave 不保存数据直接关闭服务器 ctx: 上下文
+// ShutdownNoSave 不保存快照直接关闭服务器，未持久化的数据将丢失。
 func (r *Client) ShutdownNoSave(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -514,7 +516,7 @@ func (r *Client) ShutdownNoSave(ctx context.Context) (val string, err error) {
 	return
 }
 
-// SlaveOf 设置主从复制 ctx: 上下文, host: 主机地址, port: 端口号
+// SlaveOf 将当前节点配置为指定主节点的从节点，host 与 port 为主节点地址。
 func (r *Client) SlaveOf(ctx context.Context, host, port string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -527,7 +529,7 @@ func (r *Client) SlaveOf(ctx context.Context, host, port string) (val string, er
 	return
 }
 
-// SlowLogGet 获取慢查询日志 ctx: 上下文, num: 日志条数
+// SlowLogGet 返回最近 num 条慢查询日志。
 func (r *Client) SlowLogGet(ctx context.Context, num int64) (val []redis.SlowLog, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -540,7 +542,7 @@ func (r *Client) SlowLogGet(ctx context.Context, num int64) (val []redis.SlowLog
 	return
 }
 
-// Time 获取服务器时间 ctx: 上下文
+// Time 返回服务器当前时间。
 func (r *Client) Time(ctx context.Context) (val time.Time, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -553,7 +555,7 @@ func (r *Client) Time(ctx context.Context) (val time.Time, err error) {
 	return
 }
 
-// DebugObject 获取键的调试信息 ctx: 上下文, key: 键名
+// DebugObject 返回指定键的内部编码与引用等调试信息。
 func (r *Client) DebugObject(ctx context.Context, key string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -566,7 +568,7 @@ func (r *Client) DebugObject(ctx context.Context, key string) (val string, err e
 	return
 }
 
-// MemoryUsage 获取键的内存使用情况 ctx: 上下文, key: 键名, samples: 采样次数
+// MemoryUsage 返回指定键占用的内存字节数；samples 控制估算采样精度，可选传入。
 func (r *Client) MemoryUsage(ctx context.Context, key string, samples ...int) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -579,7 +581,7 @@ func (r *Client) MemoryUsage(ctx context.Context, key string, samples ...int) (v
 	return
 }
 
-// ModuleLoadex 加载Redis模块 ctx: 上下文, conf: 模块配置
+// ModuleLoadex 按给定配置向服务器加载模块。
 func (r *Client) ModuleLoadex(ctx context.Context, conf *redis.ModuleLoadexConfig) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -602,10 +604,6 @@ func (r *Client) ModuleLoadex(ctx context.Context, conf *redis.ModuleLoadexConfi
 // 	}, acceptable)
 // }
 
-// MGetByPipeline gets multiple values from keys,Pipeline is used when
-// redis is a cluster,This means higher IO performance
-// params: keys ...string
-// return: []string, error
 // func (r *Client) MGetByPipeline(ctx context.Context, keys ...string) ([]string, error) {
 // 	var res []string
 // 	if r.ClientType == ClientCluster {

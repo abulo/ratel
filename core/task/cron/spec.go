@@ -2,22 +2,22 @@ package cron
 
 import "time"
 
-// SpecSchedule specifies a duty cycle (to the second granularity), based on a
-// traditional crontab specification. It is computed initially and stored as bit sets.
+// SpecSchedule 基于传统 crontab 表达式描述精度到秒的触发周期，各字段以位集合形式保存。
 type SpecSchedule struct {
+	// Second、Minute、Hour、Dom、Month、Dow 分别为秒、分钟、小时、日、月、星期的命中位集合。
 	Second, Minute, Hour, Dom, Month, Dow uint64
 
-	// Override location for this schedule.
+	// Location 为该调度表单独指定的时区；为 time.Local 时沿用调用方时间。
 	Location *time.Location
 }
 
-// bounds provides a range of acceptable values (plus a map of name to value).
+// bounds 描述单个字段的取值区间，以及星期/月份别名到数值的映射。
 type bounds struct {
 	min, max uint
 	names    map[string]uint
 }
 
-// The bounds for each field.
+// 各字段的取值区间。
 var (
 	seconds = bounds{0, 59, nil}
 	minutes = bounds{0, 59, nil}
@@ -49,26 +49,17 @@ var (
 )
 
 const (
-	// Set the top bit if a star was included in the expression.
+	// starBit 在表达式包含星号通配时置位，用于区分日与星期字段为“或”还是“与”语义。
 	starBit = 1 << 63
 )
 
-// Next returns the next time this schedule is activated, greater than the given
-// time.  If no time can be found to satisfy the schedule, return the zero time.
+// Next 返回晚于 t 的下一次触发时间；若五年内都找不到满足调度表的时间，则返回零值时间。
 func (s *SpecSchedule) Next(t time.Time) time.Time {
-	// General approach
-	//
-	// For Month, Day, Hour, Minute, Second:
-	// Check if the time value matches.  If yes, continue to the next field.
-	// If the field doesn't match the schedule, then increment the field until it matches.
-	// While incrementing the field, a wrap-around brings it back to the beginning
-	// of the field list (since it is necessary to re-verify previous field
-	// values)
+	// 按月、日、小时、分钟、秒逐级进位匹配；字段回绕到边界后必须回头重新校验前置字段，
+	// 因此使用 WRAP 标签统一回到入口重新检查。
 
-	// Convert the given time into the schedule's timezone, if one is specified.
-	// Save the original timezone so we can convert back after we find a time.
-	// Note that schedules without a time zone specified (time.Local) are treated
-	// as local to the time provided.
+	// 先把给定时间转换到调度表指定的时区，并记录原时区，找到目标时间后再转回。
+	// 未指定时区（time.Local）时按 t 自带时区处理。
 	origLocation := t.Location()
 	loc := s.Location
 	if loc == time.Local {
@@ -78,13 +69,13 @@ func (s *SpecSchedule) Next(t time.Time) time.Time {
 		t = t.In(s.Location)
 	}
 
-	// Start at the earliest possible time (the upcoming second).
+	// 从 t 的下一秒开始计算。
 	t = t.Add(1*time.Second - time.Duration(t.Nanosecond())*time.Nanosecond)
 
-	// This flag indicates whether a field has been incremented.
+	// 标记是否已经为匹配而进位过某个字段。
 	added := false
 
-	// If no time is found within five years, return zero.
+	// 五年内仍找不到可命中时间时视为不可满足，返回零值。
 	yearLimit := t.Year() + 5
 
 WRAP:
@@ -92,36 +83,26 @@ WRAP:
 		return time.Time{}
 	}
 
-	// Find the first applicable month.
-	// If it's this month, then do nothing.
 	for 1<<uint(t.Month())&s.Month == 0 {
-		// If we have to add a month, reset the other parts to 0.
+		// 首次进位时先把日、时分秒清零，从月初开始推进。
 		if !added {
 			added = true
-			// Otherwise, set the date at the beginning (since the current time is irrelevant).
 			t = time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, loc)
 		}
 		t = t.AddDate(0, 1, 0)
 
-		// Wrapped around.
 		if t.Month() == time.January {
 			goto WRAP
 		}
 	}
 
-	// Now get a day in that month.
-	//
-	// NOTE: This causes issues for daylight savings regimes where midnight does
-	// not exist.  For example: Sao Paulo has DST that transforms midnight on
-	// 11/3 into 1am. Handle that by noticing when the Hour ends up != 0.
 	for !dayMatches(s, t) {
 		if !added {
 			added = true
 			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
 		}
 		t = t.AddDate(0, 0, 1)
-		// Notice if the hour is no longer midnight due to DST.
-		// Add an hour if it's 23, subtract an hour if it's 1.
+		// 夏令时切换可能导致当天不存在零点，此时把时刻拉回零点附近。
 		if t.Hour() != 0 {
 			if t.Hour() > 12 {
 				t = t.Add(time.Duration(24-t.Hour()) * time.Hour)
@@ -174,8 +155,8 @@ WRAP:
 	return t.In(origLocation)
 }
 
-// dayMatches returns true if the schedule's day-of-week and day-of-month
-// restrictions are satisfied by the given time.
+// dayMatches 判断给定时间是否同时满足调度表的日与星期约束；任一字段使用星号时取“与”，
+// 否则日与星期取“或”。
 func dayMatches(s *SpecSchedule, t time.Time) bool {
 	var (
 		domMatch bool = 1<<uint(t.Day())&s.Dom > 0

@@ -13,6 +13,8 @@ import (
 	"github.com/spf13/cast"
 )
 
+// GenerateService 使用 ServiceTemplate 渲染并写出 gRPC 服务实现文件到 fullServiceDir，
+// 文件已存在时先删除再生成，随后执行 go fmt 与 goimports 整理格式；模板渲染失败时打印错误并返回。
 func GenerateService(moduleParam base.ModuleParam, fullServiceDir, tableName string) {
 	tpl := template.Must(template.New("service").Funcs(template.FuncMap{
 		"Convert":               base.Convert,
@@ -27,7 +29,6 @@ func GenerateService(moduleParam base.ModuleParam, fullServiceDir, tableName str
 		"ApiToProto":            base.ApiToProto,
 	}).Parse(ServiceTemplate()))
 
-	// 文件夹路径
 	outServiceFile := path.Join(fullServiceDir, tableName+"_service.go")
 	if util.FileExists(outServiceFile) {
 		util.Delete(outServiceFile)
@@ -37,7 +38,6 @@ func GenerateService(moduleParam base.ModuleParam, fullServiceDir, tableName str
 		fmt.Println("文件句柄错误:", color.RedString(err.Error()))
 		return
 	}
-	//渲染输出
 	err = tpl.Execute(file, moduleParam)
 	if err != nil {
 		fmt.Println("模板解析错误:", color.RedString(err.Error()))
@@ -54,6 +54,8 @@ func GenerateService(moduleParam base.ModuleParam, fullServiceDir, tableName str
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(outServiceFile))
 
 }
+
+// ServiceTemplate 返回 gRPC 服务端实现模板；配置中 template.Service 指定了自定义模板文件时优先读取该文件内容。
 func ServiceTemplate() string {
 	if exists := base.Config.Exists("template.Service"); exists {
 		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.Service"))

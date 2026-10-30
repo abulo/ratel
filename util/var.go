@@ -5,9 +5,10 @@ import (
 	"strings"
 )
 
-//////////// Variable handling Functions ////////////
-
-// Empty empty()
+// Empty 判断给定值是否为空。
+//
+// nil、长度为 0 的字符串/数组、长度为 0 或为 nil 的切片与 map、false、零值数字、
+// nil 指针与接口均视为空；其余类型与零值做深度比较后判定。
 func Empty(val any) bool {
 	if val == nil {
 		return true
@@ -33,10 +34,11 @@ func Empty(val any) bool {
 	return reflect.DeepEqual(val, reflect.Zero(v.Type()).Interface())
 }
 
-// IsNumeric is_numeric()
-// Numeric strings consist of optional sign, any number of digits, optional decimal part and optional exponential part.
-// Thus +0123.45e6 is a valid numeric value.
-// In PHP hexadecimal (e.g. 0xf4c3b00c) is not supported, but IsNumeric is supported.
+// IsNumeric 判断值是否为数字类型或合法数字字符串。
+//
+// 整数值、浮点值与复数直接视为数字；字符串先去除首尾空白，允许前导正负号、小数
+// 点与科学计数法（e/E），也支持 0x/0X 开头的十六进制写法；空字符串与其他类型
+// 返回 false。
 func IsNumeric(val any) bool {
 	switch v := val.(type) {
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
@@ -47,7 +49,6 @@ func IsNumeric(val any) bool {
 		if v == "" {
 			return false
 		}
-		// Trim any whitespace
 		v = strings.TrimSpace(v)
 		if v[0] == '-' || v[0] == '+' {
 			if len(v) == 1 {
@@ -55,7 +56,6 @@ func IsNumeric(val any) bool {
 			}
 			v = v[1:]
 		}
-		// hex
 		if len(v) > 2 && v[0] == '0' && (v[1] == 'x' || v[1] == 'X') {
 			for _, h := range v[2:] {
 				if !((h >= '0' && h <= '9') || (h >= 'a' && h <= 'f') || (h >= 'A' && h <= 'F')) {
@@ -64,15 +64,14 @@ func IsNumeric(val any) bool {
 			}
 			return true
 		}
-		// 0-9, Point, Scientific
 		p, s, l := 0, 0, len(v)
 		for i, ch := range v {
-			if ch == '.' { // Point
+			if ch == '.' {
 				if p > 0 || s > 0 || i+1 == l {
 					return false
 				}
 				p = i
-			} else if ch == 'e' || ch == 'E' { // Scientific
+			} else if ch == 'e' || ch == 'E' {
 				if i == 0 || s > 0 || i+1 == l {
 					return false
 				}

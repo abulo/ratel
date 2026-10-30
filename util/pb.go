@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// labValue 递归将 protobuf Value 解码为普通 Go 值。
 func labValue(value *pb.Value) (any, error) {
 	var err error
 	if value == nil {
@@ -49,6 +50,9 @@ func labValue(value *pb.Value) (any, error) {
 	return errors.New(fmt.Sprintf("Cannot convert the value %+v", value)), nil
 }
 
+// StructToMap 将 protobuf Struct 递归转换为 map[string]any。
+//
+// 嵌套结构体转为嵌套 map，列表转为切片，null 转为 nil；递归过程中出现错误时原样返回。
 func StructToMap(str *pb.Struct) (map[string]any, error) {
 	var err error
 	result := make(map[string]any)
@@ -61,6 +65,7 @@ func StructToMap(str *pb.Struct) (map[string]any, error) {
 	return result, err
 }
 
+// labEntry 递归将普通 Go 值编码为 protobuf Value；不支持的类型返回错误。
 func labEntry(entry any) (*pb.Value, error) {
 	var err error
 	if entry == nil {
@@ -109,6 +114,9 @@ func labEntry(entry any) (*pb.Value, error) {
 	return nil, errors.New(fmt.Sprintf("Cannot convert [%+v] kind:%s", entry, rt.Kind()))
 }
 
+// MapToStruct 将 map[string]any 递归转换为 protobuf Struct。
+//
+// 结构体先通过反射转为 map；不支持的值类型会导致转换失败并返回错误。
 func MapToStruct(input map[string]any) (*pb.Struct, error) {
 	var err error
 	result := &pb.Struct{Fields: make(map[string]*pb.Value)}
@@ -121,6 +129,9 @@ func MapToStruct(input map[string]any) (*pb.Struct, error) {
 	return result, err
 }
 
+// StructToPbStruct 将任意结构体转换为 protobuf Struct。
+//
+// 先通过反射将结构体转为 map[string]any，再交由 MapToStruct 编码；转换失败返回错误。
 func StructToPbStruct(input any) (*pb.Struct, error) {
 	return MapToStruct(structs.Map(input))
 }

@@ -16,23 +16,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package consistenthash provides an implementation of a ring hash.
-
 import (
 	"hash/crc32"
 	"sort"
 	"strconv"
 )
 
+// Hash 根据输入字节串计算 32 位哈希值；New 未指定时默认使用 crc32.ChecksumIEEE。
 type Hash func(data []byte) uint32
 
+// Map 是一致性哈希环，虚拟副本与实际节点一一映射，用于在节点集合变化时尽量减少键的迁移。
+//
+// 零值不可直接使用，须通过 New 构造；Map 内部不加锁，Add 期间不得并发调用 Get。
 type Map struct {
 	hash     Hash
 	replicas int
-	keys     []int // Sorted
-	hashMap  map[int]string
+	// keys 为排序后的虚拟节点哈希列表。
+	keys    []int
+	hashMap map[int]string
 }
 
+// New 创建一致性哈希环；replicas 为每个节点的虚拟副本数，fn 为哈希函数，
+// fn 为 nil 时使用 CRC32 IEEE 校验。
 func New(replicas int, fn Hash) *Map {
 	m := &Map{
 		replicas: replicas,
@@ -45,16 +50,16 @@ func New(replicas int, fn Hash) *Map {
 	return m
 }
 
-// Returns true if there are no items available.
+// IsEmpty 报告哈希环中是否尚未添加任何节点。
 func (m *Map) IsEmpty() bool {
 	return len(m.keys) == 0
 }
 
-// Adds some keys to the hash.
+// Add 将给定节点加入哈希环，每个节点按副本数生成对应的虚拟节点。
 func (m *Map) Add(keys ...string) {
 	for _, key := range keys {
 		for i := 0; i < m.replicas; i++ {
-			// use replicas id + _ + key to avoid the key has pre-number.
+			// 副本序号与节点名拼接后参与哈希，避免节点名自带数字前缀造成分布偏移。
 			hash := int(m.hash([]byte(strconv.Itoa(i) + "_" + key)))
 			if m.hashMap[hash] == "" {
 				m.keys = append(m.keys, hash)
@@ -65,15 +70,16 @@ func (m *Map) Add(keys ...string) {
 	sort.Ints(m.keys)
 }
 
-// Gets the closest item in the hash to the provided key.
+// Get 返回哈希环上最接近 key 哈希值的节点；环为空时返回空字符串，
+// 目标哈希超出末尾虚拟节点时回绕到环首。
 func (m *Map) Get(key string) string {
 	if m.IsEmpty() {
 		return ""
 	}
 	hash := int(m.hash([]byte(key)))
-	// Binary search for appropriate replica.
+	// 二分查找定位不小于目标哈希的虚拟节点。
 	idx := sort.Search(len(m.keys), func(i int) bool { return m.keys[i] >= hash })
-	// Means we have cycled back to the first replica.
+	// 超出末尾时回绕到环首虚拟节点。
 	if idx == len(m.keys) {
 		idx = 0
 	}

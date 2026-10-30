@@ -9,16 +9,24 @@ import (
 	"github.com/abulo/ratel/v3/stores/redis"
 )
 
-// Session ...
+// Session 表示一份存放在 Redis 中的会话，整份会话以 JSON 形式保存在 Name 对应的键下，
+// 支持以点分路径读写嵌套字段。
+//
+// 零值的 Driver 为 nil，须先注入底层 Redis 客户端；会话内容读写依赖 Driver，
+// 同一 Session 的并发写存在覆盖风险，调用方需自行保证访问时序。
 type Session struct {
+	// Driver 为底层 Redis 客户端，会话键均经由它读写，不可为 nil。
 	Driver *redis.Client
-	Name   string
-	TTL    int64 // seconds
+	// Name 为会话在 Redis 中的键名。
+	Name string
+	// TTL 为会话过期时长，单位秒；0 表示不过期。
+	TTL int64
 }
 
-// Put https://laravel.com/docs/5.8/session
-// Pushing To Array Session Values
-// session.Put('user.teams', 'developers');  => {user: {teams: "developer"}}
+// Put 将会话值写入指定键：键名含点号时按点分路径写入嵌套层级，否则作为顶层键写入。
+//
+// 写入时先读取现有会话 JSON，解析失败会返回错误；序列化后连同 TTL 回写会话键，
+// Redis Set 返回的错误被忽略。ctx 为 nil 或已取消时替换为 context.TODO()。
 func (session *Session) Put(ctx context.Context, key string, value any) error {
 	var h = session.Driver
 	var bytes []byte
@@ -29,13 +37,11 @@ func (session *Session) Put(ctx context.Context, key string, value any) error {
 	}
 	m := make(map[string]any)
 
-	// fmt.Printf("Exists %s?\n", session.Name)
 	if val, err := h.Exists(ctx, session.Name); err == nil && val {
 		content, _ = h.Get(ctx, session.Name)
 	} else {
 		content = "{}"
 	}
-	// fmt.Printf("%s => %s", session.Name, content)
 
 	err = json.Unmarshal([]byte(content), &m)
 	if err != nil {
@@ -56,7 +62,8 @@ func (session *Session) Put(ctx context.Context, key string, value any) error {
 	return nil
 }
 
-// Get s.Get
+// Get 读取指定键的会话值：键名含点号时沿点分路径取嵌套层级，否则取顶层键；
+// 键不存在或会话内容损坏时返回 nil。ctx 为 nil 或已取消时替换为 context.TODO()。
 func (session *Session) Get(ctx context.Context, key string) any {
 	var h = session.Driver
 	var m map[string]any
@@ -77,7 +84,8 @@ func (session *Session) Get(ctx context.Context, key string) any {
 	return getSliceMap(m, keys)
 }
 
-// Remove ...
+// Remove 删除指定键的会话值：键名含点号时删除路径末端的嵌套字段，否则删除顶层键，
+// 删除结果连同 TTL 回写会话键。ctx 为 nil 或已取消时替换为 context.TODO()。
 func (session *Session) Remove(ctx context.Context, key string) {
 	var h = session.Driver
 	var m map[string]any
@@ -104,7 +112,8 @@ func (session *Session) Remove(ctx context.Context, key string) {
 	h.Set(ctx, session.Name, string(bytes), time.Duration(session.TTL)*time.Second)
 }
 
-// sess.Put("info.age", "28")
+// setSliceMap 沿点分路径 keys 在嵌套 map 中逐层补齐中间层级，并在末端键写入 value；
+// 路径中段存在非 map 类型值时会触发类型断言 panic。
 func setSliceMap(m map[string]any, keys []string, value any) map[string]any {
 	var itMap = m
 	var i int
@@ -113,7 +122,6 @@ func setSliceMap(m map[string]any, keys []string, value any) map[string]any {
 	for i = range limit {
 		_, ok := itMap[keys[i]]
 		if !ok {
-			// } else {
 			itMap[keys[i]] = make(map[string]any)
 		}
 		itMap = itMap[keys[i]].(map[string]any)
@@ -123,6 +131,7 @@ func setSliceMap(m map[string]any, keys []string, value any) map[string]any {
 	return m
 }
 
+// getSliceMap 沿点分路径 keys 逐级查找嵌套值；路径任一层级缺失或类型不符时返回 nil。
 func getSliceMap(m map[string]any, keys []string) any {
 	var itMap = m
 	var i int
@@ -144,6 +153,7 @@ func getSliceMap(m map[string]any, keys []string) any {
 	return v
 }
 
+// delSliceMap 沿点分路径 keys 逐级下钻并删除末端字段；路径中段缺失时直接返回。
 func delSliceMap(m map[string]any, keys []string) {
 	var itMap = m
 	var i int
@@ -165,18 +175,7 @@ func delSliceMap(m map[string]any, keys []string) {
 	delete(itMap, keys[i])
 }
 
-/*
-// TO BE DONE
-func (session *Session) Has(key string) bool {
-	var h = session.getDriver()
-	return h.Exists(session.Name).Val() == 1
-}
-// TO BE DONE
-func (session *Session) Push(key string, e any) {
-}
-*/
-
-// Destroy 释放
+// Destroy 删除整份会话键，返回被删除的键数量；Del 返回的错误被忽略。
 func (session *Session) Destroy(ctx context.Context) int64 {
 	var h = session.Driver
 
@@ -186,37 +185,3 @@ func (session *Session) Destroy(ctx context.Context) int64 {
 	val, _ := h.Del(ctx, session.Name)
 	return val
 }
-
-// func TestSession_Put(t *testing.T) {
-// 	var sess = Session{
-// 		Name:   "sess_1",
-// 		Driver: client,
-// 		TTL:    0,
-// 	}
-// 	var userID int64
-// 	userID = 2147483647
-// 	sess.Put("id", strconv.FormatInt(userID, 10))
-// 	// sess.Put("id", userID)
-// 	sess.Put("name", "mingzhanghui")
-// 	sess.Put("info.age", "29")
-// 	sess.Put("info.gender", "male")
-// 	sess.Put("a.b.c.d", "1")
-// }
-// func TestSession_Get(t *testing.T) {
-// 	var sess = Session{
-// 		Name:   "sess_1",
-// 		Driver: client,
-// 	}
-// 	userId := sess.Get("id")
-// 	// t.Logf("%d\n", userId.(int64))
-// 	assert.Equal(t, userId, "2147483647")
-
-// 	gender := sess.Get("info.gender")
-// 	t.Logf(gender.(string))
-// 	assert.Equal(t, gender, "male")
-
-// 	foo := sess.Get("a.b.c.d")
-// 	t.Logf(foo.(string))
-// 	assert.Equal(t, foo, "1")
-
-// }

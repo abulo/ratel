@@ -6,7 +6,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// ParallelWithError ...
+// ParallelWithError 将多个返回 error 的函数包装为并发执行函数，等待全部函数结束；
+// 返回首个非 nil 错误，全部成功时返回 nil。
 func ParallelWithError(fns ...func() error) func() error {
 	return func() error {
 		eg := errgroup.Group{}
@@ -18,8 +19,8 @@ func ParallelWithError(fns ...func() error) func() error {
 	}
 }
 
-// ParallelWithErrorChan calls the passed functions in a goroutine, returns a chan of errors.
-// fns会并发执行，chan error
+// ParallelWithErrorChan 并发执行 fns，通过返回的带缓冲错误通道逐个报告错误；
+// 全部执行完毕后通道自动关闭。单个函数的 panic 被恢复并转换为错误送入通道。
 func ParallelWithErrorChan(fns ...func() error) chan error {
 	total := len(fns)
 	errs := make(chan error, total)
@@ -42,8 +43,10 @@ func ParallelWithErrorChan(fns ...func() error) chan error {
 	return errs
 }
 
-// RestrictParallelWithErrorChan calls the passed functions in a goroutine, limiting the number of goroutines running at the same time,
-// returns a chan of errors.
+// RestrictParallelWithErrorChan 以 concurrency 为并发上限并发执行 fns，通过返回的错误通道
+// 逐个报告错误，全部执行完毕后通道自动关闭。
+//
+// concurrency 小于等于 0 时按 1 处理，大于函数个数时按函数个数处理。
 func RestrictParallelWithErrorChan(concurrency int, fns ...func() error) chan error {
 	total := len(fns)
 	if concurrency <= 0 {
@@ -57,7 +60,6 @@ func RestrictParallelWithErrorChan(concurrency int, fns ...func() error) chan er
 	jobs := make(chan func() error, concurrency)
 	wg.Add(concurrency)
 	for i := 0; i < concurrency; i++ {
-		//consumer
 		go func(jobs chan func() error, errs chan error) {
 			defer wg.Done()
 			for fn := range jobs {
@@ -66,12 +68,10 @@ func RestrictParallelWithErrorChan(concurrency int, fns ...func() error) chan er
 		}(jobs, errs)
 	}
 	go func(errs chan error) {
-		//producer
 		for _, fn := range fns {
 			jobs <- fn
 		}
 		close(jobs)
-		//wait for block errs
 		wg.Wait()
 		close(errs)
 	}(errs)

@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// ExecCloser 将logrus条目写入数据库并关闭数据库
+// ExecCloser 抽象日志条目的后端写入器，由各实现负责把条目提交到对应存储。
 type ExecCloser interface {
 	Exec(entry *entry.Entry) error
 }
@@ -19,7 +19,7 @@ type defaultExec struct {
 	canClose bool
 }
 
-// NewExec create an exec instance
+// NewExec 基于给定的 Elasticsearch 客户端与索引名创建写入器。
 func NewExec(client *elasticsearch.Client, index string) ExecCloser {
 	return &defaultExec{
 		client:   client,
@@ -28,7 +28,7 @@ func NewExec(client *elasticsearch.Client, index string) ExecCloser {
 	}
 }
 
-// NewExecWithURL create an exec instance
+// NewExecWithURL 基于给定的 Elasticsearch 客户端与索引名创建写入器，当前实现与 NewExec 行为一致。
 func NewExecWithURL(client *elasticsearch.Client, index string) ExecCloser {
 	return &defaultExec{
 		client:   client,
@@ -37,7 +37,6 @@ func NewExecWithURL(client *elasticsearch.Client, index string) ExecCloser {
 	}
 }
 
-// Exec ...
 func (e *defaultExec) Exec(entry *entry.Entry) error {
 	ctx := context.Background()
 	_, err := e.client.Index().Index(e.index).Id(uuid.New().String()).BodyJson(entry).Do(ctx)

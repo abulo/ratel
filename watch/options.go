@@ -10,101 +10,70 @@ import (
 	"github.com/pkg/errors"
 )
 
-// MinWatcherFrequency 监视器更新频率的最小值
+// MinWatcherFrequency 为监视器更新频率允许的最小值，低于该值的配置会被判定为非法。
 const MinWatcherFrequency = 1 * time.Second
 
-// Options 热编译的选项
+// Options 保存热编译服务的全部配置项。
+//
+// 零值不可直接使用，须先调用 Watch 由 sanitize 完成校验与默认值填充；
+// 配置应在启动监视前一次性写好，运行期间不保证并发安全。
 type Options struct {
-
-	// 指定本地化的输出对象
-	//
-	// 如果为空，表示原样输出，不具备本地化的功能。
-	// Printer *message.Printer
-
-	// 日志输出对象
-	//
-	// 如为空，则被初始化 *ConsoleLogger 对象。
+	// Logger 为日志输出对象；为空时初始化为控制台日志器。
 	Logger Logger
 
-	// 在 go.mod 发生变化自动运行 go mod tidy
+	// AutoTidy 控制 go.mod 发生变化时是否自动执行 go mod tidy。
 	AutoTidy bool
 
-	// 指定编译的文件
-	//
-	// 为 go build 最后的文件参数，可以为空，表示当前目录。
+	// MainFiles 为传给 go build 的文件参数；为空表示编译当前目录。
 	MainFiles string
 
-	// 指定可执行文件输出的文件路径
+	// OutputName 为可执行文件输出路径。
 	//
-	// 为空表示默认值，若不带路径信息，会附加在 Dirs 的第一个路径上；
-	//
-	// windows 系统无须指定 .exe 扩展名，会自行添加。
-	//
-	// 如果带路径信息，则会使用该文件所在目录作为工作目录。
+	// 为空时取主目录名；不含路径信息时附加到第一个监视目录下；Windows 下无需指定
+	// .exe 后缀；若带路径信息，则以该文件所在目录作为程序的运行工作目录。
 	OutputName string
 	appName    string
 
-	// 传递各个工具的参数
-	//
-	// 大致有以下几个，具体可参考 go build 的 xxflags 系列参数。
-	//  - asm   --> asmflags
-	//  - gccgo --> gccgoflags
-	//  - gc    --> gcflags
-	//  - ld    --> ldflags
+	// Flags 为传给各工具链的 flags 参数，键对应 asmflags、gccgoflags、gcflags、ldflags 系列前缀。
 	Flags Flags
 
-	// 指定监视的文件扩展名
-	//
-	// 为空表示不监视任何文件，如果指定了 *，表示所有文件类型，包括没有扩展名的文件。
+	// Exts 为需要监视的文件扩展名列表；为空表示不监视任何文件，指定 "*" 表示监视所有文件类型（含无扩展名文件）。
 	Exts    []string
 	anyExts bool
 
-	// 忽略的文件
-	//
-	// 采用 [path.Match] 作为匹配方式。
+	// Excludes 为忽略文件的路径模式列表，采用 filepath.Match 匹配语法。
 	Excludes []string
 
-	// 传递给编译成功后的程序的参数
+	// AppArgs 为传给编译后程序启动命令的参数字符串。
 	AppArgs string
 	appArgs []string
 
-	// 是否监视子目录
+	// Recursive 控制是否递归监视子目录。
 	Recursive bool
 
-	// 表示需要监视的目录
-	//
-	// 至少指定一个目录，第一个目录被当作主目录，将编译其下的文件作为执行主体。
-	// 如果你在 go.mod 中设置了 replace 或是更高级的 workspace 中有相关设置，
-	// 可以在此处指定这些需要跟踪的包。
-	//
-	// 如果 OutputName 中未指定目录的话，第一个目录会被当作工作目录使用。
-	//
-	// NOTE: 如果指定的目录下没有需要被监视的文件类型，那么该目录将被忽略。
+	// Dirs 为需要监视的目录列表，至少指定一个；第一个目录为主目录，同时作为默认工作目录。
 	Dirs  []string
 	paths []string
 
-	// 监视器的更新频率
+	// WatcherFrequency 为判定文件更新的时间间隔，间隔内的频繁修改会被忽略，避免重复编译。
 	//
-	// 只有文件更新的时长超过此值，才会被定义为更新。防止文件频繁修改导致的频繁编译调用。
-	//
-	// 此值不能小于 [MinWatcherFrequency]。
-	//
-	// 默认值为 [MinWatcherFrequency]。
+	// 不能小于 MinWatcherFrequency；为 0 时取默认值 MinWatcherFrequency。
 	WatcherFrequency time.Duration
 
-	// 传递给 go 命令的参数
 	goCmdArgs []string
 }
 
+// Flags 保存传递给 go build 的各类 flags 参数，键为工具链前缀（asm、gccgo、gc、ld），值为对应参数。
 type Flags map[string]string
 
+// sanitize 校验配置合法性、填充默认值并展开内部派生字段；校验失败时返回对应错误。
 func (opt *Options) sanitize() error {
 
 	if opt.Logger == nil {
 		opt.Logger = NewConsoleLogger(true, os.Stderr, os.Stdout)
 	}
 
-	// 检测 glob 语法
+	// 校验 Excludes 中的模式是否为合法的 filepath.Match 语法。
 	for _, p := range opt.Excludes {
 		if _, err := filepath.Match(p, "abc"); err != nil {
 			return err
@@ -138,7 +107,6 @@ func (opt *Options) sanitize() error {
 		return errors.New("watcherFrequency 值过小")
 	}
 
-	// 初始化 goCmd 的参数
 	args := []string{"build", "-o", opt.appName}
 	for k, v := range opt.Flags {
 		args = append(args, "-"+k+"flags", v)
@@ -183,12 +151,11 @@ func getAppName(outputName, wd string) (string, error) {
 		outputName += goexe
 	}
 
-	// 没有分隔符，表示仅有一个文件名，需要加上 wd
+	// 不含路径分隔符时视为纯文件名，拼接到主目录下。
 	if strings.IndexByte(outputName, '/') < 0 || strings.IndexByte(outputName, filepath.Separator) < 0 {
 		outputName = filepath.Join(wd, outputName)
 	}
 
-	// 转成绝对路径
 	outputName, err := filepath.Abs(outputName)
 	if err != nil {
 		return "", err
@@ -197,7 +164,7 @@ func getAppName(outputName, wd string) (string, error) {
 	return outputName, nil
 }
 
-// 根据 recursive 值确定是否递归查找 paths 每个目录下的子目录
+// recursivePaths 按 recursive 决定是否展开 paths 中每个目录的子目录；点开头的隐藏目录被跳过。
 func recursivePaths(recursive bool, paths []string) ([]string, error) {
 	if !recursive {
 		return paths, nil
@@ -214,7 +181,7 @@ func recursivePaths(recursive bool, paths []string) ([]string, error) {
 			return nil
 		}
 
-		if fi.Name()[0] == '.' { // 隐藏的目录
+		if fi.Name()[0] == '.' {
 			return fs.SkipDir
 		}
 		ret = append(ret, path)
@@ -278,7 +245,7 @@ func splitArgs(args string) []string {
 				start = index
 			}
 		}
-	} // end for
+	}
 
 	if start < len(args) {
 		ret = appendArg(ret, args[start:])

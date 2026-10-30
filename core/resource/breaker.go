@@ -14,12 +14,15 @@ import (
 )
 
 const (
-	letterBytes       = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	letterIdxBits     = 6 // 6 bits to represent a letter index
-	idLen             = 8
-	defaultRandLen    = 8
-	letterIdxMask     = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	letterIdxMax      = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
+	letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	// letterIdxBits 为表示一个字母索引所需的位数。
+	letterIdxBits  = 6
+	idLen          = 8
+	defaultRandLen = 8
+	// letterIdxMask 为取出低位 letterIdxBits 位的全 1 掩码。
+	letterIdxMask = 1<<letterIdxBits - 1
+	// letterIdxMax 为一次 Int63 的 63 位随机数可容纳的索引个数。
+	letterIdxMax      = 63 / letterIdxBits
 	numHistoryReasons = 5
 	timeFormat        = "15:04:05"
 	windowInit        = time.Second * 10
@@ -28,45 +31,39 @@ const (
 	protection        = 5
 )
 
+// ErrServiceUnavailable 是熔断器处于拒绝状态时返回的错误，表示当前请求应快速失败。
 var ErrServiceUnavailable = errors.New("circuit breaker is open")
+
 var initTime = time.Now().AddDate(-1, -1, -1)
 
 type (
+	// Acceptable 判定一次调用的返回错误是否视为成功：返回 true 计入成功统计，
+	// 返回 false 计入失败统计。
 	Acceptable func(err error) bool
-	Breaker    interface {
-		// Name returns the name of the Breaker.
+
+	// Breaker 是熔断器抽象，在错误率过高或系统过载时拒绝请求，避免压垮下游服务。
+	//
+	// 调用方既可以通过 Allow 手动管理请求生命周期，也可以使用 Do 系列方法直接包装
+	// 业务函数；业务函数内部发生 panic 时，熔断器按失败处理并将 panic 原样重新抛出。
+	Breaker interface {
+		// Name 返回熔断器的名称。
 		Name() string
 
-		// Allow checks if the request is allowed.
-		// If allowed, a promise will be returned, the caller needs to call promise.Accept()
-		// on success, or call promise.Reject() on failure.
-		// If not allow, ErrServiceUnavailable will be returned.
+		// Allow 在允许放行时返回一个 Promise，调用成功后须调用 Accept，失败后须调用
+		// Reject；熔断器拒绝放行时返回 ErrServiceUnavailable。
 		Allow() (Promise, error)
 
-		// Do runs the given request if the Breaker accepts it.
-		// Do returns an error instantly if the Breaker rejects the request.
-		// If a panic occurs in the request, the Breaker handles it as an error
-		// and causes the same panic again.
+		// Do 在熔断器放行时执行 req，被拒绝时立即返回错误；req 内的 panic 会被记为
+		// 失败后重新抛出。
 		Do(req func() error) error
 
-		// DoWithAcceptable runs the given request if the Breaker accepts it.
-		// DoWithAcceptable returns an error instantly if the Breaker rejects the request.
-		// If a panic occurs in the request, the Breaker handles it as an error
-		// and causes the same panic again.
-		// acceptable checks if it's a successful call, even if the err is not nil.
+		// DoWithAcceptable 行为同 Do，acceptable 用于自定义错误是否视为成功。
 		DoWithAcceptable(req func() error, acceptable Acceptable) error
 
-		// DoWithFallback runs the given request if the Breaker accepts it.
-		// DoWithFallback runs the fallback if the Breaker rejects the request.
-		// If a panic occurs in the request, the Breaker handles it as an error
-		// and causes the same panic again.
+		// DoWithFallback 在熔断器放行时执行 req，被拒绝时执行 fallback 并返回其错误。
 		DoWithFallback(req func() error, fallback func(err error) error) error
 
-		// DoWithFallbackAcceptable runs the given request if the Breaker accepts it.
-		// DoWithFallbackAcceptable runs the fallback if the Breaker rejects the request.
-		// If a panic occurs in the request, the Breaker handles it as an error
-		// and causes the same panic again.
-		// acceptable checks if it's a successful call, even if the err is not nil.
+		// DoWithFallbackAcceptable 组合 fallback 降级与 acceptable 成功判定。
 		DoWithFallbackAcceptable(req func() error, fallback func(err error) error, acceptable Acceptable) error
 	}
 
@@ -80,15 +77,16 @@ type (
 		doReq(req func() error, fallback func(err error) error, acceptable Acceptable) error
 	}
 
-	// Promise interface defines the callbacks that returned by Breaker.Allow.
+	// Promise 表示一次已放行请求的结果回调，由 Breaker.Allow 返回，调用方须且仅调用
+	// Accept 与 Reject 之一。
 	Promise interface {
-		// Accept tells the Breaker that the call is successful.
+		// Accept 通知熔断器本次调用成功。
 		Accept()
-		// Reject tells the Breaker that the call is failed.
+		// Reject 通知熔断器本次调用失败，reason 记录失败原因，供最近历史错误排查使用。
 		Reject(reason string)
 	}
 
-	// Option defines the method to customize a Breaker.
+	// Option 以函数式选项模式定制 NewBreaker 创建的熔断器。
 	Option func(breaker *circuitBreaker)
 
 	lockedSource struct {
@@ -122,13 +120,20 @@ type (
 		errWin  *errorWindow
 	}
 
-	// RollingWindowOption let callers customize the RollingWindow.
+	// RollingWindowOption 以函数式选项模式定制 NewRollingWindow 创建的滚动窗口。
 	RollingWindowOption func(rollingWindow *RollingWindow)
-	Bucket              struct {
-		Sum   float64
+
+	// Bucket 为滚动窗口中的一个时间桶，累计一段时间内事件的数值与次数。
+	Bucket struct {
+		// Sum 为桶内所有事件数值之和。
+		Sum float64
+		// Count 为桶内事件次数。
 		Count int64
 	}
-	// RollingWindow defines a rolling window to calculate the events in buckets with time interval.
+
+	// RollingWindow 是按时间片滚动的统计窗口，由固定数量的桶组成，周期性覆盖已过期的桶。
+	//
+	// 窗口方法为并发安全；零值不可直接使用，须通过 NewRollingWindow 创建。
 	RollingWindow struct {
 		lock          sync.RWMutex
 		size          int
@@ -136,15 +141,16 @@ type (
 		interval      time.Duration
 		offset        int
 		ignoreCurrent bool
-		lastTime      time.Duration // start time of the last bucket
+		lastTime      time.Duration
 	}
 	window struct {
 		buckets []*Bucket
 		size    int
 	}
 
+	// Proba 在受保护的随机数源上按给定概率进行随机判定，方法为并发安全。
 	Proba struct {
-		// rand.New(...) returns a non thread safe object
+		// rand.Rand 本身不是并发安全的，因此通过锁串行化随机数访问。
 		r    *rand.Rand
 		lock sync.Mutex
 	}
@@ -160,8 +166,9 @@ type (
 	}
 )
 
-// NewBreaker returns a Breaker object.
-// opts can be used to customize the Breaker.
+// NewBreaker 创建一个熔断器；未通过 WithName 指定名称时自动生成随机名称。
+//
+// 返回的熔断器可并发使用，opts 用于覆盖默认配置。
 func NewBreaker(opts ...Option) Breaker {
 	var b circuitBreaker
 	for _, opt := range opts {
@@ -200,7 +207,7 @@ func (cb *circuitBreaker) Name() string {
 	return cb.name
 }
 
-// WithName returns a function to set the name of a Breaker.
+// WithName 设置熔断器名称，便于日志与熔断记录中区分不同下游。
 func WithName(name string) Option {
 	return func(b *circuitBreaker) {
 		b.name = name
@@ -229,37 +236,30 @@ func (lt loggedThrottle) doReq(req func() error, fallback func(err error) error,
 	}))
 }
 
+// logError 为熔断器错误日志的预留挂接点，当前原样返回错误，不做额外处理。
 func (lt loggedThrottle) logError(err error) error {
-	// if err == ErrServiceUnavailable {
-	// 	// if circuit open, not possible to have empty error window
-	// 	errString := fmt.Sprintf(
-	// 		"proc(%s/%d), callee: %s, breaker is open and requests dropped\nlast errors:\n%s",
-	// 		ProcessName(), Pid(), lt.name, lt.errWin)
-	// 	logger.Logger.Warn(errString)
-	// }
-
 	return err
 }
 
-// Pid returns pid of current process.
+// Pid 返回当前进程的操作系统进程 ID。
 func Pid() int {
 	return os.Getpid()
 }
 
-// ProcessName returns the processname, same as the command name.
+// ProcessName 返回当前进程名，即可执行文件的命令名。
 func ProcessName() string {
 	return filepath.Base(os.Args[0])
 }
 
-// Rand returns a random string.
+// Rand 返回长度为默认 8 的随机字母数字字符串。
 func Rand() string {
 	return Randn(defaultRandLen)
 }
 
-// Randn returns a random string with length n.
+// Randn 返回长度为 n 的随机字母数字字符串；n 为 0 时返回空字符串。
 func Randn(n int) string {
 	b := make([]byte, n)
-	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
+	// 一次 Int63 产生 63 个随机位，可填充 letterIdxMax 个字符。
 	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
 		if remain == 0 {
 			cache, remain = src.Int63(), letterIdxMax
@@ -309,7 +309,7 @@ func (ew *errorWindow) String() string {
 	var reasons []string
 
 	ew.lock.Lock()
-	// reverse order
+	// 按最近发生的顺序反向输出历史原因。
 	for i := ew.index - 1; i >= ew.index-ew.count; i-- {
 		reasons = append(reasons, ew.reasons[(i+numHistoryReasons)%numHistoryReasons])
 	}
@@ -327,7 +327,7 @@ func (p promiseWithReason) Reject(reason string) {
 	p.promise.Reject()
 }
 
-// MinInt returns the smaller one of a and b.
+// MinInt 返回 a、b 中较小的整数。
 func MinInt(a, b int) int {
 	if a < b {
 		return a
@@ -336,14 +336,14 @@ func MinInt(a, b int) int {
 	return b
 }
 
-// NewProba returns a Proba.
+// NewProba 创建一个以当前时间纳秒为种子的 Proba。
 func NewProba() *Proba {
 	return &Proba{
 		r: rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
-// TrueOnProba checks if true on given probability.
+// TrueOnProba 以 proba 指定的阈值概率返回 true。
 func (p *Proba) TrueOnProba(proba float64) (truth bool) {
 	p.lock.Lock()
 	truth = p.r.Float64() < proba
@@ -363,6 +363,7 @@ func newGoogleBreaker() *googleBreaker {
 func (b *googleBreaker) accept() error {
 	accepts, total := b.history()
 	weightedAccepts := b.k * float64(accepts)
+	// 拒绝比例公式参考 Google SRE《Handling Overload》章节：
 	// https://landing.google.com/sre/sre-book/chapters/handling-overload/#eq2101
 	dropRatio := math.Max(0, (float64(total-protection)-weightedAccepts)/float64(total+1))
 	if dropRatio <= 0 {
@@ -429,8 +430,9 @@ func (b *googleBreaker) history() (accepts, total int64) {
 	return
 }
 
-// NewRollingWindow returns a RollingWindow that with size buckets and time interval,
-// use opts to customize the RollingWindow.
+// NewRollingWindow 创建包含 size 个桶、桶时间间隔为 interval 的滚动窗口。
+//
+// size 必须大于 0，否则直接 panic；opts 用于覆盖窗口默认行为。
 func NewRollingWindow(size int, interval time.Duration, opts ...RollingWindowOption) *RollingWindow {
 	if size < 1 {
 		panic("size must be greater than 0")
@@ -448,7 +450,7 @@ func NewRollingWindow(size int, interval time.Duration, opts ...RollingWindowOpt
 	return w
 }
 
-// Add adds value to current bucket.
+// Add 将数值 v 计入当前时间桶。
 func (rw *RollingWindow) Add(v float64) {
 	rw.lock.Lock()
 	defer rw.lock.Unlock()
@@ -456,14 +458,15 @@ func (rw *RollingWindow) Add(v float64) {
 	rw.win.add(rw.offset, v)
 }
 
-// Reduce runs fn on all buckets, ignore current bucket if ignoreCurrent was set.
+// Reduce 遍历全部历史时间桶并对每个桶执行 fn；配置忽略当前桶时，尚未结束的当前桶
+// 不计入统计。
 func (rw *RollingWindow) Reduce(fn func(b *Bucket)) {
 	rw.lock.RLock()
 	defer rw.lock.RUnlock()
 
 	var diff int
 	span := rw.span()
-	// ignore current bucket, because of partial data
+	// 当前桶数据尚未写完，配置 ignoreCurrent 时跳过，避免被部分数据污染统计。
 	if span == 0 && rw.ignoreCurrent {
 		diff = rw.size - 1
 	} else {
@@ -491,14 +494,13 @@ func (rw *RollingWindow) updateOffset() {
 	}
 
 	offset := rw.offset
-	// reset expired buckets
 	for i := range span {
 		rw.win.resetBucket((offset + i + 1) % rw.size)
 	}
 
 	rw.offset = (offset + span) % rw.size
 	now := Now()
-	// align to interval time boundary
+	// 将基准时间对齐到桶间隔边界，保证下一轮窗口统计从整段间隔开始。
 	rw.lastTime = now - (now-rw.lastTime)%rw.interval
 }
 
@@ -545,11 +547,12 @@ func (p googlePromise) Reject() {
 	p.b.markFailure()
 }
 
+// Now 返回自程序启动基线时刻起经过的时长，供滚动窗口计算时间偏移使用。
 func Now() time.Duration {
 	return time.Since(initTime)
 }
 
-// Since returns a diff since given d.
+// Since 返回自 d（同为 Now 基线时钟下的时长）起经过的时长。
 func Since(d time.Duration) time.Duration {
 	return time.Since(initTime) - d
 }

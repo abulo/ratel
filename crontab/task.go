@@ -14,13 +14,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// bounds provides a range of acceptable values (plus a map of name to value).
+// bounds 描述 cron 单个字段的合法取值区间，names 保存月份、星期等别名到数值的映射。
 type bounds struct {
 	min, max uint
 	names    map[string]uint
 }
 
-// TaskManager ...
+// TaskManager 管理已注册任务并在后台按计划时间触发执行。
+//
+// 零值不可直接使用，须通过 NewTaskManager 构造；任务注册、删除与遍历方法内部
+// 加锁，支持并发调用；同一调度器重复启动不会创建多个调度 goroutine。
 type TaskManager struct {
 	adminTaskList map[string]Tasker
 	taskLock      sync.RWMutex
@@ -30,7 +33,7 @@ type TaskManager struct {
 	wait          sync.WaitGroup
 }
 
-// NewTaskManager ...
+// NewTaskManager 创建一个空的 TaskManager，尚未启动调度。
 func NewTaskManager() *TaskManager {
 	return &TaskManager{
 		adminTaskList: make(map[string]Tasker),
@@ -41,7 +44,7 @@ func NewTaskManager() *TaskManager {
 	}
 }
 
-// The bounds for each field.
+// 各 cron 字段的取值区间，月份与星期附带英文别名映射。
 var (
 	seconds = bounds{0, 59, nil}
 	minutes = bounds{0, 59, nil}
@@ -73,11 +76,13 @@ var (
 )
 
 const (
-	// Set the top bit if a star was included in the expression.
+	// starBit 在表达式包含通配符 * 时置位最高位，用于区分“日”与“星期”字段之间
+	// 应取交集还是并集。
 	starBit = 1 << 63
 )
 
-// Schedule time task schedule
+// Schedule 以位掩码形式保存 cron 表达式解析后的秒、分、时、日、月、星期六个字段，
+// 每个字段的某一位为 1 表示对应取值匹配该字段。
 type Schedule struct {
 	Second uint64
 	Minute uint64
@@ -87,10 +92,11 @@ type Schedule struct {
 	Week   uint64
 }
 
-// TaskFunc task func type
+// TaskFunc 表示任务执行函数，接收上下文并在执行失败时返回错误。
 type TaskFunc func(ctx context.Context) error
 
-// Tasker task interface
+// Tasker 描述可被 TaskManager 调度的任务契约：任务须能够提供 cron 规则、当前状态、
+// 执行入口，以及上一次、下一次执行时间和超时时间。
 type Tasker interface {
 	GetSpec(ctx context.Context) string
 	GetStatus(ctx context.Context) string
@@ -102,38 +108,48 @@ type Tasker interface {
 	GetTimeout(ctx context.Context) time.Duration
 }
 
-// task error
+// taskerr 记录单次任务执行失败发生的时间与错误信息。
 type taskerr struct {
 	t       time.Time
 	errinfo string
 }
 
-// Task task struct
-// It's not a thread-safe structure.
-// Only nearest errors will be saved in ErrList
+// Task 是对单个定时任务的封装，保存 cron 规则、执行函数、执行时间与错误记录。
+//
+// Task 自身不是并发安全结构，由 TaskManager 在调度时统一访问；错误记录只保留
+// ErrLimit 容量内最近的若干条。
 type Task struct {
+	// Taskname 为任务名称。
 	Taskname string
-	Spec     *Schedule
-	SpecStr  string
-	DoFunc   TaskFunc
-	Prev     time.Time
-	Next     time.Time
-	Timeout  time.Duration // timeout duration
-	Errlist  []*taskerr    // like errtime:errinfo
-	ErrLimit int           // max length for the errlist, 0 stand for no limit
-	errCnt   int           // records the error count during the execution
+	// Spec 为解析后的调度规则。
+	Spec *Schedule
+	// SpecStr 为原始 cron 表达式字符串。
+	SpecStr string
+	// DoFunc 为任务实际执行的函数。
+	DoFunc TaskFunc
+	// Prev 为上一次执行时间。
+	Prev time.Time
+	// Next 为下一次计划执行时间。
+	Next time.Time
+	// Timeout 为任务执行超时时间；为 0 表示不设置超时。
+	Timeout time.Duration
+	// Errlist 按 ErrLimit 容量环形保存最近的执行错误。
+	Errlist []*taskerr
+	// ErrLimit 为 Errlist 保留的错误条数；NewTask 初始化为 100。
+	ErrLimit int
+	// errCnt 累计执行失败次数，用于在 Errlist 中定位环形覆盖下标。
+	errCnt int
 }
 
-// NewTask add new task with name, time and func
+// NewTask 根据任务名称、cron 表达式与执行函数创建任务，ErrLimit 默认为 100；
+// opts 用于在解析 cron 规则前覆盖任务配置（如超时时间）。spec 非法时会在 SetCron 中 panic。
 func NewTask(tname string, spec string, f TaskFunc, opts ...Option) *Task {
 	task := &Task{
 		Taskname: tname,
 		DoFunc:   f,
-		// Make configurable
 		ErrLimit: 100,
 		SpecStr:  spec,
-		// we only store the pointer, so it won't use too many space
-		Errlist: make([]*taskerr, 0),
+		Errlist:  make([]*taskerr, 0),
 	}
 
 	for _, opt := range opts {
@@ -144,12 +160,12 @@ func NewTask(tname string, spec string, f TaskFunc, opts ...Option) *Task {
 	return task
 }
 
-// GetSpec get spec string
+// GetSpec 返回任务原始的 cron 表达式字符串。
 func (t *Task) GetSpec(context.Context) string {
 	return t.SpecStr
 }
 
-// GetStatus get current task status
+// GetStatus 将已记录的错误以“时间:错误信息”逐行拼接（HTML 换行）返回；无错误时返回空串。
 func (t *Task) GetStatus(context.Context) string {
 	var str strings.Builder
 	for _, v := range t.Errlist {
@@ -161,7 +177,8 @@ func (t *Task) GetStatus(context.Context) string {
 	return str.String()
 }
 
-// Run run all tasks
+// Run 执行任务函数：捕获执行期间的 panic 并写入日志，避免单个任务异常波及调度器；
+// DoFunc 返回错误时按环形容量记入 Errlist，并将该错误原样返回。
 func (t *Task) Run(ctx context.Context) error {
 
 	defer func() {
@@ -180,104 +197,73 @@ func (t *Task) Run(ctx context.Context) error {
 	return err
 }
 
-// SetNext set next time for this task
+// SetNext 以 now 为基准按任务规则计算下一次执行时间并写入 Next。
 func (t *Task) SetNext(ctx context.Context, now time.Time) {
 	t.Next = t.Spec.Next(now)
 }
 
-// GetNext get the next call time of this task
+// GetNext 返回任务下一次计划执行时间。
 func (t *Task) GetNext(context.Context) time.Time {
 	return t.Next
 }
 
-// SetPrev set prev time of this task
+// SetPrev 将任务上一次执行时间记录为 now。
 func (t *Task) SetPrev(ctx context.Context, now time.Time) {
 	t.Prev = now
 }
 
-// GetPrev get prev time of this task
+// GetPrev 返回任务上一次执行时间。
 func (t *Task) GetPrev(context.Context) time.Time {
 	return t.Prev
 }
 
-// GetTimeout get timeout duration of this task
+// GetTimeout 返回任务执行超时时间；为 0 表示不设置超时。
 func (t *Task) GetTimeout(context.Context) time.Duration {
 	return t.Timeout
 }
 
-// Option interface
+// Option 是任务配置选项接口，函数式选项模式由 optionFunc 实现。
 type Option interface {
 	apply(*Task)
 }
 
-// optionFunc return a function to set task element
+// optionFunc 是将函数包装为 Option 的适配器。
 type optionFunc func(*Task)
 
-// apply option to task
 func (f optionFunc) apply(t *Task) {
 	f(t)
 }
 
-// TimeoutOption return a option to set timeout duration for task
+// TimeoutOption 返回设置任务超时时间的 Option；传入 0 表示不限制超时。
 func TimeoutOption(timeout time.Duration) Option {
 	return optionFunc(func(t *Task) {
 		t.Timeout = timeout
 	})
 }
 
-// six columns mean：
-//       second：0-59
-//       minute：0-59
-//       hour：1-23
-//       day：1-31
-//       month：1-12
-//       week：0-6（0 means Sunday）
-
-// SetCron some signals：
+// SetCron 解析 cron 表达式并更新任务的调度规则。
 //
-//	*： any time
-//	,：　 separate signal
-//
-// 　　    －：duration
-//
-//	/n : do as n times of time duration
-//
-// ///////////////////////////////////////////////////////
-//
-//	0/30 * * * * *                        every 30s
-//	0 43 21 * * *                         21:43
-//	0 15 05 * * * 　　                     05:15
-//	0 0 17 * * *                          17:00
-//	0 0 17 * * 1                           17:00 in every Monday
-//	0 0,10 17 * * 0,2,3                   17:00 and 17:10 in every Sunday, Tuesday and Wednesday
-//	0 0-10 17 1 * *                       17:00 to 17:10 in 1 min duration each time on the first day of month
-//	0 0 0 1,15 * 1                        0:00 on the 1st day and 15th day of month
-//	0 42 4 1 * * 　 　                     4:42 on the 1st day of month
-//	0 0 21 * * 1-6　　                     21:00 from Monday to Saturday
-//	0 0,10,20,30,40,50 * * * *　           every 10 min duration
-//	0 */10 * * * * 　　　　　　              every 10 min duration
-//	0 * 1 * * *　　　　　　　　               1:00 to 1:59 in 1 min duration each time
-//	0 0 1 * * *　　　　　　　　               1:00
-//	0 0 */1 * * *　　　　　　　               0 min of hour in 1 hour duration
-//	0 0 * * * *　　　　　　　　               0 min of hour in 1 hour duration
-//	0 2 8-20/3 * * *　　　　　　             8:02, 11:02, 14:02, 17:02, 20:02
-//	0 30 5 1,15 * *　　　　　　              5:30 on the 1st day and 15th day of month
+// 表达式按“秒 分 时 日 月 星期”六个字段解析，星期字段可省略；取值范围依次为
+// 0-59、0-59、0-23、1-31、1-12、0-6（0 表示星期日）。字段支持 *（任意取值）、
+// ,（列举）、-（区间）、/（步长），并识别 @yearly、@monthly、@weekly、@daily、
+// @hourly 等预定义描述符；格式非法或描述符无法识别时会直接 panic。
 func (t *Task) SetCron(spec string) {
 	t.Spec = t.parse(spec)
 }
 
+// parse 解析 cron 表达式：以 @ 开头时交给 parseSpec 处理，否则按五或六个字段
+// 分别生成位掩码；字段数非法时直接 panic。
 func (t *Task) parse(spec string) *Schedule {
 	if len(spec) > 0 && spec[0] == '@' {
 		return t.parseSpec(spec)
 	}
-	// Split on whitespace.  We require 5 or 6 fields.
-	// (second) (minute) (hour) (day of month) (month) (day of week, optional)
+	// 按空白切分字段，顺序为：秒、分、时、日、月、星期（可选）。
 	fields := strings.Fields(spec)
 	if len(fields) != 5 && len(fields) != 6 {
 		log.Panicf("Expected 5 or 6 fields, found %d: %s", len(fields), spec)
 	}
 
-	// If a sixth field is not provided (DayOfWeek), then it is equivalent to star.
+	// 省略星期字段时等价于 *。
 	if len(fields) == 5 {
 		fields = append(fields, "*")
 	}
@@ -294,6 +280,8 @@ func (t *Task) parse(spec string) *Schedule {
 	return schedule
 }
 
+// parseSpec 将 @yearly 等预定义描述符转换为对应的 Schedule；
+// 无法识别的描述符直接 panic。
 func (t *Task) parseSpec(spec string) *Schedule {
 	switch spec {
 	case "@yearly", "@annually":
@@ -350,15 +338,15 @@ func (t *Task) parseSpec(spec string) *Schedule {
 	return nil
 }
 
-// Next set schedule to next time
+// Next 返回 t 之后下一个满足调度规则的时间；五年内找不到匹配时间时返回零值 time.Time。
 func (s *Schedule) Next(t time.Time) time.Time {
-	// Start at the earliest possible time (the upcoming second).
+	// 从 t 的下一秒开始向后查找。
 	t = t.Add(1*time.Second - time.Duration(t.Nanosecond())*time.Nanosecond)
 
-	// This flag indicates whether a field has been incremented.
+	// added 标记是否已经向后推进过时间分量，首次推进时先把被推进分量之下的部分归零。
 	added := false
 
-	// If no time is found within five years, return zero.
+	// 五年内仍未找到匹配时间即视为规则不可达，返回零值。
 	yearLimit := t.Year() + 5
 
 WRAP:
@@ -366,24 +354,18 @@ WRAP:
 		return time.Time{}
 	}
 
-	// Find the first applicable month.
-	// If it's this month, then do nothing.
 	for 1<<uint(t.Month())&s.Month == 0 {
-		// If we have to add a month, reset the other parts to 0.
 		if !added {
 			added = true
-			// Otherwise, set the date at the beginning (since the current time is irrelevant).
 			t = time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())
 		}
 		t = t.AddDate(0, 1, 0)
 
-		// Wrapped around.
 		if t.Month() == time.January {
 			goto WRAP
 		}
 	}
 
-	// Now get a day in that month.
 	for !dayMatches(s, t) {
 		if !added {
 			added = true
@@ -435,6 +417,8 @@ WRAP:
 	return t
 }
 
+// dayMatches 判断 t 的日与星期是否同时满足规则；两个字段都使用通配符时取交集，
+// 否则按 cron 惯例取并集。
 func dayMatches(s *Schedule, t time.Time) bool {
 	var (
 		domMatch = 1<<uint(t.Day())&s.Day > 0
@@ -447,67 +431,67 @@ func dayMatches(s *Schedule, t time.Time) bool {
 	return domMatch || dowMatch
 }
 
-// WorkerStart ...
+// WorkerStart 启动后台调度循环，始终返回 nil。
 func (t *TaskManager) WorkerStart() error {
 	t.StartTask()
 	return nil
 }
 
-// WorkerStop ...
+// WorkerStop 停止后台调度循环，始终返回 nil。
 func (t *TaskManager) WorkerStop() error {
 	t.StopTask()
 	return nil
 }
 
-// StartTask start all tasks
+// StartTask 启动后台调度 goroutine；重复调用不会重复启动。
 func (t *TaskManager) StartTask() {
 	t.taskLock.Lock()
 	defer t.taskLock.Unlock()
 	if t.started {
-		// If already started， no need to start another goroutine.
 		return
 	}
 	t.started = true
 	go t.run()
 }
 
+// run 是调度循环主体：计算最近一次到期时间，到期时触发任务，
+// 同时响应任务变更与停止信号。
 func (t *TaskManager) run() {
 	now := time.Now().Local()
-	// first run the tasks, so set all tasks next run time.
+	// 启动时先为所有任务计算下一次执行时间。
 	t.setTasksStartTime(now)
 
 	for {
-		// we only use RLock here because NewMapSorter copy the reference, do not change any thing
-		// here, we sort all task and get first task running time (effective).
+		// 仅在读锁内复制任务列表引用，排序与取最早时间都在锁外完成。
 		t.taskLock.RLock()
 		sortList := NewMapSorter(t.adminTaskList)
 		t.taskLock.RUnlock()
 		sortList.Sort()
 		var effective time.Time
 		if len(t.adminTaskList) == 0 || sortList.Vals[0].GetNext(context.Background()).IsZero() {
-			// If there are no entries yet, just sleep - it still handles new entries
-			// and stop requests.
+			// 暂无任务时拉长等待，期间仍可接收新增任务与停止信号。
 			effective = now.AddDate(10, 0, 0)
 		} else {
 			effective = sortList.Vals[0].GetNext(context.Background())
 		}
 
 		select {
-		case now = <-time.After(effective.Sub(now)): // wait for effective time
+		case now = <-time.After(effective.Sub(now)):
 			t.runNextTasks(sortList, effective)
 			continue
-		case <-t.changed: // tasks have been changed, set all tasks run again now
+		case <-t.changed:
+			// 任务列表发生变更，重新计算所有任务的执行时间。
 			now = time.Now().Local()
 			t.setTasksStartTime(now)
 			continue
-		case <-t.stop: // manager is stopped, and mark manager is stopped
+		case <-t.stop:
 			t.markManagerStop()
 			return
 		}
 	}
 }
 
-// setTasksStartTime is set all tasks next running time
+// setTasksStartTime 以 now 为基准重新计算所有任务的下一次执行时间。
 func (t *TaskManager) setTasksStartTime(now time.Time) {
 	t.taskLock.Lock()
 	for _, task := range t.adminTaskList {
@@ -516,7 +500,7 @@ func (t *TaskManager) setTasksStartTime(now time.Time) {
 	t.taskLock.Unlock()
 }
 
-// markManagerStop it sets manager to be stopped
+// markManagerStop 将调度器标记为已停止。
 func (t *TaskManager) markManagerStop() {
 	t.taskLock.Lock()
 	if t.started {
@@ -525,9 +509,9 @@ func (t *TaskManager) markManagerStop() {
 	t.taskLock.Unlock()
 }
 
-// runNextTasks it runs next task which next run time is equal to effective
+// runNextTasks 触发所有下一次执行时间等于 effective 的任务；
+// 配置了超时的任务使用带超时的上下文运行。
 func (t *TaskManager) runNextTasks(sortList *MapSorter, effective time.Time) {
-	// Run every entry whose next time was this effective time.
 	i := 0
 	for _, e := range sortList.Vals {
 		i++
@@ -535,7 +519,6 @@ func (t *TaskManager) runNextTasks(sortList *MapSorter, effective time.Time) {
 			break
 		}
 
-		// check if timeout is on, if yes passing the timeout context
 		ctx := context.Background()
 		t.wait.Add(1)
 		if duration := e.GetTimeout(ctx); duration != 0 {
@@ -563,14 +546,14 @@ func (t *TaskManager) runNextTasks(sortList *MapSorter, effective time.Time) {
 	}
 }
 
-// StopTask stop all tasks
+// StopTask 异步通知调度循环退出，不等待正在执行的任务结束。
 func (t *TaskManager) StopTask() {
 	go func() {
 		t.stop <- true
 	}()
 }
 
-// GracefulShutdown wait all task done
+// GracefulShutdown 停止调度循环并等待所有正在执行的任务结束，返回的通道在全部任务完成后关闭。
 func (t *TaskManager) GracefulShutdown() <-chan struct{} {
 	done := make(chan struct{})
 	go func() {
@@ -581,7 +564,8 @@ func (t *TaskManager) GracefulShutdown() <-chan struct{} {
 	return done
 }
 
-// AddTask add task with name
+// AddTask 以 taskname 为键注册任务；调度器已在运行时通知调度循环重新计算执行时间。
+// taskname 重复会覆盖同名旧任务。
 func (t *TaskManager) AddTask(taskname string, task Tasker) {
 	isChanged := false
 	t.taskLock.Lock()
@@ -599,12 +583,12 @@ func (t *TaskManager) AddTask(taskname string, task Tasker) {
 	}
 }
 
-// Len ...
+// Len 返回当前已注册任务的数量。
 func (t *TaskManager) Len() int {
 	return len(t.adminTaskList)
 }
 
-// DeleteTask delete task with name
+// DeleteTask 按名称移除任务；调度器已在运行时通知调度循环重新计算执行时间。
 func (t *TaskManager) DeleteTask(taskname string) {
 	isChanged := false
 
@@ -622,7 +606,7 @@ func (t *TaskManager) DeleteTask(taskname string) {
 	}
 }
 
-// ClearTask clear all tasks
+// ClearTask 移除全部已注册任务；调度器已在运行时通知调度循环重新计算执行时间。
 func (t *TaskManager) ClearTask() {
 	isChanged := false
 
@@ -640,13 +624,16 @@ func (t *TaskManager) ClearTask() {
 	}
 }
 
-// MapSorter sort map for tasker
+// MapSorter 将任务 map 拆为键、值两个平行切片，并实现 sort.Interface，
+// 按任务下一次执行时间升序排列。
 type MapSorter struct {
+	// Keys 为任务名称切片，与 Vals 相同下标对齐。
 	Keys []string
+	// Vals 为任务实例切片，与 Keys 相同下标对齐。
 	Vals []Tasker
 }
 
-// NewMapSorter create new tasker map
+// NewMapSorter 由任务 map 构造对应的 MapSorter，键与值在相同下标对齐。
 func NewMapSorter(m map[string]Tasker) *MapSorter {
 	ms := &MapSorter{
 		Keys: make([]string, 0, len(m)),
@@ -659,15 +646,15 @@ func NewMapSorter(m map[string]Tasker) *MapSorter {
 	return ms
 }
 
-// Sort sort tasker map
+// Sort 就地按下一次执行时间升序排列任务。
 func (ms *MapSorter) Sort() {
 	sort.Sort(ms)
 }
 
-// Len ...
+// Len 返回待排序任务数量，实现 sort.Interface。
 func (ms *MapSorter) Len() int { return len(ms.Keys) }
 
-// Less ...
+// Less 判断下标 i 的任务是否应排在 j 之前；未设置下次执行时间的任务排在最后。
 func (ms *MapSorter) Less(i, j int) bool {
 	if ms.Vals[i].GetNext(context.Background()).IsZero() {
 		return false
@@ -678,14 +665,14 @@ func (ms *MapSorter) Less(i, j int) bool {
 	return ms.Vals[i].GetNext(context.Background()).Before(ms.Vals[j].GetNext(context.Background()))
 }
 
-// Swap ...
+// Swap 交换两个下标的任务及其名称，实现 sort.Interface。
 func (ms *MapSorter) Swap(i, j int) {
 	ms.Vals[i], ms.Vals[j] = ms.Vals[j], ms.Vals[i]
 	ms.Keys[i], ms.Keys[j] = ms.Keys[j], ms.Keys[i]
 }
 
+// getField 解析逗号分隔的多个区间表达式，合并为该字段的位掩码。
 func getField(field string, r bounds) uint64 {
-	// list = range {"," range}
 	var bits uint64
 	ranges := strings.FieldsFunc(field, func(r rune) bool { return r == ',' })
 	for _, expr := range ranges {
@@ -694,9 +681,8 @@ func getField(field string, r bounds) uint64 {
 	return bits
 }
 
-// getRange returns the bits indicated by the given expression:
-//
-//	number | number "-" number [ "/" number ]
+// getRange 解析单个 cron 子表达式（数字、区间 number-number、步长 number/step 或 *），
+// 返回对应取值的位掩码；超出区间或格式非法时直接 panic。
 func getRange(expr string, r bounds) uint64 {
 	var (
 		start, end, step uint
@@ -728,7 +714,7 @@ func getRange(expr string, r bounds) uint64 {
 	case 2:
 		step = mustParseInt(rangeAndStep[1])
 
-		// Special handling: "N/step" means "N-max/step".
+		// 单数字搭配步长时等价于 N-max/step。
 		if singleDigit {
 			end = r.max
 		}
@@ -749,7 +735,7 @@ func getRange(expr string, r bounds) uint64 {
 	return getBits(start, end, step) | extrastar
 }
 
-// parseIntOrName returns the (possibly-named) integer contained in expr.
+// parseIntOrName 先按别名表（月份、星期）查找 expr，未命中时按整数解析。
 func parseIntOrName(expr string, names map[string]uint) uint {
 	if names != nil {
 		if namedInt, ok := names[strings.ToLower(expr)]; ok {
@@ -759,7 +745,7 @@ func parseIntOrName(expr string, names map[string]uint) uint {
 	return mustParseInt(expr)
 }
 
-// mustParseInt parses the given expression as an int or panics.
+// mustParseInt 将 expr 解析为非负整数；解析失败或出现负数时直接 panic。
 func mustParseInt(expr string) uint {
 	num, err := strconv.Atoi(expr)
 	if err != nil {
@@ -772,23 +758,22 @@ func mustParseInt(expr string) uint {
 	return uint(num)
 }
 
-// getBits sets all bits in the range [min, max], modulo the given step size.
+// getBits 置位区间 [min, max] 内按 step 步长取值对应的所有位。
 func getBits(min, max, step uint) uint64 {
 	var bits uint64
 
-	// If step is 1, use shifts.
+	// 步长为 1 时直接用位运算生成掩码，避免循环。
 	if step == 1 {
 		return ^(math.MaxUint64 << (max + 1)) & (math.MaxUint64 << min)
 	}
 
-	// Else, use a simple loop.
 	for i := min; i <= max; i += step {
 		bits |= 1 << i
 	}
 	return bits
 }
 
-// all returns all bits within the given bounds.  (plus the star bit)
+// all 返回给定区间的全部取值位，并附加通配符标记位。
 func all(r bounds) uint64 {
 	return getBits(r.min, r.max, 1) | starBit
 }

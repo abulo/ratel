@@ -12,6 +12,8 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+// traceUnaryClientInterceptor 构造单向调用的客户端链路追踪拦截器，负责启动客户端 Span、
+// 透传并回写 metadata、记录方法名与错误状态。
 func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 	tracer := globalTrace.NewTracer(trace.SpanKindClient)
 	attrs := []attribute.KeyValue{
@@ -24,7 +26,6 @@ func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 		} else {
 			md = md.Copy()
 		}
-		// fmt.Println("method------", method)
 		ctx, span := tracer.Start(ctx, method, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
 		ctx = metadata.NewOutgoingContext(ctx, md)
 		span.SetAttributes(
@@ -42,6 +43,7 @@ func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 
 }
 
+// traceStreamClientInterceptor 构造流式调用的客户端链路追踪拦截器，生命周期覆盖整个流的创建过程。
 func traceStreamClientInterceptor() grpc.StreamClientInterceptor {
 
 	tracer := globalTrace.NewTracer(trace.SpanKindClient)

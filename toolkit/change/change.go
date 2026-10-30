@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// CmdNew 是 toolkit changelog 子命令，按版本标签汇总提交记录并生成 Markdown 更新日志。
 var CmdNew = &cobra.Command{
 	Use:   "changelog",
 	Short: "更新日志",
@@ -23,6 +24,7 @@ var CmdNew = &cobra.Command{
 	Run:   Run,
 }
 
+// getTags 按版本号倒序获取当前仓库的全部标签，执行 git 命令失败时返回错误。
 func getTags() ([]string, error) {
 	cmd := exec.Command("git", "tag", "--sort=-v:refname")
 	var out bytes.Buffer
@@ -35,7 +37,8 @@ func getTags() ([]string, error) {
 	return tags, nil
 }
 
-// getTagDate returns the date of a specific tag
+// getTagDate 返回指定标签最新一次提交的短格式日期（YYYY-MM-DD）；标签不存在或 git
+// 命令执行失败时返回错误。
 func getTagDate(tag string) (string, error) {
 	cmd := exec.Command("git", "log", "-1", "--format=%ad", "--date=short", tag)
 	var out bytes.Buffer
@@ -48,7 +51,8 @@ func getTagDate(tag string) (string, error) {
 	return date, nil
 }
 
-// getCommits returns a list of commits between two tags
+// getCommits 返回两个标签区间内的提交列表，每项为提交说明加短哈希；tag2 为空时返回
+// tag1 可达的全部提交。git 命令执行失败时返回错误。
 func getCommits(tag1, tag2 string) ([]string, error) {
 	var cmd *exec.Cmd
 	if tag2 == "" {
@@ -66,7 +70,9 @@ func getCommits(tag1, tag2 string) ([]string, error) {
 	return commits, nil
 }
 
-// getRepoURL returns the URL of the remote repository
+// getRepoURL 读取 origin 远程仓库地址，将 GitHub SSH 形式（git@github.com:）转换为
+// HTTPS 形式并去掉末尾的 .git，供生成提交链接使用。未配置 origin 或 git 命令失败时
+// 返回错误。
 func getRepoURL() (string, error) {
 	cmd := exec.Command("git", "config", "--get", "remote.origin.url")
 	var out bytes.Buffer
@@ -77,17 +83,17 @@ func getRepoURL() (string, error) {
 	}
 	url := strings.TrimSpace(out.String())
 
-	// Convert SSH URL to HTTPS URL if necessary
+	// GitHub 的 SSH 地址需要先转换为 HTTPS，才能拼接网页端提交链接。
 	if strings.HasPrefix(url, "git@github.com:") {
 		url = strings.Replace(url, ":", "/", 1)
 		url = strings.Replace(url, "git@github.com", "https://github.com", 1)
 	}
-	// Ensure it ends with .git and remove it for display purposes
 	url = strings.TrimSuffix(url, ".git")
 	return url, nil
 }
 
-// classifyCommits classifies commits into different types
+// classifyCommits 按约定式提交前缀将 commits 归类到固定分类；无法识别前缀的提交统一
+// 归入 others，每条提交附带指向 repoURL 对应提交页的 Markdown 链接。
 func classifyCommits(commits []string, repoURL string) map[string][]string {
 	classified := map[string][]string{
 		"feat✨:引入新功能":            {},
@@ -109,7 +115,6 @@ func classifyCommits(commits []string, repoURL string) map[string][]string {
 	}
 
 	re := regexp.MustCompile(`^(feat|fix|style|perf|docs|init|test|refactor|patch|file|publish|tag|config|git)([^:]*):(.+)([a-f0-9]{7,40})$`)
-	// match := re.FindStringSubmatch(commit)
 
 	for _, commit := range commits {
 		match := re.FindStringSubmatch(commit)
@@ -158,8 +163,12 @@ func classifyCommits(commits []string, repoURL string) map[string][]string {
 	return classified
 }
 
+// Run 执行 changelog 子命令：初始化路径后获取标签列表与远程仓库地址，按标签倒序逐个
+// 读取标签日期与区间提交，分类拼装为 Markdown 文档，最后写入项目根目录 CHANGELOG.md。
+//
+// 路径初始化、标签或仓库地址获取失败时打印错误并直接返回；标签日期读取失败时同样
+// 终止生成。文件句柄创建或内容写入失败时打印对应错误提示。
 func Run(cmd *cobra.Command, args []string) {
-	// 数据初始化
 	if err := base.InitPath(); err != nil {
 		fmt.Println("初始化:", color.RedString(err.Error()))
 		return

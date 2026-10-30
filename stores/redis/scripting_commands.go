@@ -6,7 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// Eval 执行Lua脚本 ctx:上下文 script:Lua脚本 keys:键列表 args:参数列表
+// Eval 执行 Lua 脚本 script，keys 为脚本可见的键列表，args 为附加参数，返回脚本执行结果。
 func (r *Client) Eval(ctx context.Context, script string, keys []string, args ...any) (val any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -19,7 +19,7 @@ func (r *Client) Eval(ctx context.Context, script string, keys []string, args ..
 	return
 }
 
-// EvalSha 通过SHA1执行Lua脚本 ctx:上下文 sha1:脚本SHA1值 keys:键列表 args:参数列表
+// EvalSha 按脚本 SHA1 校验和执行已缓存的 Lua 脚本；脚本不在缓存中时返回 NOSCRIPT 错误。
 func (r *Client) EvalSha(ctx context.Context, sha1 string, keys []string, args ...any) (val any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -32,7 +32,7 @@ func (r *Client) EvalSha(ctx context.Context, sha1 string, keys []string, args .
 	return
 }
 
-// EvalRO 以只读模式执行Lua脚本 ctx:上下文 script:Lua脚本 keys:键列表 args:参数列表
+// EvalRO 以只读模式执行 Lua 脚本，脚本内不允许执行写命令。
 func (r *Client) EvalRO(ctx context.Context, script string, keys []string, args ...any) (val any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -45,7 +45,7 @@ func (r *Client) EvalRO(ctx context.Context, script string, keys []string, args 
 	return
 }
 
-// EvalShaRO 以只读模式通过SHA1执行Lua脚本 ctx:上下文 sha1:脚本SHA1值 keys:键列表 args:参数列表
+// EvalShaRO 以只读模式按 SHA1 执行已缓存 Lua 脚本，脚本内不允许执行写命令。
 func (r *Client) EvalShaRO(ctx context.Context, sha1 string, keys []string, args ...any) (val any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -58,7 +58,7 @@ func (r *Client) EvalShaRO(ctx context.Context, sha1 string, keys []string, args
 	return
 }
 
-// ScriptExists 检查脚本是否存在于缓存中 ctx:上下文 hashes:脚本SHA1值列表
+// ScriptExists 批量检查给定 SHA1 脚本是否已缓存在服务器，返回布尔切片顺序与 hashes 一致。
 func (r *Client) ScriptExists(ctx context.Context, hashes ...string) (val []bool, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -71,7 +71,7 @@ func (r *Client) ScriptExists(ctx context.Context, hashes ...string) (val []bool
 	return
 }
 
-// ScriptFlush 清空脚本缓存 ctx:上下文
+// ScriptFlush 清空服务器内存中的 Lua 脚本缓存。
 func (r *Client) ScriptFlush(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -84,7 +84,7 @@ func (r *Client) ScriptFlush(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ScriptKill 终止正在运行的Lua脚本 ctx:上下文
+// ScriptKill 终止当前正在运行的 Lua 脚本；无运行中脚本时返回错误。
 func (r *Client) ScriptKill(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -97,7 +97,7 @@ func (r *Client) ScriptKill(ctx context.Context) (val string, err error) {
 	return
 }
 
-// ScriptLoad 加载脚本到缓存但不执行 ctx:上下文 script:Lua脚本
+// ScriptLoad 将 Lua 脚本加载到服务器缓存但不执行，返回 SHA1 校验和供 EvalSha 使用。
 func (r *Client) ScriptLoad(ctx context.Context, script string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -110,7 +110,7 @@ func (r *Client) ScriptLoad(ctx context.Context, script string) (val string, err
 	return
 }
 
-// FunctionLoad 加载Redis函数 ctx:上下文 code:函数代码
+// FunctionLoad 加载 Redis 函数库代码 code，返回函数库名称；已存在同名函数库时报错。
 func (r *Client) FunctionLoad(ctx context.Context, code string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -123,7 +123,7 @@ func (r *Client) FunctionLoad(ctx context.Context, code string) (val string, err
 	return
 }
 
-// FunctionLoadReplace 替换已存在的Redis函数 ctx:上下文 code:函数代码
+// FunctionLoadReplace 加载函数库代码 code，并替换服务器上已存在的同名函数库。
 func (r *Client) FunctionLoadReplace(ctx context.Context, code string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -136,7 +136,7 @@ func (r *Client) FunctionLoadReplace(ctx context.Context, code string) (val stri
 	return
 }
 
-// FunctionDelete 删除Redis函数 ctx:上下文 libName:函数库名称
+// FunctionDelete 删除指定的 Redis 函数库 libName。
 func (r *Client) FunctionDelete(ctx context.Context, libName string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -149,7 +149,7 @@ func (r *Client) FunctionDelete(ctx context.Context, libName string) (val string
 	return
 }
 
-// FunctionFlush 清空所有Redis函数 ctx:上下文
+// FunctionFlush 清空服务器上全部已加载的 Redis 函数库。
 func (r *Client) FunctionFlush(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -162,7 +162,7 @@ func (r *Client) FunctionFlush(ctx context.Context) (val string, err error) {
 	return
 }
 
-// FunctionKill 终止正在运行的Redis函数 ctx:上下文
+// FunctionKill 终止当前正在运行的 Redis 函数；无运行中函数时返回错误。
 func (r *Client) FunctionKill(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -175,7 +175,7 @@ func (r *Client) FunctionKill(ctx context.Context) (val string, err error) {
 	return
 }
 
-// FunctionFlushAsync 异步清空所有Redis函数 ctx:上下文
+// FunctionFlushAsync 异步清空全部 Redis 函数库，命令不等待清理完成即返回。
 func (r *Client) FunctionFlushAsync(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -188,7 +188,7 @@ func (r *Client) FunctionFlushAsync(ctx context.Context) (val string, err error)
 	return
 }
 
-// FunctionList 列出所有Redis函数 ctx:上下文 q:查询条件
+// FunctionList 按 FunctionListQuery 列出函数库及其包含函数的定义信息。
 func (r *Client) FunctionList(ctx context.Context, q redis.FunctionListQuery) (val []redis.Library, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -201,7 +201,7 @@ func (r *Client) FunctionList(ctx context.Context, q redis.FunctionListQuery) (v
 	return
 }
 
-// FunctionDump 导出Redis函数 ctx:上下文
+// FunctionDump 导出全部已加载函数库的二进制快照，可配合 FunctionRestore 在其他实例恢复。
 func (r *Client) FunctionDump(ctx context.Context) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -214,7 +214,7 @@ func (r *Client) FunctionDump(ctx context.Context) (val string, err error) {
 	return
 }
 
-// FunctionRestore 恢复Redis函数 ctx:上下文 libDump:函数库数据
+// FunctionRestore 用 FunctionDump 产生的快照恢复函数库。
 func (r *Client) FunctionRestore(ctx context.Context, libDump string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -227,7 +227,7 @@ func (r *Client) FunctionRestore(ctx context.Context, libDump string) (val strin
 	return
 }
 
-// FunctionStats 获取Redis函数统计信息 ctx:上下文
+// FunctionStats 返回当前 Redis 函数的运行状态与统计信息。
 func (r *Client) FunctionStats(ctx context.Context) (val redis.FunctionStats, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -240,7 +240,7 @@ func (r *Client) FunctionStats(ctx context.Context) (val redis.FunctionStats, er
 	return
 }
 
-// FCall 调用Redis函数 ctx:上下文 function:函数名称 keys:键列表 args:参数列表
+// FCall 调用指定 Redis 函数，keys 为脚本可见的键列表，args 为附加参数，返回函数返回值。
 func (r *Client) FCall(ctx context.Context, function string, keys []string, args ...any) (val any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -253,7 +253,7 @@ func (r *Client) FCall(ctx context.Context, function string, keys []string, args
 	return
 }
 
-// FCallRo 以只读模式调用Redis函数 ctx:上下文 function:函数名称 keys:键列表 args:参数列表
+// FCallRo 以只读模式调用 Redis 函数，函数内不允许执行写命令。
 func (r *Client) FCallRo(ctx context.Context, function string, keys []string, args ...any) (val any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -266,7 +266,7 @@ func (r *Client) FCallRo(ctx context.Context, function string, keys []string, ar
 	return
 }
 
-// FCallRO 以只读模式调用Redis函数 ctx:上下文 function:函数名称 keys:键列表 args:参数列表
+// FCallRO 以只读模式调用 Redis 函数，函数内不允许执行写命令。
 func (r *Client) FCallRO(ctx context.Context, function string, keys []string, args ...any) (val any, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// Publish 将信息发送到指定的频道 ctx: 上下文 channel: 频道名称 message: 要发送的消息
+// Publish 将 message 发布到 channel 频道，返回收到该消息的订阅者数量。
 func (r *Client) Publish(ctx context.Context, channel, message string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -17,7 +17,7 @@ func (r *Client) Publish(ctx context.Context, channel, message string) (val int6
 	return
 }
 
-// SPublish 将信息发送到指定的频道 ctx: 上下文 channel: 频道名称 message: 要发送的消息
+// SPublish 将 message 发布到分片频道 channel，返回收到该消息的分片订阅者数量。
 func (r *Client) SPublish(ctx context.Context, channel, message string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -30,7 +30,7 @@ func (r *Client) SPublish(ctx context.Context, channel, message string) (val int
 	return
 }
 
-// PubSubChannels 获取匹配模式的活跃频道列表 ctx: 上下文 pattern: 频道匹配模式
+// PubSubChannels 返回匹配模式 pattern 的当前活跃频道；pattern 为空时返回全部活跃频道。
 func (r *Client) PubSubChannels(ctx context.Context, pattern string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -43,7 +43,7 @@ func (r *Client) PubSubChannels(ctx context.Context, pattern string) (val []stri
 	return
 }
 
-// PubSubNumSub 获取指定频道的订阅数量 ctx: 上下文 channels: 要查询的频道列表
+// PubSubNumSub 返回给定频道各自的订阅者数量，返回 map 的键为频道名。
 func (r *Client) PubSubNumSub(ctx context.Context, channels ...string) (val map[string]int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -56,7 +56,7 @@ func (r *Client) PubSubNumSub(ctx context.Context, channels ...string) (val map[
 	return
 }
 
-// PubSubNumPat 获取模式订阅的数量 ctx: 上下文
+// PubSubNumPat 返回当前处于订阅状态的模式订阅（PSubscribe）数量。
 func (r *Client) PubSubNumPat(ctx context.Context) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -69,7 +69,7 @@ func (r *Client) PubSubNumPat(ctx context.Context) (val int64, err error) {
 	return
 }
 
-// PubSubShardChannels 获取匹配模式的活跃分片频道列表 ctx: 上下文 pattern: 频道匹配模式
+// PubSubShardChannels 返回匹配模式 pattern 的活跃分片频道；pattern 为空时返回全部活跃分片频道。
 func (r *Client) PubSubShardChannels(ctx context.Context, pattern string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -82,7 +82,7 @@ func (r *Client) PubSubShardChannels(ctx context.Context, pattern string) (val [
 	return
 }
 
-// PubSubShardNumSub 获取指定分片频道的订阅数量 ctx: 上下文 channels: 要查询的分片频道列表
+// PubSubShardNumSub 返回给定分片频道各自的订阅者数量，返回 map 的键为分片频道名。
 func (r *Client) PubSubShardNumSub(ctx context.Context, channels ...string) (val map[string]int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

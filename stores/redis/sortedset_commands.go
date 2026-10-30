@@ -7,7 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// BZPopMax 阻塞式获取有序集合中分数最大的元素 ctx: 上下文 timeout: 超时时间 keys: 一个或多个有序集合键
+// BZPopMax 阻塞式弹出有序集合中分数最高的成员，返回成员、分数及来源键；超时仍无成员时返回 redis.Nil。
 func (r *Client) BZPopMax(ctx context.Context, timeout time.Duration, keys ...string) (val *redis.ZWithKey, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -20,7 +20,7 @@ func (r *Client) BZPopMax(ctx context.Context, timeout time.Duration, keys ...st
 	return
 }
 
-// BZPopMin 阻塞式获取有序集合中分数最小的元素 ctx: 上下文 timeout: 超时时间 keys: 一个或多个有序集合键
+// BZPopMin 阻塞式弹出有序集合中分数最低的成员，返回成员、分数及来源键；超时仍无成员时返回 redis.Nil。
 func (r *Client) BZPopMin(ctx context.Context, timeout time.Duration, keys ...string) (val *redis.ZWithKey, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -33,7 +33,7 @@ func (r *Client) BZPopMin(ctx context.Context, timeout time.Duration, keys ...st
 	return
 }
 
-// BZMPop 阻塞式从有序集合中弹出元素 ctx: 上下文 timeout: 超时时间 order: 排序方式 count: 弹出数量 keys: 一个或多个有序集合键
+// BZMPop 阻塞式按 order（MAX/MIN）从多个有序集合弹出 count 个成员，返回来源键与成员分数；超时返回 redis.Nil。
 func (r *Client) BZMPop(ctx context.Context, timeout time.Duration, order string, count int64, keys ...string) (val string, ret []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -46,9 +46,8 @@ func (r *Client) BZMPop(ctx context.Context, timeout time.Duration, order string
 	return
 }
 
-// ZAdd 向有序集合添加元素 ctx: 上下文 key: 有序集合键 members: 要添加的元素及其分数
+// ZAdd 向有序集合 key 添加 members（成员与分数），返回新增成员数量；已存在成员更新为给定分数。
 func (r *Client) ZAdd(ctx context.Context, key string, members ...redis.Z) (val int64, err error) {
-	// return getRedis(r).ZAdd(getCtx(ctx), key, members...)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -60,7 +59,7 @@ func (r *Client) ZAdd(ctx context.Context, key string, members ...redis.Z) (val 
 	return
 }
 
-// ZAddLT 仅当新分数小于当前分数时更新元素 ctx: 上下文 key: 有序集合键 members: 要添加的元素及其分数
+// ZAddLT 仅当新分数小于当前分数时更新成员分数；成员不存在时新增。
 func (r *Client) ZAddLT(ctx context.Context, key string, members ...redis.Z) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -73,7 +72,7 @@ func (r *Client) ZAddLT(ctx context.Context, key string, members ...redis.Z) (va
 	return
 }
 
-// ZAddGT 仅当新分数大于当前分数时更新元素 ctx: 上下文 key: 有序集合键 members: 要添加的元素及其分数
+// ZAddGT 仅当新分数大于当前分数时更新成员分数；成员不存在时新增。
 func (r *Client) ZAddGT(ctx context.Context, key string, members ...redis.Z) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -86,7 +85,7 @@ func (r *Client) ZAddGT(ctx context.Context, key string, members ...redis.Z) (va
 	return
 }
 
-// ZAddNX 仅当元素不存在时添加元素 ctx: 上下文 key: 有序集合键 members: 要添加的元素及其分数
+// ZAddNX 仅当成员不存在时添加；已存在成员不更新分数。
 func (r *Client) ZAddNX(ctx context.Context, key string, members ...redis.Z) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -99,7 +98,7 @@ func (r *Client) ZAddNX(ctx context.Context, key string, members ...redis.Z) (va
 	return
 }
 
-// ZAddXX 仅当元素存在时更新元素 ctx: 上下文 key: 有序集合键 members: 要添加的元素及其分数
+// ZAddXX 仅当成员已存在时更新分数；不存在成员不添加。
 func (r *Client) ZAddXX(ctx context.Context, key string, members ...redis.Z) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -112,7 +111,7 @@ func (r *Client) ZAddXX(ctx context.Context, key string, members ...redis.Z) (va
 	return
 }
 
-// ZAddArgs 使用ZAddArgs参数向有序集合添加元素 ctx: 上下文 key: 有序集合键 args: ZAdd参数
+// ZAddArgs 按 ZAddArgs 指定的条件（NX/XX、LT/GT、CH、INCR 等）向有序集合添加或更新成员。
 func (r *Client) ZAddArgs(ctx context.Context, key string, args redis.ZAddArgs) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -125,7 +124,7 @@ func (r *Client) ZAddArgs(ctx context.Context, key string, args redis.ZAddArgs) 
 	return
 }
 
-// ZAddArgsIncr 使用ZAddArgs参数增加元素的分数 ctx: 上下文 key: 有序集合键 args: ZAdd参数
+// ZAddArgsIncr 按 ZAddArgs 对成员分数执行增量更新，返回更新后的分数。
 func (r *Client) ZAddArgsIncr(ctx context.Context, key string, args redis.ZAddArgs) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -138,7 +137,7 @@ func (r *Client) ZAddArgsIncr(ctx context.Context, key string, args redis.ZAddAr
 	return
 }
 
-// ZCard 获取有序集合的元素数量 ctx: 上下文 key: 有序集合键
+// ZCard 返回有序集合 key 的成员数量；键不存在时返回 0。
 func (r *Client) ZCard(ctx context.Context, key string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -151,7 +150,7 @@ func (r *Client) ZCard(ctx context.Context, key string) (val int64, err error) {
 	return
 }
 
-// ZCount 统计分数在指定范围内的元素数量 ctx: 上下文 key: 有序集合键 min: 最小分数 max: 最大分数
+// ZCount 返回分数落在 [min, max] 区间内的成员数量；min、max 可加 "(" 前缀表示开区间。
 func (r *Client) ZCount(ctx context.Context, key string, min, max string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -164,7 +163,7 @@ func (r *Client) ZCount(ctx context.Context, key string, min, max string) (val i
 	return
 }
 
-// ZLexCount 统计字典序在指定范围内的元素数量 ctx: 上下文 key: 有序集合键 min: 最小字典序 max: 最大字典序
+// ZLexCount 返回字典序落在 [min, max] 区间内的成员数量。
 func (r *Client) ZLexCount(ctx context.Context, key string, min, max string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -177,7 +176,7 @@ func (r *Client) ZLexCount(ctx context.Context, key string, min, max string) (va
 	return
 }
 
-// ZIncrBy 增加有序集合中元素的分数 ctx: 上下文 key: 有序集合键 increment: 增量 member: 元素
+// ZIncrBy 为有序集合成员 member 的分数增加 increment，返回更新后的分数；成员不存在时先以 0 为基准。
 func (r *Client) ZIncrBy(ctx context.Context, key string, increment float64, member string) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -190,7 +189,7 @@ func (r *Client) ZIncrBy(ctx context.Context, key string, increment float64, mem
 	return
 }
 
-// ZInter 计算多个有序集合的交集 ctx: 上下文 store: ZStore参数
+// ZInter 计算多个有序集合的交集，返回成员名称；成员权重与聚合方式由 ZStore 指定。
 func (r *Client) ZInter(ctx context.Context, store *redis.ZStore) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -203,7 +202,7 @@ func (r *Client) ZInter(ctx context.Context, store *redis.ZStore) (val []string,
 	return
 }
 
-// ZInterWithScores 计算多个有序集合的交集并返回分数 ctx: 上下文 store: ZStore参数
+// ZInterWithScores 计算多个有序集合的交集，并连同聚合分数一起返回。
 func (r *Client) ZInterWithScores(ctx context.Context, store *redis.ZStore) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -216,7 +215,7 @@ func (r *Client) ZInterWithScores(ctx context.Context, store *redis.ZStore) (val
 	return
 }
 
-// ZInterCard 计算多个有序集合的交集基数 ctx: 上下文 limit: 最大返回数量 keys: 一个或多个有序集合键
+// ZInterCard 返回多个有序集合交集的成员数量，limit 为参与计算的基数上限。
 func (r *Client) ZInterCard(ctx context.Context, limit int64, keys ...string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -229,7 +228,7 @@ func (r *Client) ZInterCard(ctx context.Context, limit int64, keys ...string) (v
 	return
 }
 
-// ZInterStore 计算多个有序集合的交集并存储结果 ctx: 上下文 key: 目标有序集合键 store: ZStore参数
+// ZInterStore 将多个有序集合的交集结果存入目标 key，返回结果成员数量。
 func (r *Client) ZInterStore(ctx context.Context, key string, store *redis.ZStore) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -242,7 +241,7 @@ func (r *Client) ZInterStore(ctx context.Context, key string, store *redis.ZStor
 	return
 }
 
-// ZMPop 从有序集合中弹出元素 ctx: 上下文 order: 排序方式 count: 弹出数量 keys: 一个或多个有序集合键
+// ZMPop 按 order（MAX/MIN）从多个有序集合弹出 count 个成员，返回来源键与成员分数。
 func (r *Client) ZMPop(ctx context.Context, order string, count int64, keys ...string) (key string, ret []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -255,7 +254,7 @@ func (r *Client) ZMPop(ctx context.Context, order string, count int64, keys ...s
 	return
 }
 
-// ZMScore 获取多个元素的分数 ctx: 上下文 key: 有序集合键 members: 要查询的元素
+// ZMScore 返回给定多个成员的分数切片，顺序与 members 一致；不存在成员对应位置为 nil。
 func (r *Client) ZMScore(ctx context.Context, key string, members ...string) (val []float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -268,7 +267,7 @@ func (r *Client) ZMScore(ctx context.Context, key string, members ...string) (va
 	return
 }
 
-// ZPopMax 删除并返回分数最高的元素 ctx: 上下文 key: 有序集合键 count: 要删除的元素数量
+// ZPopMax 弹出分数最高的成员，count 可选指定弹出数量。
 func (r *Client) ZPopMax(ctx context.Context, key string, count ...int64) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -281,7 +280,7 @@ func (r *Client) ZPopMax(ctx context.Context, key string, count ...int64) (val [
 	return
 }
 
-// ZPopMin 删除并返回分数最低的元素 ctx: 上下文 key: 有序集合键 count: 要删除的元素数量
+// ZPopMin 弹出分数最低的成员，count 可选指定弹出数量。
 func (r *Client) ZPopMin(ctx context.Context, key string, count ...int64) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -294,7 +293,7 @@ func (r *Client) ZPopMin(ctx context.Context, key string, count ...int64) (val [
 	return
 }
 
-// ZRange 获取有序集合指定范围内的元素 ctx: 上下文 key: 有序集合键 start: 起始索引 stop: 结束索引
+// ZRange 按索引区间 [start, stop] 升序返回成员名称。
 func (r *Client) ZRange(ctx context.Context, key string, start, stop int64) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -307,7 +306,7 @@ func (r *Client) ZRange(ctx context.Context, key string, start, stop int64) (val
 	return
 }
 
-// ZRangeWithScores 获取有序集合指定范围内的元素及其分数 ctx: 上下文 key: 有序集合键 start: 起始索引 stop: 结束索引
+// ZRangeWithScores 按索引区间 [start, stop] 升序返回成员及其分数。
 func (r *Client) ZRangeWithScores(ctx context.Context, key string, start, stop int64) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -320,7 +319,7 @@ func (r *Client) ZRangeWithScores(ctx context.Context, key string, start, stop i
 	return
 }
 
-// ZRangeByScore 获取分数在指定范围内的元素 ctx: 上下文 key: 有序集合键 opt: ZRangeBy参数
+// ZRangeByScore 按 ZRangeBy 指定的分数区间升序返回成员名称。
 func (r *Client) ZRangeByScore(ctx context.Context, key string, opt *redis.ZRangeBy) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -333,7 +332,7 @@ func (r *Client) ZRangeByScore(ctx context.Context, key string, opt *redis.ZRang
 	return
 }
 
-// ZRangeByLex 获取字典序在指定范围内的元素 ctx: 上下文 key: 有序集合键 opt: ZRangeBy参数
+// ZRangeByLex 按 ZRangeBy 指定的字典序区间升序返回成员名称。
 func (r *Client) ZRangeByLex(ctx context.Context, key string, opt *redis.ZRangeBy) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -346,7 +345,7 @@ func (r *Client) ZRangeByLex(ctx context.Context, key string, opt *redis.ZRangeB
 	return
 }
 
-// ZRangeByScoreWithScores 获取分数在指定范围内的元素及其分数 ctx: 上下文 key: 有序集合键 opt: ZRangeBy参数
+// ZRangeByScoreWithScores 按分数区间升序返回成员及其分数。
 func (r *Client) ZRangeByScoreWithScores(ctx context.Context, key string, opt *redis.ZRangeBy) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -359,7 +358,7 @@ func (r *Client) ZRangeByScoreWithScores(ctx context.Context, key string, opt *r
 	return
 }
 
-// ZRangeArgs 使用ZRangeArgs参数获取有序集合元素 ctx: 上下文 z: ZRangeArgs参数
+// ZRangeArgs 按 ZRangeArgs 指定的条件返回成员名称。
 func (r *Client) ZRangeArgs(ctx context.Context, z redis.ZRangeArgs) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -372,7 +371,7 @@ func (r *Client) ZRangeArgs(ctx context.Context, z redis.ZRangeArgs) (val []stri
 	return
 }
 
-// ZRangeArgsWithScores 使用ZRangeArgs参数获取有序集合元素及其分数 ctx: 上下文 z: ZRangeArgs参数
+// ZRangeArgsWithScores 按 ZRangeArgs 指定的条件返回成员及其分数。
 func (r *Client) ZRangeArgsWithScores(ctx context.Context, z redis.ZRangeArgs) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -385,7 +384,7 @@ func (r *Client) ZRangeArgsWithScores(ctx context.Context, z redis.ZRangeArgs) (
 	return
 }
 
-// ZRangeStore 使用ZRangeArgs参数获取有序集合元素并存储到目标集合 ctx: 上下文 dst: 目标集合键 z: ZRangeArgs参数
+// ZRangeStore 按 ZRangeArgs 取成员并存入目标集合 dst，返回写入的成员数量。
 func (r *Client) ZRangeStore(ctx context.Context, dst string, z redis.ZRangeArgs) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -399,7 +398,7 @@ func (r *Client) ZRangeStore(ctx context.Context, dst string, z redis.ZRangeArgs
 
 }
 
-// ZRank 获取元素的排名 ctx: 上下文 key: 有序集合键 member: 元素
+// ZRank 返回成员 member 按分数升序的排名（从 0 开始）；成员不存在时返回 redis.Nil。
 func (r *Client) ZRank(ctx context.Context, key string, member string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -412,7 +411,7 @@ func (r *Client) ZRank(ctx context.Context, key string, member string) (val int6
 	return
 }
 
-// ZRankWithScore 获取元素的排名及其分数 ctx: 上下文 key: 有序集合键 member: 元素
+// ZRankWithScore 返回成员 member 的升序排名及其分数。
 func (r *Client) ZRankWithScore(ctx context.Context, key string, member string) (val redis.RankScore, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -425,7 +424,7 @@ func (r *Client) ZRankWithScore(ctx context.Context, key string, member string) 
 	return
 }
 
-// ZRem 移除有序集合中的元素 ctx: 上下文 key: 有序集合键 members: 要移除的元素
+// ZRem 移除有序集合中的 members，返回实际移除的成员数量。
 func (r *Client) ZRem(ctx context.Context, key string, members ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -438,7 +437,7 @@ func (r *Client) ZRem(ctx context.Context, key string, members ...any) (val int6
 	return
 }
 
-// ZRemRangeByRank 移除指定排名范围内的元素 ctx: 上下文 key: 有序集合键 start: 起始排名 stop: 结束排名
+// ZRemRangeByRank 移除排名落在 [start, stop] 区间内的成员，返回移除数量。
 func (r *Client) ZRemRangeByRank(ctx context.Context, key string, start, stop int64) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -451,7 +450,7 @@ func (r *Client) ZRemRangeByRank(ctx context.Context, key string, start, stop in
 	return
 }
 
-// ZRemRangeByScore 移除指定分数范围内的元素 ctx: 上下文 key: 有序集合键 min: 最小分数 max: 最大分数
+// ZRemRangeByScore 移除分数落在 [min, max] 区间内的成员，返回移除数量。
 func (r *Client) ZRemRangeByScore(ctx context.Context, key string, min, max string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -464,7 +463,7 @@ func (r *Client) ZRemRangeByScore(ctx context.Context, key string, min, max stri
 	return
 }
 
-// ZRemRangeByLex 移除指定字典序范围内的元素 ctx: 上下文 key: 有序集合键 min: 最小字典序 max: 最大字典序
+// ZRemRangeByLex 移除字典序落在 [min, max] 区间内的成员，返回移除数量。
 func (r *Client) ZRemRangeByLex(ctx context.Context, key string, min, max string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -477,7 +476,7 @@ func (r *Client) ZRemRangeByLex(ctx context.Context, key string, min, max string
 	return
 }
 
-// ZRevRange 获取指定范围内的元素（倒序） ctx: 上下文 key: 有序集合键 start: 起始索引 stop: 结束索引
+// ZRevRange 按索引区间 [start, stop] 降序返回成员名称。
 func (r *Client) ZRevRange(ctx context.Context, key string, start, stop int64) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -490,7 +489,7 @@ func (r *Client) ZRevRange(ctx context.Context, key string, start, stop int64) (
 	return
 }
 
-// ZRevRangeWithScores 获取指定范围内的元素及其分数（倒序） ctx: 上下文 key: 有序集合键 start: 起始索引 stop: 结束索引
+// ZRevRangeWithScores 按索引区间 [start, stop] 降序返回成员及其分数。
 func (r *Client) ZRevRangeWithScores(ctx context.Context, key string, start, stop int64) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -503,7 +502,7 @@ func (r *Client) ZRevRangeWithScores(ctx context.Context, key string, start, sto
 	return
 }
 
-// ZRevRangeByScore 获取指定分数范围内的元素（倒序） ctx: 上下文 key: 有序集合键 opt: ZRangeBy参数
+// ZRevRangeByScore 按 ZRangeBy 指定的分数区间降序返回成员名称。
 func (r *Client) ZRevRangeByScore(ctx context.Context, key string, opt *redis.ZRangeBy) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -516,7 +515,7 @@ func (r *Client) ZRevRangeByScore(ctx context.Context, key string, opt *redis.ZR
 	return
 }
 
-// ZRevRangeByLex 获取指定字典序范围内的元素（倒序） ctx: 上下文 key: 有序集合键 opt: ZRangeBy参数
+// ZRevRangeByLex 按 ZRangeBy 指定的字典序区间降序返回成员名称。
 func (r *Client) ZRevRangeByLex(ctx context.Context, key string, opt *redis.ZRangeBy) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -529,7 +528,7 @@ func (r *Client) ZRevRangeByLex(ctx context.Context, key string, opt *redis.ZRan
 	return
 }
 
-// ZRevRangeByScoreWithScores 获取指定分数范围内的元素及其分数（倒序） ctx: 上下文 key: 有序集合键 opt: ZRangeBy参数
+// ZRevRangeByScoreWithScores 按分数区间降序返回成员及其分数。
 func (r *Client) ZRevRangeByScoreWithScores(ctx context.Context, key string, opt *redis.ZRangeBy) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -542,7 +541,7 @@ func (r *Client) ZRevRangeByScoreWithScores(ctx context.Context, key string, opt
 	return
 }
 
-// ZRevRank 获取元素的倒序排名 ctx: 上下文 key: 有序集合键 member: 元素
+// ZRevRank 返回成员 member 按分数降序的排名（从 0 开始）；成员不存在时返回 redis.Nil。
 func (r *Client) ZRevRank(ctx context.Context, key string, member string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -555,7 +554,7 @@ func (r *Client) ZRevRank(ctx context.Context, key string, member string) (val i
 	return
 }
 
-// ZRevRankWithScore 获取元素的倒序排名及其分数 ctx: 上下文 key: 有序集合键 member: 元素
+// ZRevRankWithScore 返回成员 member 的降序排名及其分数。
 func (r *Client) ZRevRankWithScore(ctx context.Context, key string, member string) (val redis.RankScore, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -568,7 +567,7 @@ func (r *Client) ZRevRankWithScore(ctx context.Context, key string, member strin
 	return
 }
 
-// ZScore 获取元素的分数 ctx: 上下文 key: 有序集合键 member: 元素
+// ZScore 返回成员 member 的分数；成员不存在时返回 redis.Nil。
 func (r *Client) ZScore(ctx context.Context, key string, member string) (val float64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -581,7 +580,7 @@ func (r *Client) ZScore(ctx context.Context, key string, member string) (val flo
 	return
 }
 
-// ZUnionStore 计算多个有序集合的并集并存储结果 ctx: 上下文 dest: 目标集合键 store: ZStore参数
+// ZUnionStore 将多个有序集合的并集存入 dest，返回结果成员数量；权重与聚合方式由 ZStore 指定。
 func (r *Client) ZUnionStore(ctx context.Context, dest string, store *redis.ZStore) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -594,7 +593,7 @@ func (r *Client) ZUnionStore(ctx context.Context, dest string, store *redis.ZSto
 	return
 }
 
-// ZRandMember 随机获取有序集合中的元素 ctx: 上下文 key: 有序集合键 count: 要获取的元素数量
+// ZRandMember 随机返回有序集合中 count 个成员名称，不移除成员。
 func (r *Client) ZRandMember(ctx context.Context, key string, count int) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -607,7 +606,7 @@ func (r *Client) ZRandMember(ctx context.Context, key string, count int) (val []
 	return
 }
 
-// ZRandMemberWithScores 随机获取有序集合中的元素及其分数 ctx: 上下文 key: 有序集合键 count: 要获取的元素数量
+// ZRandMemberWithScores 随机返回有序集合中 count 个成员及其分数，不移除成员。
 func (r *Client) ZRandMemberWithScores(ctx context.Context, key string, count int) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -620,7 +619,7 @@ func (r *Client) ZRandMemberWithScores(ctx context.Context, key string, count in
 	return
 }
 
-// ZUnion 计算多个有序集合的并集 ctx: 上下文 store: ZStore参数
+// ZUnion 计算多个有序集合的并集，返回成员名称；权重与聚合方式由 ZStore 指定。
 func (r *Client) ZUnion(ctx context.Context, store redis.ZStore) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -633,7 +632,7 @@ func (r *Client) ZUnion(ctx context.Context, store redis.ZStore) (val []string, 
 	return
 }
 
-// ZUnionWithScores 计算多个有序集合的并集并返回分数 ctx: 上下文 store: ZStore参数
+// ZUnionWithScores 计算多个有序集合的并集，并连同聚合分数一起返回。
 func (r *Client) ZUnionWithScores(ctx context.Context, store redis.ZStore) (val []redis.Z, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -646,7 +645,7 @@ func (r *Client) ZUnionWithScores(ctx context.Context, store redis.ZStore) (val 
 	return
 }
 
-// ZDiff 计算多个有序集合的差集 ctx: 上下文 keys: 一个或多个有序集合键
+// ZDiff 计算多个有序集合的差集（第一个集合相对其余集合），返回成员名称。
 func (r *Client) ZDiff(ctx context.Context, keys ...string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -659,9 +658,8 @@ func (r *Client) ZDiff(ctx context.Context, keys ...string) (val []string, err e
 	return
 }
 
-// ZDiffWithScores 计算多个有序集合的差集并返回分数 ctx: 上下文 keys: 一个或多个有序集合键
+// ZDiffWithScores 计算多个有序集合的差集，并连同分数一起返回。
 func (r *Client) ZDiffWithScores(ctx context.Context, keys ...string) (val []redis.Z, err error) {
-	// return getRedis(r).ZDiffWithScores(getCtx(ctx), keys...)
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
 		if err != nil {
@@ -673,7 +671,7 @@ func (r *Client) ZDiffWithScores(ctx context.Context, keys ...string) (val []red
 	return
 }
 
-// ZDiffStore 计算多个有序集合的差集并存储结果 ctx: 上下文 destination: 目标集合键 keys: 一个或多个有序集合键
+// ZDiffStore 将多个有序集合的差集结果存入 destination，返回结果成员数量。
 func (r *Client) ZDiffStore(ctx context.Context, destination string, keys ...string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -686,7 +684,8 @@ func (r *Client) ZDiffStore(ctx context.Context, destination string, keys ...str
 	return
 }
 
-// ZScan 扫描有序集合中的元素 ctx: 上下文 key: 有序集合键 cursorIn: 游标 match: 匹配模式 count: 返回数量
+// ZScan 以游标 cursorIn 迭代有序集合成员；match 为成员匹配模式，count 为建议批次大小，
+// 返回本次成员与供下次调用使用的新游标。
 func (r *Client) ZScan(ctx context.Context, key string, cursorIn uint64, match string, count int64) (val []string, cursor uint64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

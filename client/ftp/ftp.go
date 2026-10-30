@@ -10,29 +10,39 @@ import (
 	"github.com/jlaffaye/ftp"
 )
 
-// Config 配置
+// Config 保存 FTP 服务器的连接配置。
 type Config struct {
-	Host     string
-	Port     string
-	User     string
+	// Host 为服务器主机名或 IP 地址。
+	Host string
+	// Port 为服务端口，字符串形式。
+	Port string
+	// User 为登录用户名。
+	User string
+	// Password 为登录密码。
 	Password string
-	Timeout  time.Duration
+	// Timeout 为拨号连接的超时时间。
+	Timeout time.Duration
 }
 
-// FileData 文件
+// FileData 描述目录列举出的一个文件或目录条目。
 type FileData struct {
+	// Name 为条目名称。
 	Name string
+	// Size 为条目大小（字节）。
 	Size uint64
+	// Type 为条目类型，取值 file、directory 或 other。
 	Type string
 }
 
-// Client 客户端连接
+// Client 封装底层 FTP 连接及其配置，提供文件与目录操作。
+//
+// 零值不可直接使用，须由 Config.New 创建；连接本身不是并发安全的，同一 Client 的操作应串行调用。
 type Client struct {
 	ftp    *ftp.ServerConn
 	config *Config
 }
 
-// New 新建连接
+// New 依据配置拨号连接 FTP 服务器；拨号失败时返回错误。连接成功后须再调用 Login 完成账号认证。
 func (config *Config) New() (*Client, error) {
 	conn, err := ftp.Dial(config.Host+":"+config.Port, ftp.DialWithTimeout(config.Timeout))
 	if err != nil {
@@ -44,32 +54,32 @@ func (config *Config) New() (*Client, error) {
 	}, nil
 }
 
-// ChangeDir 将当前目录更改为指定的路径
+// ChangeDir 将当前工作目录切换到指定路径。
 func (client *Client) ChangeDir(path string) error {
 	return client.ftp.ChangeDir(path)
 }
 
-// ChangeDirToParent 将当前目录更改为父目录。这类似于对ChangeDir的调用，路径设置为“..”
+// ChangeDirToParent 将当前工作目录切换到父目录，等价于 ChangeDir("..")。
 func (client *Client) ChangeDirToParent() error {
 	return client.ftp.ChangeDirToParent()
 }
 
-// CurrentDir 返回当前目录的路径
+// CurrentDir 返回当前工作目录的远程路径。
 func (client *Client) CurrentDir() (string, error) {
 	return client.ftp.CurrentDir()
 }
 
-// Delete 从远程FTP服务器删除指定的文件
+// Delete 删除服务器上指定的远程文件。
 func (client *Client) Delete(path string) error {
 	return client.ftp.Delete(path)
 }
 
-// FileSize 返回文件的大小
+// FileSize 返回指定远程文件的大小（字节）。
 func (client *Client) FileSize(path string) (int64, error) {
 	return client.ftp.FileSize(path)
 }
 
-// DownFile 下载文件到本地
+// DownFile 下载 serverPath 处的远程文件并写入本地 destPath；下载或写入失败时返回错误。
 func (client *Client) DownFile(serverPath, destPath string) error {
 	resp, err := client.ftp.Retr(serverPath)
 	if err != nil {
@@ -87,7 +97,7 @@ func (client *Client) DownFile(serverPath, destPath string) error {
 	return os.WriteFile(destPath, fileData, 0664)
 }
 
-// UploadFile 上传本地文件到服务器
+// UploadFile 将本地 srcFullPath 文件上传到 serverPath；上传前会尝试创建远程父目录，该目录创建不做递归。
 func (client *Client) UploadFile(srcFullPath, serverPath string) error {
 	file, err := os.Open(srcFullPath)
 	if err != nil {
@@ -105,7 +115,7 @@ func (client *Client) UploadFile(srcFullPath, serverPath string) error {
 	return client.ftp.Stor(serverPath, file)
 }
 
-// List 返回文件夹下所有文件
+// List 切换到 path 并列举其下全部条目，返回文件与目录信息；目录切换或列举失败时返回错误。
 func (client *Client) List(path string) (filesData []FileData, err error) {
 	err = client.ChangeDir(path)
 	if err != nil {
@@ -129,7 +139,7 @@ func (client *Client) List(path string) (filesData []FileData, err error) {
 	return
 }
 
-// NameList 返回文件夹下所有文件
+// NameList 切换到 path 并返回其下所有条目的名称列表。
 func (client *Client) NameList(path string) ([]string, error) {
 	err := client.ChangeDir(path)
 	if err != nil {
@@ -138,37 +148,37 @@ func (client *Client) NameList(path string) ([]string, error) {
 	return client.ftp.NameList("")
 }
 
-// Rename ..
+// Rename 将远程文件或目录从 from 重命名为 to。
 func (client *Client) Rename(from, to string) error {
 	return client.ftp.Rename(from, to)
 }
 
-// RemoveDirRecur ..
+// RemoveDirRecur 递归删除指定目录及其全部内容。
 func (client *Client) RemoveDirRecur(path string) error {
 	return client.ftp.RemoveDirRecur(path)
 }
 
-// MakeDir ..
+// MakeDir 创建指定远程目录；父目录不存在时由底层命令决定是否报错。
 func (client *Client) MakeDir(path string) error {
 	return client.ftp.MakeDir(path)
 }
 
-// RemoveDir ..
+// RemoveDir 删除指定的空目录。
 func (client *Client) RemoveDir(path string) error {
 	return client.ftp.RemoveDir(path)
 }
 
-// Logout ..
+// Logout 从 FTP 服务器登出。
 func (client *Client) Logout() error {
 	return client.ftp.Logout()
 }
 
-// Quit ..
+// Quit 关闭与 FTP 服务器的连接。
 func (client *Client) Quit() error {
 	return client.ftp.Quit()
 }
 
-// Login 验证登录
+// Login 使用配置中的用户名与密码完成认证。
 func (client *Client) Login() error {
 	return client.ftp.Login(client.config.User, client.config.Password)
 }

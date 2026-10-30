@@ -11,10 +11,16 @@ import (
 	"github.com/fatih/color"
 )
 
+// repoAddIgnores 为追加服务时从模板目录中排除的版本控制与忽略规则文件。
 var repoAddIgnores = []string{
 	".git", ".github", ".gitignore",
 }
 
+// Add 在现有项目 dir 下追加一个服务目录，从 layout 仓库复制模板到 dir/Path，并将模板中
+// 的模块路径替换为 mod/Path；目标目录已存在时先弹出确认，用户同意覆盖后删除原目录再复制，
+// ctx 用于控制整个拉取过程的超时。
+//
+// 仓库复制失败时返回对应错误；用户拒绝覆盖或确认流程被中断时返回错误。
 func (p *Project) Add(ctx context.Context, dir string, layout string, branch string, mod string) error {
 	to := path.Join(dir, p.Path)
 

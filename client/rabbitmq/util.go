@@ -14,11 +14,8 @@ import (
 const defaultRetryInterval = time.Second * 3
 const defaultRetryTimes = 10
 
-// func init() {
-// 	rand.Seed(time.Now().Unix())
-// }
-
-// Dial 如果 retryable 为 nil，则表示不启用断线重连
+// Dial 创建 Connection 并立即完成首次拨号连接；retryable 为 nil 时不启用断线重连。
+// 拨号失败时返回错误。
 func Dial(url string, retryable Retryable) (*Connection, error) {
 	conn := NewConnection(url, retryable)
 	err := conn.Dial()
@@ -28,24 +25,24 @@ func Dial(url string, retryable Retryable) (*Connection, error) {
 	return conn, nil
 }
 
-// Adder 累加器。每次执行累加一定数额，返回一个 uint64。
+// Adder 是无符号整数累加器，每次调用返回累加后的新值。
 type Adder func() uint64
 
-// SAdder 返回一个 uint64 的字符串
+// SAdder 是字符串形式的累加器，每次调用返回一个唯一标识字符串。
 type SAdder func() string
 
-// NewDefaultSAdder 获取一个从 0 开始累加，每次加 1 的累加器。返回一个 uint64 的字符串
+// NewDefaultSAdder 返回从 0 开始、每次递增 1 的字符串累加器。
 func NewDefaultSAdder() SAdder {
 	return SAdderGenerator(1)
 }
 
-// AdderGenerator 累加器生成器。生成的累加器从 0 开始累加，delta 表示需要累加的数字
+// AdderGenerator 生成一个从 0 开始、每次调用按 delta 递增的 Adder。
 func AdderGenerator(delta uint64) Adder {
 	var i uint64 = 0
 	return func() uint64 { return atomic.AddUint64(&i, delta) }
 }
 
-// SAdderGenerator ..
+// SAdderGenerator 生成一个字符串累加器，每次调用将内部计数器按 delta 递增并转为十六进制字符串返回。
 func SAdderGenerator(delta uint64) SAdder {
 	adder := AdderGenerator(delta)
 	return func() string {
@@ -74,14 +71,15 @@ func getNonNilMessageFactory(factory MessageFactory) MessageFactory {
 	return MessagePlainPersistent
 }
 
-// Retryable ..
+// Retryable 定义重试策略的契约：执行可重试操作、查询是否已放弃重试以及主动放弃重试。
+// 实现须保证重试过程可被终止，避免出现无限重试。
 type Retryable interface {
-	// retry 会尝试重试 retryOperation 中的操作。retryOperation 返回 brk 表示终止循环；
-	// 否则继续尝试，直到尝试次数结束。
+	// retry 反复执行 retryOperation；回调返回 brk 为 true 表示终止循环，否则按策略继续尝试，
+	// 直到次数耗尽或策略主动放弃。
 	retry(retryOperation func() (brk bool))
-	// 是否已放弃重试（即，达到了重试结束的标志）
+	// hasGaveUp 返回是否已经放弃重试（达到重试结束条件）。
 	hasGaveUp() bool
-	// 放弃重试。在应该放弃重试的时候主动放弃重试，防止多余的重试或无限重试。
+	// GiveUp 主动放弃重试，用于在应当停止时立即终止后续重试，避免多余尝试或无限重试。
 	GiveUp()
 }
 
@@ -89,34 +87,39 @@ var emptyRetryable emptyRetry
 
 type emptyRetry struct{}
 
-func (emptyRetry) retry(fn func() bool) { fn() } // 只执行一次 listener
+// retry 仅执行一次操作，不做任何重试。
+func (emptyRetry) retry(fn func() bool) { fn() }
 func (emptyRetry) hasGaveUp() bool      { return true }
 func (emptyRetry) GiveUp()              {}
 
-// TimesRetry ..
+// TimesRetry 按次数或无限循环执行重试，使用读写锁保护放弃标记，可并发查询 hasGaveUp。
 type TimesRetry struct {
-	RetryTimes int           // 重试次数。如果 Always 为 true，此选项不可用。
-	Interval   time.Duration // 间隔时间，指定断线后间隔多久再尝试重试。
-	Always     bool          // 是否一直重试
-	gaveUp     bool          // 是否已放弃重试
+	// RetryTimes 为最大重试次数；Always 为 true 时该字段不生效。
+	RetryTimes int
+	// Interval 为两次重试之间的等待间隔。
+	Interval time.Duration
+	// Always 指定是否一直重试，不受 RetryTimes 限制。
+	Always bool
+	// gaveUp 标记是否已放弃重试。
+	gaveUp bool
 	sync.RWMutex
-	//fastRetry  bool            //是否启用使用快速重试。只在重试方法是 Always 时可用。表示断线后是否先尝试快速重试，然后再尝试间隔指定时间发起连接
 }
 
-// NewTimesRetry 创建根据次数结束重试的配置
+// NewTimesRetry 创建按次数（或无限）重试的策略；always 为 true 时忽略 retryTimes。
 func NewTimesRetry(always bool, interval time.Duration, retryTimes int) *TimesRetry {
 	return &TimesRetry{Always: always, Interval: interval, RetryTimes: retryTimes}
 }
 
-// DefaultTimesRetry 创建一个默认的重试配置：总是重试，且间隔三秒
+// DefaultTimesRetry 返回默认重试策略：Always 持续重试，间隔 3 秒；因 Always 为 true，
+// RetryTimes 不生效。
 func DefaultTimesRetry() *TimesRetry {
 	return &TimesRetry{Always: true, Interval: defaultRetryInterval, RetryTimes: defaultRetryTimes}
 }
 
-// retry 见 Retryable.retry()
+// retry 按 RetryTimes 或 Always 规则反复执行操作，成功或达到次数上限后退出并标记放弃。
 func (r *TimesRetry) retry(retryOperation func() (brk bool)) {
 	var brk bool
-	// 超出指定连接次数或连接成功，则退出循环
+	// 已放弃、非 Always 模式且次数耗尽时退出循环。
 	retryTimes := r.RetryTimes
 	for !r.hasGaveUp() || r.Always || retryTimes > 0 {
 		if !r.Always {
@@ -133,72 +136,75 @@ func (r *TimesRetry) retry(retryOperation func() (brk bool)) {
 	}
 }
 
-// hasGaveUp 见 Retryable.hasGaveUp()
+// hasGaveUp 返回是否已放弃重试。
 func (r *TimesRetry) hasGaveUp() bool {
 	r.RLock()
 	defer r.RUnlock()
 	return r.gaveUp
 }
 
-// GiveUp ..
+// GiveUp 标记后续不再重试。
 func (r *TimesRetry) GiveUp() {
 	r.Lock()
 	r.gaveUp = true
 	r.Unlock()
 }
 
-// TimesRetryBuilder ..
+// TimesRetryBuilder 以链式方式构造 TimesRetry。
 type TimesRetryBuilder struct {
 	timesRetry *TimesRetry
 }
 
-// NewTimesRetryBuilder ..
+// NewTimesRetryBuilder 创建基于默认策略的 TimesRetryBuilder。
 func NewTimesRetryBuilder() *TimesRetryBuilder {
 	return &TimesRetryBuilder{DefaultTimesRetry()}
 }
 
-// SetRetryTimes ...
+// SetRetryTimes 设置最大重试次数，返回构造器自身以便链式调用。
 func (bld *TimesRetryBuilder) SetRetryTimes(retryTimes int) *TimesRetryBuilder {
 	bld.timesRetry.RetryTimes = retryTimes
 	return bld
 }
 
-// SetInterval ...
+// SetInterval 设置重试间隔，返回构造器自身以便链式调用。
 func (bld *TimesRetryBuilder) SetInterval(interval time.Duration) *TimesRetryBuilder {
 	bld.timesRetry.Interval = interval
 	return bld
 }
 
-// SetAlways ...
+// SetAlways 设置是否持续重试，返回构造器自身以便链式调用。
 func (bld *TimesRetryBuilder) SetAlways(always bool) *TimesRetryBuilder {
 	bld.timesRetry.Always = always
 	return bld
 }
 
-// Builder ...
+// Builder 完成策略构造，返回最终的 TimesRetry。
 func (bld *TimesRetryBuilder) Builder() *TimesRetry {
 	return bld.timesRetry
 }
 
-// CtxRetry ...
+// CtxRetry 受上下文控制的重试策略：上下文结束后不再重试，使用读写锁保护放弃标记。
 type CtxRetry struct {
-	Ctx      context.Context
-	Interval time.Duration // 间隔时间，指定断线后间隔多久再尝试重试。
-	gaveUp   bool          // 是否已放弃重试
+	// Ctx 用于取消重试，上下文被取消或超时后 hasGaveUp 返回 true。
+	Ctx context.Context
+	// Interval 为两次重试之间的等待间隔。
+	Interval time.Duration
+	// gaveUp 标记是否已放弃重试。
+	gaveUp bool
 	sync.RWMutex
 }
 
-// NewCtxRetry ...
+// NewCtxRetry 创建受指定上下文控制、固定间隔重试的策略。
 func NewCtxRetry(ctx context.Context, interval time.Duration) *CtxRetry {
 	return &CtxRetry{Ctx: ctx, Interval: interval}
 }
 
-// DefaultCtxRetry ...
+// DefaultCtxRetry 创建受上下文控制、默认间隔 3 秒重试的策略。
 func DefaultCtxRetry(ctx context.Context) *CtxRetry {
 	return &CtxRetry{Ctx: ctx, Interval: defaultRetryInterval}
 }
 
-// retry 见 Retryable.retry()
+// retry 反复执行操作，直到操作成功、主动放弃或上下文结束。
 func (r *CtxRetry) retry(retryOperation func() (brk bool)) {
 	var brk bool
 	for !r.hasGaveUp() {
@@ -211,7 +217,7 @@ func (r *CtxRetry) retry(retryOperation func() (brk bool)) {
 	logger.Logger.Debug("Gave up retrying or CtxRetry context done!")
 }
 
-// hasGaveUp 见 Retryable.hasGaveUp()
+// hasGaveUp 返回是否已放弃重试；上下文结束时同样返回 true。
 func (r *CtxRetry) hasGaveUp() bool {
 	var gaveUp bool
 	r.RLock()
@@ -220,7 +226,7 @@ func (r *CtxRetry) hasGaveUp() bool {
 	return gaveUp || r.Ctx.Err() != nil
 }
 
-// GiveUp ..
+// GiveUp 标记后续不再重试。
 func (r *CtxRetry) GiveUp() {
 	r.Lock()
 	defer r.Unlock()
@@ -228,7 +234,7 @@ func (r *CtxRetry) GiveUp() {
 }
 
 var (
-	// MessagePlainTransient 无格式、非持久化消息工厂方法
+	// MessagePlainTransient 构造 text/plain、非持久化的消息。
 	MessagePlainTransient MessageFactory = func(body []byte) amqp.Publishing {
 		return amqp.Publishing{
 			ContentType:  "text/plain",
@@ -236,7 +242,7 @@ var (
 			Body:         body,
 		}
 	}
-	// MessagePlainPersistent 无格式、持久化消息工厂方法
+	// MessagePlainPersistent 构造 text/plain、持久化的消息。
 	MessagePlainPersistent MessageFactory = func(body []byte) amqp.Publishing {
 		return amqp.Publishing{
 			ContentType:  "text/plain",
@@ -244,7 +250,7 @@ var (
 			Body:         body,
 		}
 	}
-	// MessageJSONTransient JSON、非持久化消息工厂方法
+	// MessageJSONTransient 构造 text/json、非持久化的消息。
 	MessageJSONTransient MessageFactory = func(body []byte) amqp.Publishing {
 		return amqp.Publishing{
 			ContentType:  "text/json",
@@ -252,7 +258,7 @@ var (
 			Body:         body,
 		}
 	}
-	// MessageJSONPersistent JSON、持久化消息工厂方法
+	// MessageJSONPersistent 构造 text/json、持久化的消息。
 	MessageJSONPersistent MessageFactory = func(body []byte) amqp.Publishing {
 		return amqp.Publishing{
 			ContentType:  "text/json",
@@ -262,37 +268,35 @@ var (
 	}
 )
 
-// MessageFactory 消息工厂方法。默认提供了如： MessagePlainTransient, MessagePlainPersistent, MessageJSONPersistent 等
-// 在内的工厂方法。
-// 如果没有需要的工厂方法，则需要调用者自己提供对应的工厂方法。
+// MessageFactory 将消息体转换为 amqp.Publishing，决定消息的 ContentType 与持久化级别。
+// 包内已提供 Plain/JSON、持久化/非持久化四个常用工厂；没有匹配需求时由调用方自行实现。
 type MessageFactory func(body []byte) amqp.Publishing
 
-// ReceiveListener ...
+// ReceiveListener 定义消费者监听器契约：负责消息消费、结束清理，以及在主动停止消费时从连接上
+// 注销自身。消费者主动退出后必须在 Remove 中移除对应操作，否则断线重连会再次触发该消费监听。
 type ReceiveListener interface {
-	// Consumer 用于实现消费操作。详见 ConsumerFunc。
+	// Consumer 处理单条消息，返回 true 表示终止消费；详细语义见 ConsumerFunc。
 	//
-	// 如果消费者主动终止了退出，应该在 Finish 中主动移除当前 ReceiveListener。
-	// 否则下次断线重连会再次触发该消息的接收操作。
+	// 消费者主动退出后应在 Finish/Remove 流程中注销当前监听器，避免重连后重复接收。
 	Consumer(*amqp.Delivery) (brk bool)
-	// Finish 处理接收完成需要执行的操作，比如用于清理或关闭某些内容。
-	// 如果没有相关操作需要执行，可以提供空实现。
-	// Finish 可能由于主动停止接收消息或因为产生错误被调用。
-	// 如果消费时没有错误，则参数 err 为 nil。
+	// Finish 在消费正常结束或发生错误时被调用，用于清理资源；无清理需求时可提供空实现。
+	// 消费无错误时参数 err 为 nil。
 	Finish(err error)
-	// 当主动停止消费时，应当实现该方法，主动移除当前 ReceiveListener。
-	// 否则，一旦断线重连，该 ReceiveListener 会继续消费。
+	// Remove 在主动停止消费时被调用，从连接上移除当前监听操作；断线重连后该监听器不应再被触发。
 	Remove(key string, ch *Channel)
 }
 
-// AbsReceiveListener 的抽象实现。
-// 如果 ConsumerMethod 为 nil 或不赋值，将 panic;
-// 如果 FinishMethod 为 nil 或不赋值，则默认不做任何操作。
+// AbsReceiveListener 为 ReceiveListener 提供基于方法字段的抽象实现，方便按消息注入消费与清理逻辑。
+//
+// ConsumerMethod 为 nil 时 Consumer 会 panic；FinishMethod 为 nil 时 Finish 不执行任何操作。
 type AbsReceiveListener struct {
+	// ConsumerMethod 为消费回调，为 nil 时 Consumer 会 panic。
 	ConsumerMethod ConsumerFunc
-	FinishMethod   func(err error)
+	// FinishMethod 为结束清理回调，为 nil 时 Finish 直接返回。
+	FinishMethod func(err error)
 }
 
-// Consumer ..
+// Consumer 调用注入的 ConsumerMethod 处理消息；ConsumerMethod 未赋值时直接 panic。
 func (lis *AbsReceiveListener) Consumer(delivery *amqp.Delivery) (brk bool) {
 	if lis.ConsumerMethod == nil {
 		panic("AbsReceiveListener.ConsumerMethod must not be nil")
@@ -300,7 +304,7 @@ func (lis *AbsReceiveListener) Consumer(delivery *amqp.Delivery) (brk bool) {
 	return lis.ConsumerMethod(delivery)
 }
 
-// Finish TODO
+// Finish 调用注入的 FinishMethod 执行清理；未注入时不做任何操作。
 func (lis *AbsReceiveListener) Finish(err error) {
 	if lis.FinishMethod == nil {
 		return
@@ -308,7 +312,7 @@ func (lis *AbsReceiveListener) Finish(err error) {
 	lis.FinishMethod(err)
 }
 
-// Remove TODO
+// Remove 从所属连接上移除当前监听操作。
 func (lis *AbsReceiveListener) Remove(key string, ch *Channel) {
 	ch.RemoveOperation(key)
 }

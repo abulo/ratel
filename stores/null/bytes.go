@@ -9,17 +9,23 @@ import (
 	"github.com/spf13/cast"
 )
 
-// NullBytes is a global byte slice of JSON null
+// NullBytes 为 JSON null 字面量的字节表示，供各可空类型判断输入是否为 null。
 var NullBytes = []byte("null")
 
-// Bytes is a nullable []byte.
+// Bytes 是可空的 []byte，实现 sql.Scanner、driver.Valuer 以及 JSON 与文本编解码接口。
+//
+// 零值（Set 为 false）表示未赋值，可直接使用；结构体为值类型，不提供并发保护，
+// 同一实例的并发读写需由调用方自行加锁。
 type Bytes struct {
+	// Bytes 为内部保存的字节切片取值。
 	Bytes []byte
+	// Valid 表示是否持有非空有效值。
 	Valid bool
-	Set   bool
+	// Set 表示是否已被显式赋值，包含赋值为 null 的情形。
+	Set bool
 }
 
-// NewBytes creates a new Bytes
+// NewBytes 使用给定取值与有效性标记创建 Bytes；valid 为 false 时得到空值。
 func NewBytes(b []byte, valid bool) Bytes {
 	return Bytes{
 		Bytes: b,
@@ -28,12 +34,12 @@ func NewBytes(b []byte, valid bool) Bytes {
 	}
 }
 
-// BytesFrom creates a new Bytes that will be invalid if nil.
+// BytesFrom 根据字节切片创建 Bytes；传入 nil 时得到空值，空切片仍视为有效。
 func BytesFrom(b []byte) Bytes {
 	return NewBytes(b, b != nil)
 }
 
-// BytesFromPtr creates a new Bytes that will be invalid if nil.
+// BytesFromPtr 根据指针创建 Bytes；指针为 nil 时得到空值。
 func BytesFromPtr(b *[]byte) Bytes {
 	if b == nil {
 		return NewBytes(nil, false)
@@ -42,18 +48,18 @@ func BytesFromPtr(b *[]byte) Bytes {
 	return n
 }
 
-// IsValid returns true if this carries and explicit value and
-// is not null.
+// IsValid 报告是否持有显式赋值且非空的取值。
 func (b Bytes) IsValid() bool {
 	return b.Set && b.Valid
 }
 
-// IsSet returns true if this carries an explicit value (null inclusive)
+// IsSet 报告是否已被显式赋值，包含赋值为 null 的情形。
 func (b Bytes) IsSet() bool {
 	return b.Set
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
+// UnmarshalJSON 实现 json.Unmarshaler；输入为 JSON null 时置为空值，其余内容按字节切片解析，
+// 解析失败时返回对应错误。
 func (b *Bytes) UnmarshalJSON(data []byte) error {
 	b.Set = true
 
@@ -73,7 +79,7 @@ func (b *Bytes) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
+// UnmarshalText 实现 encoding.TextUnmarshaler；空文本置为空值，非空文本覆盖写入内部切片。
 func (b *Bytes) UnmarshalText(text []byte) error {
 	b.Set = true
 	if len(text) == 0 {
@@ -87,7 +93,7 @@ func (b *Bytes) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// MarshalJSON implements json.Marshaler.
+// MarshalJSON 实现 json.Marshaler；空值或空切片序列化为 JSON null。
 func (b Bytes) MarshalJSON() ([]byte, error) {
 	if !b.Valid {
 		return json.Marshal(nil)
@@ -98,7 +104,7 @@ func (b Bytes) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Bytes)
 }
 
-// MarshalText implements encoding.TextMarshaler.
+// MarshalText 实现 encoding.TextMarshaler；空值返回 nil。
 func (b Bytes) MarshalText() ([]byte, error) {
 	if !b.Valid {
 		return nil, nil
@@ -106,14 +112,14 @@ func (b Bytes) MarshalText() ([]byte, error) {
 	return b.Bytes, nil
 }
 
-// SetValid changes this Bytes's value and also sets it to be non-null.
+// SetValid 将内部取值置为 n，并同时标记为有效、已赋值。
 func (b *Bytes) SetValid(n []byte) {
 	b.Bytes = n
 	b.Valid = true
 	b.Set = true
 }
 
-// Ptr returns a pointer to this Bytes's value, or a nil pointer if this Bytes is null.
+// Ptr 返回指向内部取值的指针；空值时返回 nil。
 func (b Bytes) Ptr() *[]byte {
 	if !b.Valid {
 		return nil
@@ -121,12 +127,12 @@ func (b Bytes) Ptr() *[]byte {
 	return &b.Bytes
 }
 
-// IsZero returns true for null or zero Bytes's, for future omitempty support (Go 1.4?)
+// IsZero 报告是否为空值，供结构体标签 omitempty 判定使用。
 func (b Bytes) IsZero() bool {
 	return !b.Valid
 }
 
-// Scan implements the Scanner interface.
+// Scan 实现 sql.Scanner；value 为 nil 时清空状态，否则按驱动值转换后写入内部取值。
 func (b *Bytes) Scan(value any) error {
 	if value == nil {
 		b.Bytes, b.Valid, b.Set = nil, false, false
@@ -136,7 +142,7 @@ func (b *Bytes) Scan(value any) error {
 	return convert.ConvertAssign(&b.Bytes, value)
 }
 
-// Value implements the driver Valuer interface.
+// Value 实现 driver.Valuer；空值返回 nil。
 func (b Bytes) Value() (driver.Value, error) {
 	if !b.Valid {
 		return nil, nil
@@ -144,7 +150,7 @@ func (b Bytes) Value() (driver.Value, error) {
 	return b.Bytes, nil
 }
 
-// ValueOrDefault returns the inner value if valid, otherwise default.
+// ValueOrDefault 返回内部取值；空值时返回空字节切片。
 func (t Bytes) ValueOrDefault() []byte {
 	if !t.Valid {
 		return []byte{}
@@ -152,7 +158,7 @@ func (t Bytes) ValueOrDefault() []byte {
 	return t.Bytes
 }
 
-// String returns the string representation of the float or null.
+// Result 返回内部取值的字符串形式；空值返回 "NULL"。
 func (t Bytes) Result() string {
 	if !t.Valid {
 		return "NULL"

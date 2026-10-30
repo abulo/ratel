@@ -7,7 +7,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// BLPop 阻塞式弹出列表元素 ctx: 上下文, timeout: 超时时间, keys: 要弹出的键列表
+// BLPop 阻塞式从给定键列表的左侧弹出元素，返回被操作键与弹出元素；
+// timeout 为最长阻塞等待时间，超时仍无元素时返回 redis.Nil。
 func (r *Client) BLPop(ctx context.Context, timeout time.Duration, keys ...string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -20,7 +21,8 @@ func (r *Client) BLPop(ctx context.Context, timeout time.Duration, keys ...strin
 	return
 }
 
-// BLMPop 阻塞式弹出多个列表元素 ctx: 上下文, timeout: 超时时间, direction: 弹出方向(left/right), count: 弹出数量, keys: 要弹出的键列表
+// BLMPop 阻塞式按 direction（left/right）从多个列表弹出 count 个元素，
+// 返回被操作键与弹出元素；超时仍无元素时返回 redis.Nil。
 func (r *Client) BLMPop(ctx context.Context, timeout time.Duration, direction string, count int64, keys ...string) (key string, val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -33,7 +35,8 @@ func (r *Client) BLMPop(ctx context.Context, timeout time.Duration, direction st
 	return
 }
 
-// BRPop 阻塞式弹出列表尾部元素 ctx: 上下文, timeout: 超时时间, keys: 要弹出的键列表
+// BRPop 阻塞式从给定键列表的右侧弹出元素，返回被操作键与弹出元素；
+// timeout 为最长阻塞等待时间，超时仍无元素时返回 redis.Nil。
 func (r *Client) BRPop(ctx context.Context, timeout time.Duration, keys ...string) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -46,7 +49,8 @@ func (r *Client) BRPop(ctx context.Context, timeout time.Duration, keys ...strin
 	return
 }
 
-// BRPopLPush 阻塞式弹出并插入元素 ctx: 上下文, source: 源列表, destination: 目标列表, timeout: 超时时间
+// BRPopLPush 阻塞式将 source 列表尾部元素弹出并推入 destination 列表头部；
+// timeout 为最长阻塞等待时间，超时仍无元素时返回 redis.Nil。
 func (r *Client) BRPopLPush(ctx context.Context, source, destination string, timeout time.Duration) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -59,7 +63,7 @@ func (r *Client) BRPopLPush(ctx context.Context, source, destination string, tim
 	return
 }
 
-// LIndex 获取列表指定位置的元素 ctx: 上下文, key: 列表键, index: 元素索引
+// LIndex 返回列表 key 中索引 index 处的元素；索引越界或列表不存在时返回 redis.Nil。
 func (r *Client) LIndex(ctx context.Context, key string, index int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -72,7 +76,8 @@ func (r *Client) LIndex(ctx context.Context, key string, index int64) (val strin
 	return
 }
 
-// LInsert 在列表中插入元素 ctx: 上下文, key: 列表键, op: 插入位置(BEFORE/AFTER), pivot: 参考元素, value: 要插入的值
+// LInsert 在列表 key 中按 op（BEFORE/AFTER）相对参考元素 pivot 插入 value，
+// 返回插入后的列表长度；参考元素不存在时返回 -1。
 func (r *Client) LInsert(ctx context.Context, key string, op string, pivot, value any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -85,7 +90,7 @@ func (r *Client) LInsert(ctx context.Context, key string, op string, pivot, valu
 	return
 }
 
-// LInsertBefore 在参考元素前插入值 ctx: 上下文, key: 列表键, pivot: 参考元素, value: 要插入的值
+// LInsertBefore 在参考元素 pivot 之前插入 value，返回插入后的列表长度。
 func (r *Client) LInsertBefore(ctx context.Context, key string, pivot, value any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -98,7 +103,7 @@ func (r *Client) LInsertBefore(ctx context.Context, key string, pivot, value any
 	return
 }
 
-// LInsertAfter 在参考元素后插入值 ctx: 上下文, key: 列表键, pivot: 参考元素, value: 要插入的值
+// LInsertAfter 在参考元素 pivot 之后插入 value，返回插入后的列表长度。
 func (r *Client) LInsertAfter(ctx context.Context, key string, pivot, value any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -111,7 +116,7 @@ func (r *Client) LInsertAfter(ctx context.Context, key string, pivot, value any)
 	return
 }
 
-// LLen 获取列表长度 ctx: 上下文, key: 列表键
+// LLen 返回列表 key 的长度；键不存在时返回 0。
 func (r *Client) LLen(ctx context.Context, key string) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -124,7 +129,7 @@ func (r *Client) LLen(ctx context.Context, key string) (val int64, err error) {
 	return
 }
 
-// LMPop 弹出多个列表元素 ctx: 上下文, direction: 弹出方向(left/right), count: 弹出数量, keys: 要弹出的键列表
+// LMPop 按 direction（left/right）从多个列表弹出 count 个元素，返回被操作键与弹出元素。
 func (r *Client) LMPop(ctx context.Context, direction string, count int64, keys ...string) (key string, val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -137,7 +142,7 @@ func (r *Client) LMPop(ctx context.Context, direction string, count int64, keys 
 	return
 }
 
-// LPop 弹出列表头元素 ctx: 上下文, key: 列表键
+// LPop 弹出列表 key 的左侧首元素；列表为空或不存在时返回 redis.Nil。
 func (r *Client) LPop(ctx context.Context, key string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -150,7 +155,7 @@ func (r *Client) LPop(ctx context.Context, key string) (val string, err error) {
 	return
 }
 
-// LPopCount 弹出多个列表头元素 ctx: 上下文, key: 列表键, count: 弹出数量
+// LPopCount 从列表 key 左侧弹出最多 count 个元素，按弹出顺序返回。
 func (r *Client) LPopCount(ctx context.Context, key string, count int) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -162,6 +167,8 @@ func (r *Client) LPopCount(ctx context.Context, key string, count int) (val []st
 	}, acceptable)
 	return
 }
+
+// LPos 返回列表中 value 元素首次出现的索引；args 限定扫描范围与数量，未找到时返回 -1。
 func (r *Client) LPos(ctx context.Context, key string, value string, args redis.LPosArgs) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -173,6 +180,8 @@ func (r *Client) LPos(ctx context.Context, key string, value string, args redis.
 	}, acceptable)
 	return
 }
+
+// LPosCount 返回列表中 value 元素匹配的前 count 个索引位置，扫描范围受 args 约束。
 func (r *Client) LPosCount(ctx context.Context, key string, value string, count int64, args redis.LPosArgs) (val []int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -185,7 +194,7 @@ func (r *Client) LPosCount(ctx context.Context, key string, value string, count 
 	return
 }
 
-// LPush 在列表头部插入元素 ctx: 上下文, key: 列表键, values: 要插入的值
+// LPush 在列表 key 左侧依次插入 values，返回插入后的列表长度；键不存在时先创建空列表。
 func (r *Client) LPush(ctx context.Context, key string, values ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -198,7 +207,7 @@ func (r *Client) LPush(ctx context.Context, key string, values ...any) (val int6
 	return
 }
 
-// LPushX 仅在列表存在时在头部插入元素 ctx: 上下文, key: 列表键, value: 要插入的值
+// LPushX 仅当列表 key 已存在时在左侧插入 value，返回列表长度；键不存在时操作无效。
 func (r *Client) LPushX(ctx context.Context, key string, value any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -211,7 +220,7 @@ func (r *Client) LPushX(ctx context.Context, key string, value any) (val int64, 
 	return
 }
 
-// LRange 获取列表指定范围的元素 ctx: 上下文, key: 列表键, start: 起始索引, stop: 结束索引
+// LRange 返回列表 key 在 [start, stop] 范围内的元素，索引支持负数定位尾部。
 func (r *Client) LRange(ctx context.Context, key string, start, stop int64) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -224,7 +233,7 @@ func (r *Client) LRange(ctx context.Context, key string, start, stop int64) (val
 	return
 }
 
-// LRem 移除列表中指定值的元素 ctx: 上下文, key: 列表键, count: 移除数量, value: 要移除的值
+// LRem 移除列表中值为 value 的元素，count 控制移除数量与扫描方向，返回实际移除数量。
 func (r *Client) LRem(ctx context.Context, key string, count int64, value any) (val int64, err error) {
 
 	err = r.brk.DoWithAcceptable(func() error {
@@ -238,7 +247,7 @@ func (r *Client) LRem(ctx context.Context, key string, count int64, value any) (
 	return
 }
 
-// LSet 设置列表指定位置的元素 ctx: 上下文, key: 列表键, index: 元素索引, value: 要设置的值
+// LSet 将列表 key 中索引 index 处的元素设置为 value；索引越界时命令报错。
 func (r *Client) LSet(ctx context.Context, key string, index int64, value any) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -251,7 +260,7 @@ func (r *Client) LSet(ctx context.Context, key string, index int64, value any) (
 	return
 }
 
-// LTrim 修剪列表只保留指定范围的元素 ctx: 上下文, key: 列表键, start: 起始索引, stop: 结束索引
+// LTrim 修剪列表，仅保留 [start, stop] 范围内的元素，范围外元素被删除。
 func (r *Client) LTrim(ctx context.Context, key string, start, stop int64) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -264,7 +273,7 @@ func (r *Client) LTrim(ctx context.Context, key string, start, stop int64) (val 
 	return
 }
 
-// RPop 弹出列表尾部元素 ctx: 上下文, key: 列表键
+// RPop 弹出列表 key 的右侧尾元素；列表为空或不存在时返回 redis.Nil。
 func (r *Client) RPop(ctx context.Context, key string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -277,7 +286,7 @@ func (r *Client) RPop(ctx context.Context, key string) (val string, err error) {
 	return
 }
 
-// RPopCount 弹出多个列表尾部元素 ctx: 上下文, key: 列表键, count: 弹出数量
+// RPopCount 从列表 key 右侧弹出最多 count 个元素，按弹出顺序返回。
 func (r *Client) RPopCount(ctx context.Context, key string, count int) (val []string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -290,7 +299,7 @@ func (r *Client) RPopCount(ctx context.Context, key string, count int) (val []st
 	return
 }
 
-// RPopLPush 弹出尾部元素并插入到另一个列表 ctx: 上下文, source: 源列表, destination: 目标列表
+// RPopLPush 弹出 source 列表尾部元素并推入 destination 列表头部；源列表与目标列表可为同一列表。
 func (r *Client) RPopLPush(ctx context.Context, source, destination string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -303,7 +312,7 @@ func (r *Client) RPopLPush(ctx context.Context, source, destination string) (val
 	return
 }
 
-// RPush 在列表尾部插入元素 ctx: 上下文, key: 列表键, values: 要插入的值
+// RPush 在列表 key 右侧依次插入 values，返回插入后的列表长度；键不存在时先创建空列表。
 func (r *Client) RPush(ctx context.Context, key string, values ...any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -316,7 +325,7 @@ func (r *Client) RPush(ctx context.Context, key string, values ...any) (val int6
 	return
 }
 
-// RPushX 仅在列表存在时在尾部插入元素 ctx: 上下文, key: 列表键, value: 要插入的值
+// RPushX 仅当列表 key 已存在时在右侧插入 value，返回列表长度；键不存在时操作无效。
 func (r *Client) RPushX(ctx context.Context, key string, value any) (val int64, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -328,6 +337,9 @@ func (r *Client) RPushX(ctx context.Context, key string, value any) (val int64, 
 	}, acceptable)
 	return
 }
+
+// LMove 将 source 列表由 srcpos 指定端的元素移动到 destination 列表的 destpos 端，
+// 返回被移动的元素；源与目标可为同一列表。
 func (r *Client) LMove(ctx context.Context, source, destination, srcpos, destpos string) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)
@@ -339,6 +351,8 @@ func (r *Client) LMove(ctx context.Context, source, destination, srcpos, destpos
 	}, acceptable)
 	return
 }
+
+// BLMove 阻塞式执行 LMove，ts 为最长阻塞等待时间；超时仍无元素时返回 redis.Nil。
 func (r *Client) BLMove(ctx context.Context, source, destination, srcpos, destpos string, ts time.Duration) (val string, err error) {
 	err = r.brk.DoWithAcceptable(func() error {
 		conn, err := getRedis(r)

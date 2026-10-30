@@ -11,12 +11,15 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
+// 驱动默认参数：最小租约时长、拨号超时与业务操作超时。
 const (
-	etcdDefaultLease    = 5 // min lease time
+	etcdDefaultLease    = 5
 	etcdDialTimeout     = 3 * time.Second
 	etcdBusinessTimeout = 5 * time.Second
 )
 
+// EtcdDriver 基于 etcd 租约与前缀监听维护在线节点列表：当前节点携带租约心跳注册，
+// 其他节点通过 Watch 前缀实时增删本地节点缓存。
 type EtcdDriver struct {
 	nodeID      string
 	serviceName string
@@ -29,7 +32,6 @@ type EtcdDriver struct {
 	cancel      context.CancelFunc
 }
 
-// NewEtcdDriver
 func newEtcdDriver(cli *etcdv3.Client) *EtcdDriver {
 	ser := &EtcdDriver{
 		cli:   cli,
@@ -39,9 +41,8 @@ func newEtcdDriver(cli *etcdv3.Client) *EtcdDriver {
 	return ser
 }
 
-// 设置key value，绑定租约
+// putKeyWithLease 申请租约并以该租约写入 key/value；租约时长小于默认值时按默认值处理。
 func (e *EtcdDriver) putKeyWithLease(ctx context.Context, key, val string) (clientv3.LeaseID, error) {
-	//设置租约时间，最少5s
 	if e.lease < etcdDefaultLease {
 		e.lease = etcdDefaultLease
 	}
@@ -52,7 +53,6 @@ func (e *EtcdDriver) putKeyWithLease(ctx context.Context, key, val string) (clie
 	if err != nil {
 		return 0, err
 	}
-	//注册服务并绑定租约
 	_, err = e.cli.Put(subCtx, key, val, clientv3.WithLease(resp.ID))
 	if err != nil {
 		return 0, err
@@ -61,10 +61,9 @@ func (e *EtcdDriver) putKeyWithLease(ctx context.Context, key, val string) (clie
 	return resp.ID, nil
 }
 
-// WatchService 初始化服务列表和监视
+// watchService 先按前缀载入现有节点，再启动协程监听前缀变更以维护节点缓存。
 func (e *EtcdDriver) watchService(ctx context.Context, serviceName string) error {
 	prefix := GetKeyPre(serviceName)
-	// 根据前缀获取现有的key
 	resp, err := e.cli.Get(ctx, prefix, clientv3.WithPrefix())
 	if err != nil {
 		return err
@@ -74,12 +73,11 @@ func (e *EtcdDriver) watchService(ctx context.Context, serviceName string) error
 		e.setServiceList(string(ev.Key), string(ev.Value))
 	}
 
-	// 监视前缀，修改变更的server
 	go e.watcher(serviceName)
 	return nil
 }
 
-// watcher 监听前缀
+// watcher 持续监听服务前缀，PUT 事件写入缓存，DELETE 事件移除缓存。
 func (e *EtcdDriver) watcher(serviceName string) {
 	prefix := GetKeyPre(serviceName)
 	rch := e.cli.Watch(context.Background(), prefix, clientv3.WithPrefix())
@@ -87,27 +85,22 @@ func (e *EtcdDriver) watcher(serviceName string) {
 		for _, ev := range wresp.Events {
 			switch ev.Type {
 			case mvccpb.PUT:
-				// 修改或者新增
 				e.setServiceList(string(ev.Kv.Key), string(ev.Kv.Value))
 			case mvccpb.DELETE:
-				// 删除
 				e.delServiceList(string(ev.Kv.Key))
 			}
 		}
 	}
 }
 
-// setServiceList 新增服务地址
 func (e *EtcdDriver) setServiceList(key, val string) {
 	e.nodes.Store(key, val)
 }
 
-// DelServiceList 删除服务地址
 func (e *EtcdDriver) delServiceList(key string) {
 	e.nodes.Delete(key)
 }
 
-// GetServices 获取服务地址
 func (e *EtcdDriver) getServices() []string {
 	addrs := make([]string, 0)
 	e.nodes.Range(func(key, _ any) bool {
@@ -144,6 +137,7 @@ func (e *EtcdDriver) startHeartBeat(ctx context.Context) {
 	}
 }
 
+// keepHeartBeat 监听驱动停止信号与租约通道：任一结束即退出协程，不再保活。
 func (e *EtcdDriver) keepHeartBeat() {
 	for {
 		select {
@@ -163,6 +157,7 @@ func (e *EtcdDriver) keepHeartBeat() {
 	}
 }
 
+// Init 实现 DriverV2：记录服务名、生成节点标识并应用给定配置选项。
 func (e *EtcdDriver) Init(serverName string, opts ...Option) {
 	e.serviceName = serverName
 	e.nodeID = GetNodeId(serverName)
@@ -171,16 +166,18 @@ func (e *EtcdDriver) Init(serverName string, opts ...Option) {
 	}
 }
 
+// NodeID 返回当前节点标识。
 func (e *EtcdDriver) NodeID() string {
 	return e.nodeID
 }
 
+// GetNodes 实现 DriverV2：返回本地缓存的全部在线节点标识。
 func (e *EtcdDriver) GetNodes(ctx context.Context) (nodes []string, err error) {
 	return e.getServices(), nil
 }
 
+// Start 实现 DriverV2：每次启动重建驱动级上下文，开启租约保活与前缀监听，随后启动保活协程。
 func (e *EtcdDriver) Start(ctx context.Context) (err error) {
-	// renew a global ctx when start every time
 	e.ctx, e.cancel = context.WithCancel(context.TODO())
 	e.startHeartBeat(ctx)
 	err = e.watchService(ctx, e.serviceName)
@@ -191,12 +188,14 @@ func (e *EtcdDriver) Start(ctx context.Context) (err error) {
 	return
 }
 
+// Stop 实现 DriverV2：撤销租约使节点键失效，并取消驱动上下文停止监听与保活协程。
 func (e *EtcdDriver) Stop(ctx context.Context) (err error) {
 	e.revoke(ctx)
 	e.cancel()
 	return
 }
 
+// WithOption 实现 DriverV2：按选项类型应用配置，当前仅支持超时选项（映射为租约时长）。
 func (e *EtcdDriver) WithOption(opt Option) (err error) {
 	switch opt.Type() {
 	case OptionTypeTimeout:

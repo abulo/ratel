@@ -12,16 +12,15 @@ import (
 	"github.com/spf13/cast"
 )
 
-// viewUrl: 页面路径
+// GeneratePage 按 PageTemplate 渲染 Vue 列表页面文件，写入 fullPageDir 下由 viewUrl
+// 指定的路径；viewUrl 包含子目录时先确保父目录存在，同名文件已存在时先删除再创建。
+//
+// 文件创建或模板解析失败时打印错误并返回，不向调用方返回错误。
 func GeneratePage(moduleParam base.ModuleParam, fullPageDir, viewUrl, tableName string) {
-	// 文件夹路径
 	dir := util.GetParentDirectory(path.Join(fullPageDir, viewUrl))
-	// 创建文件夹
 	_ = os.MkdirAll(dir, os.ModePerm)
-	// 文件路径
 	viewFullFile := path.Join(fullPageDir, viewUrl)
 
-	// 模板变量
 	tpl := template.Must(template.New("page").Funcs(template.FuncMap{
 		"Convert":               base.Convert,
 		"SymbolChar":            base.SymbolChar,
@@ -42,7 +41,6 @@ func GeneratePage(moduleParam base.ModuleParam, fullPageDir, viewUrl, tableName 
 		"PropsSearch":           base.PropsSearch,
 	}).Parse(PageTemplate()))
 
-	// 文件夹路径
 	if util.FileExists(viewFullFile) {
 		util.Delete(viewFullFile)
 	}
@@ -53,7 +51,6 @@ func GeneratePage(moduleParam base.ModuleParam, fullPageDir, viewUrl, tableName 
 		return
 	}
 
-	//渲染输出
 	err = tpl.Execute(file, moduleParam)
 	if err != nil {
 		fmt.Println("模板解析错误:", color.RedString(err.Error()))
@@ -62,6 +59,10 @@ func GeneratePage(moduleParam base.ModuleParam, fullPageDir, viewUrl, tableName 
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(viewFullFile))
 }
 
+// PageTemplate 返回 Vue 列表页面模板字符串。
+//
+// 配置项 template.VuePage 指定了自定义模板文件且文件存在时，读取该文件内容并返回；
+// 否则返回包内置模板，模板占位符由 GeneratePage 渲染填充。
 func PageTemplate() string {
 	if exists := base.Config.Exists("template.VuePage"); exists {
 		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.VuePage"))

@@ -7,63 +7,53 @@ import (
 	"time"
 )
 
-// Bucket 表以预定速率填充的令牌桶
+// Bucket 是按预定速率填充令牌的令牌桶；由 NewBucket 等构造函数创建，零值不可直接使用。
+//
+// Take、Wait 等取用操作可被多个 goroutine 并发调用；桶初始为满桶状态。
 type Bucket struct {
 	clock Clock
 
-	// startTime 保存首次创建存储桶并开始滴答的时刻.
 	startTime time.Time
 
-	// capacity 可容纳存储桶的总容量。.
 	capacity int64
 
-	// quantum 保持每个刻度上添加多少令牌.
 	quantum int64
 
-	// fillInterval 保持每个刻度之间的间隔.
 	fillInterval time.Duration
 
 	mu sync.Mutex
 
-	// availableTokens 保存截至相关的latestTick的可用令牌数.
 	availableTokens int64
 
-	// latestTick 持有我们知道存储桶中令牌数量的最新刻度.
 	latestTick int64
 }
 
-// NewBucket returns a new token bucket that fills at the
-// rate of one token every fillInterval, up to the given
-// maximum capacity. Both arguments must be
-// positive. The bucket is initially full.
+// NewBucket 创建一个令牌桶：每经过 fillInterval 补充 1 个令牌，令牌总量上限为 capacity；
+// 两个参数都必须为正数，桶创建时即为满桶。
 func NewBucket(fillInterval time.Duration, capacity int64) *Bucket {
 	return NewBucketWithClock(fillInterval, capacity, nil)
 }
 
-// NewBucketWithClock is identical to NewBucket but injects a testable clock
-// interface.
+// NewBucketWithClock 与 NewBucket 行为一致，但允许注入可替换的 Clock 时间源；
+// clock 为 nil 时使用系统时钟。
 func NewBucketWithClock(fillInterval time.Duration, capacity int64, clock Clock) *Bucket {
 	return NewBucketWithQuantumAndClock(fillInterval, capacity, 1, clock)
 }
 
-// rateMargin specifes the allowed variance of actual
-// rate from specified rate. 1% seems reasonable.
+// rateMargin 为允许的实际填充速率与指定速率之间的最大相对偏差，取 1%。
 const rateMargin = 0.01
 
-// NewBucketWithRate returns a token bucket that fills the bucket
-// at the rate of rate tokens per second up to the given
-// maximum capacity. Because of limited clock resolution,
-// at high rates, the actual rate may be up to 1% different from the
-// specified rate.
+// NewBucketWithRate 创建一个按每秒 rate 个令牌的速率填充、容量上限为 capacity 的令牌桶。
+//
+// 受时钟分辨率限制，高速率下实际填充速率与指定速率的偏差不超过 1%；rate 与 capacity 必须为正数。
 func NewBucketWithRate(rate float64, capacity int64) *Bucket {
 	return NewBucketWithRateAndClock(rate, capacity, nil)
 }
 
-// NewBucketWithRateAndClock is identical to NewBucketWithRate but injects a
-// testable clock interface.
+// NewBucketWithRateAndClock 与 NewBucketWithRate 行为一致，但允许注入可替换的 Clock 时间源；
+// clock 为 nil 时使用系统时钟。
 func NewBucketWithRateAndClock(rate float64, capacity int64, clock Clock) *Bucket {
-	// Use the same bucket each time through the loop
-	// to save allocations.
+	// 循环复用同一个桶，避免反复分配。
 	tb := NewBucketWithQuantumAndClock(1, capacity, 1, clock)
 	for quantum := int64(1); quantum < 1<<50; quantum = nextQuantum(quantum) {
 		fillInterval := time.Duration(1e9 * float64(quantum) / rate)
@@ -79,9 +69,7 @@ func NewBucketWithRateAndClock(rate float64, capacity int64, clock Clock) *Bucke
 	panic("cannot find suitable quantum for " + strconv.FormatFloat(rate, 'g', -1, 64))
 }
 
-// nextQuantum returns the next quantum to try after q.
-// We grow the quantum exponentially, but slowly, so we
-// get a good fit in the lower numbers.
+// nextQuantum 返回 q 之后下一个待尝试的量子值；量子按指数缓慢增长，以便在较小数值区间获得良好拟合。
 func nextQuantum(q int64) int64 {
 	q1 := q * 11 / 10
 	if q1 == q {
@@ -90,16 +78,16 @@ func nextQuantum(q int64) int64 {
 	return q1
 }
 
-// NewBucketWithQuantum is similar to NewBucket, but allows
-// the specification of the quantum size - quantum tokens
-// are added every fillInterval.
+// NewBucketWithQuantum 与 NewBucket 类似，但每个 fillInterval 间隔补充 quantum 个令牌；
+// fillInterval、capacity 与 quantum 都必须为正数。
 func NewBucketWithQuantum(fillInterval time.Duration, capacity, quantum int64) *Bucket {
 	return NewBucketWithQuantumAndClock(fillInterval, capacity, quantum, nil)
 }
 
-// NewBucketWithQuantumAndClock is like NewBucketWithQuantum, but
-// also has a clock argument that allows clients to fake the passing
-// of time. If clock is nil, the system clock will be used.
+// NewBucketWithQuantumAndClock 是全参数构造函数：每经过 fillInterval 补充 quantum 个令牌，
+// 容量上限为 capacity；clock 为 nil 时使用系统时钟。
+//
+// fillInterval、capacity 与 quantum 任一非正数时直接 panic。
 func NewBucketWithQuantumAndClock(fillInterval time.Duration, capacity, quantum int64, clock Clock) *Bucket {
 	if clock == nil {
 		clock = realClock{}
@@ -124,19 +112,15 @@ func NewBucketWithQuantumAndClock(fillInterval time.Duration, capacity, quantum 
 	}
 }
 
-// Wait takes count tokens from the bucket, waiting until they are
-// available.
+// Wait 从桶中取走 count 个令牌，令牌不足时阻塞睡眠到令牌可用为止。
 func (tb *Bucket) Wait(count int64) {
 	if d := tb.Take(count); d > 0 {
 		tb.clock.Sleep(d)
 	}
 }
 
-// WaitMaxDuration is like Wait except that it will
-// only take tokens from the bucket if it needs to wait
-// for no greater than maxWait. It reports whether
-// any tokens have been removed from the bucket
-// If no tokens have been removed, it returns immediately.
+// WaitMaxDuration 与 Wait 类似，但仅在等待时长不超过 maxWait 时才取走令牌；
+// 若需要等待超过 maxWait，则不扣减令牌并立即返回 false，否则返回 true。
 func (tb *Bucket) WaitMaxDuration(count int64, maxWait time.Duration) bool {
 	d, ok := tb.TakeMaxDuration(count, maxWait)
 	if d > 0 {
@@ -147,12 +131,9 @@ func (tb *Bucket) WaitMaxDuration(count int64, maxWait time.Duration) bool {
 
 const infinityDuration time.Duration = 0x7fffffffffffffff
 
-// Take takes count tokens from the bucket without blocking. It returns
-// the time that the caller should wait until the tokens are actually
-// available.
+// Take 非阻塞地从桶中取走 count 个令牌，返回调用方应等待到令牌实际可用的时长。
 //
-// Note that if the request is irrevocable - there is no way to return
-// tokens to the bucket once this method commits us to taking them.
+// 取用一旦提交即不可撤销：方法返回后无法再把令牌归还桶中；令牌充足时返回 0。
 func (tb *Bucket) Take(count int64) time.Duration {
 	tb.mu.Lock()
 	defer tb.mu.Unlock()
@@ -160,32 +141,22 @@ func (tb *Bucket) Take(count int64) time.Duration {
 	return d
 }
 
-// TakeMaxDuration is like Take, except that
-// it will only take tokens from the bucket if the wait
-// time for the tokens is no greater than maxWait.
-//
-// If it would take longer than maxWait for the tokens
-// to become available, it does nothing and reports false,
-// otherwise it returns the time that the caller should
-// wait until the tokens are actually available, and reports
-// true.
+// TakeMaxDuration 与 Take 类似，但仅在令牌等待时长不超过 maxWait 时才扣减令牌；
+// 等待超过 maxWait 时不做任何扣减并返回 false，否则返回应等待时长与 true。
 func (tb *Bucket) TakeMaxDuration(count int64, maxWait time.Duration) (time.Duration, bool) {
 	tb.mu.Lock()
 	defer tb.mu.Unlock()
 	return tb.take(tb.clock.Now(), count, maxWait)
 }
 
-// TakeAvailable takes up to count immediately available tokens from the
-// bucket. It returns the number of tokens removed, or zero if there are
-// no available tokens. It does not block.
+// TakeAvailable 立即取走桶中至多 count 个现有令牌，不阻塞；
+// 返回实际取走的令牌数，桶中没有可用令牌时返回 0。
 func (tb *Bucket) TakeAvailable(count int64) int64 {
 	tb.mu.Lock()
 	defer tb.mu.Unlock()
 	return tb.takeAvailable(tb.clock.Now(), count)
 }
 
-// takeAvailable is the internal version of TakeAvailable - it takes the
-// current time as an argument to enable easy testing.
 func (tb *Bucket) takeAvailable(now time.Time, count int64) int64 {
 	if count <= 0 {
 		return 0
@@ -201,18 +172,14 @@ func (tb *Bucket) takeAvailable(now time.Time, count int64) int64 {
 	return count
 }
 
-// Available returns the number of available tokens. It will be negative
-// when there are consumers waiting for tokens. Note that if this
-// returns greater than zero, it does not guarantee that calls that take
-// tokens from the buffer will succeed, as the number of available
-// tokens could have changed in the meantime. This method is intended
-// primarily for metrics reporting and debugging.
+// Available 返回当前可用令牌数；存在等待取用者时该值可能为负数。
+//
+// 返回值大于 0 并不保证后续取用一定成功，期间令牌数可能已被其他并发调用改变；
+// 本方法主要用于指标上报与调试。
 func (tb *Bucket) Available() int64 {
 	return tb.available(tb.clock.Now())
 }
 
-// available is the internal version of available - it takes the current time as
-// an argument to enable easy testing.
 func (tb *Bucket) available(now time.Time) int64 {
 	tb.mu.Lock()
 	defer tb.mu.Unlock()
@@ -220,18 +187,16 @@ func (tb *Bucket) available(now time.Time) int64 {
 	return tb.availableTokens
 }
 
-// Capacity returns the capacity that the bucket was created with.
+// Capacity 返回桶创建时设定的容量上限。
 func (tb *Bucket) Capacity() int64 {
 	return tb.capacity
 }
 
-// Rate returns the fill rate of the bucket, in tokens per second.
+// Rate 返回桶的填充速率，单位为令牌每秒。
 func (tb *Bucket) Rate() float64 {
 	return 1e9 * float64(tb.quantum) / float64(tb.fillInterval)
 }
 
-// take is the internal version of Take - it takes the current time as
-// an argument to enable easy testing.
 func (tb *Bucket) take(now time.Time, count int64, maxWait time.Duration) (time.Duration, bool) {
 	if count <= 0 {
 		return 0, true
@@ -244,12 +209,8 @@ func (tb *Bucket) take(now time.Time, count int64, maxWait time.Duration) (time.
 		tb.availableTokens = avail
 		return 0, true
 	}
-	// Round up the missing tokens to the nearest multiple
-	// of quantum - the tokens won't be available until
-	// that tick.
-
-	// endTick holds the tick when all the requested tokens will
-	// become available.
+	// 将缺口令牌向上取整到 quantum 的整数倍；endTick 记录请求的全部令牌
+	// 补齐所需到达的刻度，令牌在下一个对应刻度才会补齐。
 	endTick := tick + (-avail+tb.quantum-1)/tb.quantum
 	endTime := tb.startTime.Add(time.Duration(endTick) * tb.fillInterval)
 	waitTime := endTime.Sub(now)
@@ -260,15 +221,10 @@ func (tb *Bucket) take(now time.Time, count int64, maxWait time.Duration) (time.
 	return waitTime, true
 }
 
-// currentTick returns the current time tick, measured
-// from tb.startTime.
 func (tb *Bucket) currentTick(now time.Time) int64 {
 	return int64(now.Sub(tb.startTime) / tb.fillInterval)
 }
 
-// adjustavailableTokens adjusts the current number of tokens
-// available in the bucket at the given time, which must
-// be in the future (positive) with respect to tb.latestTick.
 func (tb *Bucket) adjustavailableTokens(tick int64) {
 	lastTick := tb.latestTick
 	tb.latestTick = tick
@@ -281,24 +237,19 @@ func (tb *Bucket) adjustavailableTokens(tick int64) {
 	}
 }
 
-// Clock represents the passage of time in a way that
-// can be faked out for tests.
+// Clock 抽象时间流逝过程，允许在测试中伪造时间推进；实现需提供获取当前时间与睡眠指定时长的能力。
 type Clock interface {
-	// Now returns the current time.
 	Now() time.Time
-	// Sleep sleeps for at least the given duration.
 	Sleep(d time.Duration)
 }
 
-// realClock implements Clock in terms of standard time functions.
+// realClock 基于标准库 time 实现 Clock。
 type realClock struct{}
 
-// Now implements Clock.Now by calling time.Now.
 func (realClock) Now() time.Time {
 	return time.Now()
 }
 
-// Sleep Now implements Clock.Sleep by calling time.Sleep.
 func (realClock) Sleep(d time.Duration) {
 	time.Sleep(d)
 }

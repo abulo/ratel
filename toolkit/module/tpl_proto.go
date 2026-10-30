@@ -14,8 +14,11 @@ import (
 	"github.com/spf13/cast"
 )
 
+// GenerateProto 使用 ProtoTemplate 渲染并写出 .proto 文件到 fullProtoDir，随后在 proto
+// 父目录执行 protoc 生成 gRPC 代码，再运行 protoc-go-inject-tag 为生成的 pb.go 注入自定义字段标签。
+//
+// 模板渲染失败时打印错误并返回；protoc 与标签注入命令的执行错误不会中断后续流程。
 func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, tableName string) {
-	// 模板变量
 	tpl := template.Must(template.New("proto").Funcs(template.FuncMap{
 		"Convert":               base.Convert,
 		"SymbolChar":            base.SymbolChar,
@@ -29,7 +32,6 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 		"ApiToProto":            base.ApiToProto,
 		"ProtoRequest":          base.ProtoRequest,
 	}).Parse(ProtoTemplate()))
-	// 文件夹路径
 	outProtoFile := path.Join(fullProtoDir, tableName+".proto")
 	if util.FileExists(outProtoFile) {
 		util.Delete(outProtoFile)
@@ -39,30 +41,24 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 		fmt.Println("文件句柄错误:", color.RedString(err.Error()))
 		return
 	}
-	//渲染输出
 	err = tpl.Execute(file, moduleParam)
 	if err != nil {
 		fmt.Println("模板解析错误:", color.RedString(err.Error()))
 		return
 	}
 	fmt.Printf("\n🍺 CREATED   %s\n", color.GreenString(outProtoFile))
-	//生成 grpc 代码
-	// serviceParentDir := util.GetParentDirectory(fullServiceDir)
+	// protoc 在 proto 目录的父目录执行，生成代码输出到上级项目目录；命令错误仅回显，不中断生成流程。
 	protoParentDir := util.GetParentDirectory(fullProtoDir)
 	_ = os.Chdir(protoParentDir)
-	// strLen := strings.LastIndex(fullProtoDir, "/")
-	// currentDir := fullProtoDir[strLen+1:]
 	cmdImportGrpc := exec.Command("protoc", "-I=proto", "--go-grpc_out=../", "--go_out=../", tableName+".proto")
 	cmdImportGrpc.CombinedOutput()
-	//修改自定义 tag
-	// 替换fullServiceDir中 aa 替换成  bb 字符串
+	// 将 fullServiceDir 归一化为相对工作目录的路径，供 inject-tag 命令定位生成的 pb.go。
 	fullServiceDir = strings.Replace(fullServiceDir, cast.ToString(base.Path)+"/", "", -1)
 	cmdImportTag := exec.Command("protoc-go-inject-tag", "-input="+fullServiceDir+"/"+tableName+".pb.go")
 	cmdImportTag.CombinedOutput()
 
 	builder := strings.Builder{}
 	builder.WriteString("\n")
-	// builder.WriteString(fmt.Sprintf("cd %s;", protoParentDir))
 	builder.WriteString("\n")
 	builder.WriteString(fmt.Sprintf("protoc  -I=proto  --go-grpc_out=../  --go_out=../  %s.proto ", tableName))
 	builder.WriteString("\n")
@@ -73,7 +69,7 @@ func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, t
 	fmt.Printf("\n🍺 Command   %s\n", color.GreenString(builder.String()))
 }
 
-// @inject_tag: db:"{{.ColumnName}}" json:"{{Helper .ColumnName}}" form:"{{Helper .ColumnName}}" uri:"{{Helper .ColumnName}}" xml:"{{Helper .ColumnName}}" proto:"{{Helper .ColumnName}}"
+// ProtoTemplate 返回 protobuf 服务定义模板；配置中 template.Proto 指定了自定义模板文件时优先读取该文件内容。
 func ProtoTemplate() string {
 	if exists := base.Config.Exists("template.Proto"); exists {
 		filePath := path.Join(cast.ToString(base.Path), base.Config.String("template.Proto"))

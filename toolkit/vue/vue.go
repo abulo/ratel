@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Vue represents the upgrade command.
+// Vue 是 toolkit vue 子命令，交互式采集表与模板选项后生成前端接口定义、API 模块与页面代码。
 var Vue = &cobra.Command{
 	Use:   "vue",
 	Short: "前端指令",
@@ -23,8 +23,12 @@ var Vue = &cobra.Command{
 	Run:   Run,
 }
 
+// Run 执行 vue 子命令：初始化运行环境，依次询问表名、软删除策略、模型路径、所用索引、
+// 待生成方法、分页方法与模板类型，读取数据库元数据后，按勾选的模板调用 GenerateInterface、
+// GenerateMethod 或 GeneratePage 生成前端文件。
+//
+// 任一交互式输入被取消，或环境初始化、元数据读取失败时直接返回，不生成文件。
 func Run(cmd *cobra.Command, args []string) {
-	// 数据初始化
 	if err := base.InitBase(); err != nil {
 		fmt.Println("初始化:", color.RedString(err.Error()))
 		return
@@ -55,7 +59,6 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// 初始化上下文
 	timeout := "60s"
 	t, err := time.ParseDuration(timeout)
 	if err != nil {
@@ -65,7 +68,6 @@ func Run(cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), t)
 	defer cancel()
 
-	// 表结构信息
 	tableColumn, err := base.TableColumn(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表结构信息:", color.RedString(err.Error()))
@@ -76,19 +78,16 @@ func Run(cmd *cobra.Command, args []string) {
 		tableColumnMap[item.ColumnName] = item
 	}
 
-	// 表信息
 	tableItem, err := base.TableItem(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表信息:", color.RedString(err.Error()))
 		return
 	}
-	// 表索引
 	tableIndex, err := base.TableIndex(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表索引:", color.RedString(err.Error()))
 		return
 	}
-	// 表主键
 	tablePrimary, err := base.TablePrimary(ctx, base.Config.String("db.Database"), tableName)
 	if err != nil {
 		fmt.Println("表主键:", color.RedString(err.Error()))
@@ -116,20 +115,16 @@ func Run(cmd *cobra.Command, args []string) {
 	var methodList []base.Method
 	needPageMethodList := make([]string, 0)
 
-	// 是否需要分页
 	pageBool := false
 
 	var deleteBool bool
 	if delete == "yes" {
 		deleteBool = true
 	}
-	//查询条件
 	AllCondition := make([]base.Column, 0)
 
-	// 数字长度
 	strLen := strings.LastIndex(dir, "/")
 
-	//添加默认方法
 	methodList = append(methodList, base.Method{
 		Table:          tableItem,
 		TableColumn:    tableColumn,
@@ -219,7 +214,6 @@ func Run(cmd *cobra.Command, args []string) {
 			base.CamelStr(tableItem.TableName)+"Drop",
 		)
 	}
-	//获取的索引信息没有
 	if err != nil {
 		methodName := base.CamelStr(tableItem.TableName) + "List"
 		method := base.Method{
@@ -238,23 +232,17 @@ func Run(cmd *cobra.Command, args []string) {
 		methodList = append(methodList, method)
 		needPageMethodList = append(needPageMethodList, methodName)
 	} else {
-		// js, _ := json.Marshal(tableIndex)
-		// fmt.Println(string(js))
-		//存储条件信息
 		field := make([]string, 0)
+		// 索引名约定为「类型_名称」，仅识别 Item、List 两类前缀，分别生成单条查询与列表方法。
 		idx := []string{"Item", "List"}
-		//有索引信息
 		for _, v := range tableIndex {
-			//查询条件
 			condition := make([]base.Column, 0)
-			//数据库索引
 			indexField := v.Field
 			indexFieldSlice := util.Explode(",", indexField)
 			for _, fieldValue := range indexFieldSlice {
 				if !util.InArray(fieldValue, useIndex) {
 					continue
 				}
-				//构造查询条件
 				positionIndex := cast.ToInt64(len(condition)) + 1
 				currentColumn := tableColumnMap[fieldValue]
 				currentColumn.PosiTion = positionIndex
@@ -263,15 +251,11 @@ func Run(cmd *cobra.Command, args []string) {
 					field = append(field, fieldValue)
 				}
 			}
-			// 数据库中的索引名称
 			indexName := v.IndexName
-
-			// 拆分字符串,得到索引类型和索引名称
 			indexNameSlice := util.Explode("_", indexName)
 			if len(indexNameSlice) < 2 {
 				continue
 			}
-			// 自定义函数名称和索引信息
 			customIndexType := util.UCWords(indexNameSlice[0])
 			customIndexName := util.UCWords(indexNameSlice[1])
 			if !util.InArray(customIndexType, idx) {
@@ -292,7 +276,6 @@ func Run(cmd *cobra.Command, args []string) {
 			}
 			AllCondition = append(AllCondition, condition...)
 			multiSelect = append(multiSelect, methodName)
-			//添加到集合中
 			methodList = append(methodList, method)
 			if base.CamelStr(customIndexType) == "List" {
 				needPageMethodList = append(needPageMethodList, methodName)
@@ -300,7 +283,6 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 		condition := make([]base.Column, 0)
 		for _, fieldValue := range field {
-			//构造查询条件
 			positionIndex := cast.ToInt64(len(condition)) + 1
 			currentColumn := tableColumnMap[fieldValue]
 			currentColumn.PosiTion = positionIndex
@@ -358,7 +340,6 @@ func Run(cmd *cobra.Command, args []string) {
 	var newMethodList []base.Method
 	for _, val := range methodList {
 		newMethod := val
-		// 判断是否分页
 		if util.InArray(newMethod.Name, multiPageSelected) {
 			newMethod.Page = true
 		}
@@ -370,7 +351,6 @@ func Run(cmd *cobra.Command, args []string) {
 		pageBool = true
 	}
 
-	// 数据模型
 	moduleParam := base.ModuleParam{
 		Pkg:         dir[strLen+1:],
 		Primary:     tablePrimary,

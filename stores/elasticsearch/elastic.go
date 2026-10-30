@@ -22,32 +22,43 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// MaxContentLength ...
+// MaxContentLength 为允许读取进内存并参与追踪记录的请求体大小上限，单位字节，
+// 超过该上限的请求体不再回读。
 const MaxContentLength = 1 << 16
 
-// Config ...
+// Config 保存 Elasticsearch 客户端的连接地址、认证信息与功能开关。
 type Config struct {
-	URL          []string
-	Username     string //账号 root
-	Password     string //密码
-	EnableMetric bool   // 关闭指标采集
-	EnableTrace  bool   // 关闭链路追踪
+	// URL 为集群节点地址列表，至少配置一个；客户端通过 SetURL 传给底层 elastic.Client。
+	URL []string
+	// Username 为基础认证用户名，与 Password 同时非空时才启用认证。
+	Username string
+	// Password 为基础认证密码。
+	Password string
+	// EnableMetric 是否采集 Elasticsearch 操作指标。
+	EnableMetric bool
+	// EnableTrace 是否挂载链路追踪。
+	EnableTrace bool
 }
 
-// Client --
+// Client 包装底层 elastic.Client 并持有连接配置，供上层直接调用 elastic v7 的查询 API。
+//
+// 实例由 NewClient 创建；Close 当前为空操作，不主动断开底层连接。
 type Client struct {
 	*elastic.Client
 	*Config
 }
 
-// Close disconnects
+// Close 释放客户端资源；当前底层 elastic.Client 不提供断开方法，该方法为空操作并返回 nil。
 func (client *Client) Close() error {
 	return nil
 }
 
 var clientManager = resource.NewResourceManager()
 
-// NewClient ...
+// NewClient 依据 Config 创建并按节点地址缓存复用 Elasticsearch 客户端。
+//
+// URL 为空、客户端初始化失败时记录日志并 panic；开启指标或追踪时为底层 HTTP 客户端
+// 安装带追踪与指标能力的传输层。
 func NewClient(config *Config) *Client {
 	url := util.Implode(";", config.URL)
 	val, err := clientManager.GetResource(url, func() (io.Closer, error) {
@@ -64,6 +75,8 @@ func NewClient(config *Config) *Client {
 	return val.(*Client)
 }
 
+// getClient 依据 Config 构造底层 elastic.Client 并包装为 Client；URL 为空或初始化失败时
+// 记录日志并返回错误。
 func getClient(config *Config) (*Client, error) {
 	var options []elastic.ClientOptionFunc
 	if len(config.URL) < 1 {
@@ -90,7 +103,8 @@ func getClient(config *Config) (*Client, error) {
 	return newClient, nil
 }
 
-// ESTraceServerInterceptor ...
+// ESTraceServerInterceptor 构造带追踪与指标传输层的 http.Client；EnableMetric、EnableTrace
+// 为对应开关，Addr 为节点地址，用于指标标签。
 func ESTraceServerInterceptor(EnableMetric, EnableTrace bool, Addr string) *http.Client {
 	newESTracedTransport := &ESTracedTransport{}
 	newESTracedTransport.Transport = &http.Transport{}
@@ -102,15 +116,22 @@ func ESTraceServerInterceptor(EnableMetric, EnableTrace bool, Addr string) *http
 	}
 }
 
-// ESTracedTransport ...
+// ESTracedTransport 包装底层 http.Transport，在请求转发前后采集链路追踪与操作指标。
+//
+// 实例由 ESTraceServerInterceptor 创建；EnableMetric、EnableTrace 决定对应能力是否开启，
+// Addr 作为指标中的节点标签。
 type ESTracedTransport struct {
 	*http.Transport
+	// EnableMetric 是否采集操作指标。
 	EnableMetric bool
-	EnableTrace  bool
-	Addr         string
+	// EnableTrace 是否挂载链路追踪。
+	EnableTrace bool
+	// Addr 为节点地址，用于指标标签。
+	Addr string
 }
 
-// RoundTrip ...
+// RoundTrip 转发单个 HTTP 请求：开启追踪时创建客户端 Span 并记录方法与路径；
+// 请求体未超过 MaxContentLength 时回读以便后续复用；随后交由底层 Transport 执行。
 func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err error) {
 	start := time.Now()
 	if t.EnableTrace {
@@ -132,31 +153,7 @@ func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err
 			attribute.String("elastic.url", r.URL.Path),
 		)
 		defer span.End()
-
-		// if parentSpan := trace.SpanFromContext(r.Context()); parentSpan != nil {
-		// 	parentCtx := parentSpan.Context()
-		// 	span = opentracing.StartSpan("elastic", opentracing.ChildOf(parentCtx))
-		// 	ext.SpanKindRPCClient.Set(span)
-		// 	hostName, err := os.Hostname()
-		// 	if err != nil {
-		// 		hostName = "unknown"
-		// 	}
-		// 	ext.PeerHostname.Set(span, hostName)
-		// 	defer func() {
-		// 		if err != nil {
-		// 			span.SetTag("elastic.error", err.Error())
-		// 			span.SetTag(string(ext.Error), true)
-		// 		}
-		// 		span.Finish()
-		// 	}()
-		// 	ctx := opentracing.ContextWithSpan(r.Context(), span)
-		// 	span.SetTag(string(ext.DBType), "elastic")
-		// 	span.SetTag(string(ext.DBInstance), r.URL.Host)
-		// 	span.SetTag("elastic.method", r.Method)
-		// 	span.SetTag("elastic.url", r.URL.Path)
-		// 	span.SetTag("elastic.params", r.URL.Query().Encode())
 		r = r.WithContext(newCtx)
-		// }
 	}
 	contentLength, _ := strconv.Atoi(r.Header.Get("Content-Length"))
 	if r.Body != nil && contentLength < MaxContentLength {
@@ -170,6 +167,7 @@ func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err
 	if err != nil {
 		return nil, err
 	}
+	// FIXME(owner): 指标上报条件与 EnableMetric 开关语义相反，当前在开关关闭时才上报，待修正为 t.EnableMetric。
 	if !t.EnableMetric {
 		cost := time.Since(start)
 		if err != nil {
