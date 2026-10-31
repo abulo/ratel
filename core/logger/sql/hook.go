@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
+	"github.com/abulo/ratel/v3/core/hostname"
 	"github.com/abulo/ratel/v3/core/logger/entry"
 	"github.com/abulo/ratel/v3/core/logger/queue"
 	"github.com/abulo/ratel/v3/util"
@@ -140,24 +140,19 @@ func (h *Hook) Levels() []logrus.Level {
 //
 // 转换与入队流程不阻断业务日志，Fire 始终返回 nil；写入后端的失败在后台消费阶段记录到错误输出。
 func (h *Hook) Fire(entryLogrus *logrus.Entry) error {
-	var funcVal string
-	var fileVal string
-	if entryLogrus.Caller != nil {
-		funcVal = entryLogrus.Caller.Function
-		fileVal = fmt.Sprintf("%s:%d", entryLogrus.Caller.File, entryLogrus.Caller.Line)
-	}
-	hostName, err := os.Hostname()
-	if err != nil {
-		hostName = "unknown"
-	}
-	level := entryLogrus.Level.String()
+	// PERF-3-7 [P2]：级别大写名称走预存映射表，调用位置由 entry.CallerLocation 用 AppendInt 拼接，
+	// 去掉每条日志的 Level.String()+strings.ToUpper 与 fmt.Sprintf 反射开销（预期收益需实测验证）。
+	funcVal, fileVal := entry.CallerLocation(entryLogrus.Caller)
+	// PERF-3-6 [P1]：主机名改走 core/hostname 包的进程级缓存实现（模块 4 已加 sync.Once），
+	// 调用点不再每条日志进入 gethostname 系统调用；失败兜底 "unknown" 语义由缓存实现保持。
+	hostName := hostname.Hostname()
 	newEntry := &entry.Entry{
 		Host:      hostName,
 		Timestamp: util.Now(),
 		File:      fileVal,
 		Func:      funcVal,
 		Message:   entryLogrus.Message,
-		Level:     strings.ToUpper(level),
+		Level:     entry.LevelUpper(entryLogrus.Level),
 		Data:      entryLogrus.Data,
 	}
 	h.q.Push(queue.NewJob(newEntry, func(v any) {

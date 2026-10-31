@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/abulo/ratel/v3/core/logger"
@@ -11,6 +12,17 @@ import (
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 )
+
+// transferBufPool 复用 32KB 传输缓冲，避免每次文件传输都由 io.Copy 内部新建临时缓冲。
+//
+// PERF-5-21 [P2]：缓冲复用；递归目录传输保持串行——单 SSH/SFTP 通道不支持并发操作，
+// 并发改造超出本次范围、风险较高，不实施。
+var transferBufPool = sync.Pool{
+	New: func() any {
+		buf := make([]byte, 32*1024)
+		return &buf
+	},
+}
 
 // Config 保存 SFTP 服务器的连接配置。
 type Config struct {
@@ -157,11 +169,15 @@ func getTransfer(client *sftp.Client, remoteFilepath, localFilepath string, tfBy
 		f, _ := remoteFile.Stat()
 		*totalBytes = f.Size()
 	}
+	// PERF-5-21 [P2]：从缓冲池取 32KB 缓冲配合 io.CopyBuffer 流式拷贝，传输结束归还缓冲池；
+	// 读取/写入方向、进度累计与错误返回语义保持不变。
+	bufPtr := transferBufPool.Get().(*[]byte)
+	defer transferBufPool.Put(bufPtr)
 	if tfBytes != nil {
 		remoteFileWithProgress := &IOReaderProgress{Reader: remoteFile, TransferredBytes: tfBytes}
-		bytes, copyErr = io.Copy(localFile, remoteFileWithProgress)
+		bytes, copyErr = io.CopyBuffer(localFile, remoteFileWithProgress, *bufPtr)
 	} else {
-		bytes, copyErr = io.Copy(localFile, remoteFile)
+		bytes, copyErr = io.CopyBuffer(localFile, remoteFile, *bufPtr)
 	}
 	if copyErr != nil {
 		return 0, errors.New("copyErr: " + copyErr.Error())
@@ -249,11 +265,15 @@ func putTransfer(client *sftp.Client, localFilepath string, remoteFilepath strin
 		f, _ := localFile.Stat()
 		*totalBytes = f.Size()
 	}
+	// PERF-5-21 [P2]：上传同样走缓冲池复用的 io.CopyBuffer，避免每次传输新建临时缓冲；
+	// 进度累计与错误返回语义保持不变。
+	bufPtr := transferBufPool.Get().(*[]byte)
+	defer transferBufPool.Put(bufPtr)
 	if tfBytes != nil {
 		localFileWithProgress := &IOReaderProgress{Reader: localFile, TransferredBytes: tfBytes}
-		bytes, copyErr = io.Copy(remoteFile, localFileWithProgress)
+		bytes, copyErr = io.CopyBuffer(remoteFile, localFileWithProgress, *bufPtr)
 	} else {
-		bytes, copyErr = io.Copy(remoteFile, localFile)
+		bytes, copyErr = io.CopyBuffer(remoteFile, localFile, *bufPtr)
 	}
 
 	if copyErr != nil {

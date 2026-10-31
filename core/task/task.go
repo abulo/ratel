@@ -205,7 +205,11 @@ func (d *Task) allowThisNodeRun(jobName string) (ok bool) {
 	} else {
 		d.state.Store(taskStateSteady)
 		if d.recentJobs != nil {
-			go d.reRunRecentJobs(d.recentJobs.PopAllJobs())
+			// PERF-3-8 [P1]：先取出回放任务集合并判空；稳态空集时不再新建 goroutine，
+			// 也不再触发后续空长度回放日志。函数返回值 ok 的语义保持不变。
+			if names := d.recentJobs.PopAllJobs(); len(names) > 0 {
+				go d.reRunRecentJobs(names)
+			}
 		}
 	}
 	if d.recentJobs != nil {
@@ -282,6 +286,10 @@ func (d *Task) Stop() {
 }
 
 func (d *Task) reRunRecentJobs(jobNames []string) {
+	// PERF-3-8 [P1]：空集合兜底直接返回，避免入口 Infof 空日志再次进入 logger 热路径。
+	if len(jobNames) == 0 {
+		return
+	}
 	logger.Logger.Infof("reRunRecentJobs: length=%d", len(jobNames))
 	for _, jobName := range jobNames {
 		if job, ok := d.jobs[jobName]; ok {

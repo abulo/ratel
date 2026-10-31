@@ -51,30 +51,27 @@ func OpenLocalFile(filename string, opts ...imaging.DecodeOption) (*Image, error
 	if !util.InArray(extension, extAry) {
 		return nil, errors.New("No Support file")
 	}
-	// imaging 无法直接解码 webp，先转换为临时 jpeg 文件再打开。
-	newFilename := filename + ".jpg"
+
+	var decoded image.Image
 	if extension == "webp" {
-		if !util.FileExists(newFilename) {
-			buffer, err := bimg.Read(filename)
-			if err != nil {
-				return nil, err
-			}
-			newCovImage, err := bimg.NewImage(buffer).Convert(bimg.JPEG)
-			if err != nil {
-				return nil, err
-			}
-			err = bimg.Write(newFilename, newCovImage)
-			if err != nil {
-				return nil, err
-			}
+		// PERF-7-41 [P2] 直接基于已读入内存的 fileBuffer 转换 JPEG 并在内存中解码；
+		// 不再 bimg.Read 二次读盘，也不再写临时 jpeg 后由 imaging.Open 第三次读盘
+		jpegBuffer, err := bimg.NewImage(fileBuffer).Convert(bimg.JPEG)
+		if err != nil {
+			return nil, err
 		}
-		filename = newFilename
+		decoded, err = imaging.Decode(bytes.NewReader(jpegBuffer), opts...)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// PERF-7-41 [P2] 直接从已加载字节流解码，避免 imaging.Open 再次从磁盘读取同一文件
+		decoded, err = imaging.Decode(bytes.NewReader(fileBuffer), opts...)
+		if err != nil {
+			return nil, err
+		}
 	}
-	img, err := imaging.Open(filename, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &Image{img}, nil
+	return &Image{decoded}, nil
 }
 
 // GetSource 返回内部持有的底层 image.Image。

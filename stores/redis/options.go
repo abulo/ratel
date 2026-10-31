@@ -2,6 +2,7 @@ package redis
 
 import (
 	"crypto/tls"
+	"sync"
 	"time"
 
 	"github.com/abulo/ratel/v3/core/resource"
@@ -52,7 +53,12 @@ type Client struct {
 	// IdleTimeout 为关闭空闲连接的等待时长，应小于服务端超时时间，默认不关闭空闲连接。
 	IdleTimeout time.Duration
 	// IdleCheckFrequency 为空闲连接检查频率，默认 1 分钟；设置为负值可关闭检查。
+	//
+	// PERF-1-6 [P2] go-redis 内部已固定空闲检查周期，该字段不再映射到连接生命周期；
+	// 连接最大存活时间由下方 ConnMaxLifetime 独立控制，本字段仅为保持对外配置兼容而保留。
 	IdleCheckFrequency time.Duration
+	// ConnMaxLifetime 为连接最大可复用时长；为 0 时框架默认 30 分钟，避免连接永不退役。
+	ConnMaxLifetime time.Duration
 	// TLSConfig 为 TLS 配置，设置后启用 TLS 加密，仅单节点模式生效。
 	TLSConfig *tls.Config
 	// EnableMetric 是否开启指标采集。
@@ -63,6 +69,59 @@ type Client struct {
 	brk resource.Breaker
 	// Name 为节点名称。
 	Name string
+
+	// PERF-1-1 [P0] 首次解析后缓存的底层连接实例；后续命令直接复用，
+	// 避免每条命令都经过资源管理器与 SingleFlight 锁查找。
+	nodeMu sync.RWMutex
+	node   RedisNode
+}
+
+// PERF-1-6 [P2] 框架级连接超时与生命周期默认值，避免零值透传导致超时缺失或连接永不回收。
+const (
+	defaultDialTimeout     = 5 * time.Second
+	defaultReadTimeout     = 3 * time.Second
+	defaultWriteTimeout    = 3 * time.Second
+	defaultConnMaxLifetime = 30 * time.Minute
+)
+
+// resolvedDialTimeout 返回建立连接超时，未配置时使用框架默认值。
+func (o *Client) resolvedDialTimeout() time.Duration {
+	if o.DialTimeout > 0 {
+		return o.DialTimeout
+	}
+	return defaultDialTimeout
+}
+
+// resolvedReadTimeout 返回读取超时，未配置时使用框架默认值。
+func (o *Client) resolvedReadTimeout() time.Duration {
+	if o.ReadTimeout > 0 {
+		return o.ReadTimeout
+	}
+	return defaultReadTimeout
+}
+
+// resolvedWriteTimeout 返回写入超时，未配置时使用框架默认值。
+func (o *Client) resolvedWriteTimeout() time.Duration {
+	if o.WriteTimeout > 0 {
+		return o.WriteTimeout
+	}
+	return defaultWriteTimeout
+}
+
+// resolvedPoolTimeout 返回连接池等待超时，未配置时取读取超时加 1 秒。
+func (o *Client) resolvedPoolTimeout() time.Duration {
+	if o.PoolTimeout > 0 {
+		return o.PoolTimeout
+	}
+	return o.resolvedReadTimeout() + time.Second
+}
+
+// resolvedConnMaxLifetime 返回连接最大存活时间，未配置时默认 30 分钟。
+func (o *Client) resolvedConnMaxLifetime() time.Duration {
+	if o.ConnMaxLifetime > 0 {
+		return o.ConnMaxLifetime
+	}
+	return defaultConnMaxLifetime
 }
 
 // GetRingClientConfig 将 Client 配置转换为分片（ring）模式的 redis.RingOptions。
@@ -70,13 +129,14 @@ func (o *Client) GetRingClientConfig() *redis.RingOptions {
 	opts := &redis.RingOptions{
 		Addrs:           o.Addrs,
 		Password:        o.Password,
-		DialTimeout:     o.DialTimeout,
-		ReadTimeout:     o.ReadTimeout,
-		WriteTimeout:    o.WriteTimeout,
+		DialTimeout:     o.resolvedDialTimeout(),
+		ReadTimeout:     o.resolvedReadTimeout(),
+		WriteTimeout:    o.resolvedWriteTimeout(),
 		PoolSize:        o.PoolSize,
-		PoolTimeout:     o.PoolTimeout,
+		PoolTimeout:     o.resolvedPoolTimeout(),
 		ConnMaxIdleTime: o.IdleTimeout,
-		ConnMaxLifetime: o.IdleCheckFrequency,
+		// PERF-1-6 [P2] 生命周期与空闲检查解耦：ConnMaxLifetime 取独立配置，不再误用 IdleCheckFrequency。
+		ConnMaxLifetime: o.resolvedConnMaxLifetime(),
 		DisableIdentity: true,
 		Protocol:        2,
 	}
@@ -90,13 +150,14 @@ func (o *Client) GetFailoverClientConfig() *redis.FailoverOptions {
 		SentinelAddrs:   o.Hosts,
 		RouteByLatency:  o.RouteByLatency,
 		Password:        o.Password,
-		DialTimeout:     o.DialTimeout,
-		ReadTimeout:     o.ReadTimeout,
-		WriteTimeout:    o.WriteTimeout,
+		DialTimeout:     o.resolvedDialTimeout(),
+		ReadTimeout:     o.resolvedReadTimeout(),
+		WriteTimeout:    o.resolvedWriteTimeout(),
 		PoolSize:        o.PoolSize,
-		PoolTimeout:     o.PoolTimeout,
+		PoolTimeout:     o.resolvedPoolTimeout(),
 		ConnMaxIdleTime: o.IdleTimeout,
-		ConnMaxLifetime: o.IdleCheckFrequency,
+		// PERF-1-6 [P2] 生命周期与空闲检查解耦：ConnMaxLifetime 取独立配置，不再误用 IdleCheckFrequency。
+		ConnMaxLifetime: o.resolvedConnMaxLifetime(),
 		DisableIdentity: true,
 		Protocol:        2,
 	}
@@ -110,13 +171,14 @@ func (o *Client) GetClusterClientConfig() *redis.ClusterOptions {
 		ReadOnly:        o.IsReadOnly,
 		RouteByLatency:  o.RouteByLatency,
 		Password:        o.Password,
-		DialTimeout:     o.DialTimeout,
-		ReadTimeout:     o.ReadTimeout,
-		WriteTimeout:    o.WriteTimeout,
+		DialTimeout:     o.resolvedDialTimeout(),
+		ReadTimeout:     o.resolvedReadTimeout(),
+		WriteTimeout:    o.resolvedWriteTimeout(),
 		PoolSize:        o.PoolSize,
-		PoolTimeout:     o.PoolTimeout,
+		PoolTimeout:     o.resolvedPoolTimeout(),
 		ConnMaxIdleTime: o.IdleTimeout,
-		ConnMaxLifetime: o.IdleCheckFrequency,
+		// PERF-1-6 [P2] 生命周期与空闲检查解耦：ConnMaxLifetime 取独立配置，不再误用 IdleCheckFrequency。
+		ConnMaxLifetime: o.resolvedConnMaxLifetime(),
 		DisableIdentity: true,
 		Protocol:        2,
 	}
@@ -133,13 +195,14 @@ func (o *Client) GetClientConfig() *redis.Options {
 		Password:        o.Password,
 		DB:              o.Database,
 		MaxRetries:      o.MaxRedirects,
-		DialTimeout:     o.DialTimeout,
-		ReadTimeout:     o.ReadTimeout,
-		WriteTimeout:    o.WriteTimeout,
+		DialTimeout:     o.resolvedDialTimeout(),
+		ReadTimeout:     o.resolvedReadTimeout(),
+		WriteTimeout:    o.resolvedWriteTimeout(),
 		PoolSize:        o.PoolSize,
-		PoolTimeout:     o.PoolTimeout,
+		PoolTimeout:     o.resolvedPoolTimeout(),
 		ConnMaxIdleTime: o.IdleTimeout,
-		ConnMaxLifetime: o.IdleCheckFrequency,
+		// PERF-1-6 [P2] 生命周期与空闲检查解耦：ConnMaxLifetime 取独立配置，不再误用 IdleCheckFrequency。
+		ConnMaxLifetime: o.resolvedConnMaxLifetime(),
 		TLSConfig:       o.TLSConfig,
 		DisableIdentity: true,
 		Protocol:        2,

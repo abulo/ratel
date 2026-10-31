@@ -1,6 +1,10 @@
 package metric
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"sync"
+
+	"github.com/prometheus/client_golang/prometheus"
+)
 
 // HistogramVecOpts 定义直方图向量的 Prometheus 配置项。
 type HistogramVecOpts struct {
@@ -20,6 +24,10 @@ type HistogramVecOpts struct {
 
 type histogramVec struct {
 	*prometheus.HistogramVec
+	// PERF-3-14 [P2]：按标签组合缓存已解析的 Observer 子指标，热点上报命中缓存后不再重复执行向量内查找；
+	// 首次未命中仍走 WithLabelValues，标签数量不匹配时由 Prometheus 原样 panic，错误行为不变。
+	mu       sync.RWMutex
+	children map[string]prometheus.Observer
 }
 
 // Build 按配置创建直方图向量并注册到 Prometheus 默认注册器；同名向量重复注册会触发 panic。
@@ -38,7 +46,26 @@ func (opts HistogramVecOpts) Build() *histogramVec {
 	}
 }
 
+// getChild 返回 labels 对应的 Histogram Observer，未命中时经 WithLabelValues 解析并回填缓存。
+func (histogram *histogramVec) getChild(labels []string) prometheus.Observer {
+	key := labelKey(labels)
+	histogram.mu.RLock()
+	child, ok := histogram.children[key]
+	histogram.mu.RUnlock()
+	if ok {
+		return child
+	}
+	child = histogram.WithLabelValues(labels...)
+	histogram.mu.Lock()
+	if histogram.children == nil {
+		histogram.children = make(map[string]prometheus.Observer)
+	}
+	histogram.children[key] = child
+	histogram.mu.Unlock()
+	return child
+}
+
 // Observe 记录一个观测值 v 到对应标签组合的直方图；标签值数量与顺序须与向量定义的 Labels 一致。
 func (histogram *histogramVec) Observe(v float64, labels ...string) {
-	histogram.WithLabelValues(labels...).Observe(v)
+	histogram.getChild(labels).Observe(v)
 }

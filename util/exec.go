@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"unicode"
 )
 
@@ -50,6 +52,28 @@ func Exec(command string, output *[]string, returnVar *int) string {
 	return ""
 }
 
+// PERF-7-31 [P2] 带缓存上限的输出写入器：未触顶时写入 stdBuf，触顶后仅返回写入成功、不再缓存；终端透传由 MultiWriter 另一路承担
+type boundedCacheWriter struct {
+	buf    *bytes.Buffer
+	limit  int64
+	capped atomic.Bool
+}
+
+func (w *boundedCacheWriter) Write(p []byte) (int, error) {
+	if !w.capped.Load() {
+		if int64(w.buf.Len())+int64(len(p)) > w.limit {
+			remain := w.limit - int64(w.buf.Len())
+			if remain > 0 {
+				w.buf.Write(p[:remain])
+			}
+			w.capped.Store(true)
+		} else {
+			w.buf.Write(p)
+		}
+	}
+	return len(p), nil
+}
+
 // System 解析 command 并执行，标准输出与标准错误同时透传到终端并缓存到内存。
 //
 // 执行成功时 returnVar 置 0，返回缓存输出的最后一行；启动、读取或等待失败时
@@ -83,8 +107,11 @@ func System(command string, returnVar *int) string {
 	cmd := exec.Command(parts[0], parts[1:]...)
 	stdoutIn, _ := cmd.StdoutPipe()
 	stderrIn, _ := cmd.StderrPipe()
-	stdout := io.MultiWriter(os.Stdout, &stdBuf)
-	stderr := io.MultiWriter(os.Stderr, &stdBuf)
+
+	// PERF-7-31 [P2] stdBuf 设置 1MB 缓存上限，超出后只向终端透传、不再缓存，避免无界缓冲随长命令输出无限增长
+	cache := &boundedCacheWriter{buf: &stdBuf, limit: 1 << 20}
+	stdout := io.MultiWriter(os.Stdout, cache)
+	stderr := io.MultiWriter(os.Stderr, cache)
 
 	err = cmd.Start()
 	if err != nil {
@@ -92,14 +119,20 @@ func System(command string, returnVar *int) string {
 		return ""
 	}
 
+	// PERF-7-31 [P2] 两个拷贝 goroutine 纳入 WaitGroup，cmd.Wait() 后先等待拷贝结束再读取错误，避免等待返回后缓冲丢失与悬挂 goroutine
+	var wg sync.WaitGroup
+	wg.Add(2)
 	go func() {
+		defer wg.Done()
 		_, err1 = io.Copy(stdout, stdoutIn)
 	}()
 	go func() {
+		defer wg.Done()
 		_, err2 = io.Copy(stderr, stderrIn)
 	}()
 
 	err3 = cmd.Wait()
+	wg.Wait()
 	if err1 != nil || err2 != nil || err3 != nil {
 		if err1 != nil {
 			fmt.Println(err1)

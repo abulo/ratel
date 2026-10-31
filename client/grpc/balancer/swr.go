@@ -1,7 +1,6 @@
 package balancer
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -13,6 +12,7 @@ import (
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
+	"google.golang.org/grpc/grpclog"
 )
 
 const (
@@ -46,19 +46,32 @@ func (s swrPickerBuilder) Build(info PickerBuildInfo) balancer.Picker {
 	return newSWRPicker(info)
 }
 
+// lockedSW 将一个 weighted.SW 桶与其互斥锁绑定；weighted.SW 内部不做并发保护，
+// 每次 Next 仍需在桶级锁内串行执行，但不同路由桶之间不再共享同一把全局锁。
+type lockedSW struct {
+	mu   sync.Mutex
+	size int
+	sw   weighted.SW
+}
+
+// Add 向桶内追加候选节点并维护节点计数；仅在 Picker 构建期（parseBuildInfo）调用。
+func (l *lockedSW) Add(item any, weight int) {
+	l.sw.Add(item, weight)
+	l.size++
+}
+
 type swrPicker struct {
 	readySCs     map[balancer.SubConn]base.SubConnInfo
-	mu           sync.Mutex
-	buckets      *weighted.SW
-	routeBuckets map[string]*weighted.SW
+	global       *lockedSW
+	routeBuckets map[string]*lockedSW
 	*attributes.Attributes
 }
 
 func newSWRPicker(info PickerBuildInfo) *swrPicker {
 	picker := &swrPicker{
-		buckets:      &weighted.SW{},
+		global:       &lockedSW{},
 		readySCs:     info.ReadySCs,
-		routeBuckets: map[string]*weighted.SW{},
+		routeBuckets: map[string]*lockedSW{},
 	}
 	picker.parseBuildInfo(info)
 	return picker
@@ -67,16 +80,26 @@ func newSWRPicker(info PickerBuildInfo) *swrPicker {
 // Pick 先按方法名查找该 URI 的专用路由桶，存在则在其中加权轮询；否则使用全局桶。
 // 选不到候选 SubConn 时返回错误。
 func (p *swrPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	var buckets = p.buckets
+	bucket := p.global
 	if bs, ok := p.routeBuckets[info.FullMethodName]; ok {
 		// 按 URI 将流量分组到独立的路由桶。
-		buckets = bs
+		bucket = bs
 	}
 
-	sub, ok := buckets.Next().(balancer.SubConn)
+	// PERF-5-6 [P1]：每个路由桶持有独立互斥锁，Pick 只锁住当前命中的桶，不同方法名的选择
+	// 不再在一把全局锁上排队；桶在 Build 完成后节点集合不再变更，size 可在无锁下读取。
+	// 单节点桶走无锁快路径：weighted.SW 对 n==1 直接返回唯一节点、不改动轮询状态。（预期收益需实测验证）
+	if bucket.size == 1 {
+		if sub, ok := bucket.sw.Next().(balancer.SubConn); ok {
+			return balancer.PickResult{SubConn: sub}, nil
+		}
+		return balancer.PickResult{}, errors.New("pick failed")
+	}
+
+	bucket.mu.Lock()
+	defer bucket.mu.Unlock()
+
+	sub, ok := bucket.sw.Next().(balancer.SubConn)
 	if ok {
 		return balancer.PickResult{SubConn: sub}, nil
 	}
@@ -91,7 +114,9 @@ func (p *swrPicker) parseBuildInfo(info PickerBuildInfo) {
 	var groupedSubConns = map[string][]balancer.SubConn{}
 
 	for subConn, info := range info.ReadySCs {
-		p.buckets.Add(subConn, 1)
+		// PERF-5-7 [P2]：每个节点只向全局桶 Add 一次；删除循环末尾重复的第二次 Add，
+		// 避免桶内节点数与权重翻倍导致后续每次 Next 的 O(n) 扫描长度被放大。
+		p.global.Add(subConn, 1)
 		if info.Address.Attributes != nil {
 			if serviceInfo, ok := info.Address.Attributes.Value(constant.KeyServiceInfo).(server.ServiceInfo); ok {
 				// TODO(owner): 按服务分组进一步精细化路由。
@@ -104,7 +129,6 @@ func (p *swrPicker) parseBuildInfo(info PickerBuildInfo) {
 		}
 		host := info.Address.Addr
 		hostedSubConns[host] = subConn
-		p.buckets.Add(subConn, 1)
 	}
 
 	if info.Attributes == nil {
@@ -116,14 +140,19 @@ func (p *swrPicker) parseBuildInfo(info PickerBuildInfo) {
 		return
 	}
 
-	fmt.Printf("providerConfig => %v\n", providerConfig)
+	// PERF-5-8 [P2]：移除构建期遗留的 fmt.Printf 同步 stdout 输出，降级为 grpclog.V(2) 级别受控日志。
+	if grpclog.V(2) {
+		grpclog.Infoln("swr: providerConfig =>", providerConfig)
+	}
 
 	consumerConfigs, ok := info.Attributes.Value(constant.KeyConsumerConfig).(map[string]registry.ConsumerConfig)
 	if !ok {
 		return
 	}
 
-	fmt.Printf("consumerConfigs => %v\n", consumerConfigs)
+	if grpclog.V(2) {
+		grpclog.Infoln("swr: consumerConfigs =>", consumerConfigs)
+	}
 
 	// 解析路由配置，为每个 URI 建立独立的加权轮询桶。
 	routeConfigs, ok := info.Attributes.Value(constant.KeyRouteConfig).(map[string]registry.RouteConfig)
@@ -132,7 +161,7 @@ func (p *swrPicker) parseBuildInfo(info PickerBuildInfo) {
 	}
 	for _, config := range routeConfigs {
 		if _, ok := p.routeBuckets[config.URI]; !ok {
-			p.routeBuckets[config.URI] = &weighted.SW{}
+			p.routeBuckets[config.URI] = &lockedSW{}
 		}
 
 		// 基于分组配置权重，同一分组下的所有节点使用相同权重。

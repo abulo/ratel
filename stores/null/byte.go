@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"encoding/json"
+	"strconv"
 
 	"github.com/pkg/errors"
-
-	"github.com/spf13/cast"
 )
 
 // Byte 是可空的 byte，实现 sql.Scanner、driver.Valuer 以及 JSON 与文本编解码接口。
@@ -101,7 +100,7 @@ func (b *Byte) UnmarshalText(text []byte) error {
 // MarshalJSON 实现 json.Marshaler；空值序列化为 JSON null，有效值序列化为带引号的单字符字符串。
 func (b Byte) MarshalJSON() ([]byte, error) {
 	if !b.Valid {
-		return json.Marshal(nil)
+		return NullBytes, nil // PERF-2-17 [P2] 复用包级共享 null 字节，省去 json 反射序列化与分配
 	}
 	return []byte{'"', b.Byte, '"'}, nil
 }
@@ -172,5 +171,6 @@ func (t Byte) Result() string {
 	if !t.Valid {
 		return "NULL"
 	}
-	return cast.ToString(t.Byte)
+	// PERF-2-19 [P2] 已知类型为 byte，直接十进制格式化，去掉 cast 反射分发。
+	return strconv.FormatUint(uint64(t.Byte), 10)
 }

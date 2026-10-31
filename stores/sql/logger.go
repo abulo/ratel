@@ -84,17 +84,24 @@ func (l *WrapLogger) Error(ctx context.Context, s string, args ...any) {
 // 调试开关开启时常规执行记 Debug；错误在未被忽略时记 Error。
 func (l *WrapLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	elapsed := time.Since(begin)
+	// PERF-2-2 [P1] 先判定本次是否会输出日志；不满足任何级别时直接返回，
+	// 不构造 SQL 字符串、不做调用栈回溯、不分配 Fields 映射，日志输出内容与原逻辑保持一致。
+	willLogError := Acceptable(err) != nil && !l.SkipErrRecordNotFound
+	willLogSlow := l.SlowThreshold != 0 && elapsed > l.SlowThreshold
+	if !willLogError && !willLogSlow && !l.Debug {
+		return
+	}
 	sql, _ := fc()
 	fields := logrus.Fields{}
 	if l.SourceField != "" {
 		fields[l.SourceField] = utils.FileWithLineNum()
 	}
-	if Acceptable(err) != nil && !l.SkipErrRecordNotFound {
+	if willLogError {
 		fields[logrus.ErrorKey] = err
 		l.Logrus.WithContext(ctx).WithFields(fields).Errorf("%s [%s]", sql, elapsed)
 		return
 	}
-	if l.SlowThreshold != 0 && elapsed > l.SlowThreshold {
+	if willLogSlow {
 		l.Logrus.WithContext(ctx).WithFields(fields).Warnf("%s [%s]", sql, elapsed)
 		return
 	}
@@ -161,17 +168,24 @@ func (l *WrapEntry) Error(ctx context.Context, s string, args ...any) {
 // 调试开关开启时常规执行记 Debug；错误在未被忽略时记 Error。
 func (l *WrapEntry) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	elapsed := time.Since(begin)
+	// PERF-2-2 [P1] 先判定本次是否会输出日志；不满足任何级别时直接返回，
+	// 不构造 SQL 字符串、不做调用栈回溯、不分配 Fields 映射，日志输出内容与原逻辑保持一致。
+	willLogError := Acceptable(err) != nil && !l.SkipErrRecordNotFound
+	willLogSlow := l.SlowThreshold != 0 && elapsed > l.SlowThreshold
+	if !willLogError && !willLogSlow && !l.Debug {
+		return
+	}
 	sql, _ := fc()
 	fields := logrus.Fields{}
 	if l.SourceField != "" {
 		fields[l.SourceField] = utils.FileWithLineNum()
 	}
-	if Acceptable(err) != nil && !l.SkipErrRecordNotFound {
+	if willLogError {
 		fields[logrus.ErrorKey] = err
 		l.Logrus.WithContext(ctx).WithFields(fields).Errorf("%s [%s]", sql, elapsed)
 		return
 	}
-	if l.SlowThreshold != 0 && elapsed > l.SlowThreshold {
+	if willLogSlow {
 		l.Logrus.WithContext(ctx).WithFields(fields).Warnf("%s [%s]", sql, elapsed)
 		return
 	}

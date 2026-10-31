@@ -89,7 +89,7 @@ func (f *Float64) UnmarshalText(text []byte) error {
 // MarshalJSON 实现 json.Marshaler；空值序列化为 JSON null。
 func (f Float64) MarshalJSON() ([]byte, error) {
 	if !f.Valid {
-		return json.Marshal(nil)
+		return NullBytes, nil // PERF-2-17 [P2] 复用包级共享 null 字节，省去 json 反射序列化与分配
 	}
 	return []byte(strconv.FormatFloat(f.Float64, 'f', -1, 64)), nil
 }

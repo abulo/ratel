@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"sync"
 	"text/template"
 	"time"
 
@@ -15,6 +16,26 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 )
+
+// PERF-8-1 [P1] DAO 模板对所有表完全相同：模板字符串读取、FuncMap 注册与 template.Parse
+// 在整个命令生命周期内只做一次并缓存复用，避免批量生成时每张表重复完成模板词法/语法编译。
+var (
+	daoTplOnce sync.Once
+	daoTpl     *template.Template
+)
+
+// loadDaoTemplate 懒加载并缓存预解析完成的 DAO 模板；解析失败保持原有 template.Must 直接 panic 语义。
+func loadDaoTemplate() *template.Template {
+	daoTplOnce.Do(func() {
+		daoTpl = template.Must(template.New("name").Funcs(template.FuncMap{
+			"CamelStr":   base.CamelStr,
+			"Helper":     base.Helper,
+			"SymbolChar": base.SymbolChar,
+			"Pointer":    base.Pointer,
+		}).Parse(DaoTemplate()))
+	})
+	return daoTpl
+}
 
 // CmdNew 是 toolkit dao 子命令，按数据库表清单生成 GORM 模型结构体代码。
 var (
@@ -61,17 +82,56 @@ func Run(cmd *cobra.Command, args []string) {
 			tables = util.Explode(",", tableName)
 		}
 	}
+
+	// PERF-8-7 [P2] 命令行指定的表名预建集合，循环内 O(1) 命中判断，替代反射型 InArray 线性查找。
+	tablesSet := make(map[string]struct{}, len(tables))
+	for _, name := range tables {
+		tablesSet[name] = struct{}{}
+	}
+
+	// PERF-8-1 [P1] 命令启动后即完成一次模板读取与预解析，避免逐表重复解析。
+	loadDaoTemplate()
+
+	// PERF-8-18 [P2] 跨表 TableColumn 查询受限并发（预期收益需实测验证）：各表查询互不依赖，
+	// 4 路信号量并发取字段；单表失败保持原有跳过、不中断其余表的语义；结果按下标回填，
+	// 后续渲染与写文件仍按原表顺序串行，生成产物顺序与内容保持不变。
+	filtered := make([]base.Table, 0, len(tableList))
 	for _, table := range tableList {
 		if !util.Empty(tables) {
-			if !util.InArray(table.TableName, tables) {
+			if _, ok := tablesSet[table.TableName]; !ok {
 				continue
 			}
 		}
-		column, err := base.TableColumn(ctx, base.Config.String("db.Database"), table.TableName)
-		if err != nil {
+		filtered = append(filtered, table)
+	}
+
+	type daoColumns struct {
+		columns []base.Column
+		ok      bool
+	}
+	results := make([]daoColumns, len(filtered))
+	sem := make(chan struct{}, 4)
+	var wg sync.WaitGroup
+	for i, table := range filtered {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(idx int, tbl base.Table) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			column, qerr := base.TableColumn(ctx, base.Config.String("db.Database"), tbl.TableName)
+			if qerr != nil {
+				return
+			}
+			results[idx] = daoColumns{columns: column, ok: true}
+		}(i, table)
+	}
+	wg.Wait()
+
+	for i, table := range filtered {
+		if !results[i].ok {
 			continue
 		}
-		GenerateDao(table, column)
+		GenerateDao(table, results[i].columns)
 	}
 	_ = os.Chdir(dir)
 	cmdShell := exec.Command("go", "fmt")
@@ -97,12 +157,8 @@ func GenerateDao(table base.Table, column []base.Column) {
 		fmt.Println("文件句柄错误:", color.RedString(err.Error()))
 		return
 	}
-	tpl := template.Must(template.New("name").Funcs(template.FuncMap{
-		"CamelStr":   base.CamelStr,
-		"Helper":     base.Helper,
-		"SymbolChar": base.SymbolChar,
-		"Pointer":    base.Pointer,
-	}).Parse(DaoTemplate()))
+	// PERF-8-1 [P1] 复用命令级预解析缓存，不再逐表重建 FuncMap 与重新 Parse。
+	tpl := loadDaoTemplate()
 
 	data := base.DaoParam{
 		Table:       table,

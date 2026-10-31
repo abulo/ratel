@@ -76,6 +76,9 @@ func (m *Map) Get(key string) string {
 	if m.IsEmpty() {
 		return ""
 	}
+	// PERF-3-13 [P2]：复核结论——导出的 Hash 接口签名为 func([]byte) uint32，标准库 crc32 摘要不提供
+	// WriteString 入口，消除 string→[]byte 拷贝需要变更导出 API（违反兼容红线）或自行实现字符串版 CRC32；
+	// 该分配为一次小对象、触发频率等于任务调度频率，收益低于改造风险，本条目不改代码。
 	hash := int(m.hash([]byte(key)))
 	// 二分查找定位不小于目标哈希的虚拟节点。
 	idx := sort.Search(len(m.keys), func(i int) bool { return m.keys[i] >= hash })

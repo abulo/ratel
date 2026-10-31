@@ -48,6 +48,15 @@ func (manager *ResourceManager) Close() error {
 // 同一 key 的并发创建请求由单飞合并，仅执行一次 create；create 返回错误时
 // 不缓存该资源，错误原样返回给调用方。
 func (manager *ResourceManager) GetResource(key string, create func() (io.Closer, error)) (io.Closer, error) {
+	// PERF-4-5 [P1]：缓存命中先走读锁快速旁路，不再进入单飞全局锁；
+	// 仅未命中时交给 SingleFlight 合并同一 key 的并发首次创建（双重锁固定成本预期收益需实测验证）。
+	manager.lock.RLock()
+	if resource, ok := manager.resources[key]; ok {
+		manager.lock.RUnlock()
+		return resource, nil
+	}
+	manager.lock.RUnlock()
+
 	val, err := manager.singleFlight.Do(key, func() (any, error) {
 		manager.lock.RLock()
 		resource, ok := manager.resources[key]

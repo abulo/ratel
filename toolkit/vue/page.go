@@ -21,25 +21,30 @@ func GeneratePage(moduleParam base.ModuleParam, fullPageDir, viewUrl, tableName 
 	_ = os.MkdirAll(dir, os.ModePerm)
 	viewFullFile := path.Join(fullPageDir, viewUrl)
 
-	tpl := template.Must(template.New("page").Funcs(template.FuncMap{
-		"Convert":               base.Convert,
-		"SymbolChar":            base.SymbolChar,
-		"Char":                  base.Char,
-		"Helper":                base.Helper,
-		"CamelStr":              base.CamelStr,
-		"Add":                   base.Add,
-		"ModuleProtoConvertDao": base.ModuleProtoConvertDao,
-		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
-		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
-		"ApiToProto":            base.ApiToProto,
-		"TypeScriptCondition":   base.TypeScriptCondition,
-		"TypeScript":            base.TypeScript,
-		"Json":                  base.Json,
-		"InMethod":              base.InMethod,
-		"Rule":                  base.Rule,
-		"Props":                 base.Props,
-		"PropsSearch":           base.PropsSearch,
-	}).Parse(PageTemplate()))
+	// PERF-8-22 [P2] 方法类型集合在渲染入口构建一次；模板内 30 余次 InMethod 判定全部 O(1) 命中，
+	// 判定结果与 base.InMethod 逐方法扫描保持一致。
+	methodTypes := make(map[string]struct{}, len(moduleParam.Method))
+	for _, m := range moduleParam.Method {
+		methodTypes[m.Type] = struct{}{}
+	}
+
+	// PERF-8-20 [P2] 公共模板函数复用 base 包级定义，仅追加本生成器专属函数。
+	funcs := base.CommonTemplateFuncs()
+	funcs["TypeScriptCondition"] = base.TypeScriptCondition
+	funcs["TypeScript"] = base.TypeScript
+	funcs["Json"] = base.Json
+	funcs["InMethod"] = func(_ []base.Method, target ...string) bool {
+		for _, t := range target {
+			if _, ok := methodTypes[t]; ok {
+				return true
+			}
+		}
+		return false
+	}
+	funcs["Rule"] = base.Rule
+	funcs["Props"] = base.Props
+	funcs["PropsSearch"] = base.PropsSearch
+	tpl := template.Must(template.New("page").Funcs(funcs).Parse(PageTemplate()))
 
 	if util.FileExists(viewFullFile) {
 		util.Delete(viewFullFile)

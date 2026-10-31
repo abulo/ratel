@@ -1,6 +1,8 @@
 package rabbitmq
 
 import (
+	"sync"
+
 	"github.com/streadway/amqp"
 )
 
@@ -29,13 +31,15 @@ func (c *Consumer) Receive(queue string, opts *ReceiveOpts, lis ReceiveListener)
 // autoAck 为 true 时服务器自动确认该消息，若通道或连接在消息处理完成前关闭，消息不会重新入队；
 // autoAck 为 false 时由调用方手动确认。
 func (c *Consumer) Get(queue string, autoAck bool) (*amqp.Delivery, bool, error) {
-	ch, err := c.c.Channel()
+	// PERF-5-13 [P1]：拉取消费复用同一条互斥保护的长驻通道，不再每条消息 open/close；
+	// autoAck 参数与错误返回语义保持不变，通道异常时槽位自动清空并于下次调用重建。
+	ch, err := c.c.trackChannel(&c.c.getMu, &c.c.getCh)
 	if err != nil {
 		return nil, false, err
 	}
-	defer ch.Close()
 	msg, ok, err := ch.Get(queue, autoAck)
 	if err != nil {
+		c.c.dropChannelOnErr(&c.c.getMu, &c.c.getCh, ch, err)
 		return nil, false, err
 	}
 	return &msg, ok, err
@@ -46,15 +50,34 @@ type Producer struct {
 	c *Connection
 }
 
-// Send 新建通道向指定交换器与路由键发布消息，发送完成后关闭通道。
+// Send 向指定交换器与路由键发布消息；普通发布与确认模式分别复用连接上的常驻通道。
 //
 // opts 为 nil 时使用默认发送选项；配置 retryable 后进入同步发布确认流程，确认前阻塞后续发送，
 // 会显著降低 QPS，详见 Channel.SendOpts。
 func (p *Producer) Send(exchange string, routingKey string, body []byte, opts *SendOpts) error {
-	ch, err := p.c.Channel()
+	// PERF-5-13 [P1]：复用连接上互斥保护的长驻通道，消除每条消息 channel.open/close 两次 broker
+	// 往返；普通发布与确认模式分槽复用，避免共用一条通道时 Confirm 状态与确认监听串扰；错误语义
+	// 保持原样透传，可恢复错误后槽位自动重建。（预期收益需实测验证）
+	resolved := opts
+	if resolved == nil {
+		resolved = DefaultSendOpts()
+	}
+
+	var mu *sync.Mutex
+	var slot **Channel
+	if resolved.retryable == nil {
+		mu, slot = &p.c.pubMu, &p.c.pubCh
+	} else {
+		mu, slot = &p.c.confirmMu, &p.c.confirmCh
+	}
+
+	ch, err := p.c.trackChannel(mu, slot)
 	if err != nil {
 		return err
 	}
-	defer ch.Close()
-	return ch.SendOpts(exchange, routingKey, body, opts)
+	if err = ch.SendOpts(exchange, routingKey, body, opts); err != nil {
+		p.c.dropChannelOnErr(mu, slot, ch, err)
+		return err
+	}
+	return nil
 }

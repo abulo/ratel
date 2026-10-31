@@ -2,9 +2,9 @@ package ecode
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/pkg/errors"
 
@@ -49,12 +49,42 @@ func (s *spbStatus) GetMessage(exts ...any) string {
 		buf.WriteByte(',')
 	}
 	for i := 0; i < len(exts); i++ {
-		buf.WriteString(fmt.Sprintf("%v", exts[i]))
+		buf.WriteString(messageAnyToString(exts[i]))
 		buf.WriteByte(':')
-		buf.WriteString(fmt.Sprintf("%v", exts[i+1]))
+		buf.WriteString(messageAnyToString(exts[i+1]))
 		i++
 	}
 	return buf.String()
+}
+
+// messageAnyToString 对常见标量类型走无反射快路径，其余类型回退 fmt.Sprintf("%v")，
+// 输出格式与原实现保持一致（PERF-4-15 [P2]）。
+func messageAnyToString(v any) string {
+	switch t := v.(type) {
+	case nil:
+		return "<nil>"
+	case string:
+		return t
+	case int:
+		return strconv.Itoa(t)
+	case int64:
+		return strconv.FormatInt(t, 10)
+	case int32:
+		return strconv.FormatInt(int64(t), 10)
+	case uint:
+		return strconv.FormatUint(uint64(t), 10)
+	case uint64:
+		return strconv.FormatUint(t, 10)
+	case float64:
+		// 与 fmt.Sprintf("%v") 的 %g 语义保持一致，避免大指数场景被固定小数表示改写。
+		return strconv.FormatFloat(t, 'g', -1, 64)
+	case float32:
+		return strconv.FormatFloat(float64(t), 'g', -1, 32)
+	case bool:
+		return strconv.FormatBool(t)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }
 
 // GetDetailMessage 在 GetMessage 的结果之后逐行追加状态携带的每条详情消息。
@@ -68,10 +98,18 @@ func (s *spbStatus) GetDetailMessage(exts ...any) string {
 	return buf.String()
 }
 
-// String 返回状态序列化后的 JSON 文本。
+// String 返回状态的文本表示；PERF-4-14 [P2]：采用 code/message 常见字段手写拼接，
+// 替代整结构 json.Marshal 反射序列化（Details 等其余字段不在保守子集内；预期收益需实测验证）。
 func (s *spbStatus) String() string {
-	bs, _ := json.Marshal(s)
-	return string(bs)
+	if s == nil {
+		return "null"
+	}
+	code, message := int32(0), ""
+	if s.Status != nil {
+		code = s.Code
+		message = s.Message
+	}
+	return fmt.Sprintf(`{"code":%d,"message":%q}`, code, message)
 }
 
 // CauseCode 返回剥离应用编号前缀后的原始错误码（错误码对 10000 取模）。

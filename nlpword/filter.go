@@ -16,23 +16,27 @@ import (
 // 零值不可直接使用，须通过 New 构造；该过滤器不保证并发安全，多个 goroutine
 // 同时加载词库或执行检测替换时需要外部加锁。
 type Filter struct {
-	trie       *Trie
-	noise      *regexp.Regexp
-	buildVer   int64
-	updatedVer int64
+	trie         *Trie
+	noise        *regexp.Regexp
+	noiseDefault bool
+	buildVer     int64
+	updatedVer   int64
 }
 
 // New 创建一个空的敏感词过滤器，默认噪声正则匹配空白与常用干扰符号。
 func New() *Filter {
 	return &Filter{
-		trie:  NewTrie(),
-		noise: regexp.MustCompile(`[\|\s&%$@*]+`),
+		trie:         NewTrie(),
+		noise:        regexp.MustCompile(`[\|\s&%$@*]+`),
+		noiseDefault: true,
 	}
 }
 
 // UpdateNoisePattern 更换噪声过滤正则表达式；传入非法正则时该方法会 panic。
 func (filter *Filter) UpdateNoisePattern(pattern string) {
 	filter.noise = regexp.MustCompile(pattern)
+	// PERF-9-6 [P2] 自定义噪声模式无法从字符集静态推导，关闭预检快速路径，继续走正则。
+	filter.noiseDefault = false
 }
 
 // LoadWordDict 从本地字典文件按行加载敏感词；文件打开或读取失败时返回错误。
@@ -140,5 +144,22 @@ func (filter *Filter) Validate(text string) (bool, string) {
 
 // RemoveNoise 按当前噪声正则删除文本中的干扰字符后返回结果文本。
 func (filter *Filter) RemoveNoise(text string) string {
+	// PERF-9-6 [P2] 默认噪声模式下先做线性预检；文本不含任何噪声字符时直接返回原文，
+	// 跳过一次全文正则扫描与结果串分配，等价于原正则在无匹配时的输出。
+	if filter.noiseDefault && !filter.hasDefaultNoiseChar(text) {
+		return text
+	}
 	return filter.noise.ReplaceAllString(text, "")
+}
+
+// hasDefaultNoiseChar 判断文本是否包含默认噪声正则 [\|\s&%$@*]+ 可匹配的任意字符。
+// 与 Go regexp 中 \s 的 ASCII 空白集合（空格、制表、换行、回车、换页）保持一致。
+func (filter *Filter) hasDefaultNoiseChar(text string) bool {
+	for _, r := range text {
+		switch r {
+		case '|', '&', '%', '$', '@', '*', ' ', '\t', '\n', '\r', '\f':
+			return true
+		}
+	}
+	return false
 }

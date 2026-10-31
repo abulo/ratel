@@ -1,10 +1,9 @@
 package elasticsearch
 
 import (
-	"bytes"
 	"io"
+	"net"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/abulo/ratel/v3/core/call"
@@ -103,14 +102,40 @@ func getClient(config *Config) (*Client, error) {
 	return newClient, nil
 }
 
+// emptyMetadataES 为追踪开启但无上游 metadata 时复用的只读空实例，
+// 避免每次 RoundTrip 都 metadata.New(nil) 分配空 map（PERF-2-15 [P2]）。
+var emptyMetadataES = metadata.MD{}
+
+// esBaseAttrs 为各请求共享的静态基础属性（系统名），仅在包初始化时构造一次（PERF-2-15 [P2]）。
+var esBaseAttrs = []attribute.KeyValue{semconv.RPCSystemKey.String("elastic")}
+
 // ESTraceServerInterceptor 构造带追踪与指标传输层的 http.Client；EnableMetric、EnableTrace
 // 为对应开关，Addr 为节点地址，用于指标标签。
 func ESTraceServerInterceptor(EnableMetric, EnableTrace bool, Addr string) *http.Client {
-	newESTracedTransport := &ESTracedTransport{}
-	newESTracedTransport.Transport = &http.Transport{}
-	newESTracedTransport.EnableMetric = EnableMetric
-	newESTracedTransport.EnableTrace = EnableTrace
-	newESTracedTransport.Addr = Addr
+	// PERF-2-14 [P1] 显式配置连接池空闲连接数与拨号/握手/响应头超时，替代零值 http.Transport
+	// （每节点仅 2 个空闲连接且无超时上限），提升并发下的连接复用率并防止网络抖动时长时间挂起。
+	transport := &http.Transport{
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   32,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ResponseHeaderTimeout: 30 * time.Second,
+		DialContext: (&net.Dialer{
+			Timeout:   10 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		ForceAttemptHTTP2: true,
+	}
+	newESTracedTransport := &ESTracedTransport{
+		Transport:    transport,
+		EnableMetric: EnableMetric,
+		EnableTrace:  EnableTrace,
+		Addr:         Addr,
+	}
+	// PERF-2-15 [P2] tracer 在传输层构造期创建一次，各请求复用，避免每次 NewTracer 查询 provider。
+	if EnableTrace {
+		newESTracedTransport.tracer = globalTrace.NewTracer(trace.SpanKindClient)
+	}
 	return &http.Client{
 		Transport: newESTracedTransport,
 	}
@@ -128,25 +153,26 @@ type ESTracedTransport struct {
 	EnableTrace bool
 	// Addr 为节点地址，用于指标标签。
 	Addr string
+	// tracer 为构造期创建并复用的追踪器（PERF-2-15 [P2]）。
+	tracer *globalTrace.Tracer
 }
 
 // RoundTrip 转发单个 HTTP 请求：开启追踪时创建客户端 Span 并记录方法与路径；
-// 请求体未超过 MaxContentLength 时回读以便后续复用；随后交由底层 Transport 执行。
+// 请求体原样透传，随后交由底层 Transport 执行。
 func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err error) {
 	start := time.Now()
 	if t.EnableTrace {
-		tracer := globalTrace.NewTracer(trace.SpanKindClient)
-		attrs := []attribute.KeyValue{
-			semconv.RPCSystemKey.String("elastic"),
-		}
+		// PERF-2-15 [P2] 复用构造期 tracer 与共享空 metadata；静态系统名属性复用基切片，
+		// 不再每请求 NewTracer/metadata.New，也不重复构造系统名属性。
 		fn, file, line := call.Caller(6)
+		attrs := make([]attribute.KeyValue, 0, len(esBaseAttrs)+3)
+		attrs = append(attrs, esBaseAttrs...)
 		attrs = append(attrs,
 			semconv.CodeFunction(fn),
 			semconv.CodeFilepath(file),
 			semconv.CodeLineNumber(line),
 		)
-		md := metadata.New(nil)
-		newCtx, span := tracer.Start(r.Context(), "Count", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
+		newCtx, span := t.tracer.Start(r.Context(), "Count", propagation.HeaderCarrier(emptyMetadataES), trace.WithAttributes(attrs...))
 
 		span.SetAttributes(
 			attribute.String("elastic.method", r.Method),
@@ -155,14 +181,10 @@ func (t *ESTracedTransport) RoundTrip(r *http.Request) (resp *http.Response, err
 		defer span.End()
 		r = r.WithContext(newCtx)
 	}
-	contentLength, _ := strconv.Atoi(r.Header.Get("Content-Length"))
-	if r.Body != nil && contentLength < MaxContentLength {
-		buf, err := io.ReadAll(r.Body)
-		if err != nil {
-			return nil, err
-		}
-		r.Body = io.NopCloser(bytes.NewBuffer(buf))
-	}
+	// PERF-2-13 [P1] 删除未被使用的请求体回读（io.ReadAll）：原实现回读的 body 字节从未进入
+	// Span 或指标，属纯无效功；body 直接透传给底层 Transport，不再全量读入内存后重新挂回。
+	// PERF-2-16 [P2] 随上条一并删除每请求一次的 strconv.Atoi(Content-Length) 解析；该头在
+	// body 回读逻辑移除后已无消费者，避免每次出站请求多一次字符串到整数转换。
 	resp, err = t.Transport.RoundTrip(r)
 	if err != nil {
 		return nil, err

@@ -15,6 +15,8 @@ type Server struct {
 	// Manager 为底层 asynq.PeriodicTaskManager，负责定时任务的调度与入队。
 	Manager *asynq.PeriodicTaskManager
 	config  *Config
+	// info 为构造期一次性缓存的注册信息，避免每次 Info() 重复重建 ServiceInfo。
+	info *server.ServiceInfo
 }
 
 func newServer(config *Config) *Server {
@@ -22,9 +24,20 @@ func newServer(config *Config) *Server {
 	if err != nil {
 		panic(err)
 	}
+	// PERF-6-3 [P2] 注册信息构造后恒定，构造期缓存一次，Info() 直接返回，避免重复重建 Metadata map 与环境读取。
+	serviceAddr := config.Address()
+	if config.ServiceAddress != "" {
+		serviceAddr = config.ServiceAddress
+	}
+	info := server.ApplyOptions(
+		server.WithScheme("asynq"),
+		server.WithAddress(serviceAddr),
+		server.WithKind(constant.ServiceProvider),
+	)
 	return &Server{
 		Manager: m,
 		config:  config,
+		info:    &info,
 	}
 }
 
@@ -47,17 +60,10 @@ func (s *Server) GracefulStop(ctx context.Context) error {
 
 // Info 返回定时任务管理器的注册信息，协议为 asynq；注册地址优先取配置中的 ServiceAddress，
 // 否则使用配置的 Host:Port。
+//
+// PERF-6-3 [P2] 直接返回构造期缓存的注册信息，不再重复重建。
 func (s *Server) Info() *server.ServiceInfo {
-	serviceAddr := s.config.Address()
-	if s.config.ServiceAddress != "" {
-		serviceAddr = s.config.ServiceAddress
-	}
-	info := server.ApplyOptions(
-		server.WithScheme("asynq"),
-		server.WithAddress(serviceAddr),
-		server.WithKind(constant.ServiceProvider),
-	)
-	return &info
+	return s.info
 }
 
 // Health 固定返回 true，定时任务管理器不做独立探活。

@@ -10,7 +10,6 @@ import (
 	"github.com/abulo/ratel/v3/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer/roundrobin"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
 
@@ -56,13 +55,14 @@ type Config struct {
 	Etcd *etcdv3.Config
 }
 
-// New 创建带默认值的 Config：传输凭证为不安全（insecure），负载均衡为 roundrobin，拨号超时 3 秒、
+// New 创建带默认值的 Config：负载均衡为 roundrobin，拨号超时 3 秒、
 // 读取超时 1 秒、慢调用阈值 600 毫秒，访问日志级别 info，Block 为 true。
+// 传输凭证统一由 getDialOptions 装配。
 func New() *Config {
 	return &Config{
-		dialOptions: []grpc.DialOption{
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-		},
+		// PERF-5-5 [P2]：移除 New() 中重复预置的 insecure 凭证，凭证装配单点收敛到 getDialOptions，
+		// 避免同一连接上出现两条 WithTransportCredentials 选项；拨号连接语义保持不变。
+		dialOptions:            []grpc.DialOption{},
 		BalancerName:           roundrobin.Name,
 		DialTimeout:            time.Second * 3,
 		ReadTimeout:            util.Duration("1s"),

@@ -76,7 +76,8 @@ func (s *ServiceInfo) ServicePrefix() string {
 }
 
 // Label 返回 协议://地址 形式的服务定位标签。
-func (si ServiceInfo) Label() string {
+// PERF-6-1 [P2] 改为指针接收者，避免每次调用按值复制整个大结构体 ServiceInfo。
+func (si *ServiceInfo) Label() string {
 	return fmt.Sprintf("%s://%s", si.Scheme, si.Address)
 }
 
@@ -84,13 +85,26 @@ func (si ServiceInfo) Label() string {
 //
 // 仅比较 Name、Address、Kind、Group 四个区分身份的字段；实现该方法是为了兼容
 // grpc-go resolver 在服务发现与负载均衡中对地址属性做等值比较的契约。
+//
+// PERF-6-2 [P2] 优先按 *ServiceInfo 断言，避免传入指针时把整个大结构体按值装箱拷贝；
+// 仍兼容传入 ServiceInfo 值的旧调用方式，断言类型与比较语义保持不变。
 func (si ServiceInfo) Equal(o any) bool {
-	oa, ok := o.(ServiceInfo)
-	return ok &&
-		oa.Name == si.Name &&
-		oa.Address == si.Address &&
-		oa.Kind == si.Kind &&
-		oa.Group == si.Group
+	switch oa := o.(type) {
+	case *ServiceInfo:
+		if oa == nil {
+			return false
+		}
+		return oa.Name == si.Name &&
+			oa.Address == si.Address &&
+			oa.Kind == si.Kind &&
+			oa.Group == si.Group
+	case ServiceInfo:
+		return oa.Name == si.Name &&
+			oa.Address == si.Address &&
+			oa.Kind == si.Kind &&
+			oa.Group == si.Group
+	}
+	return false
 }
 
 // Server 抽象各类服务端（HTTP、gRPC、异步任务等）统一的生命周期与查询接口。

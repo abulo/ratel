@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/rand"
 	"math/big"
+	"strings"
 )
 
 // RandomBytes 使用加密安全随机源生成 length 字节的随机切片。
@@ -40,9 +41,8 @@ func RandomInt(min, max int) (int, error) {
 func StrPad(str1, str2 string, i int) string {
 	n := i - len(str1) - len(str2)
 	if n > 0 {
-		for range n {
-			str1 = str1 + "0"
-		}
+		// PERF-7-25 [P2] strings.Repeat 一次分配生成 n 个零，替代循环内 str1 = str1 + "0" 的 O(n²) 逐次拷贝
+		return str1 + strings.Repeat("0", n) + str2
 	}
 	return str1 + str2
 }

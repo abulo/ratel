@@ -4,10 +4,10 @@ import (
 	"context"
 	"reflect"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/abulo/ratel/v3/core/call"
-	"github.com/abulo/ratel/v3/core/logger"
 	"github.com/abulo/ratel/v3/core/metric"
 	"github.com/abulo/ratel/v3/core/resource"
 	globalTrace "github.com/abulo/ratel/v3/core/trace"
@@ -38,11 +38,16 @@ type (
 		EnableMetric bool
 		// EnableTrace 是否挂载 MongoDB 链路追踪。
 		EnableTrace bool
-		filter      bson.D
-		limit       int64
-		skip        int64
-		sort        bson.D
-		fields      bson.M
+		// tracer 在集合句柄构造期创建一次，追踪开启后各操作复用（PERF-2-10 [P2]）。
+		tracer *globalTrace.Tracer
+		// dbName、collName 在构造期缓存，避免每个操作重复解析 Database() 与 Collection 名称（PERF-2-11 [P2]）。
+		dbName   string
+		collName string
+		filter   bson.D
+		limit    int64
+		skip     int64
+		sort     bson.D
+		fields   bson.M
 	}
 
 	// index 为索引文档的解码结构，仅在 ListIndexes 内部使用。
@@ -52,16 +57,64 @@ type (
 	}
 )
 
+// emptyMetadataMongo 为追踪开启但无上游 metadata 时复用的只读空实例，
+// 避免每个操作都 metadata.New(nil) 分配空 map（PERF-2-10 [P2]）。
+var emptyMetadataMongo = metadata.MD{}
+
+// mongoBaseAttrs 为各操作共享的静态基础属性（系统名），仅在包初始化时构造一次；
+// 每次 startTrace 复制出局部切片后再追加调用方位置属性（PERF-2-10 [P2]）。
+var mongoBaseAttrs = []attribute.KeyValue{semconv.RPCSystemKey.String("mongo")}
+
 // newCollection 包装原生集合并注入指标、追踪开关与空的条件状态。
 func newCollection(collection *mongo.Collection, brk resource.Breaker, EnableMetric, EnableTrace bool) *DecoratedCollection {
-	return &DecoratedCollection{
+	c := &DecoratedCollection{
 		Collection:   collection,
 		brk:          brk,
 		EnableMetric: EnableMetric,
 		EnableTrace:  EnableTrace,
+		dbName:       collection.Database().Name(), // PERF-2-11 [P2] 构造期缓存库名
+		collName:     collection.Name(),            // PERF-2-11 [P2] 构造期缓存集合名
 		filter:       make(bson.D, 0),
 		sort:         make(bson.D, 0),
 	}
+	// PERF-2-10 [P2] tracer 在构造期创建一次，各操作复用，避免每次 NewTracer 查询 provider。
+	if EnableTrace {
+		c.tracer = globalTrace.NewTracer(trace.SpanKindClient)
+	}
+	return c
+}
+
+// startTrace 复用构造期 tracer 开启客户端 Span，附加调用方位置与集合属性；
+// 返回携带 Span 的新上下文与 Span，调用方负责 defer span.End()。
+// PERF-2-10 [P2] 公共追踪构造抽取到集合句柄方法内；Caller 跳过层数较原内联实现多 1 层（本方法自身帧），保持上报位置不变。
+func (c *DecoratedCollection) startTrace(ctx context.Context, op string) (context.Context, trace.Span) {
+	fn, file, line := call.Caller(7)
+	// PERF-2-10 [P2] 静态系统名属性只复制一份基切片，调用方位置属性追加到局部切片。
+	attrs := make([]attribute.KeyValue, 0, len(mongoBaseAttrs)+3)
+	attrs = append(attrs, mongoBaseAttrs...)
+	attrs = append(attrs,
+		semconv.CodeFunction(fn),
+		semconv.CodeFilepath(file),
+		semconv.CodeLineNumber(line),
+	)
+	newCtx, span := c.tracer.Start(ctx, op, propagation.HeaderCarrier(emptyMetadataMongo), trace.WithAttributes(attrs...))
+	span.SetAttributes(semconv.DBMongoDBCollection(c.dbName))
+	return newCtx, span
+}
+
+// reportMetric 按统一四标签上报操作计数与耗时；库名、集合名使用构造期缓存值，
+// 避免每个操作重复调用 Database().Name() 与 Name()（PERF-2-11 [P2]）。
+func (c *DecoratedCollection) reportMetric(start time.Time, err error) {
+	if !c.EnableMetric {
+		return
+	}
+	cost := time.Since(start)
+	status := "OK"
+	if err != nil {
+		status = "ERR"
+	}
+	metric.LibHandleCounter.WithLabelValues("mongodb", c.dbName, c.collName, status).Inc()
+	metric.LibHandleHistogram.WithLabelValues("mongodb", c.dbName, c.collName).Observe(cost.Seconds())
 }
 
 // Where 设置查询匹配条件，覆盖此前累积的 filter，返回集合自身以便链式调用。
@@ -118,37 +171,16 @@ func (c *DecoratedCollection) CreateIndex(ctx context.Context, key bson.D, op *o
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "CreateIndex", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata，不再每操作 NewTracer/metadata.New。
+			ctx, span = c.startTrace(ctx, "CreateIndex")
 			defer span.End()
-			ctx = newCtx
 		}
 		indexView := c.Collection.Indexes()
 		indexModel := mongo.IndexModel{Keys: key, Options: op}
 		res, err = indexView.CreateOne(ctx, indexModel)
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return err
 	}, acceptable)
 	return
@@ -161,24 +193,10 @@ func (c *DecoratedCollection) ListIndexes(ctx context.Context, opts *options.Lis
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "ListIndexes", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "ListIndexes")
 			defer span.End()
-			ctx = newCtx
 		}
 		indexView := c.Collection.Indexes()
 		cursor, err := indexView.List(ctx, opts)
@@ -193,15 +211,8 @@ func (c *DecoratedCollection) ListIndexes(ctx context.Context, opts *options.Lis
 			}
 		}
 		c.reset()
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return err
 	}, acceptable)
 	return
@@ -214,24 +225,10 @@ func (c *DecoratedCollection) DropIndex(ctx context.Context, name string, opts *
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "DropIndex", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "DropIndex")
 			defer span.End()
-			ctx = newCtx
 		}
 		_, err = indexView.DropOne(ctx, name, opts)
 		if err != nil {
@@ -239,15 +236,8 @@ func (c *DecoratedCollection) DropIndex(ctx context.Context, name string, opts *
 			return err
 		}
 		c.reset()
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return err
 	}, acceptable)
 	return
@@ -261,37 +251,16 @@ func (c *DecoratedCollection) InsertOne(ctx context.Context, document any) (val 
 	err = c.brk.DoWithAcceptable(func() error {
 		data := BeforeCreate(document)
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "InsertOne", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "InsertOne")
 			defer span.End()
-			ctx = newCtx
 		}
 		val, err = c.Collection.InsertOne(ctx, data)
 		c.reset()
 
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return err
 	}, acceptable)
 	return
@@ -305,36 +274,15 @@ func (c *DecoratedCollection) InsertMany(ctx context.Context, documents any) (va
 	err = c.brk.DoWithAcceptable(func() error {
 		data := BeforeCreate(documents).([]any)
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "InsertMany", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "InsertMany")
 			defer span.End()
-			ctx = newCtx
 		}
 		val, err = c.Collection.InsertMany(ctx, data)
 		c.reset()
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return err
 	}, acceptable)
 	return
@@ -347,24 +295,10 @@ func (c *DecoratedCollection) Aggregate(ctx context.Context, pipeline any, resul
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "Aggregate", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "Aggregate")
 			defer span.End()
-			ctx = newCtx
 		}
 		cursor, err := c.Collection.Aggregate(ctx, pipeline)
 		if err != nil {
@@ -373,15 +307,8 @@ func (c *DecoratedCollection) Aggregate(ctx context.Context, pipeline any, resul
 		}
 		err = cursor.All(ctx, result)
 		c.reset()
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return err
 	}, acceptable)
 	return
@@ -395,38 +322,17 @@ func (c *DecoratedCollection) UpdateOrInsert(ctx context.Context, documents []an
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "UpdateOrInsert", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "UpdateOrInsert")
 			defer span.End()
-			ctx = newCtx
 		}
 		var upsert = true
 		val, err = c.Collection.UpdateMany(ctx, c.filter, documents, &options.UpdateOptions{Upsert: &upsert})
 		c.reset()
 
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return err
 	}, acceptable)
 	return
@@ -440,24 +346,10 @@ func (c *DecoratedCollection) UpdateOne(ctx context.Context, document any) (val 
 	err = c.brk.DoWithAcceptable(func() error {
 		update := bson.M{"$set": BeforeUpdate(document)}
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "UpdateOne", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "UpdateOne")
 			defer span.End()
-			ctx = newCtx
 		}
 		val, err = c.Collection.UpdateOne(ctx, c.filter, update)
 		c.reset()
@@ -483,36 +375,15 @@ func (c *DecoratedCollection) UpdateOneRaw(ctx context.Context, document any, op
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "UpdateOneRaw", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "UpdateOneRaw")
 			defer span.End()
-			ctx = newCtx
 		}
 		val, err = c.Collection.UpdateOne(ctx, c.filter, document, opt...)
 		c.reset()
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return err
 	}, acceptable)
 	return
@@ -526,36 +397,15 @@ func (c *DecoratedCollection) UpdateMany(ctx context.Context, document any) (val
 	err = c.brk.DoWithAcceptable(func() error {
 		update := bson.M{"$set": BeforeUpdate(document)}
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "UpdateMany", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "UpdateMany")
 			defer span.End()
-			ctx = newCtx
 		}
 		val, err = c.Collection.UpdateMany(ctx, c.filter, update)
 		c.reset()
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return err
 	}, acceptable)
 	return
@@ -568,41 +418,21 @@ func (c *DecoratedCollection) FindOne(ctx context.Context, document any) (err er
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "FindOne", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "FindOne")
 			defer span.End()
-			ctx = newCtx
 		}
-		result := c.Collection.FindOne(ctx, c.filter, &options.FindOneOptions{
-			Skip:       &c.skip,
-			Sort:       c.sort,
-			Projection: c.fields,
-		})
+		// PERF-2-12 [P2] skip 为 0 时不传指针，避免零值指针参与选项解析。
+		findOneOpts := &options.FindOneOptions{Sort: c.sort, Projection: c.fields}
+		if c.skip > 0 {
+			findOneOpts.Skip = &c.skip
+		}
+		result := c.Collection.FindOne(ctx, c.filter, findOneOpts)
 		err = result.Decode(document)
 		c.reset()
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return err
 	}, acceptable)
 	return
@@ -615,70 +445,40 @@ func (c *DecoratedCollection) FindMany(ctx context.Context, documents any) (err 
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "FindMany", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "FindMany")
 			defer span.End()
-			ctx = newCtx
 		}
-		result, err := c.Collection.Find(ctx, c.filter, &options.FindOptions{
-			Skip:       &c.skip,
-			Limit:      &c.limit,
-			Sort:       c.sort,
-			Projection: c.fields,
-		})
+		// PERF-2-12 [P2] skip/limit 为 0 时不传指针，避免零值指针参与选项解析。
+		findOpts := &options.FindOptions{Sort: c.sort, Projection: c.fields}
+		if c.skip > 0 {
+			findOpts.Skip = &c.skip
+		}
+		if c.limit > 0 {
+			findOpts.Limit = &c.limit
+		}
+		result, err := c.Collection.Find(ctx, c.filter, findOpts)
 		if err != nil {
 			c.reset()
 			return err
 		}
-		defer func(ctx context.Context) {
-			if err = result.Close(ctx); err != nil {
-				logger.Logger.Error("Error closing result: ", err)
-				return
-			}
-		}(ctx)
+		// PERF-2-8 [P1] 保留与原实现一致的“指向切片的指针”类型校验；随后由驱动 cursor.All
+		// 直接批量解码到目标切片，省去逐文档 reflect.New/reflect.Append 与切片反复扩容，
+		// 文档顺序与字段映射与原手写反射实现保持一致。
 		val := reflect.ValueOf(documents)
 		if val.Kind() != reflect.Pointer || val.Elem().Kind() != reflect.Slice {
 			err = errors.New("result argument must be a slice address")
 			c.reset()
 			return err
 		}
-		slice := reflect.MakeSlice(val.Elem().Type(), 0, 0)
-		itemTyp := val.Elem().Type().Elem()
-		for result.Next(ctx) {
-			item := reflect.New(itemTyp)
-			err = result.Decode(item.Interface())
-			if err != nil {
-				err = errors.New("result argument must be a slice address")
-				c.reset()
-				return err
-			}
-			slice = reflect.Append(slice, reflect.Indirect(item))
+		if err = result.All(ctx, documents); err != nil {
+			c.reset()
+			return err
 		}
-		val.Elem().Set(slice)
 		c.reset()
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return nil
 	}, acceptable)
 	return
@@ -691,24 +491,10 @@ func (c *DecoratedCollection) Delete(ctx context.Context) (count int64, err erro
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "Delete", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "Delete")
 			defer span.End()
-			ctx = newCtx
 		}
 		if len(c.filter) == 0 {
 			err = errors.New("you can't delete all documents, it's very dangerous")
@@ -724,15 +510,8 @@ func (c *DecoratedCollection) Delete(ctx context.Context) (count int64, err erro
 		}
 		count = result.DeletedCount
 		c.reset()
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return nil
 	}, acceptable)
 	return
@@ -744,37 +523,16 @@ func (c *DecoratedCollection) Drop(ctx context.Context) (err error) {
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "Drop", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "Drop")
 			defer span.End()
-			ctx = newCtx
 		}
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 		err = c.Collection.Drop(ctx)
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return err
 	}, acceptable)
 	return
@@ -786,41 +544,46 @@ func (c *DecoratedCollection) Count(ctx context.Context) (result int64, err erro
 	ctx = getCtx(ctx)
 	err = c.brk.DoWithAcceptable(func() error {
 		if c.EnableTrace {
-			tracer := globalTrace.NewTracer(trace.SpanKindClient)
-			attrs := []attribute.KeyValue{
-				semconv.RPCSystemKey.String("mongo"),
-			}
-			fn, file, line := call.Caller(6)
-			attrs = append(attrs,
-				semconv.CodeFunction(fn),
-				semconv.CodeFilepath(file),
-				semconv.CodeLineNumber(line),
-			)
-			md := metadata.New(nil)
-			newCtx, span := tracer.Start(ctx, "Count", propagation.HeaderCarrier(md), trace.WithAttributes(attrs...))
-
-			span.SetAttributes(
-				semconv.DBMongoDBCollection(c.Database().Name()),
-			)
+			var span trace.Span
+			// PERF-2-10 [P2] 复用构造期 tracer 与共享空 metadata。
+			ctx, span = c.startTrace(ctx, "Count")
 			defer span.End()
-			ctx = newCtx
 		}
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 		result, err = c.Collection.CountDocuments(ctx, c.filter)
 		c.reset()
-		if c.EnableMetric {
-			cost := time.Since(start)
-			if err != nil {
-				metric.LibHandleCounter.WithLabelValues("mongodb", c.Database().Name(), c.Name(), "ERR").Inc()
-			} else {
-				metric.LibHandleCounter.Inc("mongodb", c.Database().Name(), c.Name(), "OK")
-			}
-			metric.LibHandleHistogram.WithLabelValues("mongodb", c.Database().Name(), c.Name()).Observe(cost.Seconds())
-		}
+		// PERF-2-11 [P2] 指标标签使用构造期缓存的库名与集合名。
+		c.reportMetric(start, err)
 		return err
 	}, acceptable)
 	return
+}
+
+// mongoStructFieldMeta 缓存单个结构体字段的反射元信息，避免每次写入重复遍历字段与读取 tag。
+type mongoStructFieldMeta struct {
+	index    int
+	bsonKey  string
+	skipOver bool
+}
+
+// mongoStructMetaCache 按结构体 reflect.Type 缓存字段元信息；类型集合在运行期稳定，
+// 缓存命中后反射遍历与 tag 读取只在首次发生（PERF-2-9 [P1]）。
+var mongoStructMetaCache sync.Map // reflect.Type -> []mongoStructFieldMeta
+
+// structFieldMeta 返回指定结构体类型缓存后的字段元信息；首次访问时构建并放入缓存。
+func structFieldMeta(typ reflect.Type) []mongoStructFieldMeta {
+	if v, ok := mongoStructMetaCache.Load(typ); ok {
+		return v.([]mongoStructFieldMeta)
+	}
+	fields := make([]mongoStructFieldMeta, 0, typ.NumField())
+	for i := 0; i < typ.NumField(); i++ {
+		f := typ.Field(i)
+		_, over := f.Tag.Lookup("over")
+		fields = append(fields, mongoStructFieldMeta{index: i, bsonKey: f.Tag.Get("bson"), skipOver: over})
+	}
+	mongoStructMetaCache.Store(typ, fields)
+	return fields
 }
 
 // BeforeCreate 在写入前将输入转换为 BSON 文档：指针自动解引用，数组/切片递归逐项转换，
@@ -842,19 +605,21 @@ func BeforeCreate(document any) any {
 		return sliceData
 
 	case reflect.Struct:
-		var data = make(bson.M)
-		for i := 0; i < typ.NumField(); i++ {
-			data[typ.Field(i).Tag.Get("bson")] = val.Field(i).Interface()
+		// PERF-2-9 [P1] 字段元信息按类型缓存，消除每次写入的字段遍历与重复 tag 读取。
+		data := make(bson.M)
+		for _, f := range structFieldMeta(typ) {
+			data[f.bsonKey] = val.Field(f.index).Interface()
 		}
-		dataVal := reflect.ValueOf(data)
-		if val.FieldByName("Id").Type() == reflect.TypeFor[primitive.ObjectID]() {
-			dataVal.SetMapIndex(reflect.ValueOf("_id"), reflect.ValueOf(primitive.NewObjectID()))
+		// PERF-2-9 [P1] 合并原两次 FieldByName("Id") 重复反射查找；字段不存在时跳过，避免零值反射恐慌。
+		if idField, ok := typ.FieldByName("Id"); ok {
+			idVal := val.FieldByName("Id")
+			if idField.Type == reflect.TypeFor[primitive.ObjectID]() {
+				data["_id"] = primitive.NewObjectID()
+			} else if idVal.Interface() == "" {
+				data["_id"] = primitive.NewObjectID().String()
+			}
 		}
-
-		if val.FieldByName("Id").Interface() == "" {
-			dataVal.SetMapIndex(reflect.ValueOf("_id"), reflect.ValueOf(primitive.NewObjectID().String()))
-		}
-		return dataVal.Interface()
+		return data
 
 	default:
 		if val.Type() == reflect.TypeFor[bson.M]() {
@@ -884,16 +649,15 @@ func BeforeUpdate(document any) any {
 		return sliceData
 
 	case reflect.Struct:
-		var data = make(bson.M)
-		for i := 0; i < typ.NumField(); i++ {
-			_, ok := typ.Field(i).Tag.Lookup("over")
-			if ok {
+		// PERF-2-9 [P1] 字段元信息按类型缓存；over 标签在缓存期一次性判定。
+		data := make(bson.M)
+		for _, f := range structFieldMeta(typ) {
+			if f.skipOver {
 				continue
 			}
-			data[typ.Field(i).Tag.Get("bson")] = val.Field(i).Interface()
+			data[f.bsonKey] = val.Field(f.index).Interface()
 		}
-		dataVal := reflect.ValueOf(data)
-		return dataVal.Interface()
+		return data
 
 	default:
 		return val.Interface()

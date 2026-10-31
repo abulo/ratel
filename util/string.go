@@ -9,12 +9,11 @@ import (
 	"fmt"
 	"hash/crc32"
 	"html"
-	"math/rand"
+	"io"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
-	"time"
 	"unicode"
 	"unicode/utf8"
 	"unsafe"
@@ -69,7 +68,8 @@ func StrIPos(haystack, needle string, offset int) int {
 	if offset < 0 {
 		offset += length
 	}
-	pos := strings.Index(strings.ToLower(haystack), strings.ToLower(needle))
+	// PERF-7-4 [P2] 窗口 EqualFold 忽略大小写匹配，避免先把整段 haystack 转小写产生一次整串拷贝
+	pos := indexFold(haystack, needle)
 	if pos == -1 {
 		return -1
 	}
@@ -111,11 +111,40 @@ func StrRIPos(haystack, needle string, offset int) int {
 	} else {
 		haystack = haystack[offset:]
 	}
-	pos = strings.LastIndex(strings.ToLower(haystack), strings.ToLower(needle))
+	// PERF-7-4 [P2] 窗口 EqualFold 反向匹配，避免整段 haystack 转小写拷贝
+	pos = lastIndexFold(haystack, needle)
 	if offset > 0 && pos != -1 {
 		pos += offset
 	}
 	return pos
+}
+
+// indexFold 返回 needle 在 haystack 中首次忽略大小写出现的字节位置；找不到返回 -1；needle 为空串返回 0。
+func indexFold(haystack, needle string) int {
+	nl := len(needle)
+	if nl == 0 {
+		return 0
+	}
+	for i := 0; i+nl <= len(haystack); i++ {
+		if strings.EqualFold(haystack[i:i+nl], needle) {
+			return i
+		}
+	}
+	return -1
+}
+
+// lastIndexFold 返回 needle 在 haystack 中最后一次忽略大小写出现的字节位置；找不到返回 -1；needle 为空串返回 len(haystack)。
+func lastIndexFold(haystack, needle string) int {
+	nl := len(needle)
+	if nl == 0 {
+		return len(haystack)
+	}
+	for i := len(haystack) - nl; i >= 0; i-- {
+		if strings.EqualFold(haystack[i:i+nl], needle) {
+			return i
+		}
+	}
+	return -1
 }
 
 // StrReplace 将 subject 中前 count 处 search 替换为 replace；count 为负数时替换全部。
@@ -151,10 +180,12 @@ func LCFirst(str string) string {
 	return ""
 }
 
+// PERF-7-3 [P2] cases.Title 大写器可并发复用，包级构造一次，避免每次调用重复初始化语言规则
+var titleCaser = cases.Title(language.English)
+
 // UCWords 将字符串按单词做标题式大小写处理，每个单词首字母大写。
 func UCWords(str string) string {
-	caser := cases.Title(language.English)
-	return caser.String(str)
+	return titleCaser.String(str)
 }
 
 // SubStr 按字节截取子串。
@@ -487,7 +518,8 @@ func StrTr(haystack string, params ...any) string {
 		if length == 0 {
 			return haystack
 		}
-		oldnew := make([]string, length*2)
+		// PERF-7-8 [P2] 容量按 length*2 预分配后直接 append，避免原 make 零长度再 append 扩容到 4 倍并留出空串槽位
+		oldnew := make([]string, 0, length*2)
 		for o, n := range pairs {
 			if o == "" {
 				return haystack
@@ -541,9 +573,9 @@ func StrTr(haystack string, params ...any) string {
 // StrShuffle 随机打乱字符串的字符顺序并返回新字符串。
 func StrShuffle(str string) string {
 	runes := []rune(str)
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	// PERF-7-14 [P2] 复用进程级共享随机源，不再每次新建 rand.Rand 与随机源（预期收益需实测验证）
 	s := make([]rune, len(runes))
-	for i, v := range r.Perm(len(runes)) {
+	for i, v := range sharedPerm(len(runes)) {
 		s[i] = runes[v]
 	}
 	return string(s)
@@ -636,7 +668,8 @@ func JSONEncode(val any) ([]byte, error) {
 // JSONString 将对象序列化为 JSON 字符串；序列化错误被忽略，失败时返回空字符串。
 func JSONString(obj any) string {
 	jsByte, _ := json.Marshal(obj)
-	return cast.ToString(jsByte)
+	// PERF-7-1 [P1] 去掉 cast.ToString(any) 的接口装箱与类型断言，直接 []byte→string，序列化结果与原实现逐字节一致
+	return string(jsByte)
 }
 
 // AddSlashes 为字符串中的单引号、双引号与反斜杠添加反斜杠转义。
@@ -719,11 +752,10 @@ func Md5File(path string) (string, error) {
 	hash := md5.New()
 
 	if fi.Size() < size {
-		data, err := os.ReadFile(path)
-		if err != nil {
+		// PERF-7-5 [P2] 复用已打开的文件句柄分块读取，避免小文件分支再次 os.ReadFile 二次打开磁盘文件
+		if _, err := io.Copy(hash, f); err != nil {
 			return "", err
 		}
-		hash.Write(data)
 	} else {
 		b := make([]byte, size)
 		for {
@@ -748,12 +780,17 @@ func Sha1(str string) string {
 
 // Sha1File 计算整个文件内容的 SHA1 十六进制摘要；读取失败时返回空字符串与错误。
 func Sha1File(path string) (string, error) {
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
 		return "", err
 	}
+	defer f.Close()
+
 	hash := sha1.New()
-	hash.Write([]byte(data))
+	// PERF-7-6 [P2] 与 Md5File 对齐，1MB 缓冲分块读取，避免大文件一次性整包读入内存
+	if _, err := io.CopyBuffer(hash, f, make([]byte, 1048576)); err != nil {
+		return "", err
+	}
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
@@ -816,14 +853,15 @@ func Levenshtein(str1, str2 string, costIns, costRep, costDel int) int {
 //
 // percent 非 nil 时通过该指针写入相似度百分比（0–100）；两个字符串均为空时返回 0。
 func SimilarText(first, second string, percent *float64) int {
-	var similarText func(string, string, int, int) int
-	similarText = func(str1, str2 string, len1, len2 int) int {
+	// PERF-7-7 [P2] 入口处把两个字符串各转一次 []byte 向下传递，消除递归每层重复 []byte(str)/string(...) 往返拷贝（算法复杂度未变更，预期收益需实测验证）
+	var similarText func(b1, b2 []byte, len1, len2 int) int
+	similarText = func(b1, b2 []byte, len1, len2 int) int {
 		var sum, max int
 		pos1, pos2 := 0, 0
 
 		for i := range len1 {
 			for j := range len2 {
-				for l := 0; (i+l < len1) && (j+l < len2) && (str1[i+l] == str2[j+l]); l++ {
+				for l := 0; (i+l < len1) && (j+l < len2) && (b1[i+l] == b2[j+l]); l++ {
 					if l+1 > max {
 						max = l + 1
 						pos1 = i
@@ -835,12 +873,10 @@ func SimilarText(first, second string, percent *float64) int {
 
 		if sum = max; sum > 0 {
 			if pos1 > 0 && pos2 > 0 {
-				sum += similarText(str1, str2, pos1, pos2)
+				sum += similarText(b1, b2, pos1, pos2)
 			}
 			if (pos1+max < len1) && (pos2+max < len2) {
-				s1 := []byte(str1)
-				s2 := []byte(str2)
-				sum += similarText(string(s1[pos1+max:]), string(s2[pos2+max:]), len1-pos1-max, len2-pos2-max)
+				sum += similarText(b1, b2, len1-pos1-max, len2-pos2-max)
 			}
 		}
 
@@ -851,7 +887,7 @@ func SimilarText(first, second string, percent *float64) int {
 	if l1+l2 == 0 {
 		return 0
 	}
-	sim := similarText(first, second, l1, l2)
+	sim := similarText([]byte(first), []byte(second), l1, l2)
 	if percent != nil {
 		*percent = float64(sim*200) / float64(l1+l2)
 	}
@@ -906,11 +942,12 @@ func Soundex(str string) string {
 	return string(sd)
 }
 
+// PERF-7-2 [P1] tagPatterns 为静态分隔符表，Replacer 包级构建一次并发复用，避免每次调用现场 NewReplacer
+var tagReplacer = strings.NewReplacer(tagPatterns...)
+
 // Tag 将标签字符串中的常见分隔符统一替换为 "/"。
 func Tag(i any) string {
-	replacer := strings.NewReplacer(tagPatterns...)
-	format := cast.ToString(i)
-	return replacer.Replace(format)
+	return tagReplacer.Replace(cast.ToString(i))
 }
 
 // StringToBytes 零拷贝将 string 转换为 []byte。

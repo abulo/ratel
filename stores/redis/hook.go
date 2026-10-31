@@ -48,23 +48,44 @@ func (op OpenTraceHook) DialHook(hook redis.DialHook) redis.DialHook {
 	}
 }
 
+// maxDBStatementRunes 为 span 中命令语句属性的最大字符长度，超长截断以避免与命令体等长的分配。
+const maxDBStatementRunes = 512
+
+// truncateDBStatement 按字符（rune）截断命令语句，避免多字节字符被从中间切断；长度未超限时原样返回。
+// PERF-1-3 [P1] 大 key / 多参数命令不再把整段参数写入 span 属性（预期收益需实测验证）。
+func truncateDBStatement(statement string) string {
+	// 字节数不超限时直接返回，避免为每条命令额外分配 rune 切片。
+	if len(statement) <= maxDBStatementRunes {
+		return statement
+	}
+	runes := []rune(statement)
+	if len(runes) <= maxDBStatementRunes {
+		return statement
+	}
+	return string(runes[:maxDBStatementRunes])
+}
+
 // ProcessHook 包装单命令处理钩子，创建以命令名命名的 span，记录调用位置与命令语句；
 // 命令执行错误原样透传给上层。
 func (op OpenTraceHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
 	tracer := globalTrace.NewTracer(trace.SpanKindServer)
-	attrs := []attribute.KeyValue{
+	// 基础属性在钩子注册期固定一次，命令级属性在闭包内单独构建，避免跨命令累积。
+	baseAttrs := []attribute.KeyValue{
 		semconv.RPCSystemKey.String("redis"),
 		semconv.HostName(hostname.Hostname()),
 	}
 	return func(ctx context.Context, cmd redis.Cmder) error {
 		fn, file, line := call.Caller(11)
+		// PERF-1-3 [P1] 每条命令使用独立切片并复制基础属性，不再复用闭包外层切片的底层数组，
+		// 修复属性跨命令累积导致的残留与单调内存增长。
+		attrs := make([]attribute.KeyValue, 0, len(baseAttrs)+4)
+		attrs = append(attrs, baseAttrs...)
 		attrs = append(attrs,
 			semconv.CodeFunction(fn),
 			semconv.CodeFilepath(file),
 			semconv.CodeLineNumber(line),
 		)
-		cmdString := rediscmd.CmdString(cmd)
-		attrs = append(attrs, semconv.DBStatement(cmdString))
+		attrs = append(attrs, semconv.DBStatement(truncateDBStatement(rediscmd.CmdString(cmd))))
 		md, ok := metadata.FromIncomingContext(ctx)
 		if ok {
 			md = md.Copy()
@@ -84,12 +105,16 @@ func (op OpenTraceHook) ProcessHook(hook redis.ProcessHook) redis.ProcessHook {
 // 管道执行错误原样透传给上层。
 func (op OpenTraceHook) ProcessPipelineHook(hook redis.ProcessPipelineHook) redis.ProcessPipelineHook {
 	tracer := globalTrace.NewTracer(trace.SpanKindServer)
-	attrs := []attribute.KeyValue{
+	// 基础属性在钩子注册期固定一次，命令级属性在闭包内单独构建，避免跨命令累积。
+	baseAttrs := []attribute.KeyValue{
 		semconv.RPCSystemKey.String("redis"),
 		semconv.HostName(hostname.Hostname()),
 	}
 	return func(ctx context.Context, cmds []redis.Cmder) error {
 		fn, file, line := call.Caller(11)
+		// PERF-1-3 [P1] 每条管道命令使用独立切片并复制基础属性，不再复用闭包外层切片的底层数组。
+		attrs := make([]attribute.KeyValue, 0, len(baseAttrs)+5)
+		attrs = append(attrs, baseAttrs...)
 		attrs = append(attrs,
 			semconv.CodeFunction(fn),
 			semconv.CodeFilepath(file),
@@ -97,7 +122,7 @@ func (op OpenTraceHook) ProcessPipelineHook(hook redis.ProcessPipelineHook) redi
 			attribute.Int("db.redis.num_cmd", len(cmds)),
 		)
 		summary, cmdsString := rediscmd.CmdsString(cmds)
-		attrs = append(attrs, semconv.DBStatement(cmdsString))
+		attrs = append(attrs, semconv.DBStatement(truncateDBStatement(cmdsString)))
 		md, ok := metadata.FromIncomingContext(ctx)
 		if ok {
 			md = md.Copy()

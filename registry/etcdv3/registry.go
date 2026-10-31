@@ -88,17 +88,8 @@ func (reg *etcdv3Registry) ListServices(ctx context.Context, prefix string) (ser
 		return nil, getErr
 	}
 
-	for _, kv := range getResp.Kvs {
-		var service server.ServiceInfo
-		if err := json.Unmarshal(kv.Value, &service); err != nil {
-			logger.Logger.WithFields(logrus.Fields{
-				"err": err,
-			}).Warnf("invalid service")
-			continue
-		}
-		services = append(services, &service)
-	}
-
+	// PERF-7-32 [P1] 两轮循环合并为一轮：同一 kv.Value 只反序列化一次到 registry.Update，
+	// 优先取内嵌 Metadata 完整信息，缺失时退化为仅 Address 条目；返回切片结构与字段语义保持不变
 	for _, kv := range getResp.Kvs {
 		var service registry.Update
 		if err := json.Unmarshal(kv.Value, &service); err != nil {
@@ -109,9 +100,13 @@ func (reg *etcdv3Registry) ListServices(ctx context.Context, prefix string) (ser
 			}).Error("invalid service")
 			continue
 		}
-		services = append(services, &server.ServiceInfo{
-			Address: service.Addr,
-		})
+		if service.Metadata != nil {
+			services = append(services, service.Metadata)
+		} else {
+			services = append(services, &server.ServiceInfo{
+				Address: service.Addr,
+			})
+		}
 	}
 
 	return
@@ -149,11 +144,28 @@ func (reg *etcdv3Registry) WatchServices(ctx context.Context, prefix string) (ch
 
 	goroutine.Go(func() {
 		for event := range watch.C() {
-			switch event.Type {
-			case mvccpb.PUT:
-				updateAddrList(al, prefix, scheme, event.Kv)
-			case mvccpb.DELETE:
-				deleteAddrList(al, prefix, scheme, event.Kv)
+			// PERF-7-33 [P2] 当前事件先合并进累计快照，再非阻塞排空通道内已积压的同周期事件，
+			// 一批事件只做一次全量 DeepCopy 与推送；快照内容与原逐事件推送的最终状态一致（事件频率/节点规模需实测验证，预期收益需实测验证）
+			applyEvent := func(ev *mvccpb.KeyValue, op mvccpb.Event_EventType) {
+				switch op {
+				case mvccpb.PUT:
+					updateAddrList(al, prefix, scheme, ev)
+				case mvccpb.DELETE:
+					deleteAddrList(al, prefix, scheme, ev)
+				}
+			}
+			applyEvent(event.Kv, event.Type)
+		drain:
+			for {
+				select {
+				case ev, ok := <-watch.C():
+					if !ok {
+						break drain
+					}
+					applyEvent(ev.Kv, ev.Type)
+				default:
+					break drain
+				}
 			}
 
 			out := al.DeepCopy()
@@ -189,10 +201,14 @@ func (reg *etcdv3Registry) Close() error {
 		reg.cancel()
 	}
 	var wg sync.WaitGroup
+	// PERF-7-34 [P2] 信号量限制并发注销 goroutine 数量为 16，避免节点很多时一次性拉起等量 goroutine 同时向 etcd 发起批量 Delete
+	sem := make(chan struct{}, 16)
 	reg.kvs.Range(func(k, v any) bool {
 		wg.Add(1)
+		sem <- struct{}{}
 		go func(k any) {
 			defer wg.Done()
+			defer func() { <-sem }()
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			err := reg.unregister(ctx, k.(string))
 			if err != nil {

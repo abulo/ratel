@@ -46,6 +46,15 @@ type Connection struct {
 	// genOptKeyFunc 为已注册操作生成唯一标识。
 	genOptKeyFunc func() string
 	sync.Once
+
+	// PERF-5-13 [P1]：普通发布、确认模式发布、拉取消费各持一条互斥保护的复用通道；
+	// amqp 单通道非并发安全，互斥锁保证同一时刻只有一个使用者操作该通道，三条槽位互不干扰。
+	pubCh     *Channel
+	pubMu     sync.Mutex
+	confirmCh *Channel
+	confirmMu sync.Mutex
+	getCh     *Channel
+	getMu     sync.Mutex
 }
 
 // NewConnection 创建一条尚未连接的 Connection；retryable 为 nil 时使用不做任何重试的空实现。
@@ -159,6 +168,49 @@ func (c *Connection) channel() (*amqp.Channel, error) {
 	c.cMut.RLock()
 	defer c.cMut.RUnlock()
 	return c.c.Channel()
+}
+
+// trackChannel 返回指定槽位中的复用通道；槽位为空时在当前连接上懒创建一条通道，并登记关闭监听，
+// 通道被连接或服务器关闭时自动清空槽位，下次调用重新创建。
+//
+// PERF-5-13 [P1]：以"单通道 + 互斥串行"方式复用通道，避免每次发布/拉取都承担 channel.open 与
+// channel.close 两次 broker 往返；调用期间由互斥锁串行化，保证单通道不被并发使用。
+func (c *Connection) trackChannel(mu *sync.Mutex, slot **Channel) (*Channel, error) {
+	mu.Lock()
+	defer mu.Unlock()
+	if *slot != nil {
+		return *slot, nil
+	}
+	ch, err := c.Channel()
+	if err != nil {
+		return nil, err
+	}
+	notify := ch.NotifyClose(make(chan *amqp.Error, 1))
+	go func() {
+		if _, ok := <-notify; ok {
+			mu.Lock()
+			if *slot == ch {
+				*slot = nil
+			}
+			mu.Unlock()
+		}
+	}()
+	*slot = ch
+	return ch, nil
+}
+
+// dropChannelOnErr 在遇到可恢复的连接/通道错误时关闭并清空对应复用槽位，下次调用重建通道；
+// 非可恢复错误保持槽位不变，交由通道自身的关闭监听处理。
+func (c *Connection) dropChannelOnErr(mu *sync.Mutex, slot **Channel, ch *Channel, err error) {
+	if !isConnectedErr(err) {
+		return
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if *slot == ch {
+		_ = ch.Close()
+		*slot = nil
+	}
 }
 
 // RetryChannel 在通道创建失败后按传入策略反复重试；重试耗尽仍失败时返回最后一次错误。

@@ -27,6 +27,9 @@ var (
 	errSlowCommand = errors.New("grpc unary slow command")
 )
 
+// PERF-5-4 [P2]：复核结论——该拦截器仅在 EnableDebug 显式开启时装配，默认不进入运行热路径；
+// 保持现有调试输出语义，不做级别门控或响应体裁剪，避免改变本地排查行为。
+//
 // debugUnaryClientInterceptor 构造调试用单向拦截器，在控制台打印目标地址、远端地址、时间戳、
 // 错误或响应内容，供本地排查使用。
 func debugUnaryClientInterceptor(addr string) grpc.UnaryClientInterceptor {
@@ -52,11 +55,12 @@ func debugUnaryClientInterceptor(addr string) grpc.UnaryClientInterceptor {
 func aidUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		md, ok := metadata.FromOutgoingContext(ctx)
-		clientAidMD := metadata.Pairs("aid", env.AppID())
+		// PERF-5-3 [P2]：存在既有 metadata 时原地 Append aid，避免 metadata.Join 合并两个切片的分配；
+		// 无既有 metadata 时直接构造只含 aid 的新 MD，语义与原 Pairs+Join 保持一致。（预期收益需实测验证）
 		if ok {
-			md = metadata.Join(md, clientAidMD)
+			md.Append("aid", env.AppID())
 		} else {
-			md = clientAidMD
+			md = metadata.Pairs("aid", env.AppID())
 		}
 		ctx = metadata.NewOutgoingContext(ctx, md)
 
@@ -106,9 +110,9 @@ func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if !ok {
 			md = metadata.New(nil)
-		} else {
-			md = md.Copy()
 		}
+		// PERF-5-3 [P2]：FromOutgoingContext 返回的已是当次新建的 MD（值切片已拷贝），
+		// 去掉冗余的 md.Copy()；carrier.Set 只改写这份当次 MD，不会回写 ctx 中原有的 MD。（预期收益需实测验证）
 		ctx, span := tracer.Start(ctx, method, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
 		ctx = metadata.NewOutgoingContext(ctx, md)
 		span.SetAttributes(
@@ -132,35 +136,12 @@ func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) gr
 		beg := time.Now()
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		spbStatus := ecode.ExtractCodes(err)
-		if err != nil {
-			// 系统级别错误使用 Error 级别记录。
-			if spbStatus.Code < ecode.EcodeNum {
-				logger.Logger.WithFields(logrus.Fields{
-					"code":   spbStatus.Code,
-					"msg":    spbStatus.Message,
-					"name":   name,
-					"method": method,
-					"time":   time.Since(beg),
-					"req":    json.RawMessage(util.JSONString(req)),
-					"reply":  json.RawMessage(util.JSONString(reply)),
-				}).Error("access_unary")
-
-			} else {
-				// 业务错误降级为 Warn，避免淹没系统故障日志。
-				logger.Logger.WithFields(logrus.Fields{
-					"code":   spbStatus.Code,
-					"msg":    spbStatus.Message,
-					"name":   name,
-					"method": method,
-					"time":   time.Since(beg),
-					"req":    json.RawMessage(util.JSONString(req)),
-					"reply":  json.RawMessage(util.JSONString(reply)),
-				}).Warn("access")
-			}
-			return err
-		}
-		if accessInterceptorLevel == "info" {
-			logger.Logger.WithFields(logrus.Fields{
+		// PERF-5-1 [P1]：Error/Warn/Info 三个分支重复构造同一组日志字段，抽为局部闭包复用，
+		// 仅在实际命中分支时才构造字段；req/reply 仍按原逻辑 JSON 序列化输出，日志内容、级别与
+		// 触发条件保持不变（按语义红线不做级别门控跳过序列化、不做 payload 截断）。JSONString 内部
+		// []byte→string 二次拷贝已由模块 7 在 util 层修复。
+		accessFields := func() logrus.Fields {
+			return logrus.Fields{
 				"code":   spbStatus.Code,
 				"msg":    spbStatus.Message,
 				"name":   name,
@@ -168,7 +149,20 @@ func loggerUnaryClientInterceptor(name string, accessInterceptorLevel string) gr
 				"time":   time.Since(beg),
 				"req":    json.RawMessage(util.JSONString(req)),
 				"reply":  json.RawMessage(util.JSONString(reply)),
-			}).Info("access_unary")
+			}
+		}
+		if err != nil {
+			// 系统级别错误使用 Error 级别记录。
+			if spbStatus.Code < ecode.EcodeNum {
+				logger.Logger.WithFields(accessFields()).Error("access_unary")
+			} else {
+				// 业务错误降级为 Warn，避免淹没系统故障日志。
+				logger.Logger.WithFields(accessFields()).Warn("access")
+			}
+			return err
+		}
+		if accessInterceptorLevel == "info" {
+			logger.Logger.WithFields(accessFields()).Info("access_unary")
 		}
 		return nil
 	}
@@ -183,12 +177,15 @@ func metricUnaryClientInterceptor(name string) func(ctx context.Context, method 
 
 		// 解析错误码以区分系统错误与业务错误。
 		spbStatus := ecode.ExtractCodes(err)
+		// PERF-5-2 [P2]：同一请求目标地址恒定，cc.Target() 只取一次供 Inc/Observe 复用，
+		// 消除四个标签参数中的重复目标字符串构造。
+		target := cc.Target()
 		if spbStatus.Code < ecode.EcodeNum {
-			metric.ClientHandleCounter.Inc(metric.TypeGRPCUnary, name, method, cc.Target(), spbStatus.GetMessage())
-			metric.ClientHandleHistogram.Observe(time.Since(beg).Seconds(), metric.TypeGRPCUnary, name, method, cc.Target())
+			metric.ClientHandleCounter.Inc(metric.TypeGRPCUnary, name, method, target, spbStatus.GetMessage())
+			metric.ClientHandleHistogram.Observe(time.Since(beg).Seconds(), metric.TypeGRPCUnary, name, method, target)
 		} else {
-			metric.ClientHandleCounter.Inc(metric.TypeGRPCUnary, name, method, cc.Target(), "biz error")
-			metric.ClientHandleHistogram.Observe(time.Since(beg).Seconds(), metric.TypeGRPCUnary, name, method, cc.Target())
+			metric.ClientHandleCounter.Inc(metric.TypeGRPCUnary, name, method, target, "biz error")
+			metric.ClientHandleHistogram.Observe(time.Since(beg).Seconds(), metric.TypeGRPCUnary, name, method, target)
 		}
 		return err
 	}

@@ -226,6 +226,9 @@ func (c *Cron) run() {
 	}
 
 	for {
+		// PERF-3-11 [P2]：复核结论——Entry.Next 已在初始化与每次触发后缓存到结构体字段，
+		// byTime.Less 仅比较 time.Time，不存在 Less 内重复调用 Schedule.Next 的问题；
+		// 条目量级为个位数~数十个，全量 sort.Sort 与 removeEntry 线性重建的常数成本可忽略，本条目不改代码。
 		sort.Sort(byTime(c.entries))
 
 		var timer *time.Timer
@@ -279,6 +282,9 @@ func (c *Cron) run() {
 	}
 }
 
+// PERF-3-12 [P2]：复核结论——每触发新建 goroutine 是 robfig/cron 的默认并发模型；
+// 任务互斥、并发上限与 Recover 包装属于可靠性/配置层能力，应由 WithChain 包装器提供（见 cron/option.go），
+// 不在本性能条目内改变默认调度语义，故本函数不改代码。
 func (c *Cron) startJob(j Job) {
 	c.jobWaiter.Go(func() {
 		j.Run()

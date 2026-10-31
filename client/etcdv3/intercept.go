@@ -23,9 +23,9 @@ func traceUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if !ok {
 			md = metadata.New(nil)
-		} else {
-			md = md.Copy()
 		}
+		// PERF-5-18 [P2]：FromOutgoingContext 返回的已是当次新建 MD（值切片已拷贝），去掉冗余
+		// md.Copy()；carrier 只改写这份当次 MD，不回写 ctx 中原有的 MD。（预期收益需实测验证）
 		ctx, span := tracer.Start(ctx, method, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
 		ctx = metadata.NewOutgoingContext(ctx, md)
 		span.SetAttributes(
@@ -55,9 +55,8 @@ func traceStreamClientInterceptor() grpc.StreamClientInterceptor {
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if !ok {
 			md = metadata.New(nil)
-		} else {
-			md = md.Copy()
 		}
+		// PERF-5-18 [P2]：同上，去掉流式拦截器中冗余的 md.Copy()。（预期收益需实测验证）
 		ctx, span := tracer.Start(ctx, method, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
 		ctx = metadata.NewOutgoingContext(ctx, md)
 		span.SetAttributes(

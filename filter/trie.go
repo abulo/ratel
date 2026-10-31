@@ -16,14 +16,14 @@ type trie struct {
 	// fail 为失败指针。
 	fail *trie
 	// len 为该节点对应路径的字节长度。
-	len  uint8
+	len uint8
 	// end 标记是否为单词结束节点。
-	end  bool
+	end bool
 }
 
 // NewTrieWriter 创建一个空的词库写入器，内部初始化自动机根节点。
 func NewTrieWriter() *TrieWriter {
-	return &TrieWriter{tireRoot: &trie{next: map[rune]*trie{}}}
+	return &TrieWriter{tireRoot: &trie{}}
 }
 
 // TrieWriter 负责向 Trie 自动机插入词库、维护跳过字符集合并构建失败指针。
@@ -31,9 +31,9 @@ func NewTrieWriter() *TrieWriter {
 // 该类型不保证并发安全，词库构建应在单 goroutine 内完成后再交给扫描器使用。
 type TrieWriter struct {
 	// size 为词库中已插入的单词数量。
-	size     int
+	size int
 	// skip 为匹配时需要跳过的字符集合。
-	skip     *Skip
+	skip *Skip
 	// tireRoot 为自动机根节点。
 	tireRoot *trie
 }
@@ -63,7 +63,11 @@ func (t *TrieWriter) Insert(word string) *TrieWriter {
 			continue
 		}
 		if _, ok := node.next[v]; !ok {
-			node.next[v] = &trie{next: map[rune]*trie{}}
+			// PERF-9-11 [P2] 子节点 map 惰性创建，避免叶子节点支付空 map 堆分配；nil map 读取安全。
+			if node.next == nil {
+				node.next = make(map[rune]*trie)
+			}
+			node.next[v] = &trie{}
 		}
 		wLen += utf8.RuneLen(v)
 		node = node.next[v]
@@ -166,7 +170,11 @@ func (t *TrieWriter) InsertBytes(p []byte, delim byte) (n int) {
 			}
 
 			if _, ok := node.next[r]; !ok {
-				node.next[r] = &trie{next: map[rune]*trie{}}
+				// PERF-9-11 [P2] 子节点 map 惰性创建，避免叶子节点支付空 map 堆分配。
+				if node.next == nil {
+					node.next = make(map[rune]*trie)
+				}
+				node.next[r] = &trie{}
 			}
 			wLen += l
 			node = node.next[r]
@@ -197,14 +205,14 @@ func (t *TrieWriter) BuildFail() int {
 	}
 
 	count := 0
-	for level := 1; len(queue) > 0; level++ {
-		temp := make([]*trie, len(queue))
-		copy(temp, queue)
-		queue = queue[:0]
-		for _, prev := range temp {
+	// PERF-9-12 [P2] 两个队列切片互换复用，消除每层 make 临时切片并整体拷贝的分配。
+	nextQueue := make([]*trie, 0, len(queue))
+	for len(queue) > 0 {
+		nextQueue = nextQueue[:0]
+		for _, prev := range queue {
 			for c, curr := range prev.next {
 				count++
-				queue = append(queue, curr)
+				nextQueue = append(nextQueue, curr)
 				failTo := prev.fail
 				for failTo != nil && failTo.next[c] == nil {
 					failTo = failTo.fail
@@ -216,68 +224,57 @@ func (t *TrieWriter) BuildFail() int {
 				}
 			}
 		}
+		queue, nextQueue = nextQueue, queue
 	}
 	return count
 }
 
 // String 以每行一个单词的形式输出词库内容，最多输出 1000 条，避免词库过大时输出失控。
 func (t *TrieWriter) String() string {
-	type pair struct {
-		trie  *trie
-		runes []rune
-	}
 	buf := bytes.Buffer{}
 	limit := 1000
-	queue := []*pair{{t.trie(), nil}}
-loop:
-	for len(queue) > 0 {
-		temp := make([]*pair, len(queue))
-		copy(temp, queue)
-		queue = queue[:0]
-		for _, p := range temp {
-			if p.trie.end {
-				buf.WriteString(string(p.runes))
-				buf.WriteByte('\n')
-				limit--
-				if limit == 0 {
-					break loop
-				}
+	// PERF-9-12 [P2] 改为 DFS + 栈式共享前缀 rune 切片（push/pop 复用底层数组），
+	// 避免每个节点整段复制前缀；导出词表集合内容不变（遍历顺序不属对外契约）。
+	var prefix []rune
+	var dfs func(node *trie)
+	dfs = func(node *trie) {
+		if node.end {
+			buf.WriteString(string(prefix))
+			buf.WriteByte('\n')
+			limit--
+			if limit == 0 {
+				return
 			}
-			for r, node := range p.trie.next {
-				queue = append(queue, &pair{node, appendRunes(p.runes, r)})
+		}
+		for r, child := range node.next {
+			prefix = append(prefix, r)
+			dfs(child)
+			prefix = prefix[:len(prefix)-1]
+			if limit == 0 {
+				return
 			}
 		}
 	}
+	dfs(t.trie())
 	return string(buf.Bytes()[:buf.Len()-1])
-}
-
-func appendRunes(runes []rune, r rune) []rune {
-	res := make([]rune, len(runes)+1)
-	copy(res, runes)
-	res[len(res)-1] = r
-	return res
 }
 
 // Array 返回词库中全部单词的字符串列表。
 func (t *TrieWriter) Array() []string {
-	type pair struct {
-		trie  *trie
-		runes []rune
-	}
 	res := make([]string, 0, t.Size())
-	queue := []*pair{{t.trie(), nil}}
-	for len(queue) > 0 {
-		temp := make([]*pair, len(queue))
-		copy(temp, queue)
-		queue = queue[:0]
-		for _, p := range temp {
-			if p.trie.end {
-				res = append(res, string(p.runes))
-			}
-			for r, node := range p.trie.next {
-				queue = append(queue, &pair{node, appendRunes(p.runes, r)})
-			}
+	// PERF-9-12 [P2] DFS 栈式共享前缀，替代 appendRunes 每节点整段前缀复制；词表集合不变。
+	var prefix []rune
+	var dfs func(node *trie)
+	dfs = func(node *trie) {
+		if node.end {
+			res = append(res, string(prefix))
+		}
+		for r, child := range node.next {
+			prefix = append(prefix, r)
+			dfs(child)
+			prefix = prefix[:len(prefix)-1]
 		}
 	}
+	dfs(t.trie())
 	return res
 }

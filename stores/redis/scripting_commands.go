@@ -278,3 +278,47 @@ func (r *Client) FCallRO(ctx context.Context, function string, keys []string, ar
 	}, acceptable)
 	return
 }
+
+// ScriptRunner 包装 go-redis 的 *redis.Script：固定脚本在服务端缓存 SHA1，运行期优先走
+// EVALSHA，收到 NOSCRIPT 时由 go-redis 自动重新加载并回退 EVAL，避免每次调用都重复传输整段
+// Lua 源码。实例本身可并发使用。
+//
+// PERF-1-5 [P2] 复用型脚本的网络传输与服务端解析优化；收益取决于脚本大小与调用频次（预期收益需实测验证）。
+type ScriptRunner struct {
+	client *Client
+	script *redis.Script
+}
+
+// NewScriptRunner 基于脚本源码 src 创建可复用的脚本执行器；同一脚本建议只创建一次并长期持有。
+func (r *Client) NewScriptRunner(src string) *ScriptRunner {
+	return &ScriptRunner{
+		client: r,
+		script: redis.NewScript(src),
+	}
+}
+
+// Run 以写模式执行脚本，keys 为脚本可见的键列表，args 为附加参数，返回脚本执行结果。
+func (sr *ScriptRunner) Run(ctx context.Context, keys []string, args ...any) (val any, err error) {
+	err = sr.client.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(sr.client)
+		if err != nil {
+			return err
+		}
+		val, err = sr.script.Run(getCtx(ctx), conn, keys, args...).Result()
+		return err
+	}, acceptable)
+	return
+}
+
+// RunRO 以只读模式执行脚本，脚本内不允许执行写命令。
+func (sr *ScriptRunner) RunRO(ctx context.Context, keys []string, args ...any) (val any, err error) {
+	err = sr.client.brk.DoWithAcceptable(func() error {
+		conn, err := getRedis(sr.client)
+		if err != nil {
+			return err
+		}
+		val, err = sr.script.RunRO(getCtx(ctx), conn, keys, args...).Result()
+		return err
+	}, acceptable)
+	return
+}

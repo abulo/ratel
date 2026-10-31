@@ -2,6 +2,7 @@ package etcdv3
 
 import (
 	"context"
+	"time"
 
 	"github.com/abulo/ratel/v3/core/ecode"
 	"github.com/abulo/ratel/v3/core/goroutine"
@@ -48,11 +49,21 @@ func (client *Client) WatchPrefix(ctx context.Context, prefix string) (*Watch, e
 	}
 
 	goroutine.Go(func() {
+		// PERF-5-15 [P1]：watch 流断开重建前指数退避（100ms 起步、2 倍递增、5s 封顶），避免
+		// etcd 故障期间外层循环立即重建形成忙等；退避等待可被 Close 取消打断。收到事件表示链路
+		// 存活，重置退避基线。（预期收益需实测验证）
+		const (
+			watchBackoffBase = 100 * time.Millisecond
+			watchBackoffMax  = 5 * time.Second
+		)
+		delay := watchBackoffBase
+
 		ctx, cancel := context.WithCancel(context.Background())
 		w.cancel = cancel
 		rch := client.Client.Watch(ctx, prefix, clientv3.WithPrefix(), clientv3.WithPrevKV(), clientv3.WithCreatedNotify(), clientv3.WithRev(w.revision))
 		for {
 			for n := range rch {
+				delay = watchBackoffBase
 				if n.CompactRevision > w.revision {
 					w.revision = n.CompactRevision
 				}
@@ -76,6 +87,17 @@ func (client *Client) WatchPrefix(ctx context.Context, prefix string) (*Watch, e
 					}
 				}
 			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(delay):
+			}
+			delay *= 2
+			if delay > watchBackoffMax {
+				delay = watchBackoffMax
+			}
+
 			ctx, cancel := context.WithCancel(context.Background())
 			w.cancel = cancel
 			if w.revision > 0 {

@@ -43,6 +43,8 @@ func getDialOptions(config *Config) []grpc.DialOption {
 		dialOptions = append(dialOptions, grpc.WithKeepaliveParams(*config.KeepAlive))
 	}
 
+	// PERF-5-5 [P2]：insecure 凭证在本单点装配，New() 预置的重复凭证已移除，避免同一连接上出现
+	// 两条重复的 WithTransportCredentials 选项；拨号连接语义保持不变。
 	dialOptions = append(dialOptions,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithResolvers(resolver.NewEtcdBuilder(config.Etcd.GetNode(), config.Etcd.MustSingleton())),

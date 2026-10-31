@@ -25,6 +25,15 @@ const (
 	TDengineDriverName = "tdengine"
 )
 
+// PERF-2-3 [P1] 连接池兜底默认值：调用方未显式配置（零值）时使用，
+// 避免 SetMaxIdleConns(0) 导致空闲连接用完即关、SetMaxOpenConns(0) 导致连接数无上限。
+const (
+	defaultMaxIdleConns    = 10
+	defaultMaxOpenConns    = 100
+	defaultConnMaxLifetime = time.Hour
+	defaultConnMaxIdleTime = 30 * time.Minute
+)
+
 // Client 保存关系型数据库的全部连接配置，由各 With* Option 在 NewClient 阶段装配。
 //
 // 零值不可直接使用，须先通过 Option 填写 Host、Port、Username、Password、Database、
@@ -298,8 +307,9 @@ func (c *Client) Open() (*ClientManager, error) {
 	newLogger.SetSourceField("gorm")
 	newLogger.SetSkipErrRecordNotFound(true)
 	db, err := gorm.Open(dialector, &gorm.Config{
+		// PERF-2-5 [P2] time.Now() 返回值已是本地时区，去掉冗余的 .Local() 归一化调用。
 		NowFunc: func() time.Time {
-			return time.Now().Local()
+			return time.Now()
 		},
 		Logger:                 newLogger,
 		SkipDefaultTransaction: true,
@@ -324,10 +334,27 @@ func (c *Client) Open() (*ClientManager, error) {
 	if err != nil {
 		return nil, err
 	}
-	sqlDB.SetMaxIdleConns(c.MaxIdleConns)
-	sqlDB.SetMaxOpenConns(c.MaxOpenConns)
-	sqlDB.SetConnMaxLifetime(c.MaxLifetime)
-	sqlDB.SetConnMaxIdleTime(c.MaxIdleTime)
+	// PERF-2-3 [P1] 仅对未显式配置（零值）的连接池参数填充兜底默认值，显式传入的配置保持不变。
+	maxIdleConns := c.MaxIdleConns
+	if maxIdleConns <= 0 {
+		maxIdleConns = defaultMaxIdleConns
+	}
+	maxOpenConns := c.MaxOpenConns
+	if maxOpenConns <= 0 {
+		maxOpenConns = defaultMaxOpenConns
+	}
+	maxLifetime := c.MaxLifetime
+	if maxLifetime <= 0 {
+		maxLifetime = defaultConnMaxLifetime
+	}
+	maxIdleTime := c.MaxIdleTime
+	if maxIdleTime <= 0 {
+		maxIdleTime = defaultConnMaxIdleTime
+	}
+	sqlDB.SetMaxIdleConns(maxIdleConns)
+	sqlDB.SetMaxOpenConns(maxOpenConns)
+	sqlDB.SetConnMaxLifetime(maxLifetime)
+	sqlDB.SetConnMaxIdleTime(maxIdleTime)
 
 	if err := sqlDB.Ping(); err != nil {
 		_ = sqlDB.Close()

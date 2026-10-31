@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
-	"github.com/spf13/cast"
 )
 
 // String 是可空的 string，实现 sql.Scanner、driver.Valuer 以及 JSON 与文本编解码接口。
@@ -75,8 +74,9 @@ func (s *String) UnmarshalJSON(data []byte) error {
 // MarshalJSON 实现 json.Marshaler；空值序列化为 JSON null。
 func (s String) MarshalJSON() ([]byte, error) {
 	if !s.Valid {
-		return json.Marshal(nil)
+		return NullBytes, nil // PERF-2-17 [P2] 复用包级共享 null 字节，省去 json 反射序列化与分配
 	}
+	// 有效分支保留 json.Marshal：其引号与 HTML 转义规则（< > & 等）须与原实现保持一致。
 	return json.Marshal(s.String)
 }
 
@@ -152,5 +152,6 @@ func (t String) Result() string {
 	if !t.Valid {
 		return "NULL"
 	}
-	return cast.ToString(t.String)
+	// PERF-2-19 [P2] 已知类型即为 string，直接返回，去掉 cast 反射分发。
+	return t.String
 }

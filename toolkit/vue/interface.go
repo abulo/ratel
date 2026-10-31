@@ -17,20 +17,11 @@ import (
 //
 // 文件创建或模板解析失败时打印错误并返回，不向调用方返回错误。
 func GenerateInterface(moduleParam base.ModuleParam, fullInterfaceDir, tableName string) {
-	tpl := template.Must(template.New("interface").Funcs(template.FuncMap{
-		"Convert":               base.Convert,
-		"SymbolChar":            base.SymbolChar,
-		"Char":                  base.Char,
-		"Helper":                base.Helper,
-		"CamelStr":              base.CamelStr,
-		"Add":                   base.Add,
-		"ModuleProtoConvertDao": base.ModuleProtoConvertDao,
-		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
-		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
-		"ApiToProto":            base.ApiToProto,
-		"TypeScriptCondition":   base.TypeScriptCondition,
-		"TypeScript":            base.TypeScript,
-	}).Parse(InterfaceTemplate()))
+	// PERF-8-20 [P2] 公共模板函数复用 base 包级定义，仅追加本生成器专属函数。
+	funcs := base.CommonTemplateFuncs()
+	funcs["TypeScriptCondition"] = base.TypeScriptCondition
+	funcs["TypeScript"] = base.TypeScript
+	tpl := template.Must(template.New("interface").Funcs(funcs).Parse(InterfaceTemplate()))
 
 	outInterfaceFile := path.Join(fullInterfaceDir, base.Helper(tableName)+".ts")
 	if util.FileExists(outInterfaceFile) {

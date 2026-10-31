@@ -66,11 +66,13 @@ func ExtractCodes(e error) *spbStatus {
 		return OK
 	}
 	gst, _ := status.FromError(e)
+	// PERF-4-13 [P2]：Details 延迟初始化，错误路径不再预先分配空切片；
+	// WithDetails 的 append 与 GetDetailMessage 的 range 对 nil 切片行为等价
+	//（错误路径分配形成的 GC 压力预期收益需实测验证）。
 	return &spbStatus{
 		&spb.Status{
 			Code:    int32(gst.Code()),
 			Message: gst.Message(),
-			Details: make([]*any.Any, 0),
 		},
 	}
 }

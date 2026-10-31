@@ -137,16 +137,19 @@ func ExtractIP(addr string) (string, error) {
 	return "", errors.New("no IP address found, and explicit IP not provided")
 }
 
-// isPrivateIP 判断 ipAddr 是否属于内网、保留或运营商 NAT 保留网段。
-func isPrivateIP(ipAddr string) bool {
-	var privateBlocks []*net.IPNet
-
+// PERF-7-21 [P2] 私网网段为常量，包级解析一次缓存为 *net.IPNet，避免 isPrivateIP 每次调用重复 net.ParseCIDR
+var privateBlocks = func() []*net.IPNet {
+	var blocks []*net.IPNet
 	for _, b := range []string{"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10", "fd00::/8"} {
 		if _, block, err := net.ParseCIDR(b); err == nil {
-			privateBlocks = append(privateBlocks, block)
+			blocks = append(blocks, block)
 		}
 	}
+	return blocks
+}()
 
+// isPrivateIP 判断 ipAddr 是否属于内网、保留或运营商 NAT 保留网段。
+func isPrivateIP(ipAddr string) bool {
 	ip := net.ParseIP(ipAddr)
 	for _, priv := range privateBlocks {
 		if priv.Contains(ip) {

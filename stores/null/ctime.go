@@ -3,7 +3,6 @@ package null
 import (
 	"bytes"
 	"database/sql/driver"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -60,7 +59,7 @@ func (t CTime) IsSet() bool {
 // MarshalJSON 实现 json.Marshaler；空值序列化为 JSON null，有效值按 hh:mm:ss 输出。
 func (t CTime) MarshalJSON() ([]byte, error) {
 	if !t.Valid {
-		return json.Marshal(nil)
+		return NullBytes, nil // PERF-2-17 [P2] 复用包级共享 null 字节，省去 json 反射序列化与分配
 	}
 
 	// 序列化实现参考标准库 time.Time 的 JSON 逻辑。

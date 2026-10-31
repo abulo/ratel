@@ -5,10 +5,41 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/cast"
 )
+
+// PERF-7-15 [P1] 进程级共享随机源：包级单例 + 互斥保护，并发安全；替代各函数每次 rand.New(rand.NewSource(...)) 的重复构造（预期收益需实测验证）
+var (
+	sharedRandMu sync.Mutex
+	sharedRand   = rand.New(rand.NewSource(time.Now().UnixNano()))
+)
+
+// sharedIntn 返回 [0, n) 的随机整数，供包内各随机工具复用共享随机源。
+func sharedIntn(n int) int {
+	sharedRandMu.Lock()
+	v := sharedRand.Intn(n)
+	sharedRandMu.Unlock()
+	return v
+}
+
+// sharedPerm 返回 [0, n) 的随机排列，供包内各随机工具复用共享随机源。
+func sharedPerm(n int) []int {
+	sharedRandMu.Lock()
+	v := sharedRand.Perm(n)
+	sharedRandMu.Unlock()
+	return v
+}
+
+// sharedInt63n 返回 [0, n) 的非负随机 int64，供包内各随机工具复用共享随机源。
+func sharedInt63n(n int64) int64 {
+	sharedRandMu.Lock()
+	v := sharedRand.Int63n(n)
+	sharedRandMu.Unlock()
+	return v
+}
 
 // Abs 返回 number 的绝对值。
 func Abs(number float64) float64 {
@@ -29,8 +60,8 @@ func Rand(min, max int) int {
 	if min == max {
 		return min
 	}
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	return r.Intn(max+1-min) + min
+	// PERF-7-15 [P1] 复用进程级共享随机源；区间闭区间 [min, max] 语义与原实现保持一致
+	return sharedIntn(max+1-min) + min
 }
 
 // Round 将 value 四舍五入到 precision 位小数。

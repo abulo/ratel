@@ -11,7 +11,6 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +18,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/spf13/cast"
+)
+
+// PERF-7-26 [P1] 四个校验正则原样提升为包级预编译变量，避免每次校验现场编译正则；表达式内容与原实现保持一致
+var (
+	phoneRegex = regexp.MustCompile(`^((13[0-9])|(14[5,7])|(15[0-3,5-9])|(17[0,3,5-8])|(18[0-9])|166|198|199|(147))\d{8}$`)
+	emailRegex = regexp.MustCompile(`^[0-9a-z][_.0-9a-z-]{0,31}@([0-9a-z][0-9a-z-]{0,30}[0-9a-z]\.){1,4}[a-z]{2,4}$`)
+	ipv4Regex  = regexp.MustCompile(`^((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)$`)
+	ipv6Regex  = regexp.MustCompile(`^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$`)
 )
 
 // MarshalHTML 将 v 序列化为 JSON 后包装为 template.HTML 类型，供 HTML 模板原样输出；
@@ -91,30 +98,22 @@ func Random() string {
 
 // VerifyPhone 判断 phone 是否为中国大陆手机号格式。
 func VerifyPhone(phone string) bool {
-	regular := "^((13[0-9])|(14[5,7])|(15[0-3,5-9])|(17[0,3,5-8])|(18[0-9])|166|198|199|(147))\\d{8}$"
-
-	reg := regexp.MustCompile(regular)
-	return reg.MatchString(phone)
+	return phoneRegex.MatchString(phone)
 }
 
 // VerifyEmail 判断 email 是否为合法邮箱地址格式。
 func VerifyEmail(email string) bool {
-	pattern := `^[0-9a-z][_.0-9a-z-]{0,31}@([0-9a-z][0-9a-z-]{0,30}[0-9a-z]\.){1,4}[a-z]{2,4}$`
-
-	reg := regexp.MustCompile(pattern)
-	return reg.MatchString(email)
+	return emailRegex.MatchString(email)
 }
 
-// VerifyIPv4 判断 address 是否为合法 IPv4 地址；正则编译错误被忽略并按不匹配处理。
+// VerifyIPv4 判断 address 是否为合法 IPv4 地址。
 func VerifyIPv4(address string) bool {
-	res, _ := regexp.MatchString(`^((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)$`, address)
-	return res
+	return ipv4Regex.MatchString(address)
 }
 
-// VerifyIPv6 判断 address 是否为合法 IPv6 地址；正则编译错误被忽略并按不匹配处理。
+// VerifyIPv6 判断 address 是否为合法 IPv6 地址。
 func VerifyIPv6(address string) bool {
-	res, _ := regexp.MatchString(`^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$`, address)
-	return res
+	return ipv6Regex.MatchString(address)
 }
 
 // FunctionName 返回函数值 i 对应的运行时函数完整名称；i 不是函数类型时会 panic。
@@ -149,21 +148,21 @@ func GetMissingElement(arr []int) int {
 	if len(arr) <= 0 {
 		return 1
 	}
-	sort.Sort(intSlice(arr))
-	var arrTemp []int
-
-	for i := 1; i <= arr[len(arr)-1]; i++ {
-		arrTemp = append(arrTemp, i)
-	}
-	if equal(arrTemp, arr) {
-		return arr[len(arr)-1] + 1
-	}
-	for i, v := range arrTemp {
-		if v != arr[i] {
-			return v
+	// PERF-7-28 [P2] map 标记 + 从 1 起探测首个缺失，替代排序、构造等长 1..max 切片与全等比较的 O(n log n) 方案
+	seen := make(map[int]struct{}, len(arr))
+	max := arr[0]
+	for _, v := range arr {
+		seen[v] = struct{}{}
+		if v > max {
+			max = v
 		}
 	}
-	return 1
+	for i := 1; i <= max; i++ {
+		if _, ok := seen[i]; !ok {
+			return i
+		}
+	}
+	return max + 1
 }
 
 // NewReplacer 将 endpoint 中的占位键按成对传入的 values 依次替换。
@@ -177,26 +176,15 @@ func NewReplacer(endpoint string, values ...any) string {
 	if len(values)%2 != 0 {
 		return endpoint
 	}
-	params := make(map[string]string)
-	if len(values) > 0 {
-		key := ""
-		for k, v := range values {
-			if k%2 == 0 {
-				key = cast.ToString(v)
-			} else {
-				params[key] = cast.ToString(v)
-			}
-		}
-	}
-
-	if len(params) < 1 || Empty(params) {
+	if len(values) == 0 {
 		return endpoint
 	}
-
-	for pk, pv := range params {
-		endpoint = string(ByteReplace([]byte(endpoint), []byte(pk), []byte(pv), 1))
+	// PERF-7-27 [P2] 收集成对键值后交 strings.NewReplacer 一次构建、单趟扫描替换，替代循环内每键 ByteReplace 全量重建 endpoint 字符串的 O(k·m) 重复拷贝
+	pairs := make([]string, 0, len(values))
+	for _, v := range values {
+		pairs = append(pairs, cast.ToString(v))
 	}
-	return endpoint
+	return strings.NewReplacer(pairs...).Replace(endpoint)
 }
 
 // ByteReplace 将字节切片 s 中前 n 处 old 替换为 new。

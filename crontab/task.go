@@ -38,9 +38,10 @@ func NewTaskManager() *TaskManager {
 	return &TaskManager{
 		adminTaskList: make(map[string]Tasker),
 		taskLock:      sync.RWMutex{},
-		stop:          make(chan bool),
-		changed:       make(chan bool),
-		started:       false,
+		// PERF-7-39 [P2] stop/changed 缓冲为 1，配合非阻塞发送，避免调度循环退出后独立发送 goroutine 永久阻塞
+		stop:    make(chan bool, 1),
+		changed: make(chan bool, 1),
+		started: false,
 	}
 }
 
@@ -468,11 +469,12 @@ func (t *TaskManager) run() {
 		t.taskLock.RUnlock()
 		sortList.Sort()
 		var effective time.Time
-		if len(t.adminTaskList) == 0 || sortList.Vals[0].GetNext(context.Background()).IsZero() {
+		// PERF-7-38 [P1] 排序器已缓存首个任务 Next，直接复用缓存值，不再重复调用 GetNext
+		if len(t.adminTaskList) == 0 || sortList.nexts[0].IsZero() {
 			// 暂无任务时拉长等待，期间仍可接收新增任务与停止信号。
 			effective = now.AddDate(10, 0, 0)
 		} else {
-			effective = sortList.Vals[0].GetNext(context.Background())
+			effective = sortList.nexts[0]
 		}
 
 		select {
@@ -548,16 +550,21 @@ func (t *TaskManager) runNextTasks(sortList *MapSorter, effective time.Time) {
 
 // StopTask 异步通知调度循环退出，不等待正在执行的任务结束。
 func (t *TaskManager) StopTask() {
-	go func() {
-		t.stop <- true
-	}()
+	// PERF-7-39 [P2] 缓冲通道 + 非阻塞发送；已有停止信号待处理时直接丢弃，不再起独立 goroutine 阻塞等待接收方
+	select {
+	case t.stop <- true:
+	default:
+	}
 }
 
 // GracefulShutdown 停止调度循环并等待所有正在执行的任务结束，返回的通道在全部任务完成后关闭。
 func (t *TaskManager) GracefulShutdown() <-chan struct{} {
 	done := make(chan struct{})
 	go func() {
-		t.stop <- true
+		select {
+		case t.stop <- true:
+		default:
+		}
 		t.wait.Wait()
 		close(done)
 	}()
@@ -577,9 +584,11 @@ func (t *TaskManager) AddTask(taskname string, task Tasker) {
 	t.taskLock.Unlock()
 
 	if isChanged {
-		go func() {
-			t.changed <- true
-		}()
+		// PERF-7-39 [P2] 缓冲通道 + 非阻塞合并发送；已有变更信号待处理时丢弃本次通知，不再起阻塞 goroutine
+		select {
+		case t.changed <- true:
+		default:
+		}
 	}
 }
 
@@ -600,9 +609,11 @@ func (t *TaskManager) DeleteTask(taskname string) {
 	t.taskLock.Unlock()
 
 	if isChanged {
-		go func() {
-			t.changed <- true
-		}()
+		// PERF-7-39 [P2] 缓冲通道 + 非阻塞合并发送；已有变更信号待处理时丢弃本次通知，不再起阻塞 goroutine
+		select {
+		case t.changed <- true:
+		default:
+		}
 	}
 }
 
@@ -618,9 +629,11 @@ func (t *TaskManager) ClearTask() {
 	t.taskLock.Unlock()
 
 	if isChanged {
-		go func() {
-			t.changed <- true
-		}()
+		// PERF-7-39 [P2] 缓冲通道 + 非阻塞合并发送；已有变更信号待处理时丢弃本次通知，不再起阻塞 goroutine
+		select {
+		case t.changed <- true:
+		default:
+		}
 	}
 }
 
@@ -631,17 +644,22 @@ type MapSorter struct {
 	Keys []string
 	// Vals 为任务实例切片，与 Keys 相同下标对齐。
 	Vals []Tasker
+	// nexts 为与 Vals 对齐的 Next 时间戳缓存，避免 Less 内反复调用 GetNext（PERF-7-38）。
+	nexts []time.Time
 }
 
 // NewMapSorter 由任务 map 构造对应的 MapSorter，键与值在相同下标对齐。
 func NewMapSorter(m map[string]Tasker) *MapSorter {
 	ms := &MapSorter{
-		Keys: make([]string, 0, len(m)),
-		Vals: make([]Tasker, 0, len(m)),
+		Keys:  make([]string, 0, len(m)),
+		Vals:  make([]Tasker, 0, len(m)),
+		nexts: make([]time.Time, 0, len(m)),
 	}
 	for k, v := range m {
 		ms.Keys = append(ms.Keys, k)
 		ms.Vals = append(ms.Vals, v)
+		// PERF-7-38 [P1] 构造时一次性缓存每个任务的 Next 时间戳，供排序比较复用
+		ms.nexts = append(ms.nexts, v.GetNext(context.Background()))
 	}
 	return ms
 }
@@ -656,19 +674,22 @@ func (ms *MapSorter) Len() int { return len(ms.Keys) }
 
 // Less 判断下标 i 的任务是否应排在 j 之前；未设置下次执行时间的任务排在最后。
 func (ms *MapSorter) Less(i, j int) bool {
-	if ms.Vals[i].GetNext(context.Background()).IsZero() {
+	// PERF-7-38 [P1] 直接比较缓存的 Next 时间戳，替代原实现内最多 4 次 GetNext 接口调用
+	ni, nj := ms.nexts[i], ms.nexts[j]
+	if ni.IsZero() {
 		return false
 	}
-	if ms.Vals[j].GetNext(context.Background()).IsZero() {
+	if nj.IsZero() {
 		return true
 	}
-	return ms.Vals[i].GetNext(context.Background()).Before(ms.Vals[j].GetNext(context.Background()))
+	return ni.Before(nj)
 }
 
 // Swap 交换两个下标的任务及其名称，实现 sort.Interface。
 func (ms *MapSorter) Swap(i, j int) {
 	ms.Vals[i], ms.Vals[j] = ms.Vals[j], ms.Vals[i]
 	ms.Keys[i], ms.Keys[j] = ms.Keys[j], ms.Keys[i]
+	ms.nexts[i], ms.nexts[j] = ms.nexts[j], ms.nexts[i]
 }
 
 // getField 解析逗号分隔的多个区间表达式，合并为该字段的位掩码。

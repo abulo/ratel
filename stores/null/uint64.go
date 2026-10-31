@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
-	"github.com/spf13/cast"
 )
 
 // Uint64 是可空的 uint64，实现 sql.Scanner、driver.Valuer 以及 JSON 与文本编解码接口。
@@ -93,7 +92,7 @@ func (u *Uint64) UnmarshalText(text []byte) error {
 // MarshalJSON 实现 json.Marshaler；空值序列化为 JSON null。
 func (u Uint64) MarshalJSON() ([]byte, error) {
 	if !u.Valid {
-		return json.Marshal(nil)
+		return NullBytes, nil // PERF-2-17 [P2] 复用包级共享 null 字节，省去 json 反射序列化与分配
 	}
 	return []byte(strconv.FormatUint(u.Uint64, 10)), nil
 }
@@ -169,5 +168,5 @@ func (t Uint64) Result() string {
 	if !t.Valid {
 		return "NULL"
 	}
-	return cast.ToString(t.Uint64)
+	return strconv.FormatUint(t.Uint64, 10) // PERF-2-19 [P2] 已知无符号整数直接格式化，去掉 cast 反射分发
 }

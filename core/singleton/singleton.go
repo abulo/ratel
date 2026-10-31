@@ -1,16 +1,17 @@
 package singleton
 
 import (
+	"strconv"
 	"sync"
 
 	"github.com/abulo/ratel/v3/core/constant"
-	"github.com/spf13/cast"
 )
 
 var singleton sync.Map
 
+// PERF-4-16 [P2]：模块编号为整数，直接 strconv.Itoa 拼接，去掉 cast.ToString 的类型分支反射。
 func genkey(module constant.Module, key string) string {
-	return cast.ToString(int(module)) + key
+	return strconv.Itoa(int(module)) + key
 }
 
 // Load 读取指定模块与键下保存的单例；不存在时返回 nil 与 false。

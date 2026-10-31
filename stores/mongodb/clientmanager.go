@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/url"
+	"sync/atomic"
 	"time"
 
 	"github.com/abulo/ratel/v3/core/logger"
@@ -39,6 +40,9 @@ type (
 		Name string
 		// Uri 为原始连接 URI，作为连接缓存的去重标识。
 		Uri string
+		// verified 标记首次连通性 Ping 是否已成功完成；成功后复用连接池，
+		// 后续 NewModel/NewCollection 不再重复发起 Ping 网络往返（PERF-2-7 [P1]）。
+		verified atomic.Bool
 	}
 
 	// Option 是 mongo.ClientOptions 的配置选项函数，在 NewMongoDBClient 中依次装配。
@@ -167,11 +171,25 @@ func (m *MongoDB) Ping() error {
 	return m.Client.Ping(context.Background(), nil)
 }
 
+// ensureVerified 在首次获取集合句柄时做一次连通性 Ping；成功后置位 verified，
+// 后续调用跳过网络往返。连接池与驱动自身的心跳/重连机制负责运行期健康保障。
+// PERF-2-7 [P1] 保守兼容方案：首次 Ping 失败仍按原语义返回错误，仅跳过成功后的重复 Ping（预期收益需实测验证）。
+func (m *MongoDB) ensureVerified() error {
+	if m.verified.Load() {
+		return nil
+	}
+	if err := m.Ping(); err != nil {
+		return err
+	}
+	m.verified.Store(true)
+	return nil
+}
+
 // NewModel 校验连通性后为指定集合创建 Model，继承当前客户端的指标与追踪开关；
 // Ping 失败时返回错误。collection 为集合名称，调用方须保证非空。
 func (m *MongoDB) NewModel(collection string) (*Model, error) {
-	err := m.Ping()
-	if err != nil {
+	// PERF-2-7 [P1] 仅首次校验连通性，已验证后跳过重复 Ping 网络往返（预期收益需实测验证）。
+	if err := m.ensureVerified(); err != nil {
 		return nil, err
 	}
 	brk := resource.GetBreaker(m.Uri)
@@ -194,8 +212,8 @@ func (m *MongoDB) MustNewModel(collection string) *Model {
 
 // NewCollection 校验连通性后返回指定集合的 DecoratedCollection；Ping 失败时返回错误。
 func (m *MongoDB) NewCollection(collection string) (*DecoratedCollection, error) {
-	err := m.Ping()
-	if err != nil {
+	// PERF-2-7 [P1] 仅首次校验连通性，已验证后跳过重复 Ping 网络往返（预期收益需实测验证）。
+	if err := m.ensureVerified(); err != nil {
 		return nil, err
 	}
 	brk := resource.GetBreaker(m.Uri)
@@ -204,8 +222,8 @@ func (m *MongoDB) NewCollection(collection string) (*DecoratedCollection, error)
 
 // MustNewCollection 返回指定集合的 DecoratedCollection；Ping 或创建失败时记录日志并终止程序。
 func (m *MongoDB) MustNewCollection(collection string) *DecoratedCollection {
-	err := m.Ping()
-	if err != nil {
+	// PERF-2-7 [P1] 仅首次校验连通性，已验证后跳过重复 Ping 网络往返（预期收益需实测验证）。
+	if err := m.ensureVerified(); err != nil {
 		logger.Logger.Fatal(err)
 	}
 	brk := resource.GetBreaker(m.Uri)

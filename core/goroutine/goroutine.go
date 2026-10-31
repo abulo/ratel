@@ -35,20 +35,30 @@ func Parallel(fns ...func()) func() {
 // RestrictParallel 将多个函数包装为受并发数限制的并发执行函数，restrict 为同时运行的
 // goroutine 上限；函数等待全部执行结束后返回，单个函数的 panic 由内部恢复并记录日志。
 func RestrictParallel(restrict int, fns ...func()) func() {
-	var channel = make(chan struct{}, restrict)
 	return func() {
-		var wg sync.WaitGroup
-		for _, fn := range fns {
-			wg.Add(1)
-			go func(fn func()) {
-				defer wg.Done()
-				channel <- struct{}{}
-				try2(fn, nil)
-				<-channel
-			}(fn)
+		// PERF-4-9 [P2]：固定 restrict 个 worker 从任务通道取活，替代原先
+		// 每个任务先创建一个 goroutine、再阻塞排队抢信号量的做法，限制并发的同时
+		// 把在途 goroutine 数量也约束在 worker 规模内。
+		if restrict <= 0 {
+			restrict = 1
 		}
+		jobs := make(chan func(), len(fns))
+		var wg sync.WaitGroup
+		workers := min(restrict, len(fns))
+		wg.Add(workers)
+		for i := 0; i < workers; i++ {
+			go func() {
+				defer wg.Done()
+				for fn := range jobs {
+					try2(fn, nil)
+				}
+			}()
+		}
+		for _, fn := range fns {
+			jobs <- fn
+		}
+		close(jobs)
 		wg.Wait()
-		close(channel)
 	}
 }
 

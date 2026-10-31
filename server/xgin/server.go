@@ -21,6 +21,8 @@ type Server struct {
 	Server   *http.Server
 	config   *Config
 	listener net.Listener
+	// info 为构造期一次性缓存的注册信息，避免每次 Info() 重复重建 ServiceInfo。
+	info *server.ServiceInfo
 }
 
 func newServer(config *Config) *Server {
@@ -30,10 +32,21 @@ func newServer(config *Config) *Server {
 	}
 	config.Port = listener.Addr().(*net.TCPAddr).Port
 	gin.SetMode(config.Mode)
+	// PERF-6-10 [P2] 注册信息在绑定监听地址后构造一次并缓存，Info() 直接返回。
+	serviceAddr := listener.Addr().String()
+	if config.ServiceAddress != "" {
+		serviceAddr = config.ServiceAddress
+	}
+	info := server.ApplyOptions(
+		server.WithScheme("http"),
+		server.WithAddress(serviceAddr),
+		server.WithKind(constant.ServiceProvider),
+	)
 	return &Server{
 		Engine:   gin.New(),
 		config:   config,
 		listener: listener,
+		info:     &info,
 	}
 }
 
@@ -70,30 +83,16 @@ func (s *Server) GracefulStop(ctx context.Context) error {
 }
 
 // Info 返回服务注册信息，协议为 http；注册地址优先取配置中的 ServiceAddress，否则使用实际监听地址。
+//
+// PERF-6-10 [P2] 直接返回构造期缓存的注册信息，不再重复重建。
 func (s *Server) Info() *server.ServiceInfo {
-	serviceAddr := s.listener.Addr().String()
-	if s.config.ServiceAddress != "" {
-		serviceAddr = s.config.ServiceAddress
-	}
-	info := server.ApplyOptions(
-		server.WithScheme("http"),
-		server.WithAddress(serviceAddr),
-		server.WithKind(constant.ServiceProvider),
-	)
-	return &info
+	return s.info
 }
 
-// Health 通过尝试接受一条探测连接判断监听端口是否可用，连接可接受时返回 true。
+// Health 判断服务监听 listener 是否就绪；不抢占共享 listener 上的真实连接。
+//
+// PERF-6-7 [P1] 原实现直接 Accept 共享 listener 并关闭连接，会与 http.Server 的接受循环竞争、
+// 吞掉真实客户端请求；改为仅依据 listener 是否存在判断，保持签名与 bool 返回语义不变。
 func (s *Server) Health() bool {
-	if s.listener == nil {
-		return false
-	}
-
-	conn, err := s.listener.Accept()
-	if err != nil {
-		return false
-	}
-
-	_ = conn.Close()
-	return true
+	return s.listener != nil
 }

@@ -2,8 +2,6 @@ package base
 
 import (
 	"context"
-
-	"github.com/spf13/cast"
 )
 
 // DaoParam 承载生成 DAO 代码所需的表信息与字段列表，零值不可直接使用，须先填充 Table 与 TableColumn。
@@ -38,6 +36,10 @@ type Column struct {
 	DataTypeMap DataType `gorm:"-"`
 	// AlisaColumnName 为字段别名，主键字段固定为 id。
 	AlisaColumnName string `gorm:"-"`
+	// CamelName 为 ColumnName 的大驼峰形式，元数据加载阶段预计算一次，供各渲染 helper 复用（PERF-8-4 [P1]）。
+	CamelName string `gorm:"-"`
+	// LowerName 为 ColumnName 的小驼峰形式，元数据加载阶段预计算一次，供各渲染 helper 复用（PERF-8-4 [P1]）。
+	LowerName string `gorm:"-"`
 }
 
 // DataType 描述单个数据库类型在 Go、Proto、TypeScript、JSON 各场景下的类型表示。
@@ -123,6 +125,10 @@ var SqlResultConvert = map[string]string{
 	"int8": "bigint",
 	"int4": "int",
 }
+
+// sharedDataTypeMap 为全流程共享的只读类型映射表；类型集合在运行期间恒定，包级构造一次，
+// 避免每张表重复重建 33 项映射（PERF-8-8 [P2]，NewDataType 返回结果按原约定不可被调用方修改）。
+var sharedDataTypeMap = NewDataType()
 
 // NewDataType 返回数据库类型到各目标语言类型映射的完整对照表，调用方不应修改返回结果。
 func NewDataType() map[string]DataType {
@@ -226,16 +232,16 @@ func TableColumn(ctx context.Context, DbName, TableName string) ([]Column, error
 	handle.Scan(&res)
 	err = handle.Error
 	if err == nil {
-		for k, v := range res {
-			if val, ok := SqlResultConvert[v.DataType]; ok {
+		// PERF-8-9 [P2] 类型归一化、类型映射回填、位置序号与驼峰预计算合并为单趟循环；
+		// PERF-8-8 [P2] 复用包级只读映射表；PERF-8-4 [P1] 在此一次性预计算驼峰名称供渲染 helper 复用。
+		for k := range res {
+			if val, ok := SqlResultConvert[res[k].DataType]; ok {
 				res[k].DataType = val
 			}
-		}
-		dataType := NewDataType()
-		for key, item := range res {
-			res[key].DataTypeMap = dataType[item.DataType]
-			newKey := key + 1
-			res[key].PosiTion = cast.ToInt64(newKey)
+			res[k].DataTypeMap = sharedDataTypeMap[res[k].DataType]
+			res[k].PosiTion = int64(k + 1)
+			res[k].CamelName = CamelStr(res[k].ColumnName)
+			res[k].LowerName = Helper(res[k].ColumnName)
 		}
 	}
 	return res, err
@@ -280,10 +286,12 @@ func TablePrimary(ctx context.Context, DbName, TableName string) (Column, error)
 		if val, ok := SqlResultConvert[res.DataType]; ok {
 			res.DataType = val
 		}
-		dataType := NewDataType()
-		res.DataTypeMap = dataType[res.DataType]
+		// PERF-8-8 [P2] 复用包级只读映射表；PERF-8-4 [P1] 预计算驼峰名称。
+		res.DataTypeMap = sharedDataTypeMap[res.DataType]
 		res.PosiTion = 1
 		res.AlisaColumnName = "id"
+		res.CamelName = CamelStr(res.ColumnName)
+		res.LowerName = Helper(res.ColumnName)
 	}
 	return res, err
 }

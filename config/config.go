@@ -45,6 +45,9 @@ func (c *Config) LoadFile(filePath string) error {
 	return nil
 }
 
+// PERF-7-37 [P2] 支持的配置文件扩展名白名单包级静态定义，Walk 回调内 O(1) map 查找，替代每文件新建切片并调用反射型 InArray
+var configExtWhitelist = map[string]struct{}{"json": {}, "toml": {}, "yaml": {}}
+
 // LoadDir 递归遍历目录，将其中 json、toml、yaml 配置文件依次合并到当前配置中。
 //
 // 目录遍历失败或任一配置文件合并失败时返回错误；非上述扩展名的文件会被跳过。
@@ -53,15 +56,13 @@ func (c *Config) LoadDir(dirPath string) error {
 		if err != nil {
 			return err
 		}
-		ext := make([]string, 0)
-		ext = append(ext, "json", "toml", "yaml")
 
 		if !info.IsDir() {
 			fileExt := filepath.Ext(path)
 			if fileExt == "" {
 				return nil
 			}
-			if len(ext) > 0 && !util.InArray(strings.TrimPrefix(fileExt, "."), ext) {
+			if _, ok := configExtWhitelist[strings.TrimPrefix(fileExt, ".")]; !ok {
 				return nil
 			}
 			c.SetConfigType(strings.TrimPrefix(fileExt, "."))

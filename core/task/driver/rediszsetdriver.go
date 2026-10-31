@@ -52,18 +52,17 @@ func (rd *RedisZSetDriver) NodeID() string {
 
 // GetNodes 实现 DriverV2：仅返回分数不早于当前时间减去超时时长的在线节点。
 func (rd *RedisZSetDriver) GetNodes(ctx context.Context) (nodes []string, err error) {
-	rd.Lock()
-	defer rd.Unlock()
+	// PERF-3-10 [P2]：GetNodes 不读写 started 等受锁保护的状态字段，Redis 网络查询不再持有互斥锁，
+	// 避免网络抖动拉长临界区、与 Start/Stop 相互阻塞。
 	sliceCmd := rd.c.ZRangeByScore(ctx, GetKeyPre(rd.serviceName), &redis.ZRangeBy{
 		Min: fmt.Sprintf("%d", TimePre(time.Now(), rd.timeout)),
 		Max: "+inf",
 	})
 	if err = sliceCmd.Err(); err != nil {
 		return nil, err
-	} else {
-		nodes = make([]string, len(sliceCmd.Val()))
-		copy(nodes, sliceCmd.Val())
 	}
+	nodes = make([]string, len(sliceCmd.Val()))
+	copy(nodes, sliceCmd.Val())
 	return
 }
 

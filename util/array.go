@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"math/rand"
 	"reflect"
 	"regexp"
-	"time"
+	"strings"
 	"unicode"
 
 	"github.com/spf13/cast"
@@ -119,9 +118,9 @@ func ArraySlice(s []any, offset, length uint) []any {
 
 // ArrayRand 返回 elements 随机打乱顺序后的新切片，不修改原切片。
 func ArrayRand(elements []any) []any {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	// PERF-7-14 [P2] 复用进程级共享随机源，不再每次新建 rand.Rand 与随机源（预期收益需实测验证）
 	n := make([]any, len(elements))
-	for i, v := range r.Perm(len(elements)) {
+	for i, v := range sharedPerm(len(elements)) {
 		n[i] = elements[v]
 	}
 	return n
@@ -221,6 +220,65 @@ func Implode(glue string, pieces []string) string {
 // InArray 判断 needle 是否存在于切片、数组或 map 中，元素比较使用 DeepEqual；
 // haystack 类型不支持时 panic。
 func InArray(needle any, haystack any) bool {
+	// PERF-7-9 [P1] 常见标量切片/map 走类型断言直比快路径，避免反射 ValueOf、Interface 装箱与 DeepEqual；
+	// 类型不匹配、混合类型、接口/结构体等情况一律落到下方反射 DeepEqual 兜底，返回语义保持一致
+	switch h := haystack.(type) {
+	case []string:
+		if n, ok := needle.(string); ok {
+			for _, v := range h {
+				if v == n {
+					return true
+				}
+			}
+			return false
+		}
+	case []int:
+		if n, ok := needle.(int); ok {
+			for _, v := range h {
+				if v == n {
+					return true
+				}
+			}
+			return false
+		}
+	case []int64:
+		if n, ok := needle.(int64); ok {
+			for _, v := range h {
+				if v == n {
+					return true
+				}
+			}
+			return false
+		}
+	case []float64:
+		if n, ok := needle.(float64); ok {
+			for _, v := range h {
+				if v == n {
+					return true
+				}
+			}
+			return false
+		}
+	case []bool:
+		if n, ok := needle.(bool); ok {
+			for _, v := range h {
+				if v == n {
+					return true
+				}
+			}
+			return false
+		}
+	case map[string]string:
+		if n, ok := needle.(string); ok {
+			for _, v := range h {
+				if v == n {
+					return true
+				}
+			}
+			return false
+		}
+	}
+
 	val := reflect.ValueOf(haystack)
 	switch val.Kind() {
 	case reflect.Slice, reflect.Array:
@@ -244,9 +302,9 @@ func InArray(needle any, haystack any) bool {
 
 // ArrayRandMap 返回 map 切片随机打乱顺序后的新切片，不修改原切片。
 func ArrayRandMap(elements []map[string]string) []map[string]string {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	// PERF-7-14 [P2] 复用进程级共享随机源，不再每次新建 rand.Rand 与随机源（预期收益需实测验证）
 	n := make([]map[string]string, len(elements))
-	for i, v := range r.Perm(len(elements)) {
+	for i, v := range sharedPerm(len(elements)) {
 		n[i] = elements[v]
 	}
 	return n
@@ -255,6 +313,28 @@ func ArrayRandMap(elements []map[string]string) []map[string]string {
 // InMultiArray 判断 needle 中任一值是否出现在 haystack 的切片、数组或 map 中；
 // haystack 类型不支持时 panic。
 func InMultiArray(haystack any, needle ...any) bool {
+	// PERF-7-12 [P2] 字符串切片 + 字符串 needle 先把 needle 建成集合 O(n)，再单次线性查找 O(m)，替代原 O(n·m) 反射嵌套；其余类型走原反射兜底
+	if h, ok := haystack.([]string); ok {
+		needleSet := make(map[string]struct{}, len(needle))
+		allString := true
+		for _, n := range needle {
+			if s, ok := n.(string); ok {
+				needleSet[s] = struct{}{}
+			} else {
+				allString = false
+				break
+			}
+		}
+		if allString {
+			for _, v := range h {
+				if _, hit := needleSet[v]; hit {
+					return true
+				}
+			}
+			return false
+		}
+	}
+
 	val := reflect.ValueOf(haystack)
 	vals := reflect.ValueOf(needle)
 	switch val.Kind() {
@@ -296,52 +376,59 @@ func MultiArray(haystack any) bool {
 
 // InterfaceToString 将 any 切片逐个格式化为字符串并返回字符串切片。
 func InterfaceToString(data []any) (s []string) {
+	// PERF-7-13 [P2] 按 len(data) 预分配容量，消除追加过程中的多次切片扩容
+	s = make([]string, 0, len(data))
 	for _, v := range data {
 		s = append(s, fmt.Sprintf("%v", v))
 	}
 	return s
 }
 
+// PERF-7-11 [P1] 重复斜杠正则包级预编译一次，避免 SplitString 每次调用 MustCompile 现场编译
+var splitMultiSlashRe = regexp.MustCompile(`\/{2,}`)
+
 // SplitString 将 p 中的标点与符号替换为分隔符 split。
 //
 // space 为 false 时同时去除文字中的空格；处理后对结果去重并以 split 重新拼接。
 func SplitString(p, split string, space bool) string {
-	var res string
+	// PERF-7-11 [P1] strings.Builder 线性追加替代循环内 res += string(c) 的 O(n²) 拷贝
+	var res strings.Builder
+	res.Grow(len(p))
 	for _, c := range p {
 		if unicode.IsPunct(c) || unicode.IsSymbol(c) {
-			res += string(split)
+			res.WriteString(split)
 		} else {
 			if !space {
 				if unicode.IsSpace(c) {
 					continue
 				} else {
-					res += string(c)
+					res.WriteRune(c)
 				}
 			} else {
-				res += string(c)
+				res.WriteRune(c)
 			}
 		}
 	}
-	reg := regexp.MustCompile(`\/{2,}`)
-	res = reg.ReplaceAllString(res, split)
-	args := Explode(split, res)
-	newAry := make(map[string]string, 0)
-	newArys := make(map[any]any, 0)
+	// PERF-7-11 [P1] 单层 map[string]struct{} 去重 + 切片保序；StrTrim 结果缓存复用，避免同一元素重复修剪
+	args := Explode(split, splitMultiSlashRe.ReplaceAllString(res.String(), split))
+	seen := make(map[string]struct{}, len(args))
+	data := make([]string, 0, len(args))
 	for _, v := range args {
-		if len(StrTrim(v)) > 0 {
-			newAry[StrTrim(v)] = StrTrim(v)
+		t := StrTrim(v)
+		if len(t) > 0 {
+			if _, ok := seen[t]; !ok {
+				seen[t] = struct{}{}
+				data = append(data, t)
+			}
 		}
 	}
-	for _, v := range newAry {
-		newArys[v] = v
-	}
-	data := InterfaceToString(ArrayValues(newArys))
 	return Implode(split, data)
 }
 
 // ArrayPluck 从 map 切片中提取每个元素 value 字段的值组成字符串切片。
 func ArrayPluck(data []map[string]string, value string) []string {
-	res := make([]string, 0)
+	// PERF-7-13 [P2] 按 len(data) 预分配容量，消除追加扩容
+	res := make([]string, 0, len(data))
 	for _, v := range data {
 		res = append(res, v[value])
 	}
@@ -350,16 +437,12 @@ func ArrayPluck(data []map[string]string, value string) []string {
 
 // ArrayRemoveRepeatedElement 去除字符串切片中的重复元素，保留首次出现的顺序。
 func ArrayRemoveRepeatedElement(arr []string) (newArr []string) {
-	newArr = make([]string, 0)
+	// PERF-7-10 [P1] 单趟 map 标记去重，替代原 O(n²) 双重循环；map + 顺序切片保留首次出现顺序
+	seen := make(map[string]struct{}, len(arr))
+	newArr = make([]string, 0, len(arr))
 	for i := range arr {
-		repeat := false
-		for j := i + 1; j < len(arr); j++ {
-			if arr[i] == arr[j] {
-				repeat = true
-				break
-			}
-		}
-		if !repeat {
+		if _, ok := seen[arr[i]]; !ok {
+			seen[arr[i]] = struct{}{}
 			newArr = append(newArr, arr[i])
 		}
 	}
@@ -401,7 +484,8 @@ func AryMapStringToAryMapInterface(d []map[string]string) []map[string]any {
 
 // MapStringToMapInterface 将 map[string]string 的值转换为 any 类型。
 func MapStringToMapInterface(d map[string]string) map[string]any {
-	data := make(map[string]any, 0)
+	// PERF-7-13 [P2] 按 len(d) 预分配 map 容量，避免运行时多次哈希表扩容
+	data := make(map[string]any, len(d))
 
 	for k, v := range d {
 		data[k] = any(v)
@@ -421,7 +505,8 @@ func AryMapInterfaceToAryMapString(d []map[string]any) []map[string]string {
 
 // MapInterfaceToMapString 将 map[string]any 的值转换为字符串并返回新 map。
 func MapInterfaceToMapString(d map[string]any) map[string]string {
-	data := make(map[string]string, 0)
+	// PERF-7-13 [P2] 按 len(d) 预分配 map 容量，避免运行时多次哈希表扩容
+	data := make(map[string]string, len(d))
 
 	for k, v := range d {
 		data[k] = cast.ToString(v)
@@ -471,16 +556,12 @@ func InterfaceToAryMapStringString(in any) []map[string]string {
 
 // ArrayStringUniq 去除字符串切片中的重复元素，保留首次出现的顺序。
 func ArrayStringUniq(arr []string) (newArr []string) {
-	newArr = make([]string, 0)
+	// PERF-7-10 [P1] 单趟 map 标记去重，替代原 O(n²) 双重循环；map + 顺序切片保留首次出现顺序
+	seen := make(map[string]struct{}, len(arr))
+	newArr = make([]string, 0, len(arr))
 	for i := range arr {
-		repeat := false
-		for j := i + 1; j < len(arr); j++ {
-			if arr[i] == arr[j] {
-				repeat = true
-				break
-			}
-		}
-		if !repeat {
+		if _, ok := seen[arr[i]]; !ok {
+			seen[arr[i]] = struct{}{}
 			newArr = append(newArr, arr[i])
 		}
 	}

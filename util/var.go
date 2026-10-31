@@ -13,6 +13,42 @@ func Empty(val any) bool {
 	if val == nil {
 		return true
 	}
+	// PERF-7-29 [P2] 标量与常见容器先走类型断言直比快路径，避免反射 ValueOf；结构体、指针、接口及其他具体类型仍落到下方反射兜底
+	switch v := val.(type) {
+	case string:
+		return v == ""
+	case []any:
+		return len(v) == 0
+	case map[any]any:
+		return len(v) == 0
+	case bool:
+		return !v
+	case int:
+		return v == 0
+	case int8:
+		return v == 0
+	case int16:
+		return v == 0
+	case int32:
+		return v == 0
+	case int64:
+		return v == 0
+	case uint:
+		return v == 0
+	case uint8:
+		return v == 0
+	case uint16:
+		return v == 0
+	case uint32:
+		return v == 0
+	case uint64:
+		return v == 0
+	case float32:
+		return v == 0
+	case float64:
+		return v == 0
+	}
+
 	v := reflect.ValueOf(val)
 	switch v.Kind() {
 	case reflect.String, reflect.Array:

@@ -8,7 +8,6 @@ import (
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
 	"github.com/pkg/errors"
-	"github.com/spf13/cast"
 )
 
 // JSON 是保存原始 JSON 字节的可空 []byte，适用于数据库中可为 null 的 JSON 列。
@@ -61,18 +60,17 @@ func (j JSON) IsSet() bool {
 }
 
 // Unmarshal 将内部保存的 JSON 解码到 dest 指向的对象；dest 不能为 nil，
-// 返回编码或解码过程中产生的错误。
+// 返回解码过程中产生的错误。
 func (j JSON) Unmarshal(dest any) error {
 	if dest == nil {
 		return errors.New("destination is nil, not a valid pointer to an object")
 	}
-
-	res, err := json.Marshal(j)
-	if err != nil {
-		return err
+	// PERF-2-18 [P2] 直接解码内部原始字节，去掉原先对接收者再 marshal 一轮的冗余往返（预期收益需实测验证）；
+	// 空值/空内容保持原语义：解码为 no-op，null 不解构目标对象。
+	if !j.Valid || len(j.JSON) == 0 {
+		return nil
 	}
-
-	return json.Unmarshal(res, dest)
+	return json.Unmarshal(j.JSON, dest)
 }
 
 // UnmarshalJSON 实现 json.Unmarshaler。
@@ -124,17 +122,21 @@ func (j *JSON) Marshal(obj any) error {
 	if err != nil {
 		return err
 	}
-
-	return json.Unmarshal(res, j)
+	// PERF-2-18 [P2] 编码结果直接写入内部字节，去掉原先再 unmarshal 一轮的冗余往返（预期收益需实测验证）；
+	// 保持原语义：结果为 JSON null 时 Valid=false，其余内容 Valid=true。
+	j.JSON = res
+	j.Valid = !bytes.Equal(res, NullBytes)
+	j.Set = true
+	return nil
 }
 
 // MarshalJSON 实现 json.Marshaler；空值或空字节序列化为 JSON null，有效值原样返回内部字节。
 func (j JSON) MarshalJSON() ([]byte, error) {
 	if !j.Valid {
-		return json.Marshal(nil)
+		return NullBytes, nil // PERF-2-17 [P2] 复用包级共享 null 字节，省去 json 反射序列化与分配
 	}
 	if len(j.JSON) == 0 || j.JSON == nil {
-		return json.Marshal(nil)
+		return NullBytes, nil // PERF-2-17 [P2] 复用包级共享 null 字节，省去 json 反射序列化与分配
 	}
 	return j.JSON, nil
 }
@@ -198,5 +200,6 @@ func (t JSON) Result() string {
 	if !t.Valid {
 		return "NULL"
 	}
-	return cast.ToString(t.JSON)
+	// PERF-2-19 [P2] 已知类型为 []byte，直接转换字符串，去掉 cast 反射分发。
+	return string(t.JSON)
 }

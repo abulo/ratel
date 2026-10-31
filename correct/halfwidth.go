@@ -3,6 +3,7 @@ package correct
 import (
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 var (
@@ -17,11 +18,11 @@ var (
 
 // halfwidth 将全角字母、数字与空格转换为半角，并把时间写法中的全角冒号替换为半角冒号。
 func halfwidth(text string) string {
-	runes := []rune{}
+	// PERF-9-15 [P2] 按 rune 数量预分配切片容量，避免零起步反复扩容拷贝；同一次 map 查找结果直接复用。
+	runes := make([]rune, 0, utf8.RuneCountInString(text))
 	for _, char := range text {
-		newChar := charWidthMap[char]
-		if newChar != 0 {
-			runes = append(runes, charWidthMap[char])
+		if newChar, ok := charWidthMap[char]; ok {
+			runes = append(runes, newChar)
 		} else {
 			runes = append(runes, char)
 		}

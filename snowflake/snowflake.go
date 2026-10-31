@@ -75,15 +75,19 @@ func (c *Config) getCurrentTimestamp() int64 {
 // 同一时间片内序列号耗尽时会自旋等待到下一个时间片；并发抢占更新 lastID 失败时
 // 通过 CAS 重试，保证同一 Config 实例不会生成重复 ID。
 func (c *Config) GenInt64ID() int64 {
+	// PERF-7-36 [P1] CAS 冲突先本地短自旋 3 次再进入睡眠退避；单次循环只读取一次系统时钟并向下传递给序列号耗尽分支复用（冲突率与睡眠影响需并发 benchmark 实测验证，预期收益需实测验证）
+	const maxLocalSpin = 3
+	conflict := 0
 	for {
 		localLastID := atomic.LoadInt64(&c.lastID)
 		seq := c.GetSeqFromID(localLastID)
 		lastIDTime := c.GetTimeFromID(localLastID)
-		now := c.getCurrentTimestamp()
+		rawNano := time.Now().UnixNano()
+		now := (rawNano - startEpochNano) >> 20 & c.timeMask
 		if now > lastIDTime {
 			seq = 0
 		} else if seq >= c.seqMask {
-			time.Sleep(time.Duration(0xFFFFF - (time.Now().UnixNano() & 0xFFFFF)))
+			time.Sleep(time.Duration(0xFFFFF - (rawNano & 0xFFFFF)))
 			continue
 		} else {
 			seq++
@@ -92,6 +96,11 @@ func (c *Config) GenInt64ID() int64 {
 		newID := now<<(c.machineBits+c.seqBits) + seq<<c.machineBits + c.machineID
 		if atomic.CompareAndSwapInt64(&c.lastID, localLastID, newID) {
 			return newID
+		}
+		conflict++
+		if conflict <= maxLocalSpin {
+			// 本地短自旋直接重试，避免前几次冲突就进入协程睡眠/调度
+			continue
 		}
 		time.Sleep(time.Duration(20))
 	}

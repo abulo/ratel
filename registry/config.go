@@ -2,11 +2,16 @@ package registry
 
 import (
 	"log"
+	"sync"
 
 	"github.com/abulo/ratel/v3/core/logger"
 )
 
-var registryBuilder = make(map[string]Builder)
+// PERF-7-35 [P2] registryBuilder 由裸 map 改为读写锁保护：注册走写锁、查找走读锁，避免后续运行期动态注册触发 map 并发读写 fatal；当前启动期顺序注册行为不变
+var (
+	registryBuilder   = make(map[string]Builder)
+	registryBuilderMu sync.RWMutex
+)
 
 // Config 是注册器配置集合，按键名保存各注册器的 ConfigLab 配置。
 type Config map[string]ConfigLab
@@ -14,11 +19,11 @@ type Config map[string]ConfigLab
 // ConfigLab 描述单个注册器的初始化配置。
 type ConfigLab struct {
 	// Kind 为底层注册器类型，例如 etcdv3、consul；为空时按 etcdv3 处理。
-	Kind          string `json:"kind" description:"底层注册器类型, eg: etcdv3, consul"`
+	Kind string `json:"kind" description:"底层注册器类型, eg: etcdv3, consul"`
 	// ConfigKey 为构造该注册器时使用的配置键。
-	ConfigKey     string `json:"configKey" description:"底册注册器的配置键"`
+	ConfigKey string `json:"configKey" description:"底册注册器的配置键"`
 	// DeplaySeconds 为延迟注册的秒数。
-	DeplaySeconds int    `json:"deplaySeconds" description:"延迟注册"`
+	DeplaySeconds int `json:"deplaySeconds" description:"延迟注册"`
 }
 
 // DefaultRegisterer 是包级默认注册器，初始为 Local 本地实现，
@@ -35,6 +40,8 @@ type BuildFunc func(string) (Registry, error)
 //
 // 同一类型重复注册会直接 panic，避免静默覆盖已有实现。
 func RegisterBuilder(kind string, build Builder) {
+	registryBuilderMu.Lock()
+	defer registryBuilderMu.Unlock()
 	if _, ok := registryBuilder[kind]; ok {
 		log.Panicf("duplicate register registry builder: %s", kind)
 	}
@@ -64,7 +71,9 @@ func (config Config) InitDefaultRegister() {
 		if itemKind == "" {
 			itemKind = "etcdv3"
 		}
+		registryBuilderMu.RLock()
 		build, ok := registryBuilder[itemKind]
+		registryBuilderMu.RUnlock()
 		if !ok {
 			logger.Logger.Printf("invalid registry kind: %s", itemKind)
 			continue

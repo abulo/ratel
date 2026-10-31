@@ -24,6 +24,31 @@ var CmdNew = &cobra.Command{
 	Run:   Run,
 }
 
+// PERF-8-2 [P1] 提交说明解析正则包级预编译一次，避免每个标签重复 MustCompile；
+// 正则表达式与原实现逐字一致，分组含义与匹配结果保持不变。
+var commitRe = regexp.MustCompile(`^(feat|fix|style|perf|docs|init|test|refactor|patch|file|publish|tag|config|git)([^:]*):(.+)([a-f0-9]{7,40})$`)
+
+// PERF-8-15 [P2] / PERF-8-16 [P2] 16 个固定分类键包级声明一次：既是分类桶集合，
+// 也是 Markdown 输出顺序切片，消除 classifyCommits 每次调用与每个标签循环内的重复字面量构建。
+var categoryKeys = []string{
+	"feat✨:引入新功能",
+	"fix🐛:修复 bug",
+	"style💄:更新UI样式文件",
+	"format🥚:格式化代码",
+	"docs📝:添加/更新文档",
+	"perf👌:提高性能/优化",
+	"test✅:增加测试代码",
+	"refactor🎨:改进代码结构/代码格式",
+	"patch🚑:添加重要补丁",
+	"file📦:添加新文件",
+	"publish🚀:发布新版本",
+	"tag📌:发布新标签",
+	"config🔧:修改配置文件",
+	"git🙈:添加或修改.gitignore文件",
+	"others:其他",
+	"init🎉:初次提交/初始化项目",
+}
+
 // getTags 按版本号倒序获取当前仓库的全部标签，执行 git 命令失败时返回错误。
 func getTags() ([]string, error) {
 	cmd := exec.Command("git", "tag", "--sort=-v:refname")
@@ -95,29 +120,14 @@ func getRepoURL() (string, error) {
 // classifyCommits 按约定式提交前缀将 commits 归类到固定分类；无法识别前缀的提交统一
 // 归入 others，每条提交附带指向 repoURL 对应提交页的 Markdown 链接。
 func classifyCommits(commits []string, repoURL string) map[string][]string {
-	classified := map[string][]string{
-		"feat✨:引入新功能":            {},
-		"fix🐛:修复 bug":            {},
-		"style💄:更新UI样式文件":        {},
-		"format🥚:格式化代码":          {},
-		"docs📝:添加/更新文档":          {},
-		"perf👌:提高性能/优化":          {},
-		"test✅:增加测试代码":           {},
-		"refactor🎨:改进代码结构/代码格式":  {},
-		"patch🚑:添加重要补丁":          {},
-		"file📦:添加新文件":            {},
-		"publish🚀:发布新版本":         {},
-		"tag📌:发布新标签":             {},
-		"config🔧:修改配置文件":         {},
-		"git🙈:添加或修改.gitignore文件": {},
-		"others:其他":              {},
-		"init🎉:初次提交/初始化项目":       {},
+	// PERF-8-15 [P2] 分类桶由包级键集合种子化，不再每次调用重建 16 项 map 字面量。
+	classified := make(map[string][]string, len(categoryKeys))
+	for _, key := range categoryKeys {
+		classified[key] = nil
 	}
 
-	re := regexp.MustCompile(`^(feat|fix|style|perf|docs|init|test|refactor|patch|file|publish|tag|config|git)([^:]*):(.+)([a-f0-9]{7,40})$`)
-
 	for _, commit := range commits {
-		match := re.FindStringSubmatch(commit)
+		match := commitRe.FindStringSubmatch(commit)
 		if len(match) > 4 {
 			commitType, emoji, message, hash := match[1], match[2], match[3], match[4]
 			formattedCommit := fmt.Sprintf("%s%s:%s ([%s](%s/commit/%s))", commitType, emoji, message, hash, repoURL, hash)
@@ -190,48 +200,55 @@ func Run(cmd *cobra.Command, args []string) {
 
 	for i := range tags {
 		tag1 := tags[i]
-		date, err := getTagDate(tag1)
-		if err != nil {
-			fmt.Println("获取日期:", color.RedString(err.Error()))
-			return
-		}
 		var tag2 string
 		if i+1 < len(tags) {
 			tag2 = tags[i+1]
 		}
+
+		// PERF-8-17 [P2] 同一标签的日期查询与区间提交查询互不依赖，并发发起以叠加并行度；
+		// 标签之间仍保持串行，避免同仓库大量并发 git 进程；错误判定顺序与原实现一致：
+		// 先日期错误（打印后终止），再提交错误（log.Fatal）。（预期收益需实测验证）
+		type dateResult struct {
+			date string
+			err  error
+		}
+		type commitResult struct {
+			commits []string
+			err     error
+		}
+		dateCh := make(chan dateResult, 1)
+		commitCh := make(chan commitResult, 1)
+		go func() {
+			d, e := getTagDate(tag1)
+			dateCh <- dateResult{date: d, err: e}
+		}()
+		go func() {
+			c, e := getCommits(tag1, tag2)
+			commitCh <- commitResult{commits: c, err: e}
+		}()
+		dateRes := <-dateCh
+		commitRes := <-commitCh
+		if dateRes.err != nil {
+			fmt.Println("获取日期:", color.RedString(dateRes.err.Error()))
+			return
+		}
+		date := dateRes.date
+		if commitRes.err != nil {
+			log.Fatal(commitRes.err)
+		}
+		commits := commitRes.commits
+
 		if tag2 == "" {
 			changelogBuilder.WriteString(fmt.Sprintf("## %s (%s)\n", tag1, date))
 		} else {
 			changelogBuilder.WriteString(fmt.Sprintf("## [%s](%s/compare/%s...%s) (%s)\n", tag1, repoURL, tag2, tag1, date))
-		}
-		commits, err := getCommits(tag1, tag2)
-		if err != nil {
-			log.Fatal(err)
-		}
-		categories := []string{
-			"feat✨:引入新功能",
-			"fix🐛:修复 bug",
-			"style💄:更新UI样式文件",
-			"format🥚:格式化代码",
-			"docs📝:添加/更新文档",
-			"perf👌:提高性能/优化",
-			"test✅:增加测试代码",
-			"refactor🎨:改进代码结构/代码格式",
-			"patch🚑:添加重要补丁",
-			"file📦:添加新文件",
-			"publish🚀:发布新版本",
-			"tag📌:发布新标签",
-			"config🔧:修改配置文件",
-			"git🙈:添加或修改.gitignore文件",
-			"others:其他",
-			"init🎉:初次提交/初始化项目",
 		}
 
 		if len(commits) == 0 {
 			changelogBuilder.WriteString("无更新.\n")
 		} else {
 			classifiedCommits := classifyCommits(commits, repoURL)
-			for _, category := range categories {
+			for _, category := range categoryKeys {
 				if commits, exists := classifiedCommits[category]; exists && len(commits) > 0 {
 					changelogBuilder.WriteString(fmt.Sprintf("### %s\n", category))
 					for _, commit := range commits {

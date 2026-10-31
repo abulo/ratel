@@ -1,6 +1,8 @@
 package metric
 
 import (
+	"sync"
+
 	"github.com/abulo/ratel/v3/core/constant"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -21,6 +23,10 @@ type GaugeVecOpts struct {
 
 type gaugeVec struct {
 	*prometheus.GaugeVec
+	// PERF-3-14 [P2]：按标签组合缓存已解析的 Gauge 子指标，热点上报命中缓存后不再重复执行向量内查找；
+	// 首次未命中仍走 WithLabelValues，标签数量不匹配时由 Prometheus 原样 panic，错误行为不变。
+	mu       sync.RWMutex
+	children map[string]prometheus.Gauge
 }
 
 // Build 按配置创建仪表盘向量并注册到 Prometheus 默认注册器；同名向量重复注册会触发 panic。
@@ -48,17 +54,36 @@ func NewGaugeVec(name string, labels []string) *gaugeVec {
 	}.Build()
 }
 
+// getChild 返回 labels 对应的 Gauge 子指标，未命中时经 WithLabelValues 解析并回填缓存。
+func (gv *gaugeVec) getChild(labels []string) prometheus.Gauge {
+	key := labelKey(labels)
+	gv.mu.RLock()
+	child, ok := gv.children[key]
+	gv.mu.RUnlock()
+	if ok {
+		return child
+	}
+	child = gv.WithLabelValues(labels...)
+	gv.mu.Lock()
+	if gv.children == nil {
+		gv.children = make(map[string]prometheus.Gauge)
+	}
+	gv.children[key] = child
+	gv.mu.Unlock()
+	return child
+}
+
 // Inc 将对应标签组合的仪表盘加一；标签值数量与顺序须与向量定义的 Labels 一致。
 func (gv *gaugeVec) Inc(labels ...string) {
-	gv.WithLabelValues(labels...).Inc()
+	gv.getChild(labels).Inc()
 }
 
 // Add 将对应标签组合的仪表盘增加 v，v 可为负值；标签值数量与顺序须与向量定义的 Labels 一致。
 func (gv *gaugeVec) Add(v float64, labels ...string) {
-	gv.WithLabelValues(labels...).Add(v)
+	gv.getChild(labels).Add(v)
 }
 
 // Set 将对应标签组合的仪表盘置为 v；标签值数量与顺序须与向量定义的 Labels 一致。
 func (gv *gaugeVec) Set(v float64, labels ...string) {
-	gv.WithLabelValues(labels...).Set(v)
+	gv.getChild(labels).Set(v)
 }

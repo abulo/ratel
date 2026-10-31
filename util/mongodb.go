@@ -1,7 +1,6 @@
 package util
 
 import (
-	"encoding/json"
 	"reflect"
 	"strings"
 
@@ -17,21 +16,14 @@ func Pipeline(str string) mongo.Pipeline {
 	var pipeline = []bson.D{}
 	str = strings.TrimSpace(str)
 	if strings.Index(str, "[") != 0 {
-		var doc bson.M
-		json.Unmarshal([]byte(str), &doc)
+		// PERF-7-22 [P2] 直接由扩展 JSON 解析为 bson.D，跳过 json→bson.M→bson.Marshal→bson.Unmarshal 的三重序列化往返（是否处于查询热路径需实测验证）
 		var v bson.D
-		b, _ := bson.Marshal(doc)
-		bson.Unmarshal(b, &v)
+		bson.UnmarshalExtJSON([]byte(str), false, &v)
 		pipeline = append(pipeline, v)
 	} else {
-		var docs []bson.M
-		json.Unmarshal([]byte(str), &docs)
-		for _, doc := range docs {
-			var v bson.D
-			b, _ := bson.Marshal(doc)
-			bson.Unmarshal(b, &v)
-			pipeline = append(pipeline, v)
-		}
+		var docs []bson.D
+		bson.UnmarshalExtJSON([]byte(str), false, &docs)
+		pipeline = append(pipeline, docs...)
 	}
 	return pipeline
 }
@@ -41,26 +33,24 @@ func Pipeline(str string) mongo.Pipeline {
 // 同键元素已存在且值为 bson.D 时，将新值按子文档追加合并，否则用新值覆盖；
 // 调用方须保证该场景下新旧值均为 bson.D，否则会触发类型断言 panic。
 func ConvertBson(items bson.D, item bson.E) bson.D {
-	key := make([]string, 0)
-	for _, v := range items {
-		key = append(key, v.Key)
+	// PERF-7-23 [P2] 入口一次遍历建立 键→下标 映射，单趟完成判重与定位，去掉先收集键切片再走反射型 InArray、随后二次全量循环定位的两次遍历
+	indexOf := make(map[string]int, len(items))
+	for i, v := range items {
+		indexOf[v.Key] = i
 	}
-	if !InArray(item.Key, key) {
+	if idx, ok := indexOf[item.Key]; !ok {
 		items = append(items, item)
 		return items
-	}
-	for i, newItem := range items {
-		if newItem.Key == item.Key {
-			tp := indirect(newItem.Value)
-			switch tp.(type) {
-			case bson.D:
-				tran := items[i].Value.(bson.D)
-				appendVal := item.Value.(bson.D)
-				tran = append(tran, appendVal...)
-				items[i].Value = tran
-			default:
-				items[i].Value = item.Value
-			}
+	} else {
+		tp := indirect(items[idx].Value)
+		switch tp.(type) {
+		case bson.D:
+			tran := items[idx].Value.(bson.D)
+			appendVal := item.Value.(bson.D)
+			tran = append(tran, appendVal...)
+			items[idx].Value = tran
+		default:
+			items[idx].Value = item.Value
 		}
 	}
 	return items

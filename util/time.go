@@ -135,12 +135,14 @@ func Timestamp() int64 {
 	return time.Now().In(cstZone).UnixNano() / int64(time.Millisecond)
 }
 
+// PERF-7-16 [P1] datePatterns 为静态映射表，Replacer 包级构建一次并发复用，避免 Date/StrToTime 每次调用现场 NewReplacer
+var dateReplacer = strings.NewReplacer(datePatterns...)
+
 // StrToTime 按 PHP 格式 format 解析 strtime，返回本地时区下的 Unix 时间戳（秒）。
 //
 // 格式字符支持 datePatterns 中定义的 PHP 日期字符；解析失败时返回 0 与错误。
 func StrToTime(format, strtime string) (int64, error) {
-	replacer := strings.NewReplacer(datePatterns...)
-	format = replacer.Replace(format)
+	format = dateReplacer.Replace(format)
 	cstZone := TimeZone()
 	t, err := time.ParseInLocation(format, strtime, cstZone)
 	if err != nil {
@@ -153,8 +155,7 @@ func StrToTime(format, strtime string) (int64, error) {
 func Date(format string, ts ...time.Time) string {
 
 	cstZone := TimeZone()
-	replacer := strings.NewReplacer(datePatterns...)
-	formats := replacer.Replace(format)
+	formats := dateReplacer.Replace(format)
 	t := time.Now()
 	if len(ts) > 0 {
 		t = ts[0]
@@ -398,8 +399,8 @@ func Hour(s string, e string) ([]string, []int64) {
 	resInt64 := make([]int64, 0)
 
 	for i := 0; i <= total; i++ {
-		t, _ := time.ParseDuration(cast.ToString(i) + "h")
-		tempTime := start.Add(t)
+		// PERF-7-17 [P2] 直接按 i 个小时构造 Duration，替代循环内 time.ParseDuration(cast.ToString(i)+"h") 的字符串拼接与重复解析
+		tempTime := start.Add(time.Duration(i) * time.Hour)
 		res = append(res, Date("Y-m-d H", tempTime))
 		compareTemp := cast.ToInt64(Date("YmdH", tempTime))
 		resInt64 = append(resInt64, compareTemp)
@@ -412,7 +413,9 @@ func ToWeekDay(t any) string {
 	weekday := [7]string{"周日", "周一", "周二", "周三", "周四", "周五", "周六"}
 	now := cast.ToTimeInDefaultLocation(t, TimeZone())
 	var y, m, c, year, month, day uint16
-	year, month, day = cast.ToUint16(Date("Y", now)), cast.ToUint16(Date("m", now)), cast.ToUint16(Date("d", now))
+	// PERF-7-18 [P2] 直接 now.Date() 取年月日，替代连续三次 Date("Y"/"m"/"d") 格式化重建 Replacer；蔡勒公式保持不变
+	yr, mo, dy := now.Date()
+	year, month, day = uint16(yr), uint16(mo), uint16(dy)
 	if month >= 3 {
 		m = month
 		y = year % 100

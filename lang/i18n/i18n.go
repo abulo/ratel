@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gookit/ini/v2"
 	"github.com/pkg/errors"
@@ -29,8 +30,15 @@ const (
 // 零值不可直接使用，须通过 New、NewEmpty、NewWithInit 或 Init 构造；
 // 语言文件须先经 Init 加载完成后再调用翻译方法。
 type I18n struct {
-	// data 保存各语言已加载的 INI 数据。
+	// data 保存各语言已加载的 INI 数据；Lang()/Export() 等对外接口仍返回原始实例。
 	data map[string]*ini.Ini
+
+	// snap 为 data 的扁平化只读快照（PERF-9-17 [P1]）：翻译查询直接读自有 map，
+	// 绕开第三方 ini 在只读查询上使用的排他写锁。
+	snap map[string]map[string]string
+
+	// mu 保护 data / languages / snap 的读写（PERF-9-20 [P2]）：翻译读路径读锁，动态加载写路径写锁。
+	mu sync.RWMutex
 
 	// langDir 为语言文件所在目录。
 	langDir string
@@ -89,6 +97,7 @@ func Init(langDir string, defLang string, languages map[string]string) *I18n {
 func New(langDir string, defLang string, languages map[string]string) *I18n {
 	return &I18n{
 		data:        make(map[string]*ini.Ini),
+		snap:        make(map[string]map[string]string),
 		langDir:     langDir,
 		languages:   languages,
 		DefaultLang: defLang,
@@ -99,6 +108,7 @@ func New(langDir string, defLang string, languages map[string]string) *I18n {
 func NewEmpty() *I18n {
 	return &I18n{
 		data:      make(map[string]*ini.Ini),
+		snap:      make(map[string]map[string]string),
 		languages: make(map[string]string),
 	}
 }
@@ -129,23 +139,21 @@ func (l *I18n) T(lang, key string, args ...any) string {
 //
 // 语言未注册或当前语言缺失键时，回退到 FallbackLang 查找；备用语言仍取不到时
 // 原样返回 key。键路径可使用节名前缀，例如 site.name 对应 INI 的 [site] 节。
+//
+// PERF-9-17 [P1]：查询直接走自有扁平化快照，不经第三方 ini 的排他写锁；
+// PERF-9-19 [P2]：以快照存在性合并语言注册与键查找两次 map 查询。
 func (l *I18n) Tr(lang, key string, args ...any) string {
-	if !l.HasLang(lang) {
-		msg := l.transFromFallback(key)
-		if msg == "" {
-			return key
-		}
-
-		if len(args) > 0 {
-			msg = l.renderMessage(msg, args...)
-		}
-		return msg
+	l.mu.RLock()
+	snap, registered := l.snap[lang]
+	var msg string
+	ok := false
+	if registered {
+		msg, ok = lookupSnapshot(snap, key)
 	}
-
-	msg, ok := l.data[lang].GetValue(key)
 	if !ok {
-		msg = l.transFromFallback(key)
+		msg = l.lookupFallbackLocked(key)
 	}
+	l.mu.RUnlock()
 
 	if msg == "" {
 		return key
@@ -158,23 +166,57 @@ func (l *I18n) Tr(lang, key string, args ...any) string {
 }
 
 // HasKey 判断已注册的 lang 语言下是否存在 key。
+//
+// PERF-9-19 [P2]：直接以快照非空判定语言注册，合并 languages 与 data 两次 map 查找。
 func (l *I18n) HasKey(lang, key string) (ok bool) {
-	if !l.HasLang(lang) {
-		return
-	}
+	l.mu.RLock()
+	defer l.mu.RUnlock()
 
-	_, ok = l.data[lang].GetValue(key)
+	snap, registered := l.snap[lang]
+	if !registered {
+		return false
+	}
+	_, ok = lookupSnapshot(snap, key)
 	return
 }
 
 // transFromFallback 从备用语言中查找 key；备用语言未注册时返回空串。
 func (l *I18n) transFromFallback(key string) string {
-	fl := l.FallbackLang
-	if !l.HasLang(fl) {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return l.lookupFallbackLocked(key)
+}
+
+// lookupFallbackLocked 在已持锁状态下从备用语言快照查找 key。
+func (l *I18n) lookupFallbackLocked(key string) string {
+	fsnap, registered := l.snap[l.FallbackLang]
+	if !registered {
 		return ""
 	}
+	msg, ok := lookupSnapshot(fsnap, key)
+	if !ok {
+		return ""
+	}
+	return msg
+}
 
-	return l.data[fl].String(key)
+// lookupSnapshot 复刻第三方 ini.GetValue 的 formatKey 与 splitSectionAndKey 查找语义，
+// 在自有扁平化快照上查询；节内键以 "节.键" 为复合键，默认节键保持裸键名。
+func lookupSnapshot(snap map[string]string, key string) (string, bool) {
+	key = strings.Trim(strings.TrimSpace(key), ini.SepSection)
+	if key == "" {
+		return "", false
+	}
+
+	if strings.Contains(key, ini.SepSection) {
+		ss := strings.SplitN(key, ini.SepSection, 2)
+		section, k := strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
+		v, ok := snap[section+ini.SepSection+k]
+		return v, ok
+	}
+
+	v, ok := snap[key]
+	return v, ok
 }
 
 // renderMessage 按 TransMode 用 args 填充消息 msg；ReplaceMode 支持 []string 替换对、
@@ -185,29 +227,77 @@ func (l *I18n) renderMessage(msg string, args ...any) string {
 	}
 
 	if ss, ok := args[0].([]string); ok {
+		// PERF-9-18 [P1]（部分实施）：[]string 为通用原始替换对，保留 NewReplacer 维持
+		// 其前缀/最长匹配语义；map 与交替参数分支改为单遍占位符扫描，不再每次编译替换 trie。
 		return strings.NewReplacer(ss...).Replace(msg)
 	}
 
-	var ss []string
+	pairs := make(map[string]string)
 
 	if mp, ok := args[0].(map[string]any); ok {
 		for k, v := range mp {
-			ss = append(ss, "{"+k+"}")
-			ss = append(ss, toString(v))
+			pairs["{"+k+"}"] = toString(v)
 		}
-	} else {
-		// 交替传入 键、值、键、值……，偶数下标补充为 {键} 形式。
+	} else if len(args)%2 == 1 {
+		// PERF-9-18 [P1]：奇数个交替参数沿用 NewReplacer，保留原有的参数计数校验行为。
+		var ss []string
 		for i, val := range args {
 			str := toString(val)
 			if i%2 == 0 {
 				str = "{" + str + "}"
 			}
-
 			ss = append(ss, str)
+		}
+		return strings.NewReplacer(ss...).Replace(msg)
+	} else {
+		var pending string
+		for i, val := range args {
+			str := toString(val)
+			if i%2 == 0 {
+				pending = "{" + str + "}"
+			} else {
+				pairs[pending] = str
+			}
 		}
 	}
 
-	return strings.NewReplacer(ss...).Replace(msg)
+	return replacePlaceholders(msg, pairs)
+}
+
+// replacePlaceholders 单遍扫描 msg 中的 {占位符} 并按 pairs 替换；未匹配到的花括号原样保留。
+//
+// PERF-9-18 [P1]：替代 strings.NewReplacer 的每次 trie 编译；占位符由花括号定界，
+// 不存在键前缀重叠问题，替换结果与 NewReplacer 在 {key} 形式占位符上一致。
+func replacePlaceholders(msg string, pairs map[string]string) string {
+	var b strings.Builder
+	b.Grow(len(msg))
+
+	for i := 0; i < len(msg); {
+		if msg[i] != '{' {
+			b.WriteByte(msg[i])
+			i++
+			continue
+		}
+
+		rest := msg[i+1:]
+		closeIdx := strings.IndexByte(rest, '}')
+		if closeIdx < 0 {
+			b.WriteByte('{')
+			i++
+			continue
+		}
+
+		placeholder := rest[:closeIdx+1]
+		if val, ok := pairs["{"+placeholder[:closeIdx]+"}"]; ok {
+			b.WriteString(val)
+			i += closeIdx + 2
+		} else {
+			b.WriteByte('{')
+			i++
+		}
+	}
+
+	return b.String()
 }
 
 // toString 将参数转换为字符串；不支持的类型返回占位标记 "CANNOT-TO-STRING"。
@@ -263,6 +353,9 @@ func (l *I18n) Init() *I18n {
 
 // loadSingleFiles 在 FileMode 模式下逐个加载各语言对应的单个 ini 文件。
 func (l *I18n) loadSingleFiles() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	pathSep := string(os.PathSeparator)
 
 	for lang := range l.languages {
@@ -273,11 +366,15 @@ func (l *I18n) loadSingleFiles() {
 		}
 
 		l.data[lang] = lData
+		l.refreshSnapshotLocked(lang)
 	}
 }
 
 // loadDirFiles 在 DirMode 模式下遍历各语言目录，加载其中全部 ini 文件。
 func (l *I18n) loadDirFiles() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	pathSep := string(os.PathSeparator)
 
 	for lang := range l.languages {
@@ -307,7 +404,34 @@ func (l *I18n) loadDirFiles() {
 				panic("fail to load language file: " + lang + ", error " + err.Error())
 			}
 		}
+		l.refreshSnapshotLocked(lang)
 	}
+}
+
+// refreshSnapshotLocked 基于原始 ini 实例重建指定语言的扁平化快照；调用方须已持写锁。
+func (l *I18n) refreshSnapshotLocked(lang string) {
+	ld := l.data[lang]
+	if ld == nil {
+		l.snap[lang] = nil
+		return
+	}
+	l.snap[lang] = snapshotLang(ld)
+}
+
+// snapshotLang 把一个 ini 实例的全部节与键扁平化为 "节.键" → 值 的只读 map。
+func snapshotLang(ld *ini.Ini) map[string]string {
+	defSec := ld.DefSection()
+	snap := make(map[string]string)
+	for secName, sec := range ld.Data() {
+		for k, v := range sec {
+			if secName == defSec {
+				snap[k] = v
+			} else {
+				snap[secName+ini.SepSection+k] = v
+			}
+		}
+	}
+	return snap
 }
 
 // Add 注册新语言，是 NewLang 的别名。
@@ -317,21 +441,29 @@ func (l *I18n) Add(lang string, name string) {
 
 // NewLang 注册一个新语言及其显示名；语言已存在时直接忽略，不覆盖原有数据。
 func (l *I18n) NewLang(lang string, name string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	if _, ok := l.languages[lang]; ok {
 		return
 	}
 
 	l.data[lang] = ini.New()
 	l.languages[lang] = name
+	l.snap[lang] = map[string]string{}
 }
 
 // LoadFile 将 ini 文件内容追加到已注册的 lang 语言；语言未注册或文件加载失败时返回错误。
 func (l *I18n) LoadFile(lang string, file string) (err error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	if ld, ok := l.data[lang]; ok {
 		err = ld.LoadFiles(file)
 		if err != nil {
 			return
 		}
+		l.refreshSnapshotLocked(lang)
 	} else {
 		err = errors.New("language" + lang + " not exist, please create it before load data")
 	}
@@ -342,11 +474,15 @@ func (l *I18n) LoadFile(lang string, file string) (err error) {
 // LoadString 将 INI 格式字符串内容追加到已注册的 lang 语言；
 // 语言未注册或内容解析失败时返回错误。
 func (l *I18n) LoadString(lang string, data string) (err error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	if ld, ok := l.data[lang]; ok {
 		err = ld.LoadStrings(data)
 		if err != nil {
 			return
 		}
+		l.refreshSnapshotLocked(lang)
 	} else {
 		err = errors.New("language" + lang + " not exist, please create it before load data")
 	}
@@ -356,6 +492,9 @@ func (l *I18n) LoadString(lang string, data string) (err error) {
 
 // Lang 返回 lang 语言对应的 INI 实例；语言未注册时返回 nil。
 func (l *I18n) Lang(lang string) *ini.Ini {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
 	if _, ok := l.languages[lang]; ok {
 		return l.data[lang]
 	}
@@ -365,6 +504,9 @@ func (l *I18n) Lang(lang string) *ini.Ini {
 
 // Export 将 lang 语言的数据导出为 INI 格式字符串；语言未注册时返回空串，写出失败时 panic。
 func (l *I18n) Export(lang string) string {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
 	if _, ok := l.languages[lang]; !ok {
 		return ""
 	}
@@ -381,16 +523,23 @@ func (l *I18n) Export(lang string) string {
 
 // HasLang 判断管理器中是否已注册 lang 语言。
 func (l *I18n) HasLang(lang string) bool {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
 	_, ok := l.languages[lang]
 	return ok
 }
 
 // DelLang 移除指定语言及其翻译数据，返回是否确实移除了已存在的语言。
 func (l *I18n) DelLang(lang string) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	_, ok := l.languages[lang]
 	if ok {
 		delete(l.data, lang)
 		delete(l.languages, lang)
+		delete(l.snap, lang)
 	}
 
 	return ok
@@ -398,5 +547,8 @@ func (l *I18n) DelLang(lang string) bool {
 
 // Languages 返回已注册语言映射（语言名到显示名）；返回的是内部 map，调用方不应修改。
 func (l *I18n) Languages() map[string]string {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
 	return l.languages
 }

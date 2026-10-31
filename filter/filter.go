@@ -21,13 +21,16 @@ func (_this *ResultWriter) Len() int {
 }
 
 // skipStr 返回跳过集合的 rune 切片；传入自定义字符串时先排序，未传入时使用内置默认集合。
+//
+// PERF-9-13 [P2]：默认集合通过 sync.Once 预解码缓存，构造时直接引用共享切片，避免重复解码长常量。
 func skipStr(skip ...string) []rune {
 	if len(skip) > 0 {
 		runes := []rune(skip[0])
 		slices.Sort(runes)
 		return runes
 	}
-	return []rune(SortedSkipList())
+	runes, _ := defaultSkipSet()
+	return runes
 }
 
 // Strings 用词表 words 构建扫描器并完成失败指针构建。
@@ -69,6 +72,8 @@ func SetWriter(w *TrieWriter) Option {
 func SetSortedRunesSkip(s []rune) Option {
 	return func(options *options) {
 		skip := &Skip{list: s}
+		// PERF-9-7 [P1]：同步构建成员判定 map，与二分查找成员语义一致。
+		skip.set = buildSkipSet(s)
 		options.skip = skip
 	}
 }
@@ -94,7 +99,7 @@ func SetSkip(s string) Option {
 // NewSearch 按传入 Option 配置创建扫描器；未指定时使用内置默认跳过集合与空词库。
 func NewSearch(opts ...Option) *Search {
 	opt := &options{
-		skip:   &Skip{list: []rune(sortedSkipList)},
+		skip:   defaultSkip(),
 		writer: NewTrieWriter(),
 	}
 	for _, o := range opts {
@@ -102,4 +107,10 @@ func NewSearch(opts ...Option) *Search {
 	}
 	opt.writer.setSkip(opt.skip)
 	return &Search{opt.writer}
+}
+
+// defaultSkip 返回包级缓存的内置默认跳过集合（PERF-9-13 [P2]）。
+func defaultSkip() *Skip {
+	list, set := defaultSkipSet()
+	return &Skip{list: list, set: set}
 }

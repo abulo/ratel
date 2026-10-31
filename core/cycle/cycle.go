@@ -48,8 +48,8 @@ func (c *Cycle) Run(fn func() error) {
 func (c *Cycle) Done() <-chan struct{} {
 	if atomic.CompareAndSwapUint32(&c.waiting, 0, 1) {
 		go func(c *Cycle) {
-			c.mu.Lock()
-			defer c.mu.Unlock()
+			// PERF-4-12 [P2]：wg.Wait 不依赖 c.mu，等待期间不再持有互斥锁，
+			// 避免阻塞后续 Run / Close 的加锁路径。
 			c.wg.Wait()
 			close(c.done)
 		}(c)

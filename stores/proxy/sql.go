@@ -32,18 +32,26 @@ func (proxy *SQL) SetRead(db *gorm.DB) {
 
 // Write 从写库列表中随机返回一个写库实例；写库列表为空时会触发 panic，调用方须保证已装配。
 func (proxy *SQL) Write() *gorm.DB {
-	len := len(proxy.write)
-	write := util.Rand(0, len-1)
+	length := len(proxy.write)
+	// PERF-1-8 [P1] 单写库直接返回下标 0，跳过随机数选择；多写库仍随机负载均衡。
+	if length == 1 {
+		return proxy.write[0]
+	}
+	write := util.Rand(0, length-1)
 	return proxy.write[write]
 }
 
 // Read 从读库列表中随机返回一个读库实例；读库列表为空时回退到 Write 选取写库。
 func (proxy *SQL) Read() *gorm.DB {
-	len := len(proxy.read)
-	if len < 1 {
+	length := len(proxy.read)
+	if length < 1 {
 		return proxy.Write()
 	}
-	read := util.Rand(0, len-1)
+	// PERF-1-8 [P1] 单读库直接返回下标 0，跳过随机数选择；多读库仍随机负载均衡。
+	if length == 1 {
+		return proxy.read[0]
+	}
+	read := util.Rand(0, length-1)
 	return proxy.read[read]
 }
 

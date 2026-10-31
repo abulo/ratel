@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
-	"github.com/spf13/cast"
 )
 
 // Uint16 是可空的 uint16，实现 sql.Scanner、driver.Valuer 以及 JSON 与文本编解码接口。
@@ -101,7 +100,7 @@ func (u *Uint16) UnmarshalText(text []byte) error {
 // MarshalJSON 实现 json.Marshaler；空值序列化为 JSON null。
 func (u Uint16) MarshalJSON() ([]byte, error) {
 	if !u.Valid {
-		return json.Marshal(nil)
+		return NullBytes, nil // PERF-2-17 [P2] 复用包级共享 null 字节，省去 json 反射序列化与分配
 	}
 	return []byte(strconv.FormatUint(uint64(u.Uint16), 10)), nil
 }
@@ -165,5 +164,5 @@ func (t Uint16) Result() string {
 	if !t.Valid {
 		return "NULL"
 	}
-	return cast.ToString(t.Uint16)
+	return strconv.FormatUint(uint64(t.Uint16), 10) // PERF-2-19 [P2] 已知无符号整数直接格式化，去掉 cast 反射分发
 }

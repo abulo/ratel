@@ -18,6 +18,8 @@ type Server struct {
 	*http.Server
 	listener net.Listener
 	*Config
+	// info 为构造期一次性缓存的注册信息，避免每次 Info() 重复重建 ServiceInfo。
+	info *server.ServiceInfo
 }
 
 func newServer(config *Config) *Server {
@@ -26,6 +28,17 @@ func newServer(config *Config) *Server {
 		logger.Logger.Panic("start error:", err)
 	}
 
+	// PERF-6-22 [P2] 注册信息在绑定监听地址后构造一次并缓存，Info() 直接返回，避免重复重建。
+	serviceAddr := listener.Addr().String()
+	if config.ServiceAddress != "" {
+		serviceAddr = config.ServiceAddress
+	}
+	info := server.ApplyOptions(
+		server.WithScheme("http"),
+		server.WithAddress(serviceAddr),
+		server.WithKind(constant.ServiceMonitor),
+	)
+
 	return &Server{
 		Server: &http.Server{
 			Addr:    config.Address(),
@@ -33,6 +46,7 @@ func newServer(config *Config) *Server {
 		},
 		listener: listener,
 		Config:   config,
+		info:     &info,
 	}
 }
 
@@ -65,16 +79,8 @@ func (s *Server) Health() bool {
 
 // Info 返回监控服务的注册信息，服务类型为 ServiceMonitor；注册地址优先取配置中的
 // ServiceAddress，否则使用实际监听地址。
+//
+// PERF-6-22 [P2] 直接返回构造期缓存的注册信息，不再重复重建。
 func (s *Server) Info() *server.ServiceInfo {
-	serviceAddr := s.listener.Addr().String()
-	if s.Config.ServiceAddress != "" {
-		serviceAddr = s.Config.ServiceAddress
-	}
-
-	info := server.ApplyOptions(
-		server.WithScheme("http"),
-		server.WithAddress(serviceAddr),
-		server.WithKind(constant.ServiceMonitor),
-	)
-	return &info
+	return s.info
 }

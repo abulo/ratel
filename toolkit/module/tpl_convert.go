@@ -16,18 +16,9 @@ import (
 // GenerateConvert 使用 ConvertTemplate 渲染并写出 DAO 与 Proto 对象互转的 Go 文件到 fullConvertDir，
 // 文件已存在时先删除再生成，随后执行 go fmt 与 goimports 整理格式；模板渲染失败时打印错误并返回。
 func GenerateConvert(moduleParam base.ModuleParam, fullConvertDir, tableName string) {
-	tpl := template.Must(template.New("convert").Funcs(template.FuncMap{
-		"Convert":               base.Convert,
-		"SymbolChar":            base.SymbolChar,
-		"Char":                  base.Char,
-		"Helper":                base.Helper,
-		"CamelStr":              base.CamelStr,
-		"Add":                   base.Add,
-		"ModuleProtoConvertDao": base.ModuleProtoConvertDao,
-		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
-		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
-		"ApiToProto":            base.ApiToProto,
-	}).Parse(ConvertTemplate()))
+	// PERF-8-20 [P2] 公共模板函数复用 base 包级定义，避免每次调用重复构建同一 FuncMap 字面量。
+	funcs := base.CommonTemplateFuncs()
+	tpl := template.Must(template.New("convert").Funcs(funcs).Parse(ConvertTemplate()))
 	outConvertFile := path.Join(fullConvertDir, tableName+".go")
 	if util.FileExists(outConvertFile) {
 		util.Delete(outConvertFile)

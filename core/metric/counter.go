@@ -1,6 +1,8 @@
 package metric
 
 import (
+	"sync"
+
 	"github.com/abulo/ratel/v3/core/constant"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -46,14 +48,37 @@ func NewCounterVec(name string, labels []string) *counterVec {
 
 type counterVec struct {
 	*prometheus.CounterVec
+	// PERF-3-14 [P2]：按标签组合缓存已解析的 Counter 子指标，热点上报命中缓存后不再重复执行向量内查找；
+	// 首次未命中仍走 WithLabelValues，标签数量不匹配时由 Prometheus 原样 panic，错误行为不变。
+	mu       sync.RWMutex
+	children map[string]prometheus.Counter
+}
+
+// getChild 返回 labels 对应的 Counter 子指标，未命中时经 WithLabelValues 解析并回填缓存。
+func (counter *counterVec) getChild(labels []string) prometheus.Counter {
+	key := labelKey(labels)
+	counter.mu.RLock()
+	child, ok := counter.children[key]
+	counter.mu.RUnlock()
+	if ok {
+		return child
+	}
+	child = counter.WithLabelValues(labels...)
+	counter.mu.Lock()
+	if counter.children == nil {
+		counter.children = make(map[string]prometheus.Counter)
+	}
+	counter.children[key] = child
+	counter.mu.Unlock()
+	return child
 }
 
 // Inc 将对应标签组合的计数器加一；标签值数量与顺序须与向量定义的 Labels 一致。
 func (counter *counterVec) Inc(labels ...string) {
-	counter.WithLabelValues(labels...).Inc()
+	counter.getChild(labels).Inc()
 }
 
 // Add 将对应标签组合的计数器增加 v；计数器只允许单调递增，调用方不得传入负值。
 func (counter *counterVec) Add(v float64, labels ...string) {
-	counter.WithLabelValues(labels...).Add(v)
+	counter.getChild(labels).Add(v)
 }

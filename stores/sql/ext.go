@@ -2,8 +2,7 @@ package sql
 
 import (
 	"errors"
-
-	"github.com/spf13/cast"
+	"strconv"
 )
 
 // Pagination 承载分页参数，Offset 为偏移量，Limit 为每页条数；两者均为指针，
@@ -20,7 +19,8 @@ func (obj *Pagination) GetOffset() (int64, error) {
 	if obj.Offset == nil {
 		return 0, errors.New("offset is nil")
 	}
-	return cast.ToInt64(obj.Offset), nil
+	// PERF-2-6 [P2] 目标类型已知为 *int64，直接解引用，去掉 cast 反射分发。
+	return *obj.Offset, nil
 }
 
 // GetLimit 返回每页条数；Limit 为 nil 时返回错误，调用方须先完成参数绑定与校验。
@@ -28,7 +28,8 @@ func (obj *Pagination) GetLimit() (int64, error) {
 	if obj.Limit == nil {
 		return 0, errors.New("limit is nil")
 	}
-	return cast.ToInt64(obj.Limit), nil
+	// PERF-2-6 [P2] 目标类型已知为 *int64，直接解引用，去掉 cast 反射分发。
+	return *obj.Limit, nil
 }
 
 // Scope 承载起止范围参数，Start 与 End 为指针，未设置时对应取值方法返回 nil 错误；
@@ -45,7 +46,8 @@ func (obj *Scope) GetStartString() (string, error) {
 	if obj.Start == nil {
 		return "", errors.New("start is nil")
 	}
-	return cast.ToString(obj.Start), nil
+	// PERF-2-6 [P2] 目标类型已知为 *string，直接解引用，去掉 cast 反射分发。
+	return *obj.Start, nil
 }
 
 // GetEndString 以字符串形式返回结束值；End 为 nil 时返回错误。
@@ -53,7 +55,8 @@ func (obj *Scope) GetEndString() (string, error) {
 	if obj.End == nil {
 		return "", errors.New("end is nil")
 	}
-	return cast.ToString(obj.End), nil
+	// PERF-2-6 [P2] 目标类型已知为 *string，直接解引用，去掉 cast 反射分发。
+	return *obj.End, nil
 }
 
 // GetStartInt64 以 int64 形式返回起始值；Start 为 nil 时返回错误。
@@ -61,7 +64,12 @@ func (obj *Scope) GetStartInt64() (int64, error) {
 	if obj.Start == nil {
 		return 0, errors.New("start is nil")
 	}
-	return cast.ToInt64(obj.Start), nil
+	// PERF-2-6 [P2] 显式 strconv 解析替代 cast 反射；解析失败与原 cast 行为一致返回 0。
+	v, err := strconv.ParseInt(*obj.Start, 0, 64)
+	if err != nil {
+		return 0, nil
+	}
+	return v, nil
 }
 
 // GetEndInt64 以 int64 形式返回结束值；End 为 nil 时返回错误。
@@ -69,7 +77,12 @@ func (obj *Scope) GetEndInt64() (int64, error) {
 	if obj.End == nil {
 		return 0, errors.New("end is nil")
 	}
-	return cast.ToInt64(obj.End), nil
+	// PERF-2-6 [P2] 显式 strconv 解析替代 cast 反射；解析失败与原 cast 行为一致返回 0。
+	v, err := strconv.ParseInt(*obj.End, 0, 64)
+	if err != nil {
+		return 0, nil
+	}
+	return v, nil
 }
 
 // GetStartFloat64 以 float64 形式返回起始值；Start 为 nil 时返回错误。
@@ -77,7 +90,12 @@ func (obj *Scope) GetStartFloat64() (float64, error) {
 	if obj.Start == nil {
 		return 0, errors.New("start is nil")
 	}
-	return cast.ToFloat64(obj.Start), nil
+	// PERF-2-6 [P2] 显式 strconv 解析替代 cast 反射；解析失败与原 cast 行为一致返回 0。
+	v, err := strconv.ParseFloat(*obj.Start, 64)
+	if err != nil {
+		return 0, nil
+	}
+	return v, nil
 }
 
 // GetEndFloat64 以 float64 形式返回结束值；End 为 nil 时返回错误。
@@ -85,7 +103,12 @@ func (obj *Scope) GetEndFloat64() (float64, error) {
 	if obj.End == nil {
 		return 0, errors.New("end is nil")
 	}
-	return cast.ToFloat64(obj.End), nil
+	// PERF-2-6 [P2] 显式 strconv 解析替代 cast 反射；解析失败与原 cast 行为一致返回 0。
+	v, err := strconv.ParseFloat(*obj.End, 64)
+	if err != nil {
+		return 0, nil
+	}
+	return v, nil
 }
 
 // Sort 承载排序参数，Name 为排序字段，Desc 为是否降序；两者均为指针，
@@ -102,7 +125,8 @@ func (obj *Sort) GetName() (string, error) {
 	if obj.Name == nil {
 		return "", errors.New("name is nil")
 	}
-	return cast.ToString(obj.Name), nil
+	// PERF-2-6 [P2] 目标类型已知为 *string，直接解引用，去掉 cast 反射分发。
+	return *obj.Name, nil
 }
 
 // GetDesc 返回是否降序；Desc 为 nil 时返回错误。
@@ -110,5 +134,6 @@ func (obj *Sort) GetDesc() (bool, error) {
 	if obj.Desc == nil {
 		return false, errors.New("desc is nil")
 	}
-	return cast.ToBool(obj.Desc), nil
+	// PERF-2-6 [P2] 目标类型已知为 *bool，直接解引用，去掉 cast 反射分发。
+	return *obj.Desc, nil
 }

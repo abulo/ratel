@@ -166,15 +166,21 @@ func (client *Client) GetValues(ctx context.Context, keys ...string) (map[string
 		maxTxnOps     = 128
 	)
 
+	// PERF-5-17 [P2]：未传入任何键时直接返回空映射，避免向 etcd 提交零操作事务产生一次无谓往返。
+	if len(keys) == 0 {
+		return vars, nil
+	}
+
 	// 每批最多 128 个键；首批以最新修订读取，之后各批沿用首个响应的修订版本，保证跨批读取的
 	// 修订基线一致。
 	doTxn := func(ops []string) error {
 		txnOps := make([]clientv3.Op, 0, maxTxnOps)
 
 		for _, k := range ops {
+			// PERF-5-17 [P2]：结果仅收集进 map 消费、不依赖返回顺序，移除服务端 WithSort 排序，
+			// 省去 etcd 白做的排序工作；map 键顺序对外不可观测，行为保持不变。
 			txnOps = append(txnOps, clientv3.OpGet(k,
 				clientv3.WithPrefix(),
-				clientv3.WithSort(clientv3.SortByKey, clientv3.SortDescend),
 				clientv3.WithRev(firstRevision)))
 		}
 
@@ -200,17 +206,14 @@ func (client *Client) GetValues(ctx context.Context, keys ...string) (map[string
 		}
 		return nil
 	}
-	cnt := len(keys) / maxTxnOps
-	for i := 0; i <= cnt; i++ {
-		switch temp := (i == cnt); temp {
-		case false:
-			if err := doTxn(keys[i*maxTxnOps : (i+1)*maxTxnOps]); err != nil {
-				return vars, err
-			}
-		case true:
-			if err := doTxn(keys[i*maxTxnOps:]); err != nil {
-				return vars, err
-			}
+	// PERF-5-17 [P2]：标准按窗口分批，去掉原 `i <= cnt` 在空切片上多走一次的空批。
+	for start := 0; start < len(keys); start += maxTxnOps {
+		end := start + maxTxnOps
+		if end > len(keys) {
+			end = len(keys)
+		}
+		if err := doTxn(keys[start:end]); err != nil {
+			return vars, err
 		}
 	}
 	return vars, nil

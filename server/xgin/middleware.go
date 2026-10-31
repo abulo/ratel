@@ -38,25 +38,38 @@ func metricServerInterceptor() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		beg := time.Now()
 		c.Next()
-		metric.ServerHandleHistogram.Observe(time.Since(beg).Seconds(), metric.TypeHTTP, c.Request.Method+"."+c.Request.URL.Path, extractAID(c))
-		metric.ServerHandleCounter.Inc(metric.TypeHTTP, c.Request.Method+"."+c.Request.URL.Path, extractAID(c), http.StatusText(c.Writer.Status()))
+		// PERF-6-4 [P1] method/path/aid 与标签串每请求只构造一次；路由模板替代原始 Path 控制指标标签基数，
+		// 未匹配路由（FullPath 为空，如 404）回退原始 Path，保持原行为。
+		method := c.Request.Method
+		path := c.FullPath()
+		if path == "" {
+			path = c.Request.URL.Path
+		}
+		label := method + "." + path
+		aid := extractAID(c)
+		metric.ServerHandleHistogram.Observe(time.Since(beg).Seconds(), metric.TypeHTTP, label, aid)
+		metric.ServerHandleCounter.Inc(metric.TypeHTTP, label, aid, http.StatusText(c.Writer.Status()))
 	}
 }
 
 // traceServerInterceptor 返回服务端链路追踪中间件：创建服务端 Span、填充 HTTP 属性并将追踪上下文注入请求。
 func traceServerInterceptor() gin.HandlerFunc {
+	// PERF-6-5 [P1] tracer 与主机名在装配期获取一次并闭包复用，避免每请求重复查 tracer 注册表与调用 os.Hostname()；
+	// 恒定属性在工厂层构造一次，请求级属性在闭包内复用局部变量，避免重复取值与字符串分配。
+	// （hostname 系统调用的实际 CPU 占比需实测验证）
+	tracer := globalTrace.NewTracer(trace.SpanKindServer)
+	staticAttrs := []attribute.KeyValue{
+		semconv.RPCSystemKey.String("http"),
+		semconv.HostName(hostname.Hostname()),
+	}
 	return func(c *gin.Context) {
-		tracer := globalTrace.NewTracer(trace.SpanKindServer)
-		attrs := []attribute.KeyValue{
-			semconv.RPCSystemKey.String("http"),
-			semconv.HostName(hostname.Hostname()),
-		}
-
-		ctx, span := tracer.Start(c.Request.Context(), c.Request.URL.Path, propagation.HeaderCarrier(c.Request.Header), trace.WithAttributes(attrs...))
+		target := c.Request.URL.Path
+		method := c.Request.Method
+		ctx, span := tracer.Start(c.Request.Context(), target, propagation.HeaderCarrier(c.Request.Header), trace.WithAttributes(staticAttrs...))
 		span.SetAttributes(
 			semconv.HTTPURLKey.String(c.Request.URL.String()),
-			semconv.HTTPTargetKey.String(c.Request.URL.Path),
-			semconv.HTTPMethodKey.String(c.Request.Method),
+			semconv.HTTPTargetKey.String(target),
+			semconv.HTTPMethodKey.String(method),
 			semconv.HTTPUserAgentKey.String(c.Request.UserAgent()),
 			semconv.NetPeerNameKey.String(c.ClientIP()),
 		)
@@ -72,24 +85,34 @@ func traceServerInterceptor() gin.HandlerFunc {
 func recoverMiddleware(slowQueryThresholdInMilli int64) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var beg = time.Now()
-		fields := make(logrus.Fields)
+		var fields logrus.Fields
 		var brokenPipe bool
 		defer func() {
-			fields["cost"] = time.Since(beg).Seconds()
+			// PERF-6-6 [P1] 耗时只计算一次；fields 惰性初始化，成功且不写额外字段时不再分配空 map。
+			elapsed := time.Since(beg)
 			if slowQueryThresholdInMilli > 0 {
-				if cost := int64(time.Since(beg)) / 1e6; cost > slowQueryThresholdInMilli {
+				if cost := elapsed.Milliseconds(); cost > slowQueryThresholdInMilli {
+					if fields == nil {
+						fields = make(logrus.Fields)
+					}
 					fields["slow"] = cost
 				}
 			}
 			if rec := recover(); rec != nil {
 				if ne, ok := rec.(*net.OpError); ok {
 					if se, ok := ne.Err.(*os.SyscallError); ok {
-						if strings.Contains(strings.ToLower(se.Error()), "broken pipe") || strings.Contains(strings.ToLower(se.Error()), "connection reset by peer") {
+						// PERF-6-6 [P1] 错误文本只小写化一次，避免两次 ToLower 分配。
+						lowerErr := strings.ToLower(se.Error())
+						if strings.Contains(lowerErr, "broken pipe") || strings.Contains(lowerErr, "connection reset by peer") {
 							brokenPipe = true
 						}
 					}
 				}
-				var err = rec.(error)
+				err := rec.(error)
+				if fields == nil {
+					fields = make(logrus.Fields)
+				}
+				fields["cost"] = elapsed.Seconds()
 				fields["stack"] = stack(3)
 				fields["err"] = err.Error()
 				logger.Logger.WithFields(fields).Error("access")
@@ -101,13 +124,24 @@ func recoverMiddleware(slowQueryThresholdInMilli int64) gin.HandlerFunc {
 				c.AbortWithStatus(http.StatusInternalServerError)
 				return
 			}
+			privateErrs := c.Errors.ByType(gin.ErrorTypePrivate)
+			errStr := ""
+			if len(privateErrs) > 0 {
+				errStr = privateErrs.String()
+			}
+			// PERF-6-6 [P1] ClientIP 只解析一次；错误列表仅在存在私有错误时拼接。
+			ip := c.ClientIP()
+			if fields == nil {
+				fields = make(logrus.Fields)
+			}
+			fields["cost"] = elapsed.Seconds()
 			fields["method"] = c.Request.Method
 			fields["code"] = c.Writer.Status()
 			fields["size"] = c.Writer.Size()
 			fields["host"] = c.Request.Host
 			fields["path"] = c.Request.URL.Path
-			fields["ip"] = c.ClientIP()
-			fields["err"] = c.Errors.ByType(gin.ErrorTypePrivate).String()
+			fields["ip"] = ip
+			fields["err"] = errStr
 			logger.Logger.WithFields(fields).Info("access")
 		}()
 		c.Next()

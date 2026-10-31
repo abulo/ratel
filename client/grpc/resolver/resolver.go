@@ -3,6 +3,7 @@ package resolver
 import (
 	"context"
 	"strings"
+	"sync"
 
 	"github.com/abulo/ratel/v3/core/constant"
 	"github.com/abulo/ratel/v3/core/goroutine"
@@ -80,10 +81,15 @@ func (b baseBuilder) Scheme() string {
 
 type baseResolver struct {
 	stop chan struct{}
+	once sync.Once
 }
 
 // ResolveNow 为空实现：节点变更由后台监听通道主动推送，不支持按需触发重新解析。
 func (b *baseResolver) ResolveNow(options resolver.ResolveNowOptions) {}
 
 // Close 停止后台监听协程。
-func (b *baseResolver) Close() { b.stop <- struct{}{} }
+func (b *baseResolver) Close() {
+	// PERF-5-12 [P2]：以 close(stop) 替代向无缓冲通道发送信号，重复 Close 不再永久阻塞；
+	// sync.Once 保证关闭幂等，后台协程经 `case <-stop` 感知通道关闭后退出。
+	b.once.Do(func() { close(b.stop) })
+}

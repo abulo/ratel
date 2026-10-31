@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 
 	"github.com/abulo/ratel/v3/stores/null/convert"
-	"github.com/spf13/cast"
 )
 
 // NullBytes 为 JSON null 字面量的字节表示，供各可空类型判断输入是否为 null。
@@ -96,10 +95,10 @@ func (b *Bytes) UnmarshalText(text []byte) error {
 // MarshalJSON 实现 json.Marshaler；空值或空切片序列化为 JSON null。
 func (b Bytes) MarshalJSON() ([]byte, error) {
 	if !b.Valid {
-		return json.Marshal(nil)
+		return NullBytes, nil // PERF-2-17 [P2] 复用包级共享 null 字节，省去 json 反射序列化与分配
 	}
 	if len(b.Bytes) == 0 {
-		return json.Marshal(nil)
+		return NullBytes, nil // PERF-2-17 [P2] 复用包级共享 null 字节，省去 json 反射序列化与分配
 	}
 	return json.Marshal(b.Bytes)
 }
@@ -163,5 +162,6 @@ func (t Bytes) Result() string {
 	if !t.Valid {
 		return "NULL"
 	}
-	return cast.ToString(t.Bytes)
+	// PERF-2-19 [P2] 已知类型为 []byte，直接转换字符串，去掉 cast 反射分发。
+	return string(t.Bytes)
 }

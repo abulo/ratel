@@ -7,9 +7,15 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"golang.org/x/mod/modfile"
 )
+
+// moduleVersionCache 缓存 ModuleVersion 按模块路径查询成功的结果；
+// PERF-8-13 [P2] 同一命令进程内重复查询时不再重复执行 go mod graph 全图读取与逐行扫描。
+// 失败结果不写入缓存，保留原有失败后再次尝试的语义。（预期收益需实测验证）
+var moduleVersionCache sync.Map
 
 // ModulePath 读取指定 go.mod 文件并返回其 module 声明路径；文件读取失败时返回错误。
 func ModulePath(filename string) (string, error) {
@@ -22,6 +28,9 @@ func ModulePath(filename string) (string, error) {
 
 // ModuleVersion 通过 go mod graph 在模块依赖图中查找指定模块的路径与版本；未找到或命令失败时返回错误。
 func ModuleVersion(path string) (string, error) {
+	if cached, ok := moduleVersionCache.Load(path); ok {
+		return cached.(string), nil
+	}
 	stdout := &bytes.Buffer{}
 	fd := exec.Command("go", "mod", "graph")
 	fd.Stdout = stdout
@@ -38,7 +47,9 @@ func ModuleVersion(path string) (string, error) {
 		str := string(line)
 		i := strings.Index(str, "@")
 		if strings.Contains(str, path+"@") && i != -1 {
-			return path + str[i:], nil
+			result := path + str[i:]
+			moduleVersionCache.Store(path, result)
+			return result, nil
 		}
 	}
 }

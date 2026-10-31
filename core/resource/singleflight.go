@@ -20,17 +20,28 @@ type (
 		err error
 	}
 
-	flightGroup struct {
+	// PERF-4-6 [P2]：按 key 哈希分片，不同 key 的并发查找落在不同互斥锁上，
+	// 替代原先覆盖全部 key 的单一全局互斥锁（分片后锁竞争缓解程度预期收益需实测验证）。
+	flightShard struct {
 		calls map[string]*call
 		lock  sync.Mutex
 	}
+
+	flightGroup struct {
+		shards [flightShardCount]flightShard
+	}
 )
+
+// flightShardCount 为单飞调用表的分片数量，取 2 的幂便于取模。
+const flightShardCount = 16
 
 // NewSingleFlight 创建一个并发安全的 SingleFlight 实例，内部按 key 跟踪进行中的调用。
 func NewSingleFlight() SingleFlight {
-	return &flightGroup{
-		calls: make(map[string]*call),
+	g := &flightGroup{}
+	for i := range g.shards {
+		g.shards[i].calls = make(map[string]*call)
 	}
+	return g
 }
 
 func (g *flightGroup) Do(key string, fn func() (any, error)) (any, error) {
@@ -53,27 +64,39 @@ func (g *flightGroup) DoEx(key string, fn func() (any, error)) (val any, fresh b
 	return c.val, true, c.err
 }
 
+// shard 返回 key 所属分片；内联 FNV-1a 哈希分布均匀，避免每次调用分配哈希对象。
+func (g *flightGroup) shard(key string) *flightShard {
+	h := uint32(2166136261)
+	for i := 0; i < len(key); i++ {
+		h ^= uint32(key[i])
+		h *= 16777619
+	}
+	return &g.shards[h%flightShardCount]
+}
+
 func (g *flightGroup) createCall(key string) (c *call, done bool) {
-	g.lock.Lock()
-	if c, ok := g.calls[key]; ok {
-		g.lock.Unlock()
+	sh := g.shard(key)
+	sh.lock.Lock()
+	if c, ok := sh.calls[key]; ok {
+		sh.lock.Unlock()
 		c.wg.Wait()
 		return c, true
 	}
 
 	c = new(call)
 	c.wg.Add(1)
-	g.calls[key] = c
-	g.lock.Unlock()
+	sh.calls[key] = c
+	sh.lock.Unlock()
 
 	return c, false
 }
 
 func (g *flightGroup) makeCall(c *call, key string, fn func() (any, error)) {
+	sh := g.shard(key)
 	defer func() {
-		g.lock.Lock()
-		delete(g.calls, key)
-		g.lock.Unlock()
+		sh.lock.Lock()
+		delete(sh.calls, key)
+		sh.lock.Unlock()
 		c.wg.Done()
 	}()
 

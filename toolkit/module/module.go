@@ -14,6 +14,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 )
 
 // CmdNew 定义 toolkit mp 子命令，运行时由 Run 完成数据模型层代码的交互式生成。
@@ -85,37 +86,67 @@ func Run(cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), t)
 	defer cancel()
 
-	tableColumn, err := base.TableColumn(ctx, base.Config.String("db.Database"), tableName)
-	if err != nil {
-		fmt.Println("表结构信息:", color.RedString(err.Error()))
+	// PERF-8-19 [P2] 四次元数据查询互不依赖，使用 errgroup 并发发起；错误按原查询顺序依次上报，
+	// 错误提示文案与“首个失败即返回”的语义保持不变。（预期收益需实测验证）
+	var (
+		tableColumn                     []base.Column
+		tableItem                       base.Table
+		tableIndex                      []base.Index
+		tablePrimary                    base.Column
+		colErr, itemErr, idxErr, priErr error
+	)
+	var eg errgroup.Group
+	eg.Go(func() error {
+		tableColumn, colErr = base.TableColumn(ctx, base.Config.String("db.Database"), tableName)
+		return nil
+	})
+	eg.Go(func() error {
+		tableItem, itemErr = base.TableItem(ctx, base.Config.String("db.Database"), tableName)
+		return nil
+	})
+	eg.Go(func() error {
+		tableIndex, idxErr = base.TableIndex(ctx, base.Config.String("db.Database"), tableName)
+		return nil
+	})
+	eg.Go(func() error {
+		tablePrimary, priErr = base.TablePrimary(ctx, base.Config.String("db.Database"), tableName)
+		return nil
+	})
+	_ = eg.Wait()
+	if colErr != nil {
+		fmt.Println("表结构信息:", color.RedString(colErr.Error()))
 		return
 	}
+	if itemErr != nil {
+		fmt.Println("表信息:", color.RedString(itemErr.Error()))
+		return
+	}
+	if idxErr != nil {
+		fmt.Println("表索引:", color.RedString(idxErr.Error()))
+		return
+	}
+	if priErr != nil {
+		fmt.Println("表主键:", color.RedString(priErr.Error()))
+		return
+	}
+
 	tableColumnMap := make(map[string]base.Column)
 	for _, item := range tableColumn {
 		tableColumnMap[item.ColumnName] = item
 	}
-	tableItem, err := base.TableItem(ctx, base.Config.String("db.Database"), tableName)
-	if err != nil {
-		fmt.Println("表信息:", color.RedString(err.Error()))
-		return
-	}
-	tableIndex, err := base.TableIndex(ctx, base.Config.String("db.Database"), tableName)
-	if err != nil {
-		fmt.Println("表索引:", color.RedString(err.Error()))
-		return
-	}
-	tablePrimary, err := base.TablePrimary(ctx, base.Config.String("db.Database"), tableName)
-	if err != nil {
-		fmt.Println("表主键:", color.RedString(err.Error()))
-		return
-	}
+
+	// PERF-8-6 [P2] 表名大驼峰在命令级计算一次，后续方法名/注册片段统一复用，避免重复转换。
+	tableCamel := base.CamelStr(tableItem.TableName)
+	// PERF-8-7 [P2] 索引字段去重与成员判断预建集合，循环内 O(1) 判定，替代反射型 InArray 线性查找。
 	selectIndex := make([]string, 0)
+	selectIndexSet := make(map[string]struct{})
 	for _, item := range tableIndex {
 		tmpSlice := util.Explode(",", item.Field)
 		for _, v := range tmpSlice {
-			if util.InArray(v, selectIndex) {
+			if _, ok := selectIndexSet[v]; ok {
 				continue
 			}
+			selectIndexSet[v] = struct{}{}
 			selectIndex = append(selectIndex, v)
 		}
 	}
@@ -126,6 +157,10 @@ func Run(cmd *cobra.Command, args []string) {
 		Options: selectIndex,
 	}, &useIndex); err != nil {
 		return
+	}
+	useIndexSet := make(map[string]struct{}, len(useIndex))
+	for _, name := range useIndex {
+		useIndexSet[name] = struct{}{}
 	}
 	mod, err := base.ModulePath(path.Join(cast.ToString(base.Path), "go.mod"))
 	if err != nil {
@@ -148,7 +183,7 @@ func Run(cmd *cobra.Command, args []string) {
 		Table:          tableItem,
 		TableColumn:    tableColumn,
 		Type:           "Create",
-		Name:           base.CamelStr(tableItem.TableName) + "Create",
+		Name:           tableCamel + "Create",
 		Condition:      nil,
 		ConditionTotal: 0,
 		Primary:        tablePrimary,
@@ -161,7 +196,7 @@ func Run(cmd *cobra.Command, args []string) {
 		Table:          tableItem,
 		TableColumn:    tableColumn,
 		Type:           "Update",
-		Name:           base.CamelStr(tableItem.TableName) + "Update",
+		Name:           tableCamel + "Update",
 		Condition:      nil,
 		ConditionTotal: 0,
 		Primary:        tablePrimary,
@@ -174,7 +209,7 @@ func Run(cmd *cobra.Command, args []string) {
 		Table:          tableItem,
 		TableColumn:    tableColumn,
 		Type:           "Delete",
-		Name:           base.CamelStr(tableItem.TableName) + "Delete",
+		Name:           tableCamel + "Delete",
 		Condition:      nil,
 		ConditionTotal: 0,
 		Primary:        tablePrimary,
@@ -187,7 +222,7 @@ func Run(cmd *cobra.Command, args []string) {
 		Table:          tableItem,
 		TableColumn:    tableColumn,
 		Type:           "Show",
-		Name:           base.CamelStr(tableItem.TableName),
+		Name:           tableCamel,
 		Condition:      nil,
 		ConditionTotal: 0,
 		Primary:        tablePrimary,
@@ -199,10 +234,10 @@ func Run(cmd *cobra.Command, args []string) {
 	})
 
 	multiSelect = append(multiSelect,
-		base.CamelStr(tableItem.TableName)+"Create",
-		base.CamelStr(tableItem.TableName)+"Update",
-		base.CamelStr(tableItem.TableName)+"Delete",
-		base.CamelStr(tableItem.TableName),
+		tableCamel+"Create",
+		tableCamel+"Update",
+		tableCamel+"Delete",
+		tableCamel,
 	)
 
 	if deleteBool {
@@ -211,7 +246,7 @@ func Run(cmd *cobra.Command, args []string) {
 				Table:          tableItem,
 				TableColumn:    tableColumn,
 				Type:           "Recover",
-				Name:           base.CamelStr(tableItem.TableName) + "Recover",
+				Name:           tableCamel + "Recover",
 				Condition:      nil,
 				ConditionTotal: 0,
 				Primary:        tablePrimary,
@@ -223,14 +258,14 @@ func Run(cmd *cobra.Command, args []string) {
 			},
 		)
 		multiSelect = append(multiSelect,
-			base.CamelStr(tableItem.TableName)+"Recover",
+			tableCamel+"Recover",
 		)
 		methodList = append(methodList,
 			base.Method{
 				Table:          tableItem,
 				TableColumn:    tableColumn,
 				Type:           "Drop",
-				Name:           base.CamelStr(tableItem.TableName) + "Drop",
+				Name:           tableCamel + "Drop",
 				Condition:      nil,
 				ConditionTotal: 0,
 				Primary:        tablePrimary,
@@ -242,11 +277,11 @@ func Run(cmd *cobra.Command, args []string) {
 			},
 		)
 		multiSelect = append(multiSelect,
-			base.CamelStr(tableItem.TableName)+"Drop",
+			tableCamel+"Drop",
 		)
 	}
 	if err != nil {
-		methodName := base.CamelStr(tableItem.TableName) + "List"
+		methodName := tableCamel + "List"
 		method := base.Method{
 			Table:          tableItem,
 			TableColumn:    tableColumn,
@@ -265,20 +300,23 @@ func Run(cmd *cobra.Command, args []string) {
 		methodList = append(methodList, method)
 	} else {
 		field := make([]string, 0)
-		idx := []string{"Item", "List"}
+		// PERF-8-7 [P2] 字段去重集合与索引类型白名单集合，替代循环内 InArray 线性扫描。
+		fieldSet := make(map[string]struct{})
+		idxSet := map[string]struct{}{"Item": {}, "List": {}}
 		for _, v := range tableIndex {
 			condition := make([]base.Column, 0)
 			indexField := v.Field
 			indexFieldSlice := util.Explode(",", indexField)
 			for _, fieldValue := range indexFieldSlice {
-				if !util.InArray(fieldValue, useIndex) {
+				if _, ok := useIndexSet[fieldValue]; !ok {
 					continue
 				}
 				positionIndex := cast.ToInt64(len(condition)) + 1
 				currentColumn := tableColumnMap[fieldValue]
 				currentColumn.PosiTion = positionIndex
 				condition = append(condition, currentColumn)
-				if !util.InArray(fieldValue, field) {
+				if _, ok := fieldSet[fieldValue]; !ok {
+					fieldSet[fieldValue] = struct{}{}
 					field = append(field, fieldValue)
 				}
 			}
@@ -291,10 +329,10 @@ func Run(cmd *cobra.Command, args []string) {
 			}
 			customIndexType := util.UCWords(indexNameSlice[0])
 			customIndexName := util.UCWords(indexNameSlice[1])
-			if !util.InArray(customIndexType, idx) {
+			if _, ok := idxSet[customIndexType]; !ok {
 				continue
 			}
-			methodName := base.CamelStr(tableItem.TableName) + base.CamelStr(customIndexName)
+			methodName := tableCamel + base.CamelStr(customIndexName)
 			method := base.Method{
 				Table:          tableItem,
 				TableColumn:    tableColumn,
@@ -319,7 +357,7 @@ func Run(cmd *cobra.Command, args []string) {
 			currentColumn.PosiTion = positionIndex
 			condition = append(condition, currentColumn)
 		}
-		methodName := base.CamelStr(tableItem.TableName) + "List"
+		methodName := tableCamel + "List"
 		method := base.Method{
 			Table:          tableItem,
 			TableColumn:    tableColumn,
@@ -359,9 +397,19 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	// PERF-8-7 [P2] 用户勾选结果预建集合，方法过滤与模板勾选循环内 O(1) 命中判断。
+	multiSelectedSet := make(map[string]struct{}, len(multiSelected))
+	for _, name := range multiSelected {
+		multiSelectedSet[name] = struct{}{}
+	}
+	tplSelectedSet := make(map[string]struct{}, len(tplSelected))
+	for _, name := range tplSelected {
+		tplSelectedSet[name] = struct{}{}
+	}
+
 	var newMethodList []base.Method
 	for _, val := range methodList {
-		if util.InArray(val.Name, multiSelected) {
+		if _, ok := multiSelectedSet[val.Name]; ok {
 			newMethod := val
 			newMethod.Page = true
 			newMethodList = append(newMethodList, newMethod)
@@ -379,17 +427,17 @@ func Run(cmd *cobra.Command, args []string) {
 		Page:        pageBool,
 		SoftDelete:  deleteBool,
 	}
-	if util.InArray("module", tplSelected) {
+	if _, ok := tplSelectedSet["module"]; ok {
 		GenerateModule(moduleParam, fullModuleDir, tableName)
 	}
 
-	if util.InArray("proto", tplSelected) {
+	if _, ok := tplSelectedSet["proto"]; ok {
 		GenerateProto(moduleParam, fullProtoDir, fullServiceDir, tableName)
 	}
-	if util.InArray("convert", tplSelected) {
+	if _, ok := tplSelectedSet["convert"]; ok {
 		GenerateConvert(moduleParam, fullConvertDir, tableName)
 	}
-	if util.InArray("service", tplSelected) {
+	if _, ok := tplSelectedSet["service"]; ok {
 		GenerateService(moduleParam, fullServiceDir, tableName)
 		strLenSlot := util.Explode("/", dir)
 		pkgName := strLenSlot[len(strLenSlot)-1]
@@ -414,7 +462,7 @@ func Run(cmd *cobra.Command, args []string) {
 		builder.WriteString("\n")
 		builder.WriteString(fmt.Sprintf("	// %s->%s", moduleParam.Table.TableComment, moduleParam.Table.TableName))
 		builder.WriteString("\n")
-		builder.WriteString(fmt.Sprintf("	%s.Register%sServiceServer(server.Server, &%s.Srv%sServiceServer{", moduleParam.Pkg, base.CamelStr(moduleParam.Table.TableName), moduleParam.Pkg, base.CamelStr(moduleParam.Table.TableName)))
+		builder.WriteString(fmt.Sprintf("	%s.Register%sServiceServer(server.Server, &%s.Srv%sServiceServer{", moduleParam.Pkg, tableCamel, moduleParam.Pkg, tableCamel))
 		builder.WriteString("\n")
 		builder.WriteString("		Server: server,")
 		builder.WriteString("\n")

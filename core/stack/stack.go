@@ -31,9 +31,12 @@ func (ds *DeferStack) Push(fns ...func() error) {
 //
 // 执行后函数切片不会被清空，重复调用 Clean 会再次执行已有函数。
 func (ds *DeferStack) Clean() {
+	// PERF-4-11 [P2]：锁内仅拷贝函数快照，释放写锁后再逆序执行；
+	// 避免用户闭包执行期间长期持锁，并消除闭包内再次 Push 导致的重入死锁。
 	ds.mu.Lock()
-	defer ds.mu.Unlock()
-	for _, v := range slices.Backward(ds.fns) {
+	fns := slices.Clone(ds.fns)
+	ds.mu.Unlock()
+	for _, v := range slices.Backward(fns) {
 		_ = v()
 	}
 }

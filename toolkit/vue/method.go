@@ -17,16 +17,21 @@ import (
 // 未识别的 key 返回空字符串。
 func ApiList(key string) string {
 	apiUrl := cast.ToString(base.Url)
-	list := make(map[string]string)
-	list["add"] = base.PathChar(apiUrl)
-	list["update"] = base.PathChar(apiUrl, "/${id}/update")
-	list["item"] = base.PathChar(apiUrl, "/${id}/item")
-	list["delete"] = base.PathChar(apiUrl, "/${id}/delete")
-	list["drop"] = base.PathChar(apiUrl, "/${id}/drop")
-	list["recover"] = base.PathChar(apiUrl, "/${id}/recover")
-	list["list"] = base.PathChar(apiUrl)
-	if val, ok := list[key]; ok {
-		return val
+	// PERF-8-21 [P2] 去掉每次调用新建 7 项 map 与多轮 PathChar 切片拼接；switch 直出，
+	// 与原 map 分支产出的路径字符串逐字符一致。
+	switch key {
+	case "add", "list":
+		return "`" + apiUrl + "`"
+	case "update":
+		return "`" + apiUrl + "/${id}/update`"
+	case "item":
+		return "`" + apiUrl + "/${id}/item`"
+	case "delete":
+		return "`" + apiUrl + "/${id}/delete`"
+	case "drop":
+		return "`" + apiUrl + "/${id}/drop`"
+	case "recover":
+		return "`" + apiUrl + "/${id}/recover`"
 	}
 	return ""
 }
@@ -38,19 +43,10 @@ func ApiList(key string) string {
 // 文件创建或模板解析失败时打印错误并返回，不向调用方返回错误。
 func GenerateMethod(moduleParam base.ModuleParam, apiUrl, fullMethodDir, tableName string) {
 	base.SetUrl(apiUrl)
-	tpl := template.Must(template.New("module").Funcs(template.FuncMap{
-		"Convert":               base.Convert,
-		"SymbolChar":            base.SymbolChar,
-		"Char":                  base.Char,
-		"Helper":                base.Helper,
-		"CamelStr":              base.CamelStr,
-		"Add":                   base.Add,
-		"ModuleProtoConvertDao": base.ModuleProtoConvertDao,
-		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
-		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
-		"ApiToProto":            base.ApiToProto,
-		"ApiList":               ApiList,
-	}).Parse(MethodTemplate()))
+	// PERF-8-20 [P2] 公共模板函数复用 base 包级定义，仅追加本生成器专属的 ApiList。
+	funcs := base.CommonTemplateFuncs()
+	funcs["ApiList"] = ApiList
+	tpl := template.Must(template.New("module").Funcs(funcs).Parse(MethodTemplate()))
 
 	outMethodFile := path.Join(fullMethodDir, base.Helper(tableName)+".ts")
 	if util.FileExists(outMethodFile) {

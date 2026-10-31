@@ -19,19 +19,10 @@ import (
 //
 // 模板渲染失败时打印错误并返回；protoc 与标签注入命令的执行错误不会中断后续流程。
 func GenerateProto(moduleParam base.ModuleParam, fullProtoDir, fullServiceDir, tableName string) {
-	tpl := template.Must(template.New("proto").Funcs(template.FuncMap{
-		"Convert":               base.Convert,
-		"SymbolChar":            base.SymbolChar,
-		"Char":                  base.Char,
-		"Helper":                base.Helper,
-		"CamelStr":              base.CamelStr,
-		"Add":                   base.Add,
-		"ModuleProtoConvertDao": base.ModuleProtoConvertDao,
-		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
-		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
-		"ApiToProto":            base.ApiToProto,
-		"ProtoRequest":          base.ProtoRequest,
-	}).Parse(ProtoTemplate()))
+	// PERF-8-20 [P2] 公共模板函数复用 base 包级定义，仅追加本生成器专属的 ProtoRequest。
+	funcs := base.CommonTemplateFuncs()
+	funcs["ProtoRequest"] = base.ProtoRequest
+	tpl := template.Must(template.New("proto").Funcs(funcs).Parse(ProtoTemplate()))
 	outProtoFile := path.Join(fullProtoDir, tableName+".proto")
 	if util.FileExists(outProtoFile) {
 		util.Delete(outProtoFile)

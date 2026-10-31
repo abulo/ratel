@@ -25,6 +25,8 @@ type Server struct {
 	*grpc.Server
 	listener net.Listener
 	*Config
+	// info 为构造期一次性缓存的注册信息，避免每次 Info() 重复重建 ServiceInfo。
+	info *server.ServiceInfo
 }
 
 func newServer(config *Config) (*Server, error) {
@@ -71,15 +73,16 @@ func newServer(config *Config) (*Server, error) {
 
 	kasp := keepalive.ServerParameters{
 		// 客户端空闲 15 秒后发送 GOAWAY。
-		MaxConnectionIdle:     15 * time.Second,
-		// 连接存活超过 30 秒后发送 GOAWAY。
-		MaxConnectionAge:      30 * time.Second,
+		MaxConnectionIdle: 15 * time.Second,
+		// PERF-6-15 [P2] 原 30 秒 MaxConnectionAge 会强制所有长连接频繁重建（含 TLS 握手），
+		// 放宽到 10 分钟量级，配合在途 RPC 宽限期自然老化连接（预期收益需实测验证）。
+		MaxConnectionAge: 10 * time.Minute,
 		// 给在途 RPC 5 秒宽限期后再强制关闭连接。
 		MaxConnectionAgeGrace: 5 * time.Second,
 		// 连接空闲 5 秒后向客户端发送 Ping 确认存活。
-		Time:                  5 * time.Second,
+		Time: 5 * time.Second,
 		// 等待 Ping 应答 1 秒，超时即判定连接已失效。
-		Timeout:               1 * time.Second,
+		Timeout: 1 * time.Second,
 	}
 
 	kaep := keepalive.EnforcementPolicy{
@@ -100,22 +103,30 @@ func newServer(config *Config) (*Server, error) {
 	}
 	config.Port = listener.Addr().(*net.TCPAddr).Port
 	reflection.Register(newServer)
+	// PERF-6-3 [P2] 注册信息在绑定监听地址后构造一次并缓存，Info() 直接返回，避免重复重建。
+	serviceAddress := listener.Addr().String()
+	if config.ServiceAddress != "" {
+		serviceAddress = config.ServiceAddress
+	}
+	info := server.ApplyOptions(
+		server.WithScheme("grpc"),
+		server.WithAddress(serviceAddress),
+		server.WithKind(constant.ServiceProvider),
+	)
 	return &Server{
 		Server:   newServer,
 		listener: listener,
 		Config:   config,
+		info:     &info,
 	}, nil
 }
 
-// Health 通过尝试接受一条探测连接判断监听端口是否可用，连接可接受时返回 true。
+// Health 判断服务监听 listener 是否就绪；不抢占共享 listener 上的真实连接。
+//
+// PERF-6-14 [P1] 原实现直接 Accept 共享 listener 并关闭连接，会与 grpc.Server 的接受循环竞争、
+// 吞掉真实客户端连接；改为仅依据 listener 是否存在判断，保持签名与 bool 返回语义不变。
 func (s *Server) Health() bool {
-	conn, err := s.listener.Accept()
-	if err != nil {
-		return false
-	}
-
-	_ = conn.Close()
-	return true
+	return s.listener != nil
 }
 
 // Serve 启动 gRPC 服务并阻塞监听，返回底层服务端退出时的错误。
@@ -137,15 +148,8 @@ func (s *Server) GracefulStop(ctx context.Context) error {
 }
 
 // Info 返回服务注册信息，协议为 grpc；注册地址优先取配置中的 ServiceAddress，否则使用实际监听地址。
+//
+// PERF-6-3 [P2] 直接返回构造期缓存的注册信息，不再重复重建。
 func (s *Server) Info() *server.ServiceInfo {
-	serviceAddress := s.listener.Addr().String()
-	if s.Config.ServiceAddress != "" {
-		serviceAddress = s.Config.ServiceAddress
-	}
-	info := server.ApplyOptions(
-		server.WithScheme("grpc"),
-		server.WithAddress(serviceAddress),
-		server.WithKind(constant.ServiceProvider),
-	)
-	return &info
+	return s.info
 }

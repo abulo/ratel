@@ -2,6 +2,7 @@ package driver
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -30,6 +31,9 @@ type EtcdDriver struct {
 	leaseCh     <-chan *clientv3.LeaseKeepAliveResponse
 	ctx         context.Context
 	cancel      context.CancelFunc
+	// PERF-3-9 [P1]：started 配合 mu 防止 Stop 后再次 Start 时重复起 watcher/心跳协程。
+	mu      sync.Mutex
+	started bool
 }
 
 func newEtcdDriver(cli *etcdv3.Client) *EtcdDriver {
@@ -80,7 +84,9 @@ func (e *EtcdDriver) watchService(ctx context.Context, serviceName string) error
 // watcher 持续监听服务前缀，PUT 事件写入缓存，DELETE 事件移除缓存。
 func (e *EtcdDriver) watcher(serviceName string) {
 	prefix := GetKeyPre(serviceName)
-	rch := e.cli.Watch(context.Background(), prefix, clientv3.WithPrefix())
+	// PERF-3-9 [P1]：Watch 绑定驱动生命周期上下文 e.ctx；Stop 调用 cancel 后该 range 随之退出，
+	// 不再因 context.Background() 导致 watcher goroutine 与底层 watch 流残留泄漏。
+	rch := e.cli.Watch(e.ctx, prefix, clientv3.WithPrefix())
 	for wresp := range rch {
 		for _, ev := range wresp.Events {
 			switch ev.Type {
@@ -176,12 +182,26 @@ func (e *EtcdDriver) GetNodes(ctx context.Context) (nodes []string, err error) {
 	return e.getServices(), nil
 }
 
-// Start 实现 DriverV2：每次启动重建驱动级上下文，开启租约保活与前缀监听，随后启动保活协程。
+// Start 实现 DriverV2：每次启动重建驱动级上下文，开启租约保活与前缀监听，随后启动保活协程；
+// 重复 Start 在驱动未 Stop 时直接返回错误，避免重复注册 watcher 与心跳协程。
 func (e *EtcdDriver) Start(ctx context.Context) (err error) {
+	e.mu.Lock()
+	if e.started {
+		e.mu.Unlock()
+		return errors.New("this driver is started")
+	}
 	e.ctx, e.cancel = context.WithCancel(context.TODO())
+	e.started = true
+	e.mu.Unlock()
+
 	e.startHeartBeat(ctx)
 	err = e.watchService(ctx, e.serviceName)
 	if err != nil {
+		// PERF-3-9 [P1]：监听启动失败时回滚上下文与启动标志，避免残留半启动状态。
+		e.cancel()
+		e.mu.Lock()
+		e.started = false
+		e.mu.Unlock()
 		return
 	}
 	go e.keepHeartBeat()
@@ -190,9 +210,14 @@ func (e *EtcdDriver) Start(ctx context.Context) (err error) {
 
 // Stop 实现 DriverV2：撤销租约使节点键失效，并取消驱动上下文停止监听与保活协程。
 func (e *EtcdDriver) Stop(ctx context.Context) (err error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.revoke(ctx)
-	e.cancel()
-	return
+	if e.cancel != nil {
+		e.cancel()
+	}
+	e.started = false
+	return nil
 }
 
 // WithOption 实现 DriverV2：按选项类型应用配置，当前仅支持超时选项（映射为租约时长）。

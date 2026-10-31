@@ -1,12 +1,19 @@
 package metric
 
 import (
+	"strings"
 	"time"
 
 	"github.com/abulo/ratel/v3/core/constant"
 	"github.com/abulo/ratel/v3/core/env"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+// labelKey 将标签值序列化为子指标缓存键；同一向量标签数量固定，空字节分隔足以区分不同顺序组合。
+// PERF-3-14 [P2]：热点上报路径按该键复用首次解析得到的子指标句柄，避免每次都走向量内部查找（预期收益需实测验证）。
+func labelKey(labels []string) string {
+	return strings.Join(labels, "\x00")
+}
 
 // Metrics 组合 Prometheus 的注册器与采集器，并补充批量注册采集器的能力。
 type Metrics interface {

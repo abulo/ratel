@@ -3,7 +3,6 @@ package null
 import (
 	"bytes"
 	"database/sql/driver"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -61,7 +60,7 @@ func (t Date) IsSet() bool {
 // 年份超出 [0, 9999] 范围时返回错误。
 func (t Date) MarshalJSON() ([]byte, error) {
 	if !t.Valid {
-		return json.Marshal(nil)
+		return NullBytes, nil // PERF-2-17 [P2] 复用包级共享 null 字节，省去 json 反射序列化与分配
 	}
 
 	// 序列化实现参考标准库 time.Time 的 JSON 逻辑。

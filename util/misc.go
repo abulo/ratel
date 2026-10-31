@@ -9,7 +9,14 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
+)
+
+// PERF-7-19 [P2] 包级复用 runtime.MemStats 并加锁保护，避免每次调用 new(runtime.MemStats) 的堆分配（预期收益需实测验证，取决于采集频率）
+var (
+	memStatsMu sync.Mutex
+	memStats   runtime.MemStats
 )
 
 // Echo 将可变参数依次写入标准输出，参数之间不追加分隔符，也不自动换行。
@@ -54,18 +61,28 @@ func Putenv(setting string) error {
 //
 // realUsage 参数当前未被使用，返回值始终为运行时统计的 Alloc。
 func MemoryGetUsage(realUsage bool) uint64 {
-	stat := new(runtime.MemStats)
-	runtime.ReadMemStats(stat)
-	return stat.Alloc
+	memStatsMu.Lock()
+	runtime.ReadMemStats(&memStats)
+	alloc := memStats.Alloc
+	memStatsMu.Unlock()
+	return alloc
 }
 
 // MemoryGetPeakUsage 返回进程启动以来累计分配内存的字节数。
 //
 // realUsage 参数当前未被使用，返回值始终为运行时统计的 TotalAlloc。
 func MemoryGetPeakUsage(realUsage bool) uint64 {
-	stat := new(runtime.MemStats)
-	runtime.ReadMemStats(stat)
-	return stat.TotalAlloc
+	memStatsMu.Lock()
+	runtime.ReadMemStats(&memStats)
+	totalAlloc := memStats.TotalAlloc
+	memStatsMu.Unlock()
+	return totalAlloc
+}
+
+// PERF-7-20 [P2] 预发布级别顺序表为静态只读，包级定义一次，避免 VersionCompare 每次比较闭包内新建 10 键值 map
+var releaseLevelOrder = map[string]int{
+	"dev": 0, "alpha": 1, "a": 1, "beta": 2, "b": 2,
+	"RC": 3, "rc": 3, "#": 4, "pl": 5, "p": 5,
 }
 
 // VersionCompare 按版本号规则比较 version1 与 version2，并按 operator 返回布尔结果。
@@ -205,21 +222,8 @@ func VersionCompare(version1, version2, operator string) bool {
 
 	special = func(form1, form2 string) int {
 		found1, found2, len1, len2 := -1, -1, len(form1), len(form2)
-		// 预发布标识的先后顺序：未识别字符串 < dev < alpha/a < beta/b < RC/rc < # < pl/p。
-		forms := map[string]int{
-			"dev":   0,
-			"alpha": 1,
-			"a":     1,
-			"beta":  2,
-			"b":     2,
-			"RC":    3,
-			"rc":    3,
-			"#":     4,
-			"pl":    5,
-			"p":     5,
-		}
-
-		for name, order := range forms {
+		// PERF-7-20 [P2] 顺序表复用包级只读 releaseLevelOrder，不再每次比较新建 forms map
+		for name, order := range releaseLevelOrder {
 			if len1 < len(name) {
 				continue
 			}
@@ -228,7 +232,7 @@ func VersionCompare(version1, version2, operator string) bool {
 				break
 			}
 		}
-		for name, order := range forms {
+		for name, order := range releaseLevelOrder {
 			if len2 < len(name) {
 				continue
 			}

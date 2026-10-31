@@ -32,11 +32,14 @@ func SetGlobalTracer(tp trace.TracerProvider) {
 type Tracer struct {
 	tracer trace.Tracer
 	kind   trace.SpanKind
+	// PERF-3-15 [P2]：构造期预存固定的 SpanKind 选项，Start 时直接复用；propagator 仍每次实时读取全局值，
+	// 以兼容运行期 SetGlobalTracer 切换传播器的行为。
+	kindOpt trace.SpanStartOption
 }
 
 // NewTracer 创建指定 SpanKind 的 Tracer；内部从全局 TracerProvider 获取名为 "ratel" 的 Tracer。
 func NewTracer(kind trace.SpanKind) *Tracer {
-	return &Tracer{tracer: otel.Tracer("ratel"), kind: kind}
+	return &Tracer{tracer: otel.Tracer("ratel"), kind: kind, kindOpt: trace.WithSpanKind(kind)}
 }
 
 // Start 启动新 Span 并返回携带 Span 的上下文。
@@ -47,9 +50,17 @@ func (t *Tracer) Start(ctx context.Context, operation string, carrier propagatio
 	if (t.kind == trace.SpanKindServer || t.kind == trace.SpanKindConsumer) && carrier != nil {
 		ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
 	}
-	opts = append(opts, trace.WithSpanKind(t.kind))
 
-	ctx, span := t.tracer.Start(ctx, operation, opts...)
+	// PERF-3-15 [P2]：无调用方选项时直接复用预存选项切片，避免 opts=nil 触发 append 分配；
+	// 带调用方选项时再追加固定 kind 选项，组合结果与原实现一致。
+	var startOpts []trace.SpanStartOption
+	if len(opts) == 0 {
+		startOpts = []trace.SpanStartOption{t.kindOpt}
+	} else {
+		startOpts = append(opts, t.kindOpt)
+	}
+
+	ctx, span := t.tracer.Start(ctx, operation, startOpts...)
 
 	if (t.kind == trace.SpanKindClient || t.kind == trace.SpanKindProducer) && carrier != nil {
 		otel.GetTextMapPropagator().Inject(ctx, carrier)

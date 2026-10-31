@@ -233,6 +233,9 @@ func (c *Channel) sendOpts(exchange string, routingKey string, body []byte, opts
 
 // reSendSyncOpts 按重试策略确保消息送达：发送后同步等待发布确认，确认前阻塞后续消息；收到 nack
 // 或连接错误时按策略重试，重试耗尽仍未确认则返回 nack 错误。
+//
+// PERF-5-14 [P2]：复核结论——逐条阻塞确认与 confirms 缓冲=1 是当前显式选择的串行确认语义，
+// 异步批量确认需要新增发布模式与对账 API，超出本次性能优化范围，保持现状不改。
 func (c *Channel) reSendSyncOpts(exchange string, routingKey string, body []byte, opts *SendOpts) (err error) {
 	err = c.enableConfirm()
 	if err != nil && !isConnectedErr(err) {

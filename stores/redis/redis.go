@@ -164,9 +164,19 @@ func WithIdleTimeout(t time.Duration) Option {
 }
 
 // WithIdleCheckFrequency 设置空闲连接检查频率，传入负值可关闭检查。
+//
+// PERF-1-6 [P2] 该配置仅为兼容保留；go-redis 内部固定空闲检查周期，
+// 连接最大存活时间请使用 WithConnMaxLifetime。
 func WithIdleCheckFrequency(t time.Duration) Option {
 	return func(r *Client) {
 		r.IdleCheckFrequency = t
+	}
+}
+
+// WithConnMaxLifetime 设置连接最大可复用时长；为 0 时由框架默认 30 分钟回收。
+func WithConnMaxLifetime(t time.Duration) Option {
+	return func(r *Client) {
+		r.ConnMaxLifetime = t
 	}
 }
 
@@ -177,7 +187,47 @@ type RedisNode interface {
 	redis.Cmdable
 }
 
+// cachedNode 返回已缓存的底层连接实例；未缓存时返回 nil。
+// PERF-1-1 [P0] 后续命令直接读取该缓存，跳过资源管理器与 SingleFlight 的每命令锁查找。
+func (r *Client) cachedNode() RedisNode {
+	r.nodeMu.RLock()
+	node := r.node
+	r.nodeMu.RUnlock()
+	return node
+}
+
+// setCachedNode 缓存解析成功的底层连接实例。
+func (r *Client) setCachedNode(node RedisNode) {
+	r.nodeMu.Lock()
+	r.node = node
+	r.nodeMu.Unlock()
+}
+
+// invalidateCachedNode 清空节点缓存；当缓存实例被确认失效（资源被关闭）时调用，
+// 下一条命令会重新走资源管理器解析一次，与原「每次查资源表」的可恢复语义保持等价。
+func (r *Client) invalidateCachedNode() {
+	r.nodeMu.Lock()
+	r.node = nil
+	r.nodeMu.Unlock()
+}
+
 func getRedis(r *Client) (RedisNode, error) {
+	// PERF-1-1 [P0] 命中缓存直接复用，不再每条命令重复执行资源表查找与 SingleFlight 锁流程。
+	if node := r.cachedNode(); node != nil {
+		return node, nil
+	}
+	node, err := r.loadNode()
+	if err != nil {
+		return nil, err
+	}
+	r.setCachedNode(node)
+	return node, nil
+}
+
+// loadNode 按当前模式首次解析底层连接实例。
+// PERF-1-4 [P2] 缓存键 driverName 只在本次（首次）加载时构造一次，不再随每条命令重新拼接、
+// Implode 或遍历分片 map；命中 PERF-1-1 的节点缓存后该函数不会再次进入。
+func (r *Client) loadNode() (RedisNode, error) {
 	switch r.ClientType {
 	case ClientNormal:
 		return getClient(r)

@@ -16,18 +16,9 @@ import (
 // GenerateModule 使用 ModuleTemplate 渲染并写出数据模型层 Go 文件到 fullModuleDir，
 // 文件已存在时先删除再生成，随后执行 go fmt 与 goimports 整理格式；模板渲染失败时打印错误并返回。
 func GenerateModule(moduleParam base.ModuleParam, fullModuleDir, tableName string) {
-	tpl := template.Must(template.New("module").Funcs(template.FuncMap{
-		"Convert":               base.Convert,
-		"SymbolChar":            base.SymbolChar,
-		"Char":                  base.Char,
-		"Helper":                base.Helper,
-		"CamelStr":              base.CamelStr,
-		"Add":                   base.Add,
-		"ModuleProtoConvertDao": base.ModuleProtoConvertDao,
-		"ModuleDaoConvertProto": base.ModuleDaoConvertProto,
-		"ModuleProtoConvertMap": base.ModuleProtoConvertMap,
-		"ApiToProto":            base.ApiToProto,
-	}).Parse(ModuleTemplate()))
+	// PERF-8-20 [P2] 公共模板函数复用 base 包级定义，避免每次调用重复构建同一 FuncMap 字面量。
+	funcs := base.CommonTemplateFuncs()
+	tpl := template.Must(template.New("module").Funcs(funcs).Parse(ModuleTemplate()))
 	outModuleFile := path.Join(fullModuleDir, tableName+".go")
 	if util.FileExists(outModuleFile) {
 		util.Delete(outModuleFile)

@@ -19,7 +19,6 @@ import (
 	"github.com/cloudwego/hertz/pkg/common/errors"
 	"github.com/cloudwego/hertz/pkg/protocol"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"go.opentelemetry.io/otel/trace"
@@ -61,27 +60,42 @@ func metricServerInterceptor() app.HandlerFunc {
 	return func(c context.Context, ctx *app.RequestContext) {
 		beg := time.Now()
 		ctx.Next(c)
-		metric.ServerHandleHistogram.Observe(time.Since(beg).Seconds(), metric.TypeHTTP, string(ctx.Request.Method())+"."+string(ctx.Request.Path()), extractAID(ctx))
-		metric.ServerHandleCounter.Inc(metric.TypeHTTP, string(ctx.Request.Method())+"."+string(ctx.Request.Path()), extractAID(ctx), http.StatusText(ctx.Response.StatusCode()))
+		// PERF-6-17 [P1] method/path/aid 与标签串每请求只构造一次；路由模板替代原始 Path 控制指标标签基数，
+		// 未匹配路由（FullPath 为空，如 404）回退原始 Path，保持原行为。
+		method := string(ctx.Request.Method())
+		path := ctx.FullPath()
+		if path == "" {
+			path = string(ctx.Request.Path())
+		}
+		label := method + "." + path
+		aid := extractAID(ctx)
+		metric.ServerHandleHistogram.Observe(time.Since(beg).Seconds(), metric.TypeHTTP, label, aid)
+		metric.ServerHandleCounter.Inc(metric.TypeHTTP, label, aid, http.StatusText(ctx.Response.StatusCode()))
 	}
 }
 
 // traceServerInterceptor 返回服务端链路追踪中间件：创建服务端 Span、填充 HTTP 属性并结束 Span。
 func traceServerInterceptor() app.HandlerFunc {
+	// PERF-6-18 [P1] tracer 与主机名在装配期获取一次并闭包复用；恒定属性在工厂层构造一次。
+	// （hostname 系统调用与重复转换分配的实际收益量级需实测验证）
+	tracer := globalTrace.NewTracer(trace.SpanKindServer)
+	staticAttrs := []attribute.KeyValue{
+		semconv.RPCSystemKey.String("http"),
+		semconv.HostName(hostname.Hostname()),
+	}
 	return func(c context.Context, ctx *app.RequestContext) {
-		tracer := globalTrace.NewTracer(trace.SpanKindServer)
-		attrs := []attribute.KeyValue{
-			semconv.RPCSystemKey.String("http"),
-			semconv.HostName(hostname.Hostname()),
-		}
-		headers := &ctx.Request.Header
-		provider := &metadataProvider{headers: headers}
-		c, span := tracer.Start(c, cast.ToString(ctx.Request.Method())+" "+cast.ToString(ctx.Request.Path()), provider, trace.WithAttributes(attrs...))
+		// PERF-6-18 [P1] Method/Path/UA/IP 各只转换一次并存入局部变量复用；[]byte 直接 string()，避免重复 cast.ToString 抽象开销。
+		method := string(ctx.Request.Method())
+		path := string(ctx.Request.Path())
+		ua := string(ctx.Request.Header.UserAgent())
+		ip := ctx.ClientIP()
+		provider := &metadataProvider{headers: &ctx.Request.Header}
+		c, span := tracer.Start(c, method+" "+path, provider, trace.WithAttributes(staticAttrs...))
 		span.SetAttributes(
-			semconv.HTTPTargetKey.String(cast.ToString(ctx.Request.Path())),
-			semconv.HTTPMethodKey.String(cast.ToString(ctx.Request.Method())),
-			semconv.HTTPUserAgentKey.String(cast.ToString(ctx.Request.Header.UserAgent())),
-			semconv.NetPeerNameKey.String(cast.ToString(ctx.ClientIP())),
+			semconv.HTTPTargetKey.String(path),
+			semconv.HTTPMethodKey.String(method),
+			semconv.HTTPUserAgentKey.String(ua),
+			semconv.NetPeerNameKey.String(ip),
 		)
 		defer span.End()
 		ctx.Next(c)
@@ -95,24 +109,34 @@ func recoverMiddleware(slowQueryThresholdInMilli int64) app.HandlerFunc {
 	return func(c context.Context, ctx *app.RequestContext) {
 
 		var beg = time.Now()
-		fields := make(logrus.Fields)
+		var fields logrus.Fields
 		var brokenPipe bool
 		defer func() {
-			fields["cost"] = time.Since(beg).Seconds()
+			// PERF-6-19 [P1] 耗时只计算一次；fields 惰性初始化，成功请求不再预先分配空 map。
+			elapsed := time.Since(beg)
 			if slowQueryThresholdInMilli > 0 {
-				if cost := int64(time.Since(beg)) / 1e6; cost > slowQueryThresholdInMilli {
+				if cost := elapsed.Milliseconds(); cost > slowQueryThresholdInMilli {
+					if fields == nil {
+						fields = make(logrus.Fields)
+					}
 					fields["slow"] = cost
 				}
 			}
 			if rec := recover(); rec != nil {
 				if ne, ok := rec.(*net.OpError); ok {
 					if se, ok := ne.Err.(*os.SyscallError); ok {
-						if strings.Contains(strings.ToLower(se.Error()), "broken pipe") || strings.Contains(strings.ToLower(se.Error()), "connection reset by peer") {
+						// PERF-6-19 [P1] 错误文本只小写化一次，避免两次 ToLower 分配。
+						lowerErr := strings.ToLower(se.Error())
+						if strings.Contains(lowerErr, "broken pipe") || strings.Contains(lowerErr, "connection reset by peer") {
 							brokenPipe = true
 						}
 					}
 				}
-				var err = rec.(error)
+				err := rec.(error)
+				if fields == nil {
+					fields = make(logrus.Fields)
+				}
+				fields["cost"] = elapsed.Seconds()
 				fields["stack"] = stack(3)
 				fields["err"] = err.Error()
 				logger.Logger.WithFields(fields).Error("access")
@@ -124,13 +148,27 @@ func recoverMiddleware(slowQueryThresholdInMilli int64) app.HandlerFunc {
 				ctx.AbortWithStatus(http.StatusInternalServerError)
 				return
 			}
-			fields["method"] = cast.ToString(ctx.Request.Method())
+			privateErrs := ctx.Errors.ByType(errors.ErrorTypePrivate)
+			errStr := ""
+			if len(privateErrs) > 0 {
+				errStr = privateErrs.String()
+			}
+			// PERF-6-19 [P1] Method/Host/Path 各只做一次 []byte→string 转换；错误列表仅在存在私有错误时拼接。
+			method := string(ctx.Request.Method())
+			host := string(ctx.Request.Host())
+			path := string(ctx.Request.Path())
+			ip := ctx.ClientIP()
+			if fields == nil {
+				fields = make(logrus.Fields)
+			}
+			fields["cost"] = elapsed.Seconds()
+			fields["method"] = method
 			fields["code"] = ctx.Response.StatusCode()
 			fields["size"] = len(ctx.Response.BodyBytes())
-			fields["host"] = cast.ToString(ctx.Request.Host())
-			fields["path"] = cast.ToString(ctx.Request.Path())
-			fields["ip"] = ctx.ClientIP()
-			fields["err"] = ctx.Errors.ByType(errors.ErrorTypePrivate).String()
+			fields["host"] = host
+			fields["path"] = path
+			fields["ip"] = ip
+			fields["err"] = errStr
 			logger.Logger.WithFields(fields).Info("access")
 		}()
 		ctx.Next(c)

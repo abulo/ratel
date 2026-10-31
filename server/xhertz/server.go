@@ -14,18 +14,36 @@ import (
 type Server struct {
 	*hserver.Hertz
 	config *Config
+	// info 为构造期一次性缓存的注册信息，避免每次 Info() 重复重建 ServiceInfo。
+	info *server.ServiceInfo
 }
 
 func newServer(config *Config) *Server {
+	// PERF-6-16 [P1] 修正 1204 系 1024 笔误：原三个上限均为 28,992,320 字节（≈27.65MiB），
+	// 连接级缓冲随并发放大内存占用。取值依据：
+	//   - MaxRequestBodySize：单次请求体上限，按业务常见 JSON/表单报文取 10MiB 量级；
+	//   - MaxKeepBodySize：读取后保留给 handler 访问的内存体，无需与整体 body 上限同量级，取 1MiB；
+	//   - ReadBufferSize：连接级读取缓冲（头部 + 小包），回落到 32KiB 常规量级。
+	// （各缓冲在 Hertz 内部分配时机与实际内存峰值需压测确认，预期收益需实测验证）
+	serviceAddr := config.Address()
+	if config.ServiceAddress != "" {
+		serviceAddr = config.ServiceAddress
+	}
+	info := server.ApplyOptions(
+		server.WithScheme("http"),
+		server.WithAddress(serviceAddr),
+		server.WithKind(constant.ServiceProvider),
+	)
 	return &Server{
 		Hertz: hserver.New(
 			hserver.WithHostPorts(config.Address()),
 			hserver.WithDisablePrintRoute(config.Mode == ReleaseMode),
-			hserver.WithMaxRequestBodySize(20*1204*1204),
-			hserver.WithMaxKeepBodySize(20*1204*1204),
-			hserver.WithReadBufferSize(20*1204*1204),
+			hserver.WithMaxRequestBodySize(10*1024*1024),
+			hserver.WithMaxKeepBodySize(1*1024*1024),
+			hserver.WithReadBufferSize(32*1024),
 		),
 		config: config,
+		info:   &info,
 	}
 }
 
@@ -45,17 +63,10 @@ func (s *Server) GracefulStop(ctx context.Context) error {
 }
 
 // Info 返回服务注册信息，协议为 http；注册地址优先取配置中的 ServiceAddress，否则使用监听地址。
+//
+// PERF-6-20 [P2] 直接返回构造期缓存的注册信息，不再重复重建。
 func (s *Server) Info() *server.ServiceInfo {
-	serviceAddr := s.config.Address()
-	if s.config.ServiceAddress != "" {
-		serviceAddr = s.config.ServiceAddress
-	}
-	info := server.ApplyOptions(
-		server.WithScheme("http"),
-		server.WithAddress(serviceAddr),
-		server.WithKind(constant.ServiceProvider),
-	)
-	return &info
+	return s.info
 }
 
 // Health 固定返回 true，Hertz 服务端不做独立端口探活。

@@ -85,16 +85,27 @@ func (client *Client) DownFile(serverPath, destPath string) error {
 	if err != nil {
 		return err
 	}
-	fileData, err := io.ReadAll(resp)
-	if err != nil {
-		return err
-	}
+	// PERF-5-20 [P1]：defer 提前注册，后续打开本地文件或流式拷贝出错时响应流同样会被关闭，
+	// 顺带修复原实现 ReadAll 失败路径 resp 未关闭的资源泄漏。
 	defer func() {
 		if err := resp.Close(); err != nil {
 			logger.Logger.Error("Error closing response: ", err)
 		}
 	}()
-	return os.WriteFile(destPath, fileData, 0664)
+
+	// PERF-5-20 [P1]：改为 os.OpenFile + io.Copy 流式拷贝，内存峰值固定为拷贝缓冲大小，
+	// 不再经 io.ReadAll 把整个文件读入内存；本地文件权限 0664 与原 os.WriteFile 保持一致。
+	file, err := os.OpenFile(destPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			logger.Logger.Error("Error closing file: ", closeErr)
+		}
+	}()
+	_, err = io.Copy(file, resp)
+	return err
 }
 
 // UploadFile 将本地 srcFullPath 文件上传到 serverPath；上传前会尝试创建远程父目录，该目录创建不做递归。

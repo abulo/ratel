@@ -5,40 +5,41 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 )
 
 type builder struct {
 	// exts 为需要监视的文件扩展名。
-	exts        []string
+	exts []string
+	// extSet 为 exts 的集合形态，供 isIgnore 做 O(1) 后缀判定（PERF-7-40）。
+	extSet map[string]struct{}
 	// anyExt 标记是否监视所有文件类型。
-	anyExt      bool
+	anyExt bool
 	// excludes 为忽略文件的路径匹配模式列表。
-	excludes    []string
+	excludes []string
 	// appName 为输出的可执行文件路径。
-	appName     string
+	appName string
 	// logs 为日志输出对象。
-	logs        Logger
+	logs Logger
 	// watcherFreq 为判定文件变更的时间间隔。
 	watcherFreq time.Duration
 
 	// appWD 为被编译程序的工作目录。
-	appWD      string
+	appWD string
 	// appCmd 为被编译程序的进程句柄，用于结束旧进程。
-	appCmd     *exec.Cmd
+	appCmd *exec.Cmd
 	// appArgs 为传给被编译程序启动命令的参数。
-	appArgs    []string
+	appArgs []string
 	// appKillMux 保护 appCmd 的互斥锁。
 	appKillMux sync.Mutex
 
 	// goTidy 标记是否自动执行 go mod tidy。
-	goTidy    bool
+	goTidy bool
 	// goCmd 为 go build 或 go mod tidy 的进程句柄。
-	goCmd     *exec.Cmd
+	goCmd *exec.Cmd
 	// goArgs 为传给 go build 的参数，go mod tidy 忽略该参数。
-	goArgs    []string
+	goArgs []string
 	// goKillMux 保护 goCmd 的互斥锁。
 	goKillMux sync.Mutex
 }
@@ -48,8 +49,14 @@ func (opt *Options) newBuilder() *builder {
 	if opt.anyExts {
 		exts = []string{"*"}
 	}
+	// PERF-7-40 [P2] 构造期把监视扩展名预构建为集合，事件回调内 O(1) 判定，替代每次事件线性扫描 exts（开发期工具，预期收益需实测验证）
+	extSet := make(map[string]struct{}, len(exts))
+	for _, ext := range exts {
+		extSet[ext] = struct{}{}
+	}
 	return &builder{
 		exts:        exts,
+		extSet:      extSet,
 		anyExt:      opt.anyExts,
 		excludes:    opt.Excludes,
 		appName:     opt.appName,
@@ -92,10 +99,9 @@ func (b *builder) isIgnore(path string) bool {
 	if b.anyExt {
 		return false
 	}
-	for _, ext := range b.exts {
-		if strings.HasSuffix(path, ext) {
-			return false
-		}
+	// PERF-7-40 [P2] 用预构建集合按文件扩展名 O(1) 查找，替代逐后缀 HasSuffix 线性扫描
+	if _, ok := b.extSet[filepath.Ext(path)]; ok {
+		return false
 	}
 
 	return true

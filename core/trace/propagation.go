@@ -3,7 +3,6 @@ package trace
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -22,6 +21,12 @@ const (
 	flagsDebug      = 0x02
 	flagsSampled    = 0x01
 	flagsNotSampled = 0x00
+
+	// PERF-3-16 [P2]：三个 flags 组合取值恒定，预存十六进制字符串常量，去掉每次 Inject 的 fmt.Sprintf("%x")。
+	// 注意 "%x" 不补零，取值必须与原输出逐字一致：0x03→"3"、0x01→"1"、0x00→"0"。
+	flagDebugSampledStr = "3"
+	flagSampledStr      = "1"
+	flagNotSampledStr   = "0"
 
 	deprecatedParentSpanID = "0"
 )
@@ -47,17 +52,18 @@ var _ propagation.TextMapPropagator = &Jaeger{}
 // Inject 将当前上下文的 SpanContext 按 Jaeger 格式写入载体；TraceID 或 SpanID 无效时不写入任何头。
 func (jaeger Jaeger) Inject(ctx context.Context, carrier propagation.TextMapCarrier) {
 	sc := trace.SpanFromContext(ctx).SpanContext()
-	headers := []string{}
+	// PERF-3-16 [P2]：切片按最大 4 段预分配容量，避免多次 append 触发扩容；flags 直接使用预存常量字符串。
+	headers := make([]string, 0, 4)
 	if !sc.TraceID().IsValid() || !sc.SpanID().IsValid() {
 		return
 	}
 	headers = append(headers, sc.TraceID().String(), sc.SpanID().String(), deprecatedParentSpanID)
 	if debugFromContext(ctx) {
-		headers = append(headers, fmt.Sprintf("%x", flagsDebug|flagsSampled))
+		headers = append(headers, flagDebugSampledStr)
 	} else if sc.IsSampled() {
-		headers = append(headers, fmt.Sprintf("%x", flagsSampled))
+		headers = append(headers, flagSampledStr)
 	} else {
-		headers = append(headers, fmt.Sprintf("%x", flagsNotSampled))
+		headers = append(headers, flagNotSampledStr)
 	}
 
 	carrier.Set(jaegerHeader, strings.Join(headers, separator))

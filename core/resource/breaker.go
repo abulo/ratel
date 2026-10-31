@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -124,10 +125,16 @@ type (
 	RollingWindowOption func(rollingWindow *RollingWindow)
 
 	// Bucket 为滚动窗口中的一个时间桶，累计一段时间内事件的数值与次数。
+	//
+	// PERF-4-1 [P1]：桶内 Sum/Count 改为原子存储，同桶累加无需排他写锁；
+	// 导出字段 Sum/Count 为 Reduce 回调读取用的快照，由 Reduce 在锁内同步。
 	Bucket struct {
-		// Sum 为桶内所有事件数值之和。
+		sumBits atomic.Uint64
+		count   atomic.Int64
+
+		// Sum 为桶内所有事件数值之和（快照字段，供 Reduce 回调读取）。
 		Sum float64
-		// Count 为桶内事件次数。
+		// Count 为桶内事件次数（快照字段，供 Reduce 回调读取）。
 		Count int64
 	}
 
@@ -142,6 +149,11 @@ type (
 		offset        int
 		ignoreCurrent bool
 		lastTime      time.Duration
+
+		// PERF-4-2 [P1]：窗口累计 Sum/Count，熔断判定直接读取，O(1) 替代全桶遍历；
+		// 与各桶原子字段保持一致，跨桶复位时同步扣减（40 桶遍历占比预期收益需实测验证）。
+		cumSumBits atomic.Uint64
+		cumCount   atomic.Int64
 	}
 	window struct {
 		buckets []*Bucket
@@ -149,10 +161,11 @@ type (
 	}
 
 	// Proba 在受保护的随机数源上按给定概率进行随机判定，方法为并发安全。
+	//
+	// PERF-4-3 [P2]：改用无锁 xorshift64 状态（atomic CAS），替代互斥锁保护的
+	// 非并发安全 *rand.Rand（预期收益需实测验证）。
 	Proba struct {
-		// rand.Rand 本身不是并发安全的，因此通过锁串行化随机数访问。
-		r    *rand.Rand
-		lock sync.Mutex
+		state atomic.Uint64
 	}
 
 	googleBreaker struct {
@@ -338,17 +351,38 @@ func MinInt(a, b int) int {
 
 // NewProba 创建一个以当前时间纳秒为种子的 Proba。
 func NewProba() *Proba {
-	return &Proba{
-		r: rand.New(rand.NewSource(time.Now().UnixNano())),
+	p := &Proba{}
+	// PERF-4-3 [P2]：种子避免落到 xorshift 的全零退化状态。
+	seed := uint64(time.Now().UnixNano())
+	if seed == 0 {
+		seed = 1
 	}
+	p.state.Store(seed)
+	return p
 }
 
 // TrueOnProba 以 proba 指定的阈值概率返回 true。
 func (p *Proba) TrueOnProba(proba float64) (truth bool) {
-	p.lock.Lock()
-	truth = p.r.Float64() < proba
-	p.lock.Unlock()
-	return
+	// PERF-4-3 [P2]：CAS 循环实现无锁 xorshift64，去掉互斥锁（预期收益需实测验证）。
+	return p.nextFloat64() < proba
+}
+
+// nextFloat64 通过无锁 xorshift64 生成 [0,1) 区间的均匀随机数。
+func (p *Proba) nextFloat64() float64 {
+	for {
+		old := p.state.Load()
+		x := old
+		x ^= x << 13
+		x ^= x >> 7
+		x ^= x << 17
+		if x == 0 {
+			x = 1
+		}
+		if p.state.CompareAndSwap(old, x) {
+			// 取高 53 位映射到 [0,1)，与 rand.Float64 精度一致。
+			return float64(x>>11) / (1 << 53)
+		}
+	}
 }
 func newGoogleBreaker() *googleBreaker {
 	bucketDuration := time.Duration(int64(windowInit) / int64(buckets))
@@ -422,6 +456,13 @@ func (b *googleBreaker) markFailure() {
 }
 
 func (b *googleBreaker) history() (accepts, total int64) {
+	// PERF-4-2 [P1]：默认路径直接读取窗口累计计数，O(1) 替代 Reduce 全桶遍历；
+	// ignoreCurrent 场景语义特殊（跳过当前桶），保留原有遍历实现（预期收益需实测验证）。
+	if !b.stat.ignoreCurrent {
+		total = b.stat.cumCount.Load()
+		accepts = int64(math.Float64frombits(b.stat.cumSumBits.Load()))
+		return
+	}
 	b.stat.Reduce(func(b *Bucket) {
 		accepts += int64(b.Sum)
 		total += b.Count
@@ -451,11 +492,33 @@ func NewRollingWindow(size int, interval time.Duration, opts ...RollingWindowOpt
 }
 
 // Add 将数值 v 计入当前时间桶。
+//
+// PERF-4-1 [P1]：同桶累加走原子操作、不加排他写锁；仅跨桶轮转时在短临界区内
+// 复位过期桶；累计计数同步原子维护（锁竞争占比预期收益需实测验证）。
 func (rw *RollingWindow) Add(v float64) {
-	rw.lock.Lock()
-	defer rw.lock.Unlock()
-	rw.updateOffset()
-	rw.win.add(rw.offset, v)
+	rw.lock.RLock()
+	rotated := rw.span() > 0
+	rw.lock.RUnlock()
+
+	if rotated {
+		rw.lock.Lock()
+		// 双检：等待写锁期间可能已被其他协程完成轮转。
+		if rw.span() > 0 {
+			rw.updateOffset(Now())
+		}
+		rw.lock.Unlock()
+	}
+
+	rw.lock.RLock()
+	idx := rw.offset % rw.size
+	rw.lock.RUnlock()
+	b := rw.win.buckets[idx]
+
+	b.add(v)
+	rw.cumCount.Add(1)
+	if v != 0 {
+		addFloatBits(&rw.cumSumBits, v)
+	}
 }
 
 // Reduce 遍历全部历史时间桶并对每个桶执行 fn；配置忽略当前桶时，尚未结束的当前桶
@@ -479,7 +542,13 @@ func (rw *RollingWindow) Reduce(fn func(b *Bucket)) {
 }
 
 func (rw *RollingWindow) span() int {
-	offset := int(Since(rw.lastTime) / rw.interval)
+	return rw.spanAt(Now())
+}
+
+// spanAt 以给定当前时刻计算距基准时间已经越过的桶偏移；PERF-4-4 [P2]：供 Add 复用
+// 同一时刻，避免临界区内重复取系统时钟。
+func (rw *RollingWindow) spanAt(now time.Duration) int {
+	offset := int((now - rw.lastTime) / rw.interval)
 	if 0 <= offset && offset < rw.size {
 		return offset
 	}
@@ -487,19 +556,29 @@ func (rw *RollingWindow) span() int {
 	return rw.size
 }
 
-func (rw *RollingWindow) updateOffset() {
-	span := rw.span()
+// updateOffset 复位已过期的桶并推进偏移；调用方必须持有写锁。
+//
+// PERF-4-4 [P2]：now 由调用方传入，span 判定与时间对齐复用同一时刻。
+func (rw *RollingWindow) updateOffset(now time.Duration) {
+	span := rw.spanAt(now)
 	if span <= 0 {
 		return
 	}
 
 	offset := rw.offset
 	for i := range span {
-		rw.win.resetBucket((offset + i + 1) % rw.size)
+		b := rw.win.buckets[(offset+i+1)%rw.size]
+		// PERF-4-2 [P1]：复位旧桶前从累计值扣除其残留，保证累计与可见桶之和一致。
+		if c := b.count.Load(); c != 0 {
+			rw.cumCount.Add(-c)
+		}
+		if bits := b.sumBits.Load(); bits != 0 {
+			addFloatBits(&rw.cumSumBits, -math.Float64frombits(bits))
+		}
+		b.reset()
 	}
 
 	rw.offset = (offset + span) % rw.size
-	now := Now()
 	// 将基准时间对齐到桶间隔边界，保证下一轮窗口统计从整段间隔开始。
 	rw.lastTime = now - (now-rw.lastTime)%rw.interval
 }
@@ -515,28 +594,43 @@ func newWindow(size int) *window {
 	}
 }
 
-func (w *window) add(offset int, v float64) {
-	w.buckets[offset%w.size].add(v)
-}
-
 func (w *window) reduce(start, count int, fn func(b *Bucket)) {
 	for i := range count {
-		fn(w.buckets[(start+i)%w.size])
+		b := w.buckets[(start+i)%w.size]
+		// Reduce 回调读取前，把原子字段同步到导出快照字段。
+		b.snapshot()
+		fn(b)
 	}
 }
 
-func (w *window) resetBucket(offset int) {
-	w.buckets[offset%w.size].reset()
-}
-
+// add 以原子方式累加一次事件：次数恒加 1，数值 v 累加到 Sum。
 func (b *Bucket) add(v float64) {
-	b.Sum += v
-	b.Count++
+	b.count.Add(1)
+	if v != 0 {
+		addFloatBits(&b.sumBits, v)
+	}
 }
 
 func (b *Bucket) reset() {
-	b.Sum = 0
-	b.Count = 0
+	b.count.Store(0)
+	b.sumBits.Store(0)
+}
+
+// snapshot 在 Reduce 锁内调用，把原子内部字段复制到导出快照字段供回调读取。
+func (b *Bucket) snapshot() {
+	b.Sum = math.Float64frombits(b.sumBits.Load())
+	b.Count = b.count.Load()
+}
+
+// addFloatBits 对以 math.Float64bits 存储的浮点累计值做无锁原子加法。
+func addFloatBits(acc *atomic.Uint64, v float64) {
+	for {
+		old := acc.Load()
+		next := math.Float64bits(math.Float64frombits(old) + v)
+		if acc.CompareAndSwap(old, next) {
+			return
+		}
+	}
 }
 
 func (p googlePromise) Accept() {

@@ -1,10 +1,12 @@
 package xgin
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 
 	rstatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/status"
@@ -30,13 +32,22 @@ type GRPCProxyMessage struct {
 	Error   int           `protobuf:"varint,1,opt,name=error" json:"error"`
 	Message string        `protobuf:"bytes,2,opt,name=msg" json:"msg"`
 	Data    proto.Message `protobuf:"bytes,3,opt,name=data" json:"data"`
+
+	// PERF-6-9 [P2] String() 结果惰性缓存，避免重复调用时反复执行 protojson 序列化；Reset 后缓存随零值一并清空。
+	stringOnce sync.Once
+	stringVal  string
 }
 
 // Reset 将消息清空回零值，满足 proto.Message 接口约定。
 func (m *GRPCProxyMessage) Reset() { *m = GRPCProxyMessage{} }
 
 // String 返回 Data 负载的 Protobuf JSON 格式字符串。
-func (m *GRPCProxyMessage) String() string { return jsonpb.Format(m.Data) }
+func (m *GRPCProxyMessage) String() string {
+	m.stringOnce.Do(func() {
+		m.stringVal = jsonpb.Format(m.Data)
+	})
+	return m.stringVal
+}
 
 // ProtoMessage 标记该类型为 Protobuf 消息，满足 proto.Message 接口约定。
 func (*GRPCProxyMessage) ProtoMessage() {}
@@ -50,17 +61,20 @@ func (m *GRPCProxyMessage) MarshalJSONPB(jsb *jsonpb.MarshalOptions) ([]byte, er
 		return []byte{}, err
 	}
 
-	msg := struct {
-		Error   int             `json:"error"`
-		Message string          `json:"msg"`
-		Data    json.RawMessage `json:"data"`
-	}{
-		Error:   m.Error,
-		Message: m.Message,
-		Data:    json.RawMessage([]byte(ss)),
+	// PERF-6-8 [P2] 直接手写外层 JSON 外壳，内层 Data 字节原样嵌入，避免第二次 encoding/json 反射封包。
+	msgBytes, err := json.Marshal(m.Message)
+	if err != nil {
+		return nil, err
 	}
-
-	return json.Marshal(msg)
+	var buf bytes.Buffer
+	buf.WriteString(`{"error":`)
+	buf.WriteString(strconv.Itoa(m.Error))
+	buf.WriteString(`,"msg":`)
+	buf.Write(msgBytes)
+	buf.WriteString(`,"data":`)
+	buf.Write(ss)
+	buf.WriteString(`}`)
+	return buf.Bytes(), nil
 }
 
 var (

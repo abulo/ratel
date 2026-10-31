@@ -84,12 +84,18 @@ func MetricInterceptor() Interceptor {
 	}
 }
 
+// emptyMetadata 为追踪开启但入站 context 不带 metadata 时复用的只读空实例，
+// 避免每次查询都新建一个空 metadata.MD map（PERF-2-4 [P2] 追踪路径元数据复用）。
+var emptyMetadata = metadata.MD{}
+
 // TraceInterceptor 返回挂载客户端链路追踪的拦截器：仅当请求上下文非空时开启 Span，
 // 在 Span 上记录数据库名、主机、用户名与 SQL 语句，并将错误写入 Span 状态；
 // 上下文为空时直接透传给原处理器。
 func TraceInterceptor() Interceptor {
 	tracer := globalTrace.NewTracer(trace.SpanKindClient)
-	attrs := []attribute.KeyValue{
+	// PERF-2-1 [P1] 静态基础属性只在工厂层构造一次；请求属性放入每次调用的局部切片，
+	// 不再向闭包级共享切片 append，消除并发数据竞争与切片无限增长。
+	baseAttrs := []attribute.KeyValue{
 		semconv.RPCSystemKey.String("gorm"),
 		semconv.HostName(hostname.Hostname()),
 	}
@@ -100,16 +106,21 @@ func TraceInterceptor() Interceptor {
 				next(scope)
 				sqlRaw := scope.Dialector.Explain(stmt.SQL.String(), stmt.Vars...)
 				fn, file, line := call.Caller(4)
+				// PERF-2-1 [P1] 每次调用基于静态基础属性复制出独立的局部属性切片。
+				attrs := make([]attribute.KeyValue, 0, len(baseAttrs)+3)
+				attrs = append(attrs, baseAttrs...)
 				attrs = append(attrs,
 					semconv.CodeFunction(fn),
 					semconv.CodeFilepath(file),
 					semconv.CodeLineNumber(line),
 				)
+				// PERF-2-4 [P2] 入站 metadata 存在时仍按原逻辑拷贝（避免污染上游 context），
+				// 不存在时复用共享空实例，不再每次新建空 map。
 				md, ok := metadata.FromIncomingContext(ctx)
-				if ok {
-					md = md.Copy()
+				if !ok {
+					md = emptyMetadata
 				} else {
-					md = metadata.MD{}
+					md = md.Copy()
 				}
 				_, span := tracer.Start(ctx, op, globalTrace.MetadataReaderWriter(md), trace.WithAttributes(attrs...))
 				span.SetAttributes(

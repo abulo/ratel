@@ -18,6 +18,8 @@ type Queue struct {
 // DeclareAndBind 声明指定队列，并将其按 key 绑定到 exchange；网络原因可能导致声明失败，
 // 不保证一定创建成功。
 func (q *Queue) DeclareAndBind(queueName, key, exchange string) error {
+	// PERF-5-13 [P1]：复核结论——队列声明/绑定属于启动期低频操作，按报告建议维持"每次新建通道"现状，
+	// 不纳入生产者/消费者的常驻通道复用，避免声明状态与发布/消费通道相互影响。
 	ch, err := q.c.Channel()
 	if err != nil {
 		return err

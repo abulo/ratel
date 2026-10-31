@@ -94,8 +94,15 @@ func (config *Config) MustSingleton() *Client {
 
 // SetEndpoints 追加去重后的集群节点地址，并返回配置自身以便链式调用。
 func (config *Config) SetEndpoints(endpoint []string) *Config {
+	// PERF-5-19 [P2]：改用 seen 哈希集合做 O(N) 去重，替代反射式 util.InArray 的 O(N²) 遍历；
+	// 保留原有追加顺序与去重语义不变。
+	seen := make(map[string]struct{}, len(config.Endpoints)+len(endpoint))
+	for _, existing := range config.Endpoints {
+		seen[existing] = struct{}{}
+	}
 	for _, item := range endpoint {
-		if !util.InArray(item, config.Endpoints) {
+		if _, exists := seen[item]; !exists {
+			seen[item] = struct{}{}
 			config.Endpoints = append(config.Endpoints, item)
 		}
 	}
